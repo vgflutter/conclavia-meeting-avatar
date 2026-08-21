@@ -48,6 +48,7 @@ export function decideActivation(
         text: `Ricevuto, ${segment.speakerName}. Il collegamento tra trascrizione e avatar funziona.`,
         mood: selectDiagnosticMood(segment.text),
         level: 3,
+        language: "it-IT",
       },
     ],
     addressedTo: segment.speakerName,

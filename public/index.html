@@ -13,7 +13,7 @@
         <div>
           <p class="eyebrow">CONCLAVIA LAB</p>
           <h1>Meeting Avatar</h1>
-          <p class="lede">Configura e porta un partecipante virtuale Conclavia dentro Teams.</p>
+          <p class="lede">Configura e porta un partecipante virtuale Conclavia dentro il tuo meeting.</p>
         </div>
         <div class="runtime">
           <span class="phase">POC · FASE 1</span>
@@ -22,7 +22,7 @@
       </header>
 
       <section class="flow" aria-label="Flusso del sistema">
-        <span>Teams</span><b>→</b><span>Trascrizione continua</span><b>→</b><span>Memoria LLM</span><b>→</b><span>Partecipazione</span><b>→</b><span>MetaHuman</span><b>→</b><span>OBS</span>
+        <span id="meeting-platform-name">Meeting</span><b>→</b><span>Trascrizione continua</span><b>→</b><span>Memoria LLM</span><b>→</b><span>Partecipazione</span><b>→</b><span>MetaHuman</span><b>→</b><span>OBS</span>
       </section>
 
       <section class="panel config-panel">
@@ -39,6 +39,10 @@
             <label>
               Avatar
               <select id="avatar-profile" name="avatarProfile" required></select>
+            </label>
+            <label>
+              Piattaforma meeting
+              <select id="meeting-platform" name="meetingPlatform"></select>
             </label>
             <label>
               Nome e trigger
@@ -60,6 +64,22 @@
                 <option value="natural">Naturale</option>
                 <option value="authoritative">Autorevole</option>
               </select>
+            </label>
+            <label>
+              Voce italiana
+              <select id="italian-voice" name="italianVoice"></select>
+            </label>
+            <label>
+              English voice
+              <select id="english-voice" name="englishVoice"></select>
+            </label>
+            <label>
+              Audio del meeting da ascoltare
+              <input id="meeting-audio-device" name="meetingAudioDevice" maxlength="160" required />
+            </label>
+            <label>
+              Nome speaker trascrizione
+              <input id="meeting-speaker-name" name="meetingSpeakerName" maxlength="80" required />
             </label>
           </div>
           <label>
@@ -126,18 +146,18 @@
             <section class="microphone-card meeting-listener-card" aria-labelledby="listener-title">
               <div class="listener-heading">
                 <div>
-                  <h3 id="listener-title">Audio continuo di Teams</h3>
+                  <h3 id="listener-title">Audio continuo del meeting</h3>
                   <p>Legge BlackHole 16ch senza interruzioni. Ogni frase entra nella memoria LLM; solo “Mary” abilita la risposta.</p>
                 </div>
                 <span id="listener-turn-count" class="listener-turn-count">0 turni</span>
               </div>
               <div class="microphone-actions">
-                <button id="listener-start-button" type="button">Avvia ascolto Teams</button>
+                <button id="listener-start-button" type="button">Avvia ascolto meeting</button>
                 <button id="listener-stop-button" class="secondary" type="button" disabled>Ferma ascolto</button>
               </div>
               <p id="listener-status" class="recording-status" aria-live="polite">Ascolto continuo fermo.</p>
               <p id="listener-partial" class="listener-partial" aria-live="polite"></p>
-              <p class="listener-note">La trascrizione streaming non assegna ancora i nomi dei singoli partecipanti: le battute arrivano come “Partecipante Teams”, ma il testo completo viene conservato.</p>
+              <p class="listener-note">La trascrizione streaming non assegna ancora i nomi dei singoli partecipanti: le battute usano il nome speaker configurato, ma il testo completo viene conservato.</p>
             </section>
             <section id="participation-request" class="participation-request" aria-live="polite" hidden>
               <div class="request-icon" aria-hidden="true">✋</div>
@@ -187,7 +207,7 @@
           <div class="panel-heading">
             <div>
               <p class="eyebrow">03 · CONCLAVIA</p>
-              <h2>MetaHuman per Teams</h2>
+              <h2>MetaHuman per il meeting</h2>
             </div>
             <div class="renderer-actions">
               <button id="renderer-start-button" type="button">Avvia MetaHuman</button>
@@ -200,8 +220,8 @@
             <p class="empty">Il video Pixel Streaming apparirà qui dopo l’avvio.</p>
           </div>
           <div class="teams-route">
-            <strong>Uscita verso Teams</strong>
-            <p>OBS cattura il player MetaHuman e lo espone come Virtual Camera. L’audio di Mary va al microfono virtuale Teams su un bus separato dall’audio della riunione.</p>
+            <strong>Uscita verso il meeting</strong>
+            <p>OBS cattura il player MetaHuman e lo espone come Virtual Camera. L’audio dell’avatar va al microfono virtuale su un bus separato dall’audio della riunione.</p>
             <a id="renderer-output-link" href="#" target="_blank" rel="noreferrer" hidden>Apri il solo output MetaHuman per OBS ↗</a>
           </div>
         </section>

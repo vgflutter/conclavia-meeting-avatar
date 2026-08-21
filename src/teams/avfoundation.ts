@@ -34,7 +34,7 @@ export function parseAvfoundationAudioDevices(output: string): AvfoundationAudio
 
 export async function listAvfoundationAudioDevices(): Promise<AvfoundationAudioDevice[]> {
   if (process.platform !== "darwin") {
-    throw new Error("L'ascolto automatico Teams richiede macOS e AVFoundation.");
+    throw new Error("L'ascolto automatico del meeting richiede macOS e AVFoundation.");
   }
 
   try {

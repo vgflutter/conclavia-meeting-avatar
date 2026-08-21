@@ -15,6 +15,8 @@ export const avatarMoods = [
 
 export type AvatarMood = (typeof avatarMoods)[number];
 export type AvatarMoodLevel = 1 | 2 | 3 | 4 | 5;
+export const speechLanguages = ["it-IT", "en-US"] as const;
+export type SpeechLanguage = (typeof speechLanguages)[number];
 
 export interface TranscriptSegment {
   id: string;
@@ -28,6 +30,7 @@ export interface AvatarSpeechSentence {
   text: string;
   mood: AvatarMood;
   level: AvatarMoodLevel;
+  language: SpeechLanguage;
 }
 
 export interface AvatarSpeechCue {

@@ -59,10 +59,14 @@ async function main(): Promise<void> {
       process.env.OPENAI_TRANSCRIPTION_MODEL?.trim() || "gpt-4o-mini-transcribe",
     realtimeTranscriptionModel:
       process.env.OPENAI_REALTIME_TRANSCRIPTION_MODEL?.trim() || "gpt-live-transcribe",
-    teamsAudioDevice:
-      process.env.CONCLAVIA_TEAMS_AUDIO_DEVICE?.trim() || "BlackHole 16ch",
-    teamsSpeakerName:
-      process.env.CONCLAVIA_TEAMS_SPEAKER_NAME?.trim() || "Partecipante Teams",
+    meetingAudioDevice:
+      process.env.CONCLAVIA_MEETING_AUDIO_DEVICE?.trim()
+      || process.env.CONCLAVIA_TEAMS_AUDIO_DEVICE?.trim()
+      || "BlackHole 16ch",
+    meetingSpeakerName:
+      process.env.CONCLAVIA_MEETING_SPEAKER_NAME?.trim()
+      || process.env.CONCLAVIA_TEAMS_SPEAKER_NAME?.trim()
+      || "Partecipante meeting",
     rendererUrl:
       process.env.CONCLAVIA_RENDERER_URL?.trim() || "http://127.0.0.1:3000",
   });

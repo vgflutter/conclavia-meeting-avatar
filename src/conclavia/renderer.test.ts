@@ -10,8 +10,13 @@ const cue: AvatarSpeechCue = {
   provider: "openai",
   model: "gpt-5.4-mini",
   sentences: [
-    { text: "Sono d'accordo.", mood: "confident", level: 4 },
-    { text: "Ma verifichiamo questo rischio con attenzione.", mood: "concerned", level: 3 },
+    { text: "Sono d'accordo.", mood: "confident", level: 4, language: "it-IT" },
+    {
+      text: "Ma verifichiamo questo rischio con attenzione.",
+      mood: "concerned",
+      level: 3,
+      language: "it-IT",
+    },
   ],
   addressedTo: "Vincenzo",
   sourceSegmentIds: ["segment-1", "segment-2"],
@@ -61,7 +66,15 @@ await test("maps sentence moods to timed Unreal performance beats", () => {
 await test("uses a clearly visible intensity for a single non-neutral mood", () => {
   assert.deepEqual(
     performanceBeatsForCue(
-      { ...cue, sentences: [{ text: "Davvero?", mood: "surprised", level: 5 }] },
+      {
+        ...cue,
+        sentences: [{
+          text: "Davvero?",
+          mood: "surprised",
+          level: 5,
+          language: "it-IT",
+        }],
+      },
       3_000,
     ),
     [{

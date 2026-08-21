@@ -15,6 +15,9 @@ import { ConclaviaRenderer } from "./conclavia/renderer.js";
 import {
   avatarProfiles,
   AvatarConfigStore,
+  englishVoices,
+  italianVoices,
+  meetingPlatforms,
   voiceStyles,
   type AvatarConfig,
   type AvatarConfigInput,
@@ -148,15 +151,15 @@ export interface ServerOptions {
   responseModel: string;
   transcriptionModel: string;
   realtimeTranscriptionModel: string;
-  teamsAudioDevice: string;
-  teamsSpeakerName: string;
+  meetingAudioDevice: string;
+  meetingSpeakerName: string;
   rendererUrl: string | undefined;
 }
 
 export function startServer(options: ServerOptions): Promise<void> {
   const transcriptHistory: TranscriptSegment[] = [];
   const configStore = new AvatarConfigStore(options.configPath, {
-    avatarProfile: "mary-metahuman",
+    avatarProfile: "aera",
     name: options.wakeWord,
     apiKey: options.openaiApiKey?.trim() ?? "",
     responseModel: options.responseModel,
@@ -169,6 +172,11 @@ export function startServer(options: ServerOptions): Promise<void> {
     webSearchEnabled: true,
     requestToSpeakEnabled: true,
     voiceStyle: "lively",
+    italianVoice: "Bianca",
+    englishVoice: "Danielle",
+    meetingPlatform: "teams",
+    meetingAudioDevice: options.meetingAudioDevice,
+    meetingSpeakerName: options.meetingSpeakerName,
   });
   let runtimeConfig = configStore.current;
   const createIntelligence = (config: AvatarConfig) => config.apiKey
@@ -342,7 +350,11 @@ export function startServer(options: ServerOptions): Promise<void> {
     if (rendererArmed && decision.cue?.provider === "openai") {
       try {
         const rendererStartedAt = performance.now();
-        delivery = await renderer.deliver(decision.cue, runtimeConfig.voiceStyle);
+        delivery = await renderer.deliver(decision.cue, {
+          voiceStyle: runtimeConfig.voiceStyle,
+          italianVoice: runtimeConfig.italianVoice,
+          englishVoice: runtimeConfig.englishVoice,
+        });
         rendererMs = (rendererMs ?? 0) + Math.round(performance.now() - rendererStartedAt);
       } catch (error: unknown) {
         console.error("Conclavia MetaHuman delivery failed:", error);
@@ -374,8 +386,8 @@ export function startServer(options: ServerOptions): Promise<void> {
   const createListener = () => runtimeConfig.apiKey
     ? new MeetingListener({
         apiKey: runtimeConfig.apiKey,
-        audioDevice: options.teamsAudioDevice,
-        speakerName: options.teamsSpeakerName,
+        audioDevice: runtimeConfig.meetingAudioDevice,
+        speakerName: runtimeConfig.meetingSpeakerName,
         transcriptionModel: options.realtimeTranscriptionModel,
         wakeWord: runtimeConfig.name,
         onSegment: processSegment,
@@ -416,6 +428,9 @@ export function startServer(options: ServerOptions): Promise<void> {
           config: configStore.publicConfig,
           options: {
             avatarProfiles,
+            italianVoices,
+            englishVoices,
+            meetingPlatforms,
             voiceStyles,
           },
         });
@@ -450,7 +465,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           } catch (error: unknown) {
             listenerWarning = error instanceof Error
               ? error.message
-              : "Riavvio dell'ascolto Teams non riuscito.";
+              : "Riavvio dell'ascolto del meeting non riuscito.";
           }
         }
         sendJson(response, 200, {
@@ -479,7 +494,11 @@ export function startServer(options: ServerOptions): Promise<void> {
         let delivery: Awaited<ReturnType<ConclaviaRenderer["deliver"]>> | null = null;
         if (rendererArmed) {
           try {
-            delivery = await renderer.deliver(intervention.proposedCue, runtimeConfig.voiceStyle);
+            delivery = await renderer.deliver(intervention.proposedCue, {
+              voiceStyle: runtimeConfig.voiceStyle,
+              italianVoice: runtimeConfig.italianVoice,
+              englishVoice: runtimeConfig.englishVoice,
+            });
           } catch (error: unknown) {
             console.error("Granted intervention delivery failed:", error);
             sendJson(response, 502, {
@@ -531,9 +550,9 @@ export function startServer(options: ServerOptions): Promise<void> {
         try {
           sendJson(response, 200, await listener.start());
         } catch (error: unknown) {
-          console.error("Teams listener start failed:", error);
+          console.error("Meeting listener start failed:", error);
           sendJson(response, 502, {
-            error: error instanceof Error ? error.message : "Avvio ascolto Teams non riuscito.",
+            error: error instanceof Error ? error.message : "Avvio ascolto meeting non riuscito.",
             status: listener.status,
           });
         }
@@ -575,7 +594,7 @@ export function startServer(options: ServerOptions): Promise<void> {
 
       if (request.method === "POST" && url.pathname === "/api/renderer/start") {
         try {
-          const session = await renderer.start();
+          const session = await renderer.start(runtimeConfig.avatarProfile);
           rendererArmed = true;
           rendererPlayerUrl = session.playerUrl;
           sendJson(response, 200, {
@@ -740,8 +759,8 @@ export function startServer(options: ServerOptions): Promise<void> {
       );
       console.log(
         listener
-          ? `Teams listener: ready (${options.teamsAudioDevice} -> ${options.realtimeTranscriptionModel})`
-          : "Teams listener: not configured",
+          ? `Meeting listener: ready (${runtimeConfig.meetingAudioDevice} -> ${options.realtimeTranscriptionModel})`
+          : "Meeting listener: not configured",
       );
       resolve();
     });

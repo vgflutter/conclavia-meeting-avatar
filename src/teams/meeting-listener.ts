@@ -210,7 +210,13 @@ export class MeetingListener {
                     model: this.#options.transcriptionModel,
                   languages: ["it", "en"],
                   prompt: `Riunione di lavoro. L'assistente virtuale si chiama ${this.#options.wakeWord}.`,
-                  keywords: [this.#options.wakeWord, "Conclavia", "MetaHuman", "Microsoft Teams"],
+                  keywords: [
+                    this.#options.wakeWord,
+                    "Conclavia",
+                    "MetaHuman",
+                    "Microsoft Teams",
+                    "Google Meet",
+                  ],
                   ...(this.#manualTurnDetection ? { delay: "minimal" as const } : {}),
                   }
                 : {

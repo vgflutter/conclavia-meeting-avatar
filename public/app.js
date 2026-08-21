@@ -26,9 +26,15 @@ const configSummary = document.querySelector("#config-summary");
 const configStatus = document.querySelector("#config-status");
 const configSaveButton = document.querySelector("#config-save-button");
 const avatarProfileInput = document.querySelector("#avatar-profile");
+const meetingPlatformInput = document.querySelector("#meeting-platform");
+const meetingPlatformName = document.querySelector("#meeting-platform-name");
 const avatarNameInput = document.querySelector("#avatar-name");
 const responseModelInput = document.querySelector("#response-model");
 const voiceStyleInput = document.querySelector("#voice-style");
+const italianVoiceInput = document.querySelector("#italian-voice");
+const englishVoiceInput = document.querySelector("#english-voice");
+const meetingAudioDeviceInput = document.querySelector("#meeting-audio-device");
+const meetingSpeakerNameInput = document.querySelector("#meeting-speaker-name");
 const apiKeyInput = document.querySelector("#openai-api-key");
 const apiKeyState = document.querySelector("#api-key-state");
 const purposeInput = document.querySelector("#avatar-purpose");
@@ -76,15 +82,42 @@ function applyAvatarName(name, requestToSpeakEnabled = true) {
     : `Ogni frase finale entra nel contesto. ${avatarName} risponde quando viene chiamata.`;
 }
 
+function applyMeetingPlatform(platform) {
+  meetingPlatformName.textContent = platform === "google-meet"
+    ? "Google Meet"
+    : platform === "teams"
+      ? "Microsoft Teams"
+      : "Meeting";
+}
+
 function renderConfig(payload) {
   const { config, options } = payload;
   avatarProfileInput.innerHTML = options.avatarProfiles.map((profile) =>
     `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.label)}</option>`
   ).join("");
   avatarProfileInput.value = config.avatarProfile;
+  meetingPlatformInput.innerHTML = options.meetingPlatforms.map((platform) => {
+    const label = platform === "google-meet"
+      ? "Google Meet"
+      : platform === "teams"
+        ? "Microsoft Teams"
+        : "Generica";
+    return `<option value="${escapeHtml(platform)}">${escapeHtml(label)}</option>`;
+  }).join("");
+  meetingPlatformInput.value = config.meetingPlatform;
   avatarNameInput.value = config.name;
   responseModelInput.value = config.responseModel;
   voiceStyleInput.value = config.voiceStyle;
+  italianVoiceInput.innerHTML = options.italianVoices.map((voice) =>
+    `<option value="${escapeHtml(voice.id)}">${escapeHtml(voice.label)}</option>`
+  ).join("");
+  italianVoiceInput.value = config.italianVoice;
+  englishVoiceInput.innerHTML = options.englishVoices.map((voice) =>
+    `<option value="${escapeHtml(voice.id)}">${escapeHtml(voice.label)}</option>`
+  ).join("");
+  englishVoiceInput.value = config.englishVoice;
+  meetingAudioDeviceInput.value = config.meetingAudioDevice;
+  meetingSpeakerNameInput.value = config.meetingSpeakerName;
   purposeInput.value = config.purpose;
   personalityInput.value = config.personality;
   systemPromptInput.value = config.systemPrompt;
@@ -96,6 +129,7 @@ function renderConfig(payload) {
     : "Nessuna chiave configurata. La chiave non viene mai restituita al browser.";
   configSummary.textContent = `${config.name} · ${config.responseModel}`;
   applyAvatarName(config.name, config.requestToSpeakEnabled);
+  applyMeetingPlatform(config.meetingPlatform);
 }
 
 async function refreshConfig() {
@@ -119,9 +153,14 @@ configForm.addEventListener("submit", async (event) => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         avatarProfile: avatarProfileInput.value,
+        meetingPlatform: meetingPlatformInput.value,
         name: avatarNameInput.value,
         responseModel: responseModelInput.value,
         voiceStyle: voiceStyleInput.value,
+        italianVoice: italianVoiceInput.value,
+        englishVoice: englishVoiceInput.value,
+        meetingAudioDevice: meetingAudioDeviceInput.value,
+        meetingSpeakerName: meetingSpeakerNameInput.value,
         apiKey: apiKeyInput.value,
         purpose: purposeInput.value,
         personality: personalityInput.value,
@@ -138,7 +177,7 @@ configForm.addEventListener("submit", async (event) => {
     configStatus.textContent = result.listenerWarning
       ? `Configurazione salvata; ascolto non riavviato: ${result.listenerWarning}`
       : result.listenerRestarted
-        ? "Configurazione salvata. L’ascolto Teams è stato riavviato."
+        ? "Configurazione salvata. L’ascolto del meeting è stato riavviato."
         : "Configurazione salvata e applicata.";
   } catch (error) {
     configStatus.textContent = `Salvataggio fallito: ${error.message}`;
@@ -298,7 +337,7 @@ function renderListenerStatus(status) {
       : `${avatarName} sta leggendo l’audio da ${status.resolvedAudioDevice || status.audioDevice}.`;
   } else if (status.phase === "starting") {
     listenerStatus.className = "recording-status listening";
-    listenerStatus.textContent = "Connessione a OpenAI Realtime e apertura del bus Teams…";
+    listenerStatus.textContent = "Connessione a OpenAI Realtime e apertura del bus del meeting…";
   } else if (status.phase === "error") {
     listenerStatus.className = "recording-status";
     listenerStatus.textContent = `Ascolto fermato per errore: ${status.lastError || "errore sconosciuto"}`;

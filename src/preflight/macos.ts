@@ -82,7 +82,7 @@ async function inspectObs(): Promise<PreflightCheck> {
         id: "obs",
         label: "OBS Studio",
         level: "ready",
-        detail: "Applicazione trovata. La Virtual Camera potrà essere usata in Teams.",
+        detail: "Applicazione trovata. La Virtual Camera potrà essere usata nel meeting.",
       }
     : {
         id: "obs",

@@ -4,10 +4,12 @@ import OpenAI, { toFile } from "openai";
 
 import {
   avatarMoods,
+  speechLanguages,
   type AvatarMood,
   type AvatarMoodLevel,
   type AvatarSpeechCue,
   type AvatarSpeechSentence,
+  type SpeechLanguage,
   type TranscriptSegment,
 } from "../domain/protocol.js";
 
@@ -51,6 +53,19 @@ function cleanMoodLevel(value: unknown): AvatarMoodLevel {
   return Math.max(1, Math.min(5, Math.round(value))) as AvatarMoodLevel;
 }
 
+function sentenceLanguage(value: unknown, text: string): SpeechLanguage {
+  if (
+    typeof value === "string" &&
+    (speechLanguages as readonly string[]).includes(value)
+  ) {
+    return value as SpeechLanguage;
+  }
+  const englishSignals = text.match(
+    /\b(?:the|and|that|this|with|from|have|will|would|should|what|when|where|why|how|is|are|can)\b/giu,
+  )?.length ?? 0;
+  return englishSignals >= 2 ? "en-US" : "it-IT";
+}
+
 function stripMarkdownFence(value: string): string {
   const trimmed = value.trim();
   const match = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(trimmed);
@@ -79,7 +94,12 @@ export function parseMaryTurn(value: string, mode: ParticipationMode): ParsedMar
     return {
       action: "speak",
       reason: "Risposta diretta.",
-      sentences: [{ text: sentence, mood: "neutral", level: 2 }],
+      sentences: [{
+        text: sentence,
+        mood: "neutral",
+        level: 2,
+        language: sentenceLanguage(undefined, sentence),
+      }],
     };
   }
 
@@ -112,6 +132,7 @@ export function parseMaryTurn(value: string, mode: ParticipationMode): ParsedMar
         text,
         mood: isAvatarMood(sentence.mood) ? sentence.mood : "neutral",
         level: cleanMoodLevel(sentence.level),
+        language: sentenceLanguage(sentence.language, text),
       };
     })
     .filter((sentence): sentence is AvatarSpeechSentence => sentence !== null);
@@ -242,8 +263,9 @@ export class MeetingIntelligence {
                       text: { type: "string" },
                       mood: { type: "string", enum: avatarMoods },
                       level: { type: "integer", minimum: 1, maximum: 5 },
+                      language: { type: "string", enum: speechLanguages },
                     },
-                    required: ["text", "mood", "level"],
+                    required: ["text", "mood", "level", "language"],
                   },
                 },
               },
@@ -337,7 +359,8 @@ export class MeetingIntelligence {
           ]
         : []),
       "La risposta proposta deve essere naturale, concreta e molto breve: una o due frasi, massimo 45 parole complessive, nella lingua dell'interlocutore.",
-      "Ogni elemento sentences contiene esattamente una frase completa, il mood di quella singola frase e level da 1 (appena percettibile) a 5 (molto marcato).",
+      "Ogni elemento sentences contiene esattamente una frase completa, il mood di quella singola frase, level da 1 (appena percettibile) a 5 (molto marcato) e language (it-IT oppure en-US).",
+      "Mantieni ogni frase in una sola lingua. Se devi usare davvero l'inglese, preferisci una frase inglese completa separata: la sintesi userà una voce madrelingua diversa per quella frase.",
       "Scegli level 2 o 3 normalmente; usa 4 solo quando il contenuto lo giustifica e 5 soltanto in casi eccezionali. Per neutral usa level 1 o 2. Evita un'espressione costantemente intensa.",
       `Restituisci solo il JSON richiesto dallo schema. Per silence usa sentences vuoto. I mood ammessi sono: ${avatarMoods.join(", ")}.`,
     ].join(" ");

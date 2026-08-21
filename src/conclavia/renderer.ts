@@ -4,7 +4,11 @@ import type {
   AvatarSpeechCue,
   AvatarSpeechSentence,
 } from "../domain/protocol.js";
-import type { VoiceStyle } from "../config/avatar-config.js";
+import type {
+  EnglishVoiceId,
+  ItalianVoiceId,
+  VoiceStyle,
+} from "../config/avatar-config.js";
 
 type UnrealMood =
   | "neutral"
@@ -25,7 +29,20 @@ interface UnrealPerformanceBeat {
   mood: UnrealMood;
   intensity: number;
   focus: "camera" | "target" | "thought";
-  gesture: "none" | "nod" | "tilt" | "emphasis" | "settle";
+  gesture:
+    | "none"
+    | "nod"
+    | "tilt"
+    | "emphasis"
+    | "settle"
+    | "raise-hand"
+    | "lower-hand";
+}
+
+export interface ConclaviaVoiceConfig {
+  voiceStyle: VoiceStyle;
+  italianVoice: ItalianVoiceId;
+  englishVoice: EnglishVoiceId;
 }
 
 export interface ConclaviaRendererStatus {
@@ -125,9 +142,13 @@ function moodDirection(mood: UnrealMood): Pick<UnrealPerformanceBeat, "focus" | 
 export function performanceBeatsForCue(
   cue: AvatarSpeechCue,
   durationMs: number,
+  sentenceDurationsMs?: readonly number[],
 ): UnrealPerformanceBeat[] {
   const safeDurationMs = Math.max(2_000, Math.min(60_000, durationMs));
-  const weights = cue.sentences.map(sentenceWeight);
+  const weights = sentenceDurationsMs?.length === cue.sentences.length
+    && sentenceDurationsMs.every((value) => Number.isFinite(value) && value > 0)
+    ? [...sentenceDurationsMs]
+    : cue.sentences.map(sentenceWeight);
   const totalWeight = weights.reduce((total, weight) => total + weight, 0);
   const moods = cue.sentences.map((sentence) => moodMap[sentence.mood]);
   const levels = cue.sentences.map((sentence) => sentence.level);
@@ -249,12 +270,12 @@ export class ConclaviaRenderer {
     }
   }
 
-  async start(): Promise<ConclaviaRendererSession> {
+  async start(avatarProfile = "aera"): Promise<ConclaviaRendererSession> {
     const baseUrl = this.#requireBaseUrl();
     const response = await fetch(`${baseUrl}/api/unreal/session`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ profile: "lipsync" }),
+      body: JSON.stringify({ profile: "lipsync", avatarId: avatarProfile }),
       signal: this.#signal(185_000),
     });
     const payload = (await response.json().catch(() => ({}))) as JsonError & {
@@ -283,8 +304,9 @@ export class ConclaviaRenderer {
       speakerId: "participant-1",
       targetId: "meeting-participant",
       speakerName: request.speakerName,
-      shot: "close-up",
+      shot: "wide",
       intent: "request-to-speak",
+      bodyGesture: "raise-hand",
       expectedDurationMs: 8_000,
       performanceBeats: [
         {
@@ -292,14 +314,7 @@ export class ConclaviaRenderer {
           mood: "confidence",
           intensity: 0.82,
           focus: "camera",
-          gesture: "emphasis",
-        },
-        {
-          atMs: 1_600,
-          mood: "confidence",
-          intensity: 0.62,
-          focus: "camera",
-          gesture: "settle",
+          gesture: "raise-hand",
         },
       ],
     });
@@ -312,37 +327,69 @@ export class ConclaviaRenderer {
       speakerName,
       shot: "close-up",
       intent: "listen",
+      bodyGesture: "lower-hand",
       expectedDurationMs: 2_000,
       performanceBeats: [{
         atMs: 0,
         mood: "neutral",
         intensity: 0,
         focus: "target",
-        gesture: "settle",
+        gesture: "lower-hand",
       }],
     });
   }
 
-  async deliver(cue: AvatarSpeechCue, voiceStyle: VoiceStyle = "lively"): Promise<ConclaviaDelivery> {
+  async deliver(
+    cue: AvatarSpeechCue,
+    voice: ConclaviaVoiceConfig = {
+      voiceStyle: "lively",
+      italianVoice: "Bianca",
+      englishVoice: "Danielle",
+    },
+  ): Promise<ConclaviaDelivery> {
     const baseUrl = this.#requireBaseUrl();
     const text = speechTextForCue(cue);
     if (!text) throw new Error("La risposta di Mary è vuota");
 
-    const speechResponse = await fetch(`${baseUrl}/api/unreal/speech`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        text,
-        voice: "Bianca",
-        direction: voiceDirections[voiceStyle],
-      }),
-      signal: this.#signal(30_000),
-    });
-    if (!speechResponse.ok) {
-      const payload = (await speechResponse.json().catch(() => ({}))) as JsonError;
-      throw new Error(payload.error || `Sintesi voce HTTP ${speechResponse.status}`);
+    const sentencePcm = await Promise.all(cue.sentences.map(async (sentence) => {
+      const speechResponse = await fetch(`${baseUrl}/api/unreal/speech`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          text: sentence.text,
+          voice: sentence.language === "en-US"
+            ? voice.englishVoice
+            : voice.italianVoice,
+          languageCode: sentence.language,
+          direction: voiceDirections[voice.voiceStyle],
+        }),
+        signal: this.#signal(30_000),
+      });
+      if (!speechResponse.ok) {
+        const payload = (await speechResponse.json().catch(() => ({}))) as JsonError;
+        throw new Error(payload.error || `Sintesi voce HTTP ${speechResponse.status}`);
+      }
+      return new Uint8Array(await speechResponse.arrayBuffer());
+    }));
+    const pauseBytes = 80 * 16_000 * 2 / 1_000;
+    const totalBytes = sentencePcm.reduce(
+      (total, sentence) => total + sentence.byteLength,
+      Math.max(0, sentencePcm.length - 1) * pauseBytes,
+    );
+    const pcmBytes = new Uint8Array(totalBytes);
+    const sentenceDurationsMs: number[] = [];
+    let cursor = 0;
+    for (const [index, sentence] of sentencePcm.entries()) {
+      pcmBytes.set(sentence, cursor);
+      cursor += sentence.byteLength;
+      const hasPause = index < sentencePcm.length - 1;
+      if (hasPause) cursor += pauseBytes;
+      sentenceDurationsMs.push(
+        Math.round((sentence.byteLength / 2 / 16_000) * 1_000)
+          + (hasPause ? 80 : 0),
+      );
     }
-    const pcm = await speechResponse.arrayBuffer();
+    const pcm = pcmBytes.buffer;
     const expectedDurationMs = Math.max(
       2_000,
       Math.round((pcm.byteLength / 2 / 16_000) * 1_000),
@@ -355,8 +402,13 @@ export class ConclaviaRenderer {
       targetName: cue.addressedTo,
       shot: "close-up",
       intent: "answer",
+      bodyGesture: "lower-hand",
       expectedDurationMs,
-      performanceBeats: performanceBeatsForCue(cue, expectedDurationMs),
+      performanceBeats: performanceBeatsForCue(
+        cue,
+        expectedDurationMs,
+        sentenceDurationsMs,
+      ),
     });
 
     const playbackResponse = await fetch(`${baseUrl}/api/unreal/audio/speech`, {

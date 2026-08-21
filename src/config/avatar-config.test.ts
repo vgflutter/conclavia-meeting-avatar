@@ -7,7 +7,7 @@ import test from "node:test";
 import { AvatarConfigStore, type AvatarConfig } from "./avatar-config.js";
 
 const defaults: AvatarConfig = {
-  avatarProfile: "mary-metahuman",
+  avatarProfile: "aera",
   name: "Mary",
   apiKey: "environment-key",
   responseModel: "gpt-5.4-mini",
@@ -17,6 +17,11 @@ const defaults: AvatarConfig = {
   webSearchEnabled: true,
   requestToSpeakEnabled: true,
   voiceStyle: "natural",
+  italianVoice: "Bianca",
+  englishVoice: "Danielle",
+  meetingPlatform: "teams",
+  meetingAudioDevice: "BlackHole 16ch",
+  meetingSpeakerName: "Partecipante meeting",
 };
 
 await test("never exposes the API key in public configuration", () => {

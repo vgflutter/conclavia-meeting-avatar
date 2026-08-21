@@ -2,8 +2,30 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSy
 import { dirname } from "node:path";
 
 export const avatarProfiles = [
-  { id: "mary-metahuman", label: "Mary · Conclavia MetaHuman" },
+  { id: "aera", label: "Aera · MetaHuman" },
+  { id: "ada", label: "Ada · MetaHuman" },
 ] as const;
+
+export const italianVoices = [
+  { id: "Bianca", label: "Bianca · Italiano · donna" },
+  { id: "Beatrice", label: "Beatrice · Italiano · donna" },
+  { id: "Lorenzo", label: "Lorenzo · Italiano · uomo" },
+] as const;
+
+export const englishVoices = [
+  { id: "Danielle", label: "Danielle · English US · woman" },
+  { id: "Joanna", label: "Joanna · English US · woman" },
+  { id: "Ruth", label: "Ruth · English US · woman" },
+  { id: "Salli", label: "Salli · English US · woman" },
+  { id: "Tiffany", label: "Tiffany · English US · woman" },
+  { id: "Matthew", label: "Matthew · English US · man" },
+  { id: "Stephen", label: "Stephen · English US · man" },
+] as const;
+
+export const meetingPlatforms = ["teams", "google-meet", "generic"] as const;
+export type MeetingPlatform = (typeof meetingPlatforms)[number];
+export type ItalianVoiceId = (typeof italianVoices)[number]["id"];
+export type EnglishVoiceId = (typeof englishVoices)[number]["id"];
 
 export const voiceStyles = ["natural", "lively", "authoritative"] as const;
 export type VoiceStyle = (typeof voiceStyles)[number];
@@ -19,6 +41,11 @@ export interface AvatarConfig {
   webSearchEnabled: boolean;
   requestToSpeakEnabled: boolean;
   voiceStyle: VoiceStyle;
+  italianVoice: ItalianVoiceId;
+  englishVoice: EnglishVoiceId;
+  meetingPlatform: MeetingPlatform;
+  meetingAudioDevice: string;
+  meetingSpeakerName: string;
 }
 
 export interface PublicAvatarConfig extends Omit<AvatarConfig, "apiKey"> {
@@ -37,6 +64,11 @@ export interface AvatarConfigInput {
   webSearchEnabled?: unknown;
   requestToSpeakEnabled?: unknown;
   voiceStyle?: unknown;
+  italianVoice?: unknown;
+  englishVoice?: unknown;
+  meetingPlatform?: unknown;
+  meetingAudioDevice?: unknown;
+  meetingSpeakerName?: unknown;
 }
 
 interface StoredAvatarConfig extends Omit<AvatarConfig, "apiKey"> {
@@ -73,7 +105,9 @@ function parseStored(value: unknown, fallback: AvatarConfig): AvatarConfig | nul
   const record = value as Record<string, unknown>;
   try {
     return {
-      avatarProfile: optionalUpdate(record.avatarProfile, fallback.avatarProfile, "Profilo avatar", 80),
+      avatarProfile: record.avatarProfile === "mary-metahuman"
+        ? "aera"
+        : optionalUpdate(record.avatarProfile, fallback.avatarProfile, "Profilo avatar", 80),
       name: optionalUpdate(record.name, fallback.name, "Nome avatar", 40),
       apiKey: typeof record.apiKey === "string" && record.apiKey.trim()
         ? record.apiKey.trim()
@@ -91,6 +125,27 @@ function parseStored(value: unknown, fallback: AvatarConfig): AvatarConfig | nul
       voiceStyle: voiceStyles.includes(record.voiceStyle as VoiceStyle)
         ? record.voiceStyle as VoiceStyle
         : fallback.voiceStyle,
+      italianVoice: italianVoices.some((voice) => voice.id === record.italianVoice)
+        ? record.italianVoice as ItalianVoiceId
+        : fallback.italianVoice,
+      englishVoice: englishVoices.some((voice) => voice.id === record.englishVoice)
+        ? record.englishVoice as EnglishVoiceId
+        : fallback.englishVoice,
+      meetingPlatform: meetingPlatforms.includes(record.meetingPlatform as MeetingPlatform)
+        ? record.meetingPlatform as MeetingPlatform
+        : fallback.meetingPlatform,
+      meetingAudioDevice: optionalUpdate(
+        record.meetingAudioDevice,
+        fallback.meetingAudioDevice,
+        "Dispositivo audio riunione",
+        160,
+      ),
+      meetingSpeakerName: optionalUpdate(
+        record.meetingSpeakerName,
+        fallback.meetingSpeakerName,
+        "Nome partecipante riunione",
+        80,
+      ),
     };
   } catch {
     return null;
@@ -166,6 +221,24 @@ export class AvatarConfigStore {
     if (!voiceStyles.includes(voiceStyle as VoiceStyle)) {
       throw new Error("Stile voce non supportato");
     }
+    const italianVoice = input.italianVoice === undefined
+      ? current.italianVoice
+      : input.italianVoice;
+    if (!italianVoices.some((voice) => voice.id === italianVoice)) {
+      throw new Error("Voce italiana non supportata");
+    }
+    const englishVoice = input.englishVoice === undefined
+      ? current.englishVoice
+      : input.englishVoice;
+    if (!englishVoices.some((voice) => voice.id === englishVoice)) {
+      throw new Error("Voce inglese non supportata");
+    }
+    const meetingPlatform = input.meetingPlatform === undefined
+      ? current.meetingPlatform
+      : input.meetingPlatform;
+    if (!meetingPlatforms.includes(meetingPlatform as MeetingPlatform)) {
+      throw new Error("Piattaforma meeting non supportata");
+    }
 
     this.#config = {
       avatarProfile: requestedProfile,
@@ -182,6 +255,21 @@ export class AvatarConfigStore {
         "Richiesta di parola",
       ),
       voiceStyle: voiceStyle as VoiceStyle,
+      italianVoice: italianVoice as ItalianVoiceId,
+      englishVoice: englishVoice as EnglishVoiceId,
+      meetingPlatform: meetingPlatform as MeetingPlatform,
+      meetingAudioDevice: optionalUpdate(
+        input.meetingAudioDevice,
+        current.meetingAudioDevice,
+        "Dispositivo audio riunione",
+        160,
+      ),
+      meetingSpeakerName: optionalUpdate(
+        input.meetingSpeakerName,
+        current.meetingSpeakerName,
+        "Nome partecipante riunione",
+        80,
+      ),
     };
     this.#persist();
     return this.current;
