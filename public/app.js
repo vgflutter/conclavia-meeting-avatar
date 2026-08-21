@@ -103,6 +103,7 @@ let activeAvatarProfile = null;
 let rendererActionInProgress = false;
 let rendererActionProfile = null;
 let rendererWasAvailable = false;
+let rendererStatusRefreshInFlight = false;
 const meetingId = `conclavia-gui-${crypto.randomUUID()}`;
 
 function escapeHtml(value) {
@@ -774,11 +775,12 @@ function mountRendererPlayer(playerUrl, force = false) {
 
 function renderRendererStatus(status) {
   const reachable = status.serverStatus !== "unreachable";
-  const starting = rendererActionInProgress && !status.available;
+  const starting = rendererActionInProgress || status.starting === true;
   elements.rendererStartButton.disabled = rendererActionInProgress || !status.configured || !reachable || status.armed;
-  elements.rendererStopButton.disabled = rendererActionInProgress || !status.armed;
-  elements.meetingAvatarSwitchButton.disabled = rendererActionInProgress;
-  elements.rendererStartButton.innerHTML = rendererActionInProgress
+  elements.rendererStopButton.disabled = rendererActionInProgress || (!status.armed && !starting);
+  elements.meetingAvatarSwitchButton.disabled = starting;
+  elements.rendererStartButton.disabled = starting || elements.rendererStartButton.disabled;
+  elements.rendererStartButton.innerHTML = starting
     ? '<span class="control-icon">◌</span><span>Avvio…</span>'
     : status.armed
     ? '<span class="control-icon">✓</span><span>Avatar attivo</span>'
@@ -786,11 +788,14 @@ function renderRendererStatus(status) {
   elements.rendererPill.className = `status-pill ${status.armed && status.available ? "ready" : status.configured ? "" : "warning"}`;
   elements.stageLiveState.className = `stage-badge ${status.armed && status.available ? "ready" : ""}`;
   elements.stageLiveState.textContent = starting ? "AVVIO…" : status.armed && status.available ? "LIVE" : "OFFLINE";
-  if (status.avatarProfile) {
-    activeAvatarProfile = status.avatarProfile;
-    const label = status.avatarProfile.charAt(0).toUpperCase() + status.avatarProfile.slice(1);
+  const displayedProfile = starting
+    ? status.targetAvatarProfile || rendererActionProfile || currentConfig?.avatarProfile
+    : status.avatarProfile;
+  if (displayedProfile) {
+    activeAvatarProfile = displayedProfile;
+    const label = displayedProfile.charAt(0).toUpperCase() + displayedProfile.slice(1);
     elements.activeAvatarLabel.textContent = `${label} · ${avatarName}`;
-    elements.meetingAvatarSelect.value = status.avatarProfile;
+    elements.meetingAvatarSelect.value = displayedProfile;
     elements.stageSpeakerDetail.textContent = `MetaHuman ${label}`;
   } else if (!activeAvatarProfile) {
     elements.activeAvatarLabel.textContent = `${currentConfig?.avatarProfile ?? "Avatar"} · configurato`;
@@ -798,9 +803,15 @@ function renderRendererStatus(status) {
 
   if (starting) {
     elements.rendererPill.textContent = "Avatar: avvio";
-    elements.rendererStatus.textContent = "Accensione di Unreal e Pixel Streaming in corso. Attendi: il primo avvio può richiedere 1–2 minuti.";
+    elements.rendererStatus.textContent = "Cambio già in corso: Unreal e Pixel Streaming verranno collegati automaticamente, senza un secondo avvio.";
     elements.avatarSwitchStatus.className = "switching";
-    elements.avatarSwitchStatus.textContent = `Sto caricando ${rendererActionProfile || currentConfig?.avatarProfile || "il MetaHuman"}; la pagina si collegherà automaticamente.`;
+    elements.avatarSwitchStatus.textContent = `Sto caricando ${status.targetAvatarProfile || rendererActionProfile || currentConfig?.avatarProfile || "il MetaHuman"}; non premere altro, passerà automaticamente a LIVE.`;
+  } else if (status.lastError && !status.available) {
+    elements.rendererPill.className = "status-pill warning";
+    elements.rendererPill.textContent = "Avatar: avvio incompleto";
+    elements.rendererStatus.textContent = status.lastError;
+    elements.avatarSwitchStatus.className = "";
+    elements.avatarSwitchStatus.textContent = "Il renderer resta monitorato; puoi riprovare senza dover riselezionare l’avatar.";
   } else if (!status.configured) {
     elements.rendererPill.textContent = "Avatar: non configurato";
     elements.rendererStatus.textContent = "Bridge Conclavia non configurato.";
@@ -835,7 +846,7 @@ function renderRendererStatus(status) {
     elements.avatarSwitchStatus.className = "";
     elements.avatarSwitchStatus.textContent = "Avvia il renderer per caricare il MetaHuman selezionato.";
   }
-  if (status.available && status.playerUrl) {
+  if (!starting && status.available && status.playerUrl) {
     mountRendererPlayer(status.playerUrl, !rendererWasAvailable);
     rendererWasAvailable = true;
   } else {
@@ -843,7 +854,7 @@ function renderRendererStatus(status) {
     elements.rendererOutputLink.hidden = true;
     renderRendererPlaceholder(
       starting
-        ? "Sto avviando Unreal Engine e preparando il collegamento video…"
+        ? "Cambio avatar in corso: un solo avvio, collegamento automatico appena Unreal è pronto…"
         : "Il renderer video è fermo. Premi “Avvia avatar” per collegarlo.",
       { loading: starting },
     );
@@ -851,6 +862,8 @@ function renderRendererStatus(status) {
 }
 
 async function refreshRendererStatus() {
+  if (rendererStatusRefreshInFlight) return;
+  rendererStatusRefreshInFlight = true;
   try {
     renderRendererStatus(await requestJson("/api/renderer/status"));
   } catch (error) {
@@ -859,6 +872,8 @@ async function refreshRendererStatus() {
     elements.rendererPill.className = "status-pill warning";
     elements.rendererPill.textContent = "Avatar: offline";
     elements.rendererStatus.textContent = `Controllo fallito: ${error.message}`;
+  } finally {
+    rendererStatusRefreshInFlight = false;
   }
 }
 
@@ -878,11 +893,27 @@ elements.rendererStartButton.addEventListener("click", async () => {
   try {
     const result = await requestJson("/api/renderer/start", { method: "POST" });
     rendererActionInProgress = false;
-    renderRendererStatus({ configured: true, available: true, armed: true, serverStatus: result.serverStatus, playerUrl: result.playerUrl, avatarProfile: currentConfig?.avatarProfile });
-    elements.avatarSwitchStatus.className = "ready";
-    elements.avatarSwitchStatus.textContent = `${avatarName} è attiva e pronta a parlare.`;
-    setDecision(`${avatarName} è attiva: il prossimo intervento verrà riprodotto dal MetaHuman.`, "responding");
-    renderDebug(result, "AVATAR ATTIVATO");
+    renderRendererStatus({
+      configured: true,
+      available: result.available === true,
+      armed: result.armed === true,
+      starting: result.starting === true,
+      targetAvatarProfile: result.avatarProfile || currentConfig?.avatarProfile,
+      serverStatus: result.serverStatus,
+      playerUrl: result.playerUrl,
+    });
+    elements.avatarSwitchStatus.className = result.starting ? "switching" : "ready";
+    elements.avatarSwitchStatus.textContent = result.starting
+      ? "Avvio affidato al renderer: la pagina passerà automaticamente a LIVE."
+      : `${avatarName} è attiva e pronta a parlare.`;
+    setDecision(
+      result.starting
+        ? `${avatarName} si sta collegando; non serve premere di nuovo Avvia avatar.`
+        : `${avatarName} è attiva: il prossimo intervento verrà riprodotto dal MetaHuman.`,
+      result.starting ? "listening" : "responding",
+    );
+    renderDebug(result, result.starting ? "AVATAR IN AVVIO" : "AVATAR ATTIVATO");
+    if (result.starting) window.setTimeout(refreshRendererStatus, 1_000);
   } catch (error) {
     rendererActionInProgress = false;
     elements.rendererStatus.textContent = `Avvio fallito: ${error.message}`;
@@ -920,17 +951,25 @@ elements.meetingAvatarSwitchButton.addEventListener("click", async () => {
     rendererActionInProgress = false;
     renderRendererStatus({
       configured: true,
-      available: true,
-      armed: true,
+      available: result.available === true,
+      armed: result.armed === true,
+      starting: result.starting === true,
       serverStatus: result.serverStatus,
       playerUrl: result.playerUrl,
-      avatarProfile,
+      targetAvatarProfile: avatarProfile,
     });
-    mountRendererPlayer(result.playerUrl, true);
-    elements.avatarSwitchStatus.className = "ready";
-    elements.avatarSwitchStatus.textContent = `${avatarProfile} è ora il MetaHuman attivo.`;
-    setDecision(`${avatarName} ora usa il MetaHuman ${avatarProfile}.`, "responding");
-    renderDebug(result, "CAMBIO AVATAR");
+    elements.avatarSwitchStatus.className = result.starting ? "switching" : "ready";
+    elements.avatarSwitchStatus.textContent = result.starting
+      ? `${avatarProfile} è in caricamento; diventerà attivo automaticamente.`
+      : `${avatarProfile} è ora il MetaHuman attivo.`;
+    setDecision(
+      result.starting
+        ? `Cambio verso ${avatarProfile} avviato; non serve premere Avvia avatar.`
+        : `${avatarName} ora usa il MetaHuman ${avatarProfile}.`,
+      result.starting ? "listening" : "responding",
+    );
+    renderDebug(result, result.starting ? "CAMBIO AVATAR IN CORSO" : "CAMBIO AVATAR");
+    if (result.starting) window.setTimeout(refreshRendererStatus, 1_000);
   } catch (error) {
     rendererActionInProgress = false;
     elements.avatarSwitchStatus.className = "";
@@ -940,7 +979,6 @@ elements.meetingAvatarSwitchButton.addEventListener("click", async () => {
   } finally {
     rendererActionInProgress = false;
     rendererActionProfile = null;
-    elements.meetingAvatarSwitchButton.disabled = false;
   }
 });
 
@@ -1130,4 +1168,4 @@ updateMeetingClock();
 window.setInterval(updateMeetingClock, 1_000);
 window.setInterval(refreshListenerStatus, 900);
 window.setInterval(refreshContext, 1_500);
-window.setInterval(refreshRendererStatus, 8_000);
+window.setInterval(refreshRendererStatus, 4_000);

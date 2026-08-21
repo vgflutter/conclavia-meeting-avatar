@@ -245,10 +245,89 @@ export function startServer(options: ServerOptions): Promise<void> {
   let intelligence = createIntelligence(runtimeConfig);
   const renderer = new ConclaviaRenderer(options.rendererUrl);
   let rendererArmed = false;
+  let rendererStarting = false;
+  let rendererDesiredProfile: string | null = null;
+  let rendererTargetProfile: string | null = null;
+  let rendererStartBeganAt = 0;
+  let rendererStartError: string | null = null;
+  let rendererStartGeneration = 0;
   let rendererPlayerUrl: string | undefined;
   let dialogueActiveUntil = 0;
   let pendingRequest: AvatarInterventionRequest | null = null;
   let avatarHandRaised = false;
+
+  const markRendererReady = (playerUrl?: string): void => {
+    const shouldRestoreRaisedHand = !rendererArmed && avatarHandRaised;
+    if (playerUrl) rendererPlayerUrl = playerUrl;
+    rendererArmed = true;
+    rendererStarting = false;
+    rendererTargetProfile = null;
+    rendererStartError = null;
+    if (shouldRestoreRaisedHand) {
+      void renderer.raiseHand(runtimeConfig.name).catch((error: unknown) => {
+        console.error("Conclavia pending raise-hand cue failed:", error);
+      });
+    }
+  };
+
+  const beginRendererStart = (avatarProfile: string): boolean => {
+    if (rendererStarting && rendererTargetProfile === avatarProfile) return false;
+
+    const generation = ++rendererStartGeneration;
+    renderer.abortPending();
+    rendererArmed = false;
+    rendererStarting = true;
+    rendererDesiredProfile = avatarProfile;
+    rendererTargetProfile = avatarProfile;
+    rendererStartBeganAt = Date.now();
+    rendererStartError = null;
+
+    void renderer.start(avatarProfile).then((session) => {
+      if (generation !== rendererStartGeneration) return;
+      markRendererReady(session.playerUrl);
+    }).catch((error: unknown) => {
+      if (generation !== rendererStartGeneration || rendererArmed) return;
+      rendererStartError = error instanceof Error
+        ? error.message
+        : "Avvio MetaHuman non riuscito.";
+      // A cold Unreal boot can cross the HTTP timeout while continuing on the
+      // GPU host. Keep reconciling status instead of making the user start it
+      // a second time. Fast failures are final and immediately retryable.
+      if (Date.now() - rendererStartBeganAt < 90_000) {
+        rendererStarting = false;
+        rendererTargetProfile = null;
+      }
+      console.error("Conclavia MetaHuman background start failed:", error);
+    });
+    return true;
+  };
+
+  const reconcileRendererStatus = (
+    status: Awaited<ReturnType<ConclaviaRenderer["status"]>>,
+  ): void => {
+    if (
+      rendererDesiredProfile &&
+      status.available &&
+      status.avatarProfile === rendererDesiredProfile
+    ) {
+      markRendererReady(status.playerUrl);
+      return;
+    }
+    if (
+      rendererStarting &&
+      rendererStartError &&
+      Date.now() - rendererStartBeganAt >= 270_000
+    ) {
+      rendererStarting = false;
+      rendererTargetProfile = null;
+    }
+    if (
+      !rendererStarting &&
+      (status.serverStatus === "stopping" || status.serverStatus === "stopped")
+    ) {
+      rendererArmed = false;
+    }
+  };
 
   const isDialogueActive = () => Date.now() < dialogueActiveUntil;
 
@@ -603,6 +682,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           listener: listener?.status ?? null,
           rendererConfigured: renderer.configured,
           rendererArmed,
+          rendererStarting,
           time: new Date().toISOString(),
         });
         return;
@@ -656,19 +736,12 @@ export function startServer(options: ServerOptions): Promise<void> {
           }
         }
         let rendererRestarted = false;
-        let rendererWarning: string | null = null;
-        if (rendererArmed && previousAvatarProfile !== runtimeConfig.avatarProfile) {
-          rendererArmed = false;
-          try {
-            const session = await renderer.start(runtimeConfig.avatarProfile);
-            rendererPlayerUrl = session.playerUrl;
-            rendererArmed = true;
-            rendererRestarted = true;
-          } catch (error: unknown) {
-            rendererWarning = error instanceof Error
-              ? error.message
-              : "Cambio del MetaHuman non riuscito.";
-          }
+        const rendererWarning: string | null = null;
+        if (
+          (rendererArmed || rendererStarting) &&
+          previousAvatarProfile !== runtimeConfig.avatarProfile
+        ) {
+          rendererRestarted = beginRendererStart(runtimeConfig.avatarProfile);
         }
         sendJson(response, 200, {
           ok: true,
@@ -814,12 +887,13 @@ export function startServer(options: ServerOptions): Promise<void> {
       if (request.method === "GET" && url.pathname === "/api/renderer/status") {
         const status = await renderer.status();
         if (status.playerUrl) rendererPlayerUrl = status.playerUrl;
-        if (status.serverStatus === "stopping" || status.serverStatus === "stopped") {
-          rendererArmed = false;
-        }
+        reconcileRendererStatus(status);
         sendJson(response, 200, {
           ...status,
           armed: rendererArmed,
+          starting: rendererStarting,
+          targetAvatarProfile: rendererTargetProfile ?? rendererDesiredProfile,
+          lastError: rendererStartError,
           playerUrl: rendererPlayerUrl ?? status.playerUrl ?? null,
         });
         return;
@@ -838,56 +912,50 @@ export function startServer(options: ServerOptions): Promise<void> {
         runtimeConfig = configStore.update({ avatarProfile });
         pendingRequest = null;
         avatarHandRaised = false;
-        rendererArmed = false;
-        try {
-          const session = await renderer.start(avatarProfile);
-          rendererPlayerUrl = session.playerUrl;
-          rendererArmed = true;
-          sendJson(response, 200, {
-            ok: true,
-            avatarProfile,
-            armed: true,
-            playerUrl: rendererPlayerUrl,
-            serverStatus: session.serverStatus,
-            config: configStore.publicConfig,
-          });
-        } catch (error: unknown) {
-          console.error("Conclavia MetaHuman switch failed:", error);
-          sendJson(response, 502, {
-            error: error instanceof Error ? error.message : "Cambio MetaHuman non riuscito.",
-            avatarProfile,
-          });
+        if (!renderer.configured) {
+          sendJson(response, 503, { error: "CONCLAVIA_RENDERER_URL non configurato" });
+          return;
         }
+        beginRendererStart(avatarProfile);
+        sendJson(response, 202, {
+          ok: true,
+          avatarProfile,
+          armed: false,
+          starting: true,
+          playerUrl: rendererPlayerUrl ?? null,
+          serverStatus: "starting",
+          config: configStore.publicConfig,
+        });
         return;
       }
 
       if (request.method === "POST" && url.pathname === "/api/renderer/start") {
-        try {
-          const session = await renderer.start(runtimeConfig.avatarProfile);
-          rendererArmed = true;
-          rendererPlayerUrl = session.playerUrl;
-          sendJson(response, 200, {
-            ok: true,
-            armed: rendererArmed,
-            playerUrl: rendererPlayerUrl,
-            serverStatus: session.serverStatus,
-          });
-        } catch (error: unknown) {
-          console.error("Conclavia MetaHuman start failed:", error);
-          sendJson(response, 502, {
-            error:
-              error instanceof Error
-                ? error.message
-                : "Avvio MetaHuman non riuscito",
-          });
+        if (!renderer.configured) {
+          sendJson(response, 503, { error: "CONCLAVIA_RENDERER_URL non configurato" });
+          return;
         }
+        beginRendererStart(runtimeConfig.avatarProfile);
+        sendJson(response, 202, {
+          ok: true,
+          armed: false,
+          starting: true,
+          avatarProfile: runtimeConfig.avatarProfile,
+          playerUrl: rendererPlayerUrl ?? null,
+          serverStatus: "starting",
+        });
         return;
       }
 
       if (request.method === "DELETE" && url.pathname === "/api/renderer/session") {
+        rendererStartGeneration += 1;
+        rendererStarting = false;
+        rendererDesiredProfile = null;
+        rendererTargetProfile = null;
+        rendererStartError = null;
+        rendererArmed = false;
+        renderer.abortPending();
         try {
           await renderer.stop();
-          rendererArmed = false;
           rendererPlayerUrl = undefined;
           sendJson(response, 200, { ok: true, armed: false });
         } catch (error: unknown) {
