@@ -1,8 +1,10 @@
 import type {
+  AvatarInterventionRequest,
   AvatarMood,
   AvatarSpeechCue,
   AvatarSpeechSentence,
 } from "../domain/protocol.js";
+import type { VoiceStyle } from "../config/avatar-config.js";
 
 type UnrealMood =
   | "neutral"
@@ -45,6 +47,12 @@ export interface ConclaviaDelivery {
   sentenceCount: number;
 }
 
+const voiceDirections: Readonly<Record<VoiceStyle, string>> = {
+  natural: "naturale, presente",
+  lively: "vivace, rapida, reattiva e naturale",
+  authoritative: "autorevole, chiara e misurata",
+};
+
 interface JsonError {
   error?: string;
 }
@@ -79,11 +87,19 @@ function sentenceWeight(sentence: AvatarSpeechSentence): number {
   return Math.max(1, sentence.text.trim().split(/\s+/u).length);
 }
 
-function moodIntensity(mood: UnrealMood, sentenceIndex: number): number {
+function moodIntensity(
+  mood: UnrealMood,
+  level: AvatarSpeechSentence["level"],
+  sentenceIndex: number,
+): number {
   if (mood === "neutral") return 0;
-  if (mood === "boredom" || mood === "sadness") return 0.88;
-  if (mood === "fear" || mood === "confusion") return 0.92;
-  return sentenceIndex % 2 === 0 ? 1 : 0.96;
+  const base = [0, 0.28, 0.46, 0.66, 0.84, 1][level] ?? 0.66;
+  const moodScale = mood === "boredom" || mood === "sadness"
+    ? 0.88
+    : mood === "fear" || mood === "confusion"
+      ? 0.92
+      : sentenceIndex % 2 === 0 ? 1 : 0.96;
+  return Math.round(base * moodScale * 100) / 100;
 }
 
 function moodDirection(mood: UnrealMood): Pick<UnrealPerformanceBeat, "focus" | "gesture"> {
@@ -114,12 +130,13 @@ export function performanceBeatsForCue(
   const weights = cue.sentences.map(sentenceWeight);
   const totalWeight = weights.reduce((total, weight) => total + weight, 0);
   const moods = cue.sentences.map((sentence) => moodMap[sentence.mood]);
+  const levels = cue.sentences.map((sentence) => sentence.level);
   const firstMood = moods[0] ?? "neutral";
   const beats: UnrealPerformanceBeat[] = [
     {
       atMs: 0,
       mood: firstMood,
-      intensity: moodIntensity(firstMood, 0),
+      intensity: moodIntensity(firstMood, levels[0] ?? 3, 0),
       ...moodDirection(firstMood),
     },
   ];
@@ -164,7 +181,7 @@ export function performanceBeatsForCue(
       {
         atMs: riseAtMs,
         mood: nextMood,
-        intensity: moodIntensity(nextMood, index + 1),
+        intensity: moodIntensity(nextMood, levels[index + 1] ?? 3, index + 1),
         ...moodDirection(nextMood),
       },
     );
@@ -261,7 +278,52 @@ export class ConclaviaRenderer {
     }
   }
 
-  async deliver(cue: AvatarSpeechCue): Promise<ConclaviaDelivery> {
+  async requestToSpeak(request: AvatarInterventionRequest): Promise<void> {
+    await this.#postJson("/api/unreal/cue", {
+      speakerId: "participant-1",
+      targetId: "meeting-participant",
+      speakerName: request.speakerName,
+      shot: "close-up",
+      intent: "request-to-speak",
+      expectedDurationMs: 8_000,
+      performanceBeats: [
+        {
+          atMs: 0,
+          mood: "confidence",
+          intensity: 0.82,
+          focus: "camera",
+          gesture: "emphasis",
+        },
+        {
+          atMs: 1_600,
+          mood: "confidence",
+          intensity: 0.62,
+          focus: "camera",
+          gesture: "settle",
+        },
+      ],
+    });
+  }
+
+  async settleRequest(speakerName: string): Promise<void> {
+    await this.#postJson("/api/unreal/cue", {
+      speakerId: "participant-1",
+      targetId: "meeting-participant",
+      speakerName,
+      shot: "close-up",
+      intent: "listen",
+      expectedDurationMs: 2_000,
+      performanceBeats: [{
+        atMs: 0,
+        mood: "neutral",
+        intensity: 0,
+        focus: "target",
+        gesture: "settle",
+      }],
+    });
+  }
+
+  async deliver(cue: AvatarSpeechCue, voiceStyle: VoiceStyle = "lively"): Promise<ConclaviaDelivery> {
     const baseUrl = this.#requireBaseUrl();
     const text = speechTextForCue(cue);
     if (!text) throw new Error("La risposta di Mary è vuota");
@@ -272,7 +334,7 @@ export class ConclaviaRenderer {
       body: JSON.stringify({
         text,
         voice: "Bianca",
-        direction: "naturale, presente e autorevole",
+        direction: voiceDirections[voiceStyle],
       }),
       signal: this.#signal(30_000),
     });
@@ -289,7 +351,7 @@ export class ConclaviaRenderer {
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
-      speakerName: "Mary",
+      speakerName: cue.speakerName ?? "Mary",
       targetName: cue.addressedTo,
       shot: "close-up",
       intent: "answer",

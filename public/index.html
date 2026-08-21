@@ -13,7 +13,7 @@
         <div>
           <p class="eyebrow">CONCLAVIA LAB</p>
           <h1>Meeting Avatar</h1>
-          <p class="lede">Il banco di prova locale per portare un avatar Conclavia dentro Teams.</p>
+          <p class="lede">Configura e porta un partecipante virtuale Conclavia dentro Teams.</p>
         </div>
         <div class="runtime">
           <span class="phase">POC · FASE 1</span>
@@ -22,7 +22,78 @@
       </header>
 
       <section class="flow" aria-label="Flusso del sistema">
-        <span>Teams</span><b>→</b><span>Trascrizione continua</span><b>→</b><span>Memoria LLM</span><b>→</b><span>Gate “Mary”</span><b>→</b><span>MetaHuman</span><b>→</b><span>OBS</span>
+        <span>Teams</span><b>→</b><span>Trascrizione continua</span><b>→</b><span>Memoria LLM</span><b>→</b><span>Partecipazione</span><b>→</b><span>MetaHuman</span><b>→</b><span>OBS</span>
+      </section>
+
+      <section class="panel config-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">00 · IDENTITÀ</p>
+            <h2>Configura il partecipante virtuale</h2>
+          </div>
+          <span id="config-summary" class="config-summary">Caricamento…</span>
+        </div>
+        <p class="muted">Nome e personalità guidano la partecipazione; il nome diventa anche il trigger vocale. Le modifiche sono applicate senza riavviare il companion.</p>
+        <form id="avatar-config-form" class="config-form" autocomplete="off">
+          <div class="config-grid">
+            <label>
+              Avatar
+              <select id="avatar-profile" name="avatarProfile" required></select>
+            </label>
+            <label>
+              Nome e trigger
+              <input id="avatar-name" name="name" maxlength="40" required />
+            </label>
+            <label>
+              Modello LLM
+              <input id="response-model" name="responseModel" list="model-suggestions" maxlength="120" required />
+              <datalist id="model-suggestions">
+                <option value="gpt-5.4-mini"></option>
+                <option value="gpt-5.4"></option>
+                <option value="gpt-5-mini"></option>
+              </datalist>
+            </label>
+            <label>
+              Stile della voce
+              <select id="voice-style" name="voiceStyle">
+                <option value="lively">Vivace e reattiva</option>
+                <option value="natural">Naturale</option>
+                <option value="authoritative">Autorevole</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            OpenAI API key
+            <input id="openai-api-key" name="apiKey" type="password" maxlength="500" placeholder="Lascia vuoto per mantenere la chiave attuale" spellcheck="false" />
+            <span id="api-key-state" class="field-note">La chiave non viene mai restituita al browser.</span>
+          </label>
+          <label>
+            Scopo
+            <textarea id="avatar-purpose" name="purpose" rows="2" maxlength="1500" required></textarea>
+          </label>
+          <label>
+            Personalità
+            <textarea id="avatar-personality" name="personality" rows="2" maxlength="1500" required></textarea>
+          </label>
+          <label>
+            System prompt
+            <textarea id="avatar-system-prompt" name="systemPrompt" rows="4" maxlength="6000" required></textarea>
+          </label>
+          <div class="config-toggles">
+            <label class="toggle-row">
+              <input id="web-search-enabled" name="webSearchEnabled" type="checkbox" />
+              <span><strong>Ricerca web</strong><small>Cerca dati aggiornati quando una domanda diretta lo richiede.</small></span>
+            </label>
+            <label class="toggle-row">
+              <input id="request-to-speak-enabled" name="requestToSpeakEnabled" type="checkbox" />
+              <span><strong>Request to speak</strong><small>Può proporre un intervento, ma parla solo dopo l’autorizzazione.</small></span>
+            </label>
+          </div>
+          <div class="config-submit">
+            <button id="config-save-button" type="submit">Salva configurazione</button>
+            <p id="config-status" class="field-note" aria-live="polite">Nessuna modifica in attesa.</p>
+          </div>
+        </form>
       </section>
 
       <div class="grid">
@@ -44,7 +115,7 @@
           <div class="panel-heading">
             <div>
               <p class="eyebrow">02 · ASCOLTO</p>
-              <h2>Parla con Mary</h2>
+              <h2 id="avatar-chat-title">Parla con Mary</h2>
             </div>
           </div>
           <form id="simulation-form">
@@ -68,6 +139,17 @@
               <p id="listener-partial" class="listener-partial" aria-live="polite"></p>
               <p class="listener-note">La trascrizione streaming non assegna ancora i nomi dei singoli partecipanti: le battute arrivano come “Partecipante Teams”, ma il testo completo viene conservato.</p>
             </section>
+            <section id="participation-request" class="participation-request" aria-live="polite" hidden>
+              <div class="request-icon" aria-hidden="true">✋</div>
+              <div class="request-copy">
+                <strong id="participation-title">Mary chiede la parola</strong>
+                <p id="participation-reason"></p>
+              </div>
+              <div class="request-actions">
+                <button id="participation-grant" type="button">Dalle la parola</button>
+                <button id="participation-dismiss" class="secondary" type="button">Ignora</button>
+              </div>
+            </section>
             <section class="microphone-card" aria-labelledby="microphone-title">
               <div>
                 <h3 id="microphone-title">Microfono reale</h3>
@@ -86,7 +168,7 @@
               Frase intercettata
               <textarea name="text" rows="4" maxlength="2000" required>Mary, cosa ne pensi di questa idea?</textarea>
             </label>
-            <p class="muted form-note">Ogni frase finale entra nel contesto. Mary risponde soltanto quando viene chiamata.</p>
+            <p id="activation-note" class="muted form-note">Ogni frase finale entra nel contesto. Mary risponde quando viene chiamata o chiede prima la parola.</p>
             <button type="submit">Invia testo alla conversazione</button>
           </form>
           <p id="decision-status" class="decision-status" aria-live="polite">In attesa di una frase…</p>

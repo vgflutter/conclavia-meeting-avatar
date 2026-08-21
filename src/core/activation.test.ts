@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { decideActivation, isDialogueDismissal } from "./activation.js";
+import {
+  decideActivation,
+  isAutonomyCandidate,
+  isDialogueDismissal,
+  isFloorGrant,
+} from "./activation.js";
 import type { TranscriptSegment } from "../domain/protocol.js";
 
 function segment(overrides: Partial<TranscriptSegment> = {}): TranscriptSegment {
@@ -64,5 +69,18 @@ await test("keeps responding to natural follow-up turns while dialogue is active
 await test("recognizes explicit dialogue dismissal phrases", () => {
   assert.equal(isDialogueDismissal("Grazie Mary, basta così.", "Mary"), true);
   assert.equal(isDialogueDismissal("Mary, puoi smettere di rispondere.", "Mary"), true);
+  assert.equal(isDialogueDismissal("Thank you Mary.", "Mary"), true);
   assert.equal(isDialogueDismissal("Grazie per il contributo.", "Mary"), false);
+});
+
+await test("recognizes an explicit grant after a request to speak", () => {
+  assert.equal(isFloorGrant("Mary, vai pure.", "Mary"), true);
+  assert.equal(isFloorGrant("Prego Mary, intervieni.", "Mary"), true);
+  assert.equal(isFloorGrant("Mary, go ahead.", "Mary"), true);
+  assert.equal(isFloorGrant("Vai avanti Luca.", "Mary"), false);
+});
+
+await test("only sends substantial meeting turns to the autonomy evaluator", () => {
+  assert.equal(isAutonomyCandidate("Sì, ok."), false);
+  assert.equal(isAutonomyCandidate("Il dato trimestrale è cambiato rispetto alla previsione."), true);
 });

@@ -47,6 +47,7 @@ export function decideActivation(
       {
         text: `Ricevuto, ${segment.speakerName}. Il collegamento tra trascrizione e avatar funziona.`,
         mood: selectDiagnosticMood(segment.text),
+        level: 3,
       },
     ],
     addressedTo: segment.speakerName,
@@ -66,9 +67,27 @@ export function isDialogueDismissal(text: string, wakeWord: string): boolean {
   const escapedWakeWord = escapeRegExp(wakeWord);
   const wakeWordPattern = `\\b${escapedWakeWord}\\b`;
   const dismissalPattern =
-    "(?:grazie|basta(?:\\s+così)?|fermati|stop|smett(?:i|ere)(?:\\s+di\\s+(?:rispondere|intervenire))?|non\\s+(?:rispondere|intervenire)|torna\\s+in\\s+ascolto)";
+    "(?:grazie|thanks?|thank\\s+you|basta(?:\\s+così)?|fermati|stop|smett(?:i|ere)(?:\\s+di\\s+(?:rispondere|intervenire))?|non\\s+(?:rispondere|intervenire)|do\\s+not\\s+(?:answer|speak|intervene)|torna\\s+in\\s+ascolto)";
   return new RegExp(
     `(?:${wakeWordPattern}[\\s,.:;!?-]*(?:puoi\\s+)?${dismissalPattern}|${dismissalPattern}[\\s,.:;!?-]*${wakeWordPattern})`,
     "i",
   ).test(text);
+}
+
+export function isFloorGrant(text: string, wakeWord: string): boolean {
+  const escapedWakeWord = escapeRegExp(wakeWord);
+  const wakeWordPattern = `\\b${escapedWakeWord}\\b`;
+  const grantPattern =
+    "(?:vai|prego|parla|intervieni|dicci|puoi\\s+(?:parlare|intervenire)|sentiamo|go\\s+ahead|speak|tell\\s+us|you\\s+can\\s+(?:speak|intervene))";
+  return new RegExp(
+    `(?:${wakeWordPattern}[\\s,.:;!?-]*(?:ora\\s+)?${grantPattern}|${grantPattern}[\\s,.:;!?-]*(?:pure[\\s,.:;!?-]*)?${wakeWordPattern})`,
+    "i",
+  ).test(text);
+}
+
+export function isAutonomyCandidate(text: string): boolean {
+  const words = text.trim().split(/\s+/u).filter(Boolean);
+  if (words.length < 5 || text.trim().length < 24) return false;
+  return !/^(?:s[ìi]|no|ok(?:ay)?|ecco|allora|bene|capito|perfetto|grazie)[\s,.:;!?-]*$/iu
+    .test(text.trim());
 }

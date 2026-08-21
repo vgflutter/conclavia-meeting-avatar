@@ -5,9 +5,26 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { decideActivation, isDialogueDismissal } from "./core/activation.js";
+import {
+  decideActivation,
+  isAutonomyCandidate,
+  isDialogueDismissal,
+  isFloorGrant,
+} from "./core/activation.js";
 import { ConclaviaRenderer } from "./conclavia/renderer.js";
-import type { ActivationDecision, TranscriptSegment } from "./domain/protocol.js";
+import {
+  avatarProfiles,
+  AvatarConfigStore,
+  voiceStyles,
+  type AvatarConfig,
+  type AvatarConfigInput,
+} from "./config/avatar-config.js";
+import type {
+  ActivationDecision,
+  AvatarInterventionRequest,
+  AvatarSpeechCue,
+  TranscriptSegment,
+} from "./domain/protocol.js";
 import { MeetingIntelligence } from "./openai/meeting-intelligence.js";
 import { runMacosPreflight } from "./preflight/macos.js";
 import { MeetingListener } from "./teams/meeting-listener.js";
@@ -23,6 +40,7 @@ const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
 ] as const);
 const maxRetainedSegments = 200;
 const maxAudioBytes = 20 * 1024 * 1024;
+const interventionRequestTtlMs = 45_000;
 
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
   response.writeHead(statusCode, {
@@ -125,6 +143,7 @@ export interface ServerOptions {
   port: number;
   wakeWord: string;
   dialogueTimeoutMs: number;
+  configPath: string;
   openaiApiKey: string | undefined;
   responseModel: string;
   transcriptionModel: string;
@@ -136,20 +155,66 @@ export interface ServerOptions {
 
 export function startServer(options: ServerOptions): Promise<void> {
   const transcriptHistory: TranscriptSegment[] = [];
-  const openaiApiKey = options.openaiApiKey?.trim();
-  const intelligence = openaiApiKey
+  const configStore = new AvatarConfigStore(options.configPath, {
+    avatarProfile: "mary-metahuman",
+    name: options.wakeWord,
+    apiKey: options.openaiApiKey?.trim() ?? "",
+    responseModel: options.responseModel,
+    purpose:
+      "Aiutare il gruppo a prendere decisioni migliori con informazioni verificabili, sintesi e punti di vista utili.",
+    personality:
+      "Competente, curiosa, concreta e cordiale. Non monopolizza la conversazione e non finge di sapere ciò che non sa.",
+    systemPrompt:
+      "Agisci come una partecipante reale alla riunione. Distingui fatti, ipotesi e opinioni; sii concisa e orientata all'obiettivo.",
+    webSearchEnabled: true,
+    requestToSpeakEnabled: true,
+    voiceStyle: "lively",
+  });
+  let runtimeConfig = configStore.current;
+  const createIntelligence = (config: AvatarConfig) => config.apiKey
     ? new MeetingIntelligence({
-        apiKey: openaiApiKey,
-        responseModel: options.responseModel,
+        apiKey: config.apiKey,
+        responseModel: config.responseModel,
         transcriptionModel: options.transcriptionModel,
+        avatarName: config.name,
+        purpose: config.purpose,
+        personality: config.personality,
+        systemPrompt: config.systemPrompt,
+        webSearchEnabled: config.webSearchEnabled,
       })
     : null;
+  let intelligence = createIntelligence(runtimeConfig);
   const renderer = new ConclaviaRenderer(options.rendererUrl);
   let rendererArmed = false;
   let rendererPlayerUrl: string | undefined;
   let dialogueActiveUntil = 0;
+  let pendingRequest: AvatarInterventionRequest | null = null;
 
   const isDialogueActive = () => Date.now() < dialogueActiveUntil;
+
+  const participationSnapshot = () => {
+    if (pendingRequest && Date.now() >= Date.parse(pendingRequest.expiresAt)) {
+      pendingRequest = null;
+    }
+    return pendingRequest;
+  };
+
+  const retainSegment = (segment: TranscriptSegment) => {
+    transcriptHistory.push(segment);
+    if (transcriptHistory.length > maxRetainedSegments) {
+      transcriptHistory.splice(0, transcriptHistory.length - maxRetainedSegments);
+    }
+  };
+
+  const retainAvatarCue = (cue: AvatarSpeechCue) => {
+    retainSegment({
+      id: cue.id,
+      speakerName: cue.speakerName ?? runtimeConfig.name,
+      text: cue.sentences.map((sentence) => sentence.text).join(" "),
+      isFinal: true,
+      capturedAt: cue.createdAt,
+    });
+  };
 
   const contextSnapshot = () => ({
     retainedSegmentCount: transcriptHistory.length,
@@ -158,74 +223,133 @@ export function startServer(options: ServerOptions): Promise<void> {
       active: isDialogueActive(),
       activeUntil: isDialogueActive() ? new Date(dialogueActiveUntil).toISOString() : null,
     },
+    participationRequest: participationSnapshot(),
   });
 
   const processSegment = async (segment: TranscriptSegment) => {
     const startedAt = performance.now();
     let llmMs: number | null = null;
     let rendererMs: number | null = null;
+    let usedWebSearch = false;
     let decision: ActivationDecision = decideActivation(
       segment,
-      options.wakeWord,
+      runtimeConfig.name,
       isDialogueActive(),
     );
-    if (decision.ingested) {
-      transcriptHistory.push(segment);
-      if (transcriptHistory.length > maxRetainedSegments) {
-        transcriptHistory.splice(0, transcriptHistory.length - maxRetainedSegments);
-      }
-    }
+    if (decision.ingested) retainSegment(segment);
+
     let warning: string | null = null;
     let delivery: Awaited<ReturnType<ConclaviaRenderer["deliver"]>> | null = null;
-    if (decision.activated && intelligence) {
-      try {
-        const llmStartedAt = performance.now();
-        const cue = await intelligence.createCue(transcriptHistory, segment);
-        llmMs = Math.round(performance.now() - llmStartedAt);
-        if (cue) {
-          decision = { ...decision, cue };
-          dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
-          transcriptHistory.push({
-            id: cue.id,
-            speakerName: options.wakeWord,
-            text: cue.sentences.map((sentence) => sentence.text).join(" "),
-            isFinal: true,
-            capturedAt: cue.createdAt,
-          });
-          if (transcriptHistory.length > maxRetainedSegments) {
-            transcriptHistory.splice(0, transcriptHistory.length - maxRetainedSegments);
+    const currentRequest = participationSnapshot();
+
+    if (isDialogueDismissal(segment.text, runtimeConfig.name)) {
+      pendingRequest = null;
+      dialogueActiveUntil = 0;
+      decision = {
+        ingested: decision.ingested,
+        activated: false,
+        reason: "conversation-observed",
+      };
+      if (rendererArmed) {
+        try {
+          await renderer.settleRequest(runtimeConfig.name);
+        } catch {
+          // The verbal command still closes the local state if Unreal is unavailable.
+        }
+      }
+    } else if (currentRequest && isFloorGrant(segment.text, runtimeConfig.name)) {
+      pendingRequest = null;
+      decision = {
+        ingested: true,
+        activated: true,
+        reason: "conversation-follow-up",
+        cue: currentRequest.proposedCue,
+      };
+      dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
+      retainAvatarCue(currentRequest.proposedCue);
+    } else {
+      const direct = decision.activated;
+      const shouldObserve =
+        !direct &&
+        !currentRequest &&
+        runtimeConfig.requestToSpeakEnabled &&
+        isAutonomyCandidate(segment.text);
+
+      if (direct && currentRequest) pendingRequest = null;
+
+      if ((direct || shouldObserve) && intelligence) {
+        try {
+          const llmStartedAt = performance.now();
+          const turn = await intelligence.evaluateTurn(
+            transcriptHistory,
+            segment,
+            direct ? "direct" : "observer",
+          );
+          llmMs = Math.round(performance.now() - llmStartedAt);
+          usedWebSearch = turn.usedWebSearch;
+
+          if (turn.action === "speak" && turn.cue) {
+            decision = { ...decision, activated: true, cue: turn.cue };
+            dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
+            retainAvatarCue(turn.cue);
+          } else if (turn.action === "request-to-speak" && turn.cue) {
+            const createdAt = new Date();
+            const request: AvatarInterventionRequest = {
+              id: randomUUID(),
+              kind: "request-to-speak",
+              speakerName: runtimeConfig.name,
+              reason: turn.reason,
+              proposedCue: turn.cue,
+              createdAt: createdAt.toISOString(),
+              expiresAt: new Date(createdAt.getTime() + interventionRequestTtlMs).toISOString(),
+            };
+            pendingRequest = request;
+            decision = {
+              ingested: decision.ingested,
+              activated: false,
+              reason: "autonomous-request",
+              request,
+            };
+            if (rendererArmed) {
+              try {
+                const rendererStartedAt = performance.now();
+                await renderer.requestToSpeak(request);
+                rendererMs = Math.round(performance.now() - rendererStartedAt);
+              } catch (error: unknown) {
+                console.error("Conclavia request-to-speak cue failed:", error);
+                warning = `${runtimeConfig.name} ha chiesto la parola, ma il cue del MetaHuman non è riuscito.`;
+              }
+            }
+          } else {
+            decision = {
+              ingested: decision.ingested,
+              activated: false,
+              reason: direct ? "conversation-observed" : "not-addressed",
+            };
           }
-        } else {
+        } catch (error: unknown) {
+          console.error("OpenAI participation decision failed:", error);
           decision = {
             ingested: decision.ingested,
             activated: false,
-            reason: "conversation-observed",
+            reason: direct ? "conversation-observed" : "not-addressed",
           };
+          warning = `${runtimeConfig.name} ha ascoltato la frase, ma la valutazione OpenAI non è riuscita.`;
         }
-      } catch (error: unknown) {
-        console.error("OpenAI response failed:", error);
-        warning = "Mary ha ascoltato la frase, ma la risposta OpenAI non è riuscita. È mostrata la risposta diagnostica.";
       }
     }
 
-    if (
-      rendererArmed &&
-      decision.cue?.provider === "openai"
-    ) {
+    if (rendererArmed && decision.cue?.provider === "openai") {
       try {
         const rendererStartedAt = performance.now();
-        delivery = await renderer.deliver(decision.cue);
-        rendererMs = Math.round(performance.now() - rendererStartedAt);
+        delivery = await renderer.deliver(decision.cue, runtimeConfig.voiceStyle);
+        rendererMs = (rendererMs ?? 0) + Math.round(performance.now() - rendererStartedAt);
       } catch (error: unknown) {
         console.error("Conclavia MetaHuman delivery failed:", error);
         const rendererWarning =
-          "Mary ha generato la risposta, ma il MetaHuman non è riuscito a riprodurla.";
+          `${runtimeConfig.name} ha generato la risposta, ma il MetaHuman non è riuscito a riprodurla.`;
         warning = warning ? `${warning} ${rendererWarning}` : rendererWarning;
       }
-    }
-
-    if (isDialogueDismissal(segment.text, options.wakeWord)) {
-      dialogueActiveUntil = 0;
     }
 
     return {
@@ -242,20 +366,22 @@ export function startServer(options: ServerOptions): Promise<void> {
         rendererMs,
         totalMs: Math.round(performance.now() - startedAt),
       },
+      usedWebSearch,
       warning,
     };
   };
 
-  const listener = openaiApiKey
+  const createListener = () => runtimeConfig.apiKey
     ? new MeetingListener({
-        apiKey: openaiApiKey,
+        apiKey: runtimeConfig.apiKey,
         audioDevice: options.teamsAudioDevice,
         speakerName: options.teamsSpeakerName,
         transcriptionModel: options.realtimeTranscriptionModel,
-        wakeWord: options.wakeWord,
+        wakeWord: runtimeConfig.name,
         onSegment: processSegment,
       })
     : null;
+  let listener = createListener();
 
   const handleRequest = async (
     request: IncomingMessage,
@@ -269,16 +395,120 @@ export function startServer(options: ServerOptions): Promise<void> {
           status: "ok",
           service: "conclavia-meeting-avatar",
           openaiConfigured: intelligence !== null,
-          responseModel: options.responseModel,
+          responseModel: runtimeConfig.responseModel,
           transcriptionModel: options.transcriptionModel,
           realtimeTranscriptionModel: options.realtimeTranscriptionModel,
-          wakeWord: options.wakeWord,
+          wakeWord: runtimeConfig.name,
+          webSearchEnabled: runtimeConfig.webSearchEnabled,
+          requestToSpeakEnabled: runtimeConfig.requestToSpeakEnabled,
           dialogue: contextSnapshot().dialogue,
+          participationRequest: participationSnapshot(),
           listener: listener?.status ?? null,
           rendererConfigured: renderer.configured,
           rendererArmed,
           time: new Date().toISOString(),
         });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/config") {
+        sendJson(response, 200, {
+          config: configStore.publicConfig,
+          options: {
+            avatarProfiles,
+            voiceStyles,
+          },
+        });
+        return;
+      }
+
+      if (request.method === "PUT" && url.pathname === "/api/config") {
+        const input = await readJsonBody(request) as AvatarConfigInput;
+        const wasListening = listener?.status.running === true;
+        let nextConfig: AvatarConfig;
+        try {
+          nextConfig = configStore.update(input);
+        } catch (error: unknown) {
+          sendJson(response, 400, {
+            error: error instanceof Error ? error.message : "Configurazione non valida.",
+          });
+          return;
+        }
+
+        intelligence?.abortPending();
+        await listener?.stop();
+        runtimeConfig = nextConfig;
+        intelligence = createIntelligence(runtimeConfig);
+        listener = createListener();
+        pendingRequest = null;
+        dialogueActiveUntil = 0;
+
+        let listenerWarning: string | null = null;
+        if (wasListening && listener) {
+          try {
+            await listener.start();
+          } catch (error: unknown) {
+            listenerWarning = error instanceof Error
+              ? error.message
+              : "Riavvio dell'ascolto Teams non riuscito.";
+          }
+        }
+        sendJson(response, 200, {
+          ok: true,
+          config: configStore.publicConfig,
+          listenerRestarted: wasListening && listener?.status.running === true,
+          listenerWarning,
+        });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/participation") {
+        sendJson(response, 200, { request: participationSnapshot() });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/participation/grant") {
+        const intervention = participationSnapshot();
+        if (!intervention) {
+          sendJson(response, 409, { error: "Non ci sono richieste di parola in attesa." });
+          return;
+        }
+        pendingRequest = null;
+        dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
+        retainAvatarCue(intervention.proposedCue);
+        let delivery: Awaited<ReturnType<ConclaviaRenderer["deliver"]>> | null = null;
+        if (rendererArmed) {
+          try {
+            delivery = await renderer.deliver(intervention.proposedCue, runtimeConfig.voiceStyle);
+          } catch (error: unknown) {
+            console.error("Granted intervention delivery failed:", error);
+            sendJson(response, 502, {
+              error: error instanceof Error ? error.message : "Riproduzione non riuscita.",
+              cue: intervention.proposedCue,
+            });
+            return;
+          }
+        }
+        sendJson(response, 200, {
+          ok: true,
+          cue: intervention.proposedCue,
+          delivery,
+          rendererArmed,
+        });
+        return;
+      }
+
+      if (request.method === "DELETE" && url.pathname === "/api/participation") {
+        const intervention = participationSnapshot();
+        pendingRequest = null;
+        if (intervention && rendererArmed) {
+          try {
+            await renderer.settleRequest(runtimeConfig.name);
+          } catch {
+            // Dismissal is still valid when the visual cue endpoint is unavailable.
+          }
+        }
+        sendJson(response, 200, { ok: true, dismissed: intervention !== null });
         return;
       }
 
@@ -294,7 +524,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       if (request.method === "POST" && url.pathname === "/api/listener/start") {
         if (!listener) {
           sendJson(response, 503, {
-            error: "OpenAI non configurato. Aggiungi OPENAI_API_KEY e riavvia il server.",
+            error: "OpenAI non configurato. Inserisci la API key nella configurazione avatar.",
           });
           return;
         }
@@ -405,7 +635,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       if (request.method === "POST" && url.pathname === "/api/transcribe") {
         if (!intelligence) {
           sendJson(response, 503, {
-            error: "OpenAI non configurato. Aggiungi OPENAI_API_KEY al file .env e riavvia il server.",
+            error: "OpenAI non configurato. Inserisci la API key nella configurazione avatar.",
           });
           return;
         }
@@ -497,10 +727,10 @@ export function startServer(options: ServerOptions): Promise<void> {
     server.once("error", reject);
     server.listen(options.port, options.host, () => {
       console.log(`Conclavia Meeting Avatar: http://${options.host}:${options.port}`);
-      console.log(`Wake word: ${options.wakeWord}`);
+      console.log(`Avatar name / trigger: ${runtimeConfig.name}`);
       console.log(
         intelligence
-          ? `OpenAI: ready (${options.transcriptionModel} + ${options.responseModel})`
+          ? `OpenAI: ready (${options.transcriptionModel} + ${runtimeConfig.responseModel})`
           : "OpenAI: not configured (text diagnostic mode only)",
       );
       console.log(

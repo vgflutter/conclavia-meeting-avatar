@@ -21,11 +21,34 @@ const listenerStopButton = document.querySelector("#listener-stop-button");
 const listenerStatus = document.querySelector("#listener-status");
 const listenerPartial = document.querySelector("#listener-partial");
 const listenerTurnCount = document.querySelector("#listener-turn-count");
+const configForm = document.querySelector("#avatar-config-form");
+const configSummary = document.querySelector("#config-summary");
+const configStatus = document.querySelector("#config-status");
+const configSaveButton = document.querySelector("#config-save-button");
+const avatarProfileInput = document.querySelector("#avatar-profile");
+const avatarNameInput = document.querySelector("#avatar-name");
+const responseModelInput = document.querySelector("#response-model");
+const voiceStyleInput = document.querySelector("#voice-style");
+const apiKeyInput = document.querySelector("#openai-api-key");
+const apiKeyState = document.querySelector("#api-key-state");
+const purposeInput = document.querySelector("#avatar-purpose");
+const personalityInput = document.querySelector("#avatar-personality");
+const systemPromptInput = document.querySelector("#avatar-system-prompt");
+const webSearchInput = document.querySelector("#web-search-enabled");
+const requestToSpeakInput = document.querySelector("#request-to-speak-enabled");
+const avatarChatTitle = document.querySelector("#avatar-chat-title");
+const activationNote = document.querySelector("#activation-note");
+const participationRequest = document.querySelector("#participation-request");
+const participationTitle = document.querySelector("#participation-title");
+const participationReason = document.querySelector("#participation-reason");
+const participationGrant = document.querySelector("#participation-grant");
+const participationDismiss = document.querySelector("#participation-dismiss");
 
 let mediaRecorder = null;
 let mediaStream = null;
 let audioChunks = [];
 let lastListenerSegmentId = null;
+let avatarName = "Mary";
 
 function renderCheck(check) {
   const action = check.action ? `<p class="action">${escapeHtml(check.action)}</p>` : "";
@@ -44,6 +67,143 @@ function escapeHtml(value) {
     "\"": "&quot;",
   })[character]);
 }
+
+function applyAvatarName(name, requestToSpeakEnabled = true) {
+  avatarName = name || "Mary";
+  avatarChatTitle.textContent = `Parla con ${avatarName}`;
+  activationNote.textContent = requestToSpeakEnabled
+    ? `Ogni frase finale entra nel contesto. ${avatarName} risponde quando viene chiamata o chiede prima la parola.`
+    : `Ogni frase finale entra nel contesto. ${avatarName} risponde quando viene chiamata.`;
+}
+
+function renderConfig(payload) {
+  const { config, options } = payload;
+  avatarProfileInput.innerHTML = options.avatarProfiles.map((profile) =>
+    `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.label)}</option>`
+  ).join("");
+  avatarProfileInput.value = config.avatarProfile;
+  avatarNameInput.value = config.name;
+  responseModelInput.value = config.responseModel;
+  voiceStyleInput.value = config.voiceStyle;
+  purposeInput.value = config.purpose;
+  personalityInput.value = config.personality;
+  systemPromptInput.value = config.systemPrompt;
+  webSearchInput.checked = config.webSearchEnabled;
+  requestToSpeakInput.checked = config.requestToSpeakEnabled;
+  apiKeyInput.value = "";
+  apiKeyState.textContent = config.apiKeyConfigured
+    ? `Chiave configurata (${config.apiKeySource === "environment" ? "ambiente" : "archivio locale protetto"}). Lascia vuoto per mantenerla.`
+    : "Nessuna chiave configurata. La chiave non viene mai restituita al browser.";
+  configSummary.textContent = `${config.name} · ${config.responseModel}`;
+  applyAvatarName(config.name, config.requestToSpeakEnabled);
+}
+
+async function refreshConfig() {
+  try {
+    const response = await fetch("/api/config", { cache: "no-store" });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+    renderConfig(payload);
+  } catch (error) {
+    configStatus.textContent = `Configurazione non disponibile: ${error.message}`;
+  }
+}
+
+configForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  configSaveButton.disabled = true;
+  configStatus.textContent = "Salvataggio e applicazione in corso…";
+  try {
+    const response = await fetch("/api/config", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        avatarProfile: avatarProfileInput.value,
+        name: avatarNameInput.value,
+        responseModel: responseModelInput.value,
+        voiceStyle: voiceStyleInput.value,
+        apiKey: apiKeyInput.value,
+        purpose: purposeInput.value,
+        personality: personalityInput.value,
+        systemPrompt: systemPromptInput.value,
+        webSearchEnabled: webSearchInput.checked,
+        requestToSpeakEnabled: requestToSpeakInput.checked,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    await refreshConfig();
+    await refreshHealth();
+    await refreshListenerStatus();
+    configStatus.textContent = result.listenerWarning
+      ? `Configurazione salvata; ascolto non riavviato: ${result.listenerWarning}`
+      : result.listenerRestarted
+        ? "Configurazione salvata. L’ascolto Teams è stato riavviato."
+        : "Configurazione salvata e applicata.";
+  } catch (error) {
+    configStatus.textContent = `Salvataggio fallito: ${error.message}`;
+  } finally {
+    configSaveButton.disabled = false;
+  }
+});
+
+function renderParticipationRequest(request) {
+  participationRequest.hidden = !request;
+  if (!request) return;
+  participationTitle.textContent = `${request.speakerName || avatarName} chiede la parola`;
+  participationReason.textContent = request.reason || "Ha un contributo utile alla conversazione.";
+}
+
+async function refreshParticipation() {
+  try {
+    const response = await fetch("/api/participation", { cache: "no-store" });
+    const payload = await response.json();
+    if (response.ok) renderParticipationRequest(payload.request);
+  } catch {
+    // The request also remains visible in the most recent turn result.
+  }
+}
+
+participationGrant.addEventListener("click", async () => {
+  participationGrant.disabled = true;
+  participationDismiss.disabled = true;
+  participationReason.textContent = `Sto dando la parola a ${avatarName}…`;
+  try {
+    const response = await fetch("/api/participation/grant", { method: "POST" });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    renderParticipationRequest(null);
+    renderMaryResponse({ activated: true, cue: result.cue });
+    decisionStatus.className = "decision-status responding";
+    decisionStatus.textContent = `${avatarName} ha ricevuto la parola e sta rispondendo.`;
+    if (result.delivery) {
+      rendererStatus.className = "decision-status responding";
+      rendererStatus.textContent = `${avatarName} è in onda sul MetaHuman.`;
+    }
+    await refreshContext();
+  } catch (error) {
+    participationReason.textContent = `Impossibile dare la parola: ${error.message}`;
+  } finally {
+    participationGrant.disabled = false;
+    participationDismiss.disabled = false;
+  }
+});
+
+participationDismiss.addEventListener("click", async () => {
+  participationGrant.disabled = true;
+  participationDismiss.disabled = true;
+  try {
+    const response = await fetch("/api/participation", { method: "DELETE" });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    renderParticipationRequest(null);
+  } catch (error) {
+    participationReason.textContent = `Chiusura non riuscita: ${error.message}`;
+  } finally {
+    participationGrant.disabled = false;
+    participationDismiss.disabled = false;
+  }
+});
 
 function renderContext(context) {
   const count = context.retainedSegmentCount ?? 0;
@@ -77,37 +237,44 @@ function renderMaryResponse(decision) {
   }
 
   const provider = decision.cue.provider === "openai" ? "OPENAI" : "DIAGNOSTICA";
+  const sources = decision.cue.webSources ?? [];
   maryResponse.innerHTML = `
     <div class="mary-response-heading">
-      <strong>Mary</strong>
+      <strong>${escapeHtml(decision.cue.speakerName || avatarName)}</strong>
       <span>${provider}${decision.cue.model ? ` · ${escapeHtml(decision.cue.model)}` : ""}</span>
     </div>
     ${sentences.map((sentence) => `
       <article class="mary-sentence">
         <p>${escapeHtml(sentence.text)}</p>
-        <span>${escapeHtml(sentence.mood)}</span>
+        <span>${escapeHtml(sentence.mood)} · L${escapeHtml(sentence.level ?? 3)}</span>
       </article>
     `).join("")}
+    ${sources.length ? `<ul class="web-sources">${sources.map((source) =>
+      `<li><a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">${escapeHtml(source.title)}</a></li>`
+    ).join("")}</ul>` : ""}
   `;
 }
 
 function renderTurn(result) {
   renderContext(result.llmContext);
   renderMaryResponse(result.decision);
+  renderParticipationRequest(result.decision.request ?? result.llmContext?.participationRequest ?? null);
   decisionStatus.className = `decision-status ${result.decision.activated ? "responding" : "listening"}`;
 
   if (result.decision.activated && result.decision.cue?.provider === "openai") {
-    decisionStatus.textContent = "Ascoltata e aggiunta al contesto. Mary ha letto la conversazione e ha risposto.";
+    decisionStatus.textContent = `Ascoltata e aggiunta al contesto. ${avatarName} ha letto la conversazione e ha risposto${result.usedWebSearch ? " usando la ricerca web" : ""}.`;
   } else if (result.decision.activated) {
-    decisionStatus.textContent = "Mary è stata chiamata, ma sta usando la risposta diagnostica: configura OpenAI per la risposta reale.";
+    decisionStatus.textContent = `${avatarName} è stata chiamata, ma sta usando la risposta diagnostica: configura OpenAI per la risposta reale.`;
+  } else if (result.decision.reason === "autonomous-request") {
+    decisionStatus.textContent = `${avatarName} ha un contributo e ha chiesto la parola senza interrompere.`;
   } else {
-    decisionStatus.textContent = "Ascoltata e aggiunta al contesto. Mary continua ad ascoltare senza rispondere.";
+    decisionStatus.textContent = `Ascoltata e aggiunta al contesto. ${avatarName} continua ad ascoltare senza rispondere.`;
   }
 
   if (result.warning) decisionStatus.textContent += ` ${result.warning}`;
   if (result.renderer?.delivery) {
     rendererStatus.className = "decision-status responding";
-    rendererStatus.textContent = `Mary è in onda sul MetaHuman · ${Math.round(result.renderer.delivery.durationMs / 100) / 10}s · ${result.renderer.delivery.sentenceCount} ${result.renderer.delivery.sentenceCount === 1 ? "frase" : "frasi"}.`;
+    rendererStatus.textContent = `${avatarName} è in onda sul MetaHuman · ${Math.round(result.renderer.delivery.durationMs / 100) / 10}s · ${result.renderer.delivery.sentenceCount} ${result.renderer.delivery.sentenceCount === 1 ? "frase" : "frasi"}.`;
   }
   simulationResult.textContent = JSON.stringify({
     transcription: result.segment.text,
@@ -128,7 +295,7 @@ function renderListenerStatus(status) {
     listenerStatus.className = `recording-status ${status.speechDetected ? "active" : "listening"}`;
     listenerStatus.textContent = status.speechDetected
       ? "Voce rilevata: trascrizione in corso…"
-      : `Mary sta leggendo l’audio da ${status.resolvedAudioDevice || status.audioDevice}.`;
+      : `${avatarName} sta leggendo l’audio da ${status.resolvedAudioDevice || status.audioDevice}.`;
   } else if (status.phase === "starting") {
     listenerStatus.className = "recording-status listening";
     listenerStatus.textContent = "Connessione a OpenAI Realtime e apertura del bus Teams…";
@@ -230,13 +397,13 @@ function renderRendererStatus(status) {
     rendererStatus.textContent = "Avvia conclavia-frontend sulla porta 3000 per raggiungere le API Unreal.";
   } else if (status.armed && status.available) {
     rendererStatus.className = "decision-status responding";
-    rendererStatus.textContent = "MetaHuman pronto e armato: la prossima risposta di Mary andrà in onda.";
+    rendererStatus.textContent = `MetaHuman pronto e armato: la prossima risposta di ${avatarName} andrà in onda.`;
   } else if (status.armed) {
     rendererStatus.className = "decision-status listening";
     rendererStatus.textContent = "MetaHuman armato; il renderer sta completando l’avvio.";
   } else if (status.available) {
     rendererStatus.className = "decision-status listening";
-    rendererStatus.textContent = "Renderer già online. Premi “Avvia MetaHuman” per collegarlo a Mary.";
+    rendererStatus.textContent = `Renderer già online. Premi “Avvia MetaHuman” per collegarlo a ${avatarName}.`;
   } else {
     rendererStatus.className = "decision-status listening";
     rendererStatus.textContent = `Renderer ${status.serverStatus || "non ancora avviato"}. L’avvio può accendere l’host GPU.`;
@@ -310,11 +477,11 @@ async function refreshHealth() {
     const health = await response.json();
     providerStatus.className = `provider-status ${health.openaiConfigured ? "ready" : "missing"}`;
     providerStatus.textContent = health.openaiConfigured
-      ? `OpenAI pronto · ${health.transcriptionModel}`
+      ? `OpenAI pronto · ${health.responseModel}${health.webSearchEnabled ? " · web" : ""}`
       : "OpenAI non configurato";
     recordButton.disabled = !health.openaiConfigured || !window.MediaRecorder;
     if (!health.openaiConfigured) {
-      recordingStatus.textContent = "Aggiungi OPENAI_API_KEY a .env e riavvia il server.";
+      recordingStatus.textContent = "Inserisci la OpenAI API key nel pannello di configurazione.";
     } else if (!window.MediaRecorder) {
       recordingStatus.textContent = "Questo browser non supporta la registrazione MediaRecorder.";
     }
@@ -436,9 +603,11 @@ simulationForm.addEventListener("submit", async (event) => {
   }
 });
 
+void refreshConfig().then(refreshHealth);
 void refreshContext();
-void refreshHealth();
 void refreshRendererStatus();
 void refreshListenerStatus();
+void refreshParticipation();
 window.setInterval(refreshRendererStatus, 8_000);
 window.setInterval(refreshListenerStatus, 1_000);
+window.setInterval(refreshParticipation, 750);

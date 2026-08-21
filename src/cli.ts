@@ -51,6 +51,8 @@ async function main(): Promise<void> {
     port,
     wakeWord,
     dialogueTimeoutMs,
+    configPath:
+      process.env.CONCLAVIA_CONFIG_PATH?.trim() || ".conclavia/avatar-config.json",
     openaiApiKey: process.env.OPENAI_API_KEY,
     responseModel: process.env.OPENAI_RESPONSE_MODEL?.trim() || "gpt-5.4-mini",
     transcriptionModel:
