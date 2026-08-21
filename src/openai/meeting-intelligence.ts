@@ -150,7 +150,14 @@ export function parseMaryReply(value: string): AvatarSpeechSentence[] {
 
 function transcriptForModel(history: readonly TranscriptSegment[]): string {
   return history
-    .map((segment) => `[${segment.capturedAt}] ${segment.speakerName}: ${segment.text}`)
+    .map((segment) => {
+      const source = segment.source === "chat"
+        ? `CHAT ${segment.platform ?? "generic"}`
+        : segment.source === "manual"
+          ? "MANUAL"
+          : "VOICE";
+      return `[${segment.capturedAt}] [${source}] ${segment.speakerName}: ${segment.text}`;
+    })
     .join("\n");
 }
 
@@ -228,6 +235,7 @@ export class MeetingIntelligence {
     history: readonly TranscriptSegment[],
     latestSegment: TranscriptSegment,
     mode: ParticipationMode,
+    responseChannel: "voice" | "chat" = "voice",
   ): Promise<MaryTurnDecision> {
     const controller = this.#requestController();
     const webSearchAvailable = mode === "direct" && this.#options.webSearchEnabled;
@@ -289,7 +297,7 @@ export class MeetingIntelligence {
               include: ["web_search_call.action.sources" as const],
             }
           : {}),
-        instructions: this.#instructions(mode, webSearchAvailable),
+        instructions: this.#instructions(mode, webSearchAvailable, responseChannel),
         input: [
           "TRASCRIZIONE COMPLETA DELLA RIUNIONE:",
           transcriptForModel(history),
@@ -333,7 +341,11 @@ export class MeetingIntelligence {
     this.#activeControllers.clear();
   }
 
-  #instructions(mode: ParticipationMode, webSearchAvailable: boolean): string {
+  #instructions(
+    mode: ParticipationMode,
+    webSearchAvailable: boolean,
+    responseChannel: "voice" | "chat",
+  ): string {
     const directRules = [
       `Se l'ultimo intervento si rivolge a ${this.#options.avatarName} o continua chiaramente un dialogo con lei, usa action=speak.`,
       "Se le persone parlano tra loro, usano un intercalare, assentono soltanto o la frase è incompleta o ambigua, usa action=silence.",
@@ -358,6 +370,9 @@ export class MeetingIntelligence {
             "Non dire di non avere accesso a Internet o a dati aggiornati: cerca prima. Non usare il web per opinioni o domande che si risolvono dal contesto della riunione.",
           ]
         : []),
+      responseChannel === "chat"
+        ? "La risposta verrà pubblicata nella chat del meeting: scrivila come un messaggio autonomo, senza dire che la stai leggendo ad alta voce. Se viene chiesto un riassunto, sintetizza i punti emersi prima del comando corrente."
+        : "La risposta verrà pronunciata dall'avatar: usa una formulazione naturale da dire ad alta voce.",
       "La risposta proposta deve essere naturale, concreta e molto breve: una o due frasi, massimo 45 parole complessive, nella lingua dell'interlocutore.",
       "Ogni elemento sentences contiene esattamente una frase completa, il mood di quella singola frase, level da 1 (appena percettibile) a 5 (molto marcato) e language (it-IT oppure en-US).",
       "Mantieni ogni frase in una sola lingua. Se devi usare davvero l'inglese, preferisci una frase inglese completa separata: la sintesi userà una voce madrelingua diversa per quella frase.",

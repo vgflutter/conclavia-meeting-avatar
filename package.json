@@ -12,6 +12,7 @@
     "start": "node --env-file-if-exists=.env dist/cli.js serve",
     "preflight": "node --env-file-if-exists=.env --import tsx src/cli.ts preflight",
     "simulate": "node --env-file-if-exists=.env --import tsx src/cli.ts simulate",
+    "chat:simulate": "node adapters/generic/post-message.mjs",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

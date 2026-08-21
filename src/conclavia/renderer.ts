@@ -300,10 +300,14 @@ export class ConclaviaRenderer {
   }
 
   async requestToSpeak(request: AvatarInterventionRequest): Promise<void> {
+    await this.raiseHand(request.speakerName);
+  }
+
+  async raiseHand(speakerName: string): Promise<void> {
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
-      speakerName: request.speakerName,
+      speakerName,
       shot: "wide",
       intent: "request-to-speak",
       bodyGesture: "raise-hand",
@@ -321,6 +325,10 @@ export class ConclaviaRenderer {
   }
 
   async settleRequest(speakerName: string): Promise<void> {
+    await this.lowerHand(speakerName);
+  }
+
+  async lowerHand(speakerName: string): Promise<void> {
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",

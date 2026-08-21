@@ -1,0 +1,55 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.21/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.21",
+  "version": "0.1.0",
+  "id": "00000000-0000-0000-0000-000000000000",
+  "packageName": "com.conclavia.meetingavatar",
+  "developer": {
+    "name": "Conclavia",
+    "websiteUrl": "https://example.com",
+    "privacyUrl": "https://example.com/privacy",
+    "termsOfUseUrl": "https://example.com/terms"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "Conclavia Avatar",
+    "full": "Conclavia Meeting Avatar"
+  },
+  "description": {
+    "short": "Connects meeting chat to a configurable Conclavia avatar.",
+    "full": "Reads messages only in conversations where the app is installed, sends them to the configured meeting companion, and publishes only explicitly requested avatar responses."
+  },
+  "accentColor": "#07110F",
+  "webApplicationInfo": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "resource": "https://example.com/conclavia-meeting-avatar"
+  },
+  "authorization": {
+    "permissions": {
+      "resourceSpecific": [
+        {
+          "type": "Application",
+          "name": "ChatMessage.Read.Chat"
+        }
+      ]
+    }
+  },
+  "bots": [
+    {
+      "botId": "00000000-0000-0000-0000-000000000000",
+      "scopes": [
+        "groupchat"
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": []
+}

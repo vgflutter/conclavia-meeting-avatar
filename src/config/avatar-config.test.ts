@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { AvatarConfigStore, type AvatarConfig } from "./avatar-config.js";
+import {
+  AvatarConfigStore,
+  defaultChatCommandAliases,
+  type AvatarConfig,
+} from "./avatar-config.js";
 
 const defaults: AvatarConfig = {
   avatarProfile: "aera",
@@ -16,6 +20,8 @@ const defaults: AvatarConfig = {
   systemPrompt: "Distingui fatti e opinioni.",
   webSearchEnabled: true,
   requestToSpeakEnabled: true,
+  chatEnabled: true,
+  chatCommandAliases: defaultChatCommandAliases,
   voiceStyle: "natural",
   italianVoice: "Bianca",
   englishVoice: "Danielle",
@@ -48,4 +54,20 @@ await test("rejects an unsupported avatar profile", () => {
   const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
   const store = new AvatarConfigStore(path, defaults);
   assert.throws(() => store.update({ avatarProfile: "unknown" }), /non supportato/u);
+});
+
+await test("persists configurable chat commands and returns defensive copies", () => {
+  const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
+  const store = new AvatarConfigStore(path, defaults);
+  store.update({
+    chatCommandAliases: {
+      ...defaultChatCommandAliases,
+      raiseHand: ["fai un cenno"],
+    },
+  });
+
+  const config = store.current;
+  assert.deepEqual(config.chatCommandAliases.raiseHand, ["fai un cenno"]);
+  config.chatCommandAliases.raiseHand.push("mutazione esterna");
+  assert.deepEqual(store.current.chatCommandAliases.raiseHand, ["fai un cenno"]);
 });

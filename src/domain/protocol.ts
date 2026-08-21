@@ -17,6 +17,27 @@ export type AvatarMood = (typeof avatarMoods)[number];
 export type AvatarMoodLevel = 1 | 2 | 3 | 4 | 5;
 export const speechLanguages = ["it-IT", "en-US"] as const;
 export type SpeechLanguage = (typeof speechLanguages)[number];
+export const transcriptSources = ["speech", "chat", "manual"] as const;
+export type TranscriptSource = (typeof transcriptSources)[number];
+export const chatPlatforms = ["teams", "google-meet", "generic"] as const;
+export type ChatPlatform = (typeof chatPlatforms)[number];
+
+export const chatCommandKinds = [
+  "raise-hand",
+  "lower-hand",
+  "summarize-in-chat",
+  "reply-in-chat",
+  "speak",
+] as const;
+export type ChatCommandKind = (typeof chatCommandKinds)[number];
+
+export interface ChatCommandAliases {
+  raiseHand: string[];
+  lowerHand: string[];
+  summarizeInChat: string[];
+  replyInChat: string[];
+  speak: string[];
+}
 
 export interface TranscriptSegment {
   id: string;
@@ -24,6 +45,36 @@ export interface TranscriptSegment {
   text: string;
   isFinal: boolean;
   capturedAt: string;
+  source?: TranscriptSource;
+  platform?: ChatPlatform;
+  meetingId?: string;
+  externalId?: string;
+}
+
+export interface ChatMessageInput {
+  platform: ChatPlatform;
+  meetingId: string;
+  messageId: string;
+  speakerName: string;
+  text: string;
+  capturedAt?: string;
+  senderIsAvatar?: boolean;
+}
+
+export interface MatchedChatCommand {
+  kind: ChatCommandKind;
+  alias: string;
+  argument: string;
+}
+
+export interface OutboundChatMessage {
+  id: string;
+  platform: ChatPlatform;
+  meetingId: string;
+  replyToMessageId: string;
+  speakerName: string;
+  text: string;
+  createdAt: string;
 }
 
 export interface AvatarSpeechSentence {

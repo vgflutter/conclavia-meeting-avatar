@@ -108,7 +108,39 @@
               <input id="request-to-speak-enabled" name="requestToSpeakEnabled" type="checkbox" />
               <span><strong>Request to speak</strong><small>Può proporre un intervento, ma parla solo dopo l’autorizzazione.</small></span>
             </label>
+            <label class="toggle-row">
+              <input id="chat-enabled" name="chatEnabled" type="checkbox" />
+              <span><strong>Chat del meeting</strong><small>Acquisisce messaggi da Teams, Meet o adapter generici e applica i comandi configurati.</small></span>
+            </label>
           </div>
+          <section class="command-config" aria-labelledby="command-config-title">
+            <div>
+              <h3 id="command-config-title">Comandi chat</h3>
+              <p>Alias separati da virgola. Il comando è eseguito soltanto quando il messaggio inizia con il nome dell’avatar.</p>
+            </div>
+            <div class="command-grid">
+              <label>
+                Alza la mano
+                <input id="command-raise-hand" maxlength="500" />
+              </label>
+              <label>
+                Abbassa la mano
+                <input id="command-lower-hand" maxlength="500" />
+              </label>
+              <label>
+                Riassumi nella chat
+                <input id="command-summarize-chat" maxlength="500" />
+              </label>
+              <label>
+                Rispondi nella chat
+                <input id="command-reply-chat" maxlength="500" />
+              </label>
+              <label>
+                Intervieni a voce
+                <input id="command-speak" maxlength="500" />
+              </label>
+            </div>
+          </section>
           <div class="config-submit">
             <button id="config-save-button" type="submit">Salva configurazione</button>
             <p id="config-status" class="field-note" aria-live="polite">Nessuna modifica in attesa.</p>
@@ -158,6 +190,36 @@
               <p id="listener-status" class="recording-status" aria-live="polite">Ascolto continuo fermo.</p>
               <p id="listener-partial" class="listener-partial" aria-live="polite"></p>
               <p class="listener-note">La trascrizione streaming non assegna ancora i nomi dei singoli partecipanti: le battute usano il nome speaker configurato, ma il testo completo viene conservato.</p>
+            </section>
+            <section class="microphone-card chat-adapter-card" aria-labelledby="chat-adapter-title">
+              <div class="listener-heading">
+                <div>
+                  <h3 id="chat-adapter-title">Chat multipiattaforma</h3>
+                  <p>Simula lo stesso evento prodotto dagli adapter Teams e Google Meet. Le risposte destinate alla chat vengono restituite all’adapter.</p>
+                </div>
+                <span class="listener-turn-count">API CHAT</span>
+              </div>
+              <div class="chat-test-grid">
+                <label>
+                  Origine
+                  <select id="chat-test-platform">
+                    <option value="teams">Microsoft Teams</option>
+                    <option value="google-meet">Google Meet</option>
+                    <option value="generic">Generica</option>
+                  </select>
+                </label>
+                <label>
+                  Meeting ID
+                  <input id="chat-test-meeting-id" value="demo-meeting" maxlength="240" />
+                </label>
+              </div>
+              <label>
+                Messaggio chat di test
+                <textarea id="chat-test-text" rows="3" maxlength="4000">Mary, alza la mano</textarea>
+              </label>
+              <button id="chat-test-button" type="button">Invia come messaggio chat</button>
+              <p id="chat-test-status" class="recording-status" aria-live="polite">Adapter in attesa.</p>
+              <pre id="chat-test-result" class="console compact-console" aria-live="polite">Nessun messaggio chat inviato.</pre>
             </section>
             <section id="participation-request" class="participation-request" aria-live="polite" hidden>
               <div class="request-icon" aria-hidden="true">✋</div>

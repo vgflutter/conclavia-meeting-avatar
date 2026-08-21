@@ -16,6 +16,9 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 
 - Continuous meeting audio capture from BlackHole 16ch using ffmpeg and OpenAI Realtime transcription.
 - Persistent meeting memory: every final utterance is retained and included in the LLM context when a turn is evaluated.
+- Platform-neutral chat ingestion for Teams, Google Meet browser bridges, and generic adapters, merged chronologically with voice memory.
+- Configurable chat commands for physical gestures, voice interventions, chat replies, and meeting summaries.
+- Chat message idempotency and avatar self-message filtering to prevent duplicate actions and response loops.
 - Configurable avatar name, which is also the direct voice trigger.
 - Natural follow-up dialogue, so the trigger does not need to be repeated for every sentence.
 - Conservative participation control that keeps the avatar silent for fillers, incomplete remarks, and conversations between human participants.
@@ -78,24 +81,44 @@ concerned, surprised, empathetic, assertive, frustrated, reflective
 ## Architecture
 
 ```text
-Teams / Google Meet / conferencing application
-      │ meeting audio
-      ▼
-macOS companion ──► live STT ──► transcript memory ──► participation LLM
-      ▲                                                    │
-      │                         direct answer / hand raise  ▼
-BlackHole 16ch                                    optional web search
-                                                           │
-                                                           ▼
-                                              sentence mood + level
-                                                           │
-                                                           ▼
-BlackHole 2ch ◄── Conclavia TTS ◄── Unreal / MetaHuman ◄── cues
+Teams agent ─────────┐
+Meet browser bridge ─┼──► canonical chat events ──┐
+Generic adapter ─────┘                             │
+                                                  ▼
+meeting audio ──► live STT ──► chronological memory ──► command router / participation LLM
+      ▲                                                            │
+      │                                  chat reply / voice / gesture ▼
+BlackHole 16ch                                             optional web search
+                                                                   │
+                platform adapter ◄── outbound chat                  │
+                                                                   ▼
+                                                      sentence mood + level
+                                                                   │
+                                                                   ▼
+BlackHole 2ch ◄── Conclavia TTS ◄── Unreal / MetaHuman ◄────────── cues
       │                                      │
       └──► meeting microphone                └──► OBS Virtual Camera ──► meeting
 ```
 
 The companion and Unreal renderer are separate processes. The renderer can therefore run locally or on a cloud GPU without changing the conferencing integration.
+
+## Cross-platform chat and commands
+
+All chat integrations use one canonical endpoint:
+
+```text
+POST http://127.0.0.1:4310/api/chat/messages
+```
+
+The management application enables chat ingestion and edits comma-separated aliases for five deterministic commands: raise hand, lower hand, summarize in chat, reply in chat, and speak. A command is recognized only when a message starts with the configured avatar name or mention. Any text after the matched alias remains a free-form LLM directive, for example:
+
+```text
+Mary, intervieni riportando la discussione sul rispetto della consegna
+```
+
+Messages that do not contain a command still enter meeting memory. They follow the same conservative direct-response and `request-to-speak` policy as voice input.
+
+Teams uses an installed agent with `groupchat` scope and resource-specific `ChatMessage.Read.Chat` consent. Google Meet does not expose live chat through its REST API, so Meet uses an isolated browser adapter; a Meet DOM change cannot affect the companion core. See the [chat adapter contract](docs/chat-adapter-contract.md), [Teams adapter template](adapters/teams/README.md), and [Google Meet adapter design](adapters/google-meet/README.md).
 
 ## Facial animation architecture
 
@@ -153,6 +176,8 @@ OPENAI_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
 OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-live-transcribe
 ```
 
+The chat enable switch and command aliases are stored in the local avatar configuration and edited from the web application.
+
 Start the Conclavia frontend separately:
 
 ```bash
@@ -183,6 +208,12 @@ The current realtime transcript uses the configured generic speaker name; it doe
 8. Inspect the turn JSON: every spoken sentence must include its own `mood`, `level`, and `language`.
 
 The **Record** button performs the same flow through the browser microphone. The manual text field is the fastest option for deterministic protocol tests.
+
+The **Chat multipiattaforma** panel calls the production chat endpoint. It can test Teams, Google Meet, or generic events before a platform adapter is connected. The equivalent CLI command is:
+
+```bash
+npm run chat:simulate -- teams Vincenzo "Mary, riassumi in chat"
+```
 
 ## Commands
 
@@ -216,8 +247,10 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 - Stream TTS generation and playback to reduce time to first audio further.
 - Replace the first arm-layer hand pose with a polished authored AnimSequence or Control Rig gesture after visual calibration.
 - Improve participant attribution using Teams captions or dedicated diarization.
+- Finish and calibrate the isolated Google Meet browser bridge against the current Meet accessibility tree.
+- Deploy the Teams RSC agent and authenticated relay from the included manifest template.
 - Separate and expose transcription, participation, LLM, web search, TTS, and renderer latency metrics.
-- Evolve from the host-account POC to optional platform-specific bots with separate participant identities.
+- Add optional platform-specific participant identities while preserving the local host-account mode.
 
 ## License
 

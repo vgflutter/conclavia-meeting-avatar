@@ -42,6 +42,18 @@ const personalityInput = document.querySelector("#avatar-personality");
 const systemPromptInput = document.querySelector("#avatar-system-prompt");
 const webSearchInput = document.querySelector("#web-search-enabled");
 const requestToSpeakInput = document.querySelector("#request-to-speak-enabled");
+const chatEnabledInput = document.querySelector("#chat-enabled");
+const commandRaiseHandInput = document.querySelector("#command-raise-hand");
+const commandLowerHandInput = document.querySelector("#command-lower-hand");
+const commandSummarizeChatInput = document.querySelector("#command-summarize-chat");
+const commandReplyChatInput = document.querySelector("#command-reply-chat");
+const commandSpeakInput = document.querySelector("#command-speak");
+const chatTestPlatformInput = document.querySelector("#chat-test-platform");
+const chatTestMeetingIdInput = document.querySelector("#chat-test-meeting-id");
+const chatTestTextInput = document.querySelector("#chat-test-text");
+const chatTestButton = document.querySelector("#chat-test-button");
+const chatTestStatus = document.querySelector("#chat-test-status");
+const chatTestResult = document.querySelector("#chat-test-result");
 const avatarChatTitle = document.querySelector("#avatar-chat-title");
 const activationNote = document.querySelector("#activation-note");
 const participationRequest = document.querySelector("#participation-request");
@@ -90,6 +102,17 @@ function applyMeetingPlatform(platform) {
       : "Meeting";
 }
 
+function renderCommandAliases(input, aliases) {
+  input.value = (aliases ?? []).join(", ");
+}
+
+function parseCommandAliases(input) {
+  return [...new Set(input.value
+    .split(",")
+    .map((alias) => alias.trim().replace(/\s+/g, " "))
+    .filter(Boolean))];
+}
+
 function renderConfig(payload) {
   const { config, options } = payload;
   avatarProfileInput.innerHTML = options.avatarProfiles.map((profile) =>
@@ -123,6 +146,12 @@ function renderConfig(payload) {
   systemPromptInput.value = config.systemPrompt;
   webSearchInput.checked = config.webSearchEnabled;
   requestToSpeakInput.checked = config.requestToSpeakEnabled;
+  chatEnabledInput.checked = config.chatEnabled;
+  renderCommandAliases(commandRaiseHandInput, config.chatCommandAliases.raiseHand);
+  renderCommandAliases(commandLowerHandInput, config.chatCommandAliases.lowerHand);
+  renderCommandAliases(commandSummarizeChatInput, config.chatCommandAliases.summarizeInChat);
+  renderCommandAliases(commandReplyChatInput, config.chatCommandAliases.replyInChat);
+  renderCommandAliases(commandSpeakInput, config.chatCommandAliases.speak);
   apiKeyInput.value = "";
   apiKeyState.textContent = config.apiKeyConfigured
     ? `Chiave configurata (${config.apiKeySource === "environment" ? "ambiente" : "archivio locale protetto"}). Lascia vuoto per mantenerla.`
@@ -167,6 +196,14 @@ configForm.addEventListener("submit", async (event) => {
         systemPrompt: systemPromptInput.value,
         webSearchEnabled: webSearchInput.checked,
         requestToSpeakEnabled: requestToSpeakInput.checked,
+        chatEnabled: chatEnabledInput.checked,
+        chatCommandAliases: {
+          raiseHand: parseCommandAliases(commandRaiseHandInput),
+          lowerHand: parseCommandAliases(commandLowerHandInput),
+          summarizeInChat: parseCommandAliases(commandSummarizeChatInput),
+          replyInChat: parseCommandAliases(commandReplyChatInput),
+          speak: parseCommandAliases(commandSpeakInput),
+        },
       }),
     });
     const result = await response.json();
@@ -253,11 +290,65 @@ function renderContext(context) {
   }
   contextResults.innerHTML = context.recentSegments.map((segment) => `
     <article class="context-turn">
-      <strong>${escapeHtml(segment.speakerName)}</strong>
+      <strong>${escapeHtml(segment.speakerName)} <span>${escapeHtml(segment.source === "chat" ? `CHAT · ${segment.platform || "generic"}` : segment.source || "VOICE")}</span></strong>
       <p>${escapeHtml(segment.text)}</p>
     </article>
   `).join("");
 }
+
+chatTestButton.addEventListener("click", async () => {
+  const speakerName = speakerNameInput.value.trim();
+  const meetingId = chatTestMeetingIdInput.value.trim();
+  const text = chatTestTextInput.value.trim();
+  if (!speakerName || !meetingId || !text) {
+    chatTestStatus.textContent = "Inserisci speaker, meeting ID e messaggio.";
+    return;
+  }
+
+  chatTestButton.disabled = true;
+  chatTestStatus.className = "recording-status listening";
+  chatTestStatus.textContent = "Invio al command router…";
+  try {
+    const response = await fetch("/api/chat/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        platform: chatTestPlatformInput.value,
+        meetingId,
+        messageId: crypto.randomUUID(),
+        speakerName,
+        text,
+        capturedAt: new Date().toISOString(),
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    if (result.turn) renderTurn(result.turn);
+    await refreshContext();
+
+    const outbound = result.outboundMessages?.[0];
+    if (outbound) {
+      chatTestStatus.textContent = `${outbound.speakerName} ha risposto nella chat: “${outbound.text}”`;
+    } else if (result.action === "raise-hand") {
+      chatTestStatus.textContent = `${avatarName} ha eseguito il gesto: mano alzata.`;
+    } else if (result.action === "lower-hand") {
+      chatTestStatus.textContent = `${avatarName} ha eseguito il gesto: mano abbassata.`;
+    } else if (result.turn?.decision?.activated) {
+      chatTestStatus.textContent = `${avatarName} ha ricevuto il comando e interviene a voce.`;
+    } else if (result.reason === "self-message") {
+      chatTestStatus.textContent = "Messaggio dell’avatar ignorato per prevenire un loop.";
+    } else {
+      chatTestStatus.textContent = "Messaggio acquisito come contesto; nessuna azione immediata.";
+    }
+    chatTestResult.textContent = JSON.stringify(result, null, 2);
+  } catch (error) {
+    chatTestStatus.className = "recording-status";
+    chatTestStatus.textContent = `Messaggio chat non acquisito: ${error.message}`;
+    chatTestResult.textContent = `Errore: ${error.message}`;
+  } finally {
+    chatTestButton.disabled = false;
+  }
+});
 
 async function refreshContext() {
   try {

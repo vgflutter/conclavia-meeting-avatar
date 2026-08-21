@@ -1,6 +1,8 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
+import type { ChatCommandAliases } from "../domain/protocol.js";
+
 export const avatarProfiles = [
   { id: "aera", label: "Aera · MetaHuman" },
   { id: "ada", label: "Ada · MetaHuman" },
@@ -30,6 +32,14 @@ export type EnglishVoiceId = (typeof englishVoices)[number]["id"];
 export const voiceStyles = ["natural", "lively", "authoritative"] as const;
 export type VoiceStyle = (typeof voiceStyles)[number];
 
+export const defaultChatCommandAliases: ChatCommandAliases = {
+  raiseHand: ["alza la mano", "chiedi la parola", "raise your hand", "request to speak"],
+  lowerHand: ["abbassa la mano", "ritira la richiesta", "lower your hand"],
+  summarizeInChat: ["riassumi in chat", "scrivi un riassunto", "summarize in chat"],
+  replyInChat: ["rispondi in chat", "scrivi in chat", "reply in chat"],
+  speak: ["intervieni", "parla", "rispondi a voce", "speak"],
+};
+
 export interface AvatarConfig {
   avatarProfile: string;
   name: string;
@@ -40,6 +50,8 @@ export interface AvatarConfig {
   systemPrompt: string;
   webSearchEnabled: boolean;
   requestToSpeakEnabled: boolean;
+  chatEnabled: boolean;
+  chatCommandAliases: ChatCommandAliases;
   voiceStyle: VoiceStyle;
   italianVoice: ItalianVoiceId;
   englishVoice: EnglishVoiceId;
@@ -63,6 +75,8 @@ export interface AvatarConfigInput {
   systemPrompt?: unknown;
   webSearchEnabled?: unknown;
   requestToSpeakEnabled?: unknown;
+  chatEnabled?: unknown;
+  chatCommandAliases?: unknown;
   voiceStyle?: unknown;
   italianVoice?: unknown;
   englishVoice?: unknown;
@@ -72,7 +86,7 @@ export interface AvatarConfigInput {
 }
 
 interface StoredAvatarConfig extends Omit<AvatarConfig, "apiKey"> {
-  version: 1;
+  version: 2;
   apiKey?: string;
 }
 
@@ -100,6 +114,49 @@ function boolUpdate(value: unknown, current: boolean, label: string): boolean {
   return value;
 }
 
+function commandAliasList(value: unknown, fallback: string[], label: string): string[] {
+  if (value === undefined) return [...fallback];
+  if (!Array.isArray(value) || value.length === 0 || value.length > 12) {
+    throw new Error(`${label} deve contenere da 1 a 12 comandi`);
+  }
+  const aliases = value.map((entry) => textField(entry, label, 80));
+  return [...new Set(aliases.map((alias) => alias.replace(/\s+/gu, " ")))];
+}
+
+function commandAliases(
+  value: unknown,
+  fallback: ChatCommandAliases,
+): ChatCommandAliases {
+  if (value === undefined) {
+    return {
+      raiseHand: [...fallback.raiseHand],
+      lowerHand: [...fallback.lowerHand],
+      summarizeInChat: [...fallback.summarizeInChat],
+      replyInChat: [...fallback.replyInChat],
+      speak: [...fallback.speak],
+    };
+  }
+  if (typeof value !== "object" || value === null) {
+    throw new Error("Comandi chat non validi");
+  }
+  const record = value as Record<string, unknown>;
+  return {
+    raiseHand: commandAliasList(record.raiseHand, fallback.raiseHand, "Comandi alza mano"),
+    lowerHand: commandAliasList(record.lowerHand, fallback.lowerHand, "Comandi abbassa mano"),
+    summarizeInChat: commandAliasList(
+      record.summarizeInChat,
+      fallback.summarizeInChat,
+      "Comandi riassunto chat",
+    ),
+    replyInChat: commandAliasList(
+      record.replyInChat,
+      fallback.replyInChat,
+      "Comandi risposta chat",
+    ),
+    speak: commandAliasList(record.speak, fallback.speak, "Comandi intervento vocale"),
+  };
+}
+
 function parseStored(value: unknown, fallback: AvatarConfig): AvatarConfig | null {
   if (typeof value !== "object" || value === null) return null;
   const record = value as Record<string, unknown>;
@@ -122,6 +179,10 @@ function parseStored(value: unknown, fallback: AvatarConfig): AvatarConfig | nul
       requestToSpeakEnabled: typeof record.requestToSpeakEnabled === "boolean"
         ? record.requestToSpeakEnabled
         : fallback.requestToSpeakEnabled,
+      chatEnabled: typeof record.chatEnabled === "boolean"
+        ? record.chatEnabled
+        : fallback.chatEnabled,
+      chatCommandAliases: commandAliases(record.chatCommandAliases, fallback.chatCommandAliases),
       voiceStyle: voiceStyles.includes(record.voiceStyle as VoiceStyle)
         ? record.voiceStyle as VoiceStyle
         : fallback.voiceStyle,
@@ -178,13 +239,17 @@ export class AvatarConfigStore {
   }
 
   get current(): AvatarConfig {
-    return { ...this.#config };
+    return {
+      ...this.#config,
+      chatCommandAliases: commandAliases(undefined, this.#config.chatCommandAliases),
+    };
   }
 
   get publicConfig(): PublicAvatarConfig {
     const { apiKey, ...config } = this.#config;
     return {
       ...config,
+      chatCommandAliases: commandAliases(undefined, config.chatCommandAliases),
       apiKeyConfigured: apiKey.length > 0,
       apiKeySource: this.#hasLocalApiKey
         ? "local"
@@ -254,6 +319,11 @@ export class AvatarConfigStore {
         current.requestToSpeakEnabled,
         "Richiesta di parola",
       ),
+      chatEnabled: boolUpdate(input.chatEnabled, current.chatEnabled, "Lettura chat"),
+      chatCommandAliases: commandAliases(
+        input.chatCommandAliases,
+        current.chatCommandAliases,
+      ),
       voiceStyle: voiceStyle as VoiceStyle,
       italianVoice: italianVoice as ItalianVoiceId,
       englishVoice: englishVoice as EnglishVoiceId,
@@ -280,7 +350,7 @@ export class AvatarConfigStore {
     const temporaryPath = `${this.#path}.tmp`;
     const { apiKey, ...publicFields } = this.#config;
     const stored: StoredAvatarConfig = {
-      version: 1,
+      version: 2,
       ...publicFields,
       ...(this.#hasLocalApiKey ? { apiKey } : {}),
     };

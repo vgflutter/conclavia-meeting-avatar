@@ -11,10 +11,12 @@ import {
   isDialogueDismissal,
   isFloorGrant,
 } from "./core/activation.js";
+import { matchChatCommand } from "./core/chat-commands.js";
 import { ConclaviaRenderer } from "./conclavia/renderer.js";
 import {
   avatarProfiles,
   AvatarConfigStore,
+  defaultChatCommandAliases,
   englishVoices,
   italianVoices,
   meetingPlatforms,
@@ -26,8 +28,11 @@ import type {
   ActivationDecision,
   AvatarInterventionRequest,
   AvatarSpeechCue,
+  ChatMessageInput,
+  OutboundChatMessage,
   TranscriptSegment,
 } from "./domain/protocol.js";
+import { chatPlatforms } from "./domain/protocol.js";
 import { MeetingIntelligence } from "./openai/meeting-intelligence.js";
 import { runMacosPreflight } from "./preflight/macos.js";
 import { MeetingListener } from "./teams/meeting-listener.js";
@@ -42,6 +47,7 @@ const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
   ["/styles.css", ["styles.css", "text/css; charset=utf-8"]],
 ] as const);
 const maxRetainedSegments = 200;
+const maxSeenChatMessages = 2_000;
 const maxAudioBytes = 20 * 1024 * 1024;
 const interventionRequestTtlMs = 45_000;
 
@@ -104,6 +110,47 @@ function parseSimulationInput(value: unknown): { speakerName: string; text: stri
   return { speakerName, text };
 }
 
+function parseChatMessageInput(value: unknown): ChatMessageInput | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.platform !== "string" ||
+    !chatPlatforms.includes(record.platform as ChatMessageInput["platform"]) ||
+    typeof record.meetingId !== "string" ||
+    typeof record.messageId !== "string" ||
+    typeof record.speakerName !== "string" ||
+    typeof record.text !== "string"
+  ) {
+    return null;
+  }
+  const meetingId = record.meetingId.trim();
+  const messageId = record.messageId.trim();
+  const speakerName = record.speakerName.trim();
+  const text = record.text.trim();
+  if (
+    !meetingId || meetingId.length > 240 ||
+    !messageId || messageId.length > 240 ||
+    !speakerName || speakerName.length > 80 ||
+    !text || text.length > 4_000
+  ) {
+    return null;
+  }
+  const requestedCapturedAt = typeof record.capturedAt === "string"
+    ? Date.parse(record.capturedAt)
+    : Number.NaN;
+  return {
+    platform: record.platform as ChatMessageInput["platform"],
+    meetingId,
+    messageId,
+    speakerName,
+    text,
+    ...(Number.isFinite(requestedCapturedAt)
+      ? { capturedAt: new Date(requestedCapturedAt).toISOString() }
+      : {}),
+    senderIsAvatar: record.senderIsAvatar === true,
+  };
+}
+
 function audioFileDetails(contentTypeHeader: string | undefined): {
   mimeType: string;
   extension: string;
@@ -158,6 +205,8 @@ export interface ServerOptions {
 
 export function startServer(options: ServerOptions): Promise<void> {
   const transcriptHistory: TranscriptSegment[] = [];
+  const seenChatMessageKeys = new Set<string>();
+  const activeChatMessageKeys = new Set<string>();
   const configStore = new AvatarConfigStore(options.configPath, {
     avatarProfile: "aera",
     name: options.wakeWord,
@@ -171,6 +220,8 @@ export function startServer(options: ServerOptions): Promise<void> {
       "Agisci come una partecipante reale alla riunione. Distingui fatti, ipotesi e opinioni; sii concisa e orientata all'obiettivo.",
     webSearchEnabled: true,
     requestToSpeakEnabled: true,
+    chatEnabled: true,
+    chatCommandAliases: defaultChatCommandAliases,
     voiceStyle: "lively",
     italianVoice: "Bianca",
     englishVoice: "Danielle",
@@ -214,13 +265,20 @@ export function startServer(options: ServerOptions): Promise<void> {
     }
   };
 
-  const retainAvatarCue = (cue: AvatarSpeechCue) => {
+  const retainAvatarCue = (
+    cue: AvatarSpeechCue,
+    source: TranscriptSegment["source"] = "speech",
+    origin?: TranscriptSegment,
+  ) => {
     retainSegment({
       id: cue.id,
       speakerName: cue.speakerName ?? runtimeConfig.name,
       text: cue.sentences.map((sentence) => sentence.text).join(" "),
       isFinal: true,
       capturedAt: cue.createdAt,
+      source,
+      ...(origin?.platform ? { platform: origin.platform } : {}),
+      ...(origin?.meetingId ? { meetingId: origin.meetingId } : {}),
     });
   };
 
@@ -234,7 +292,10 @@ export function startServer(options: ServerOptions): Promise<void> {
     participationRequest: participationSnapshot(),
   });
 
-  const processSegment = async (segment: TranscriptSegment) => {
+  const processSegment = async (
+    segment: TranscriptSegment,
+    responseChannel: "voice" | "chat" = "voice",
+  ) => {
     const startedAt = performance.now();
     let llmMs: number | null = null;
     let rendererMs: number | null = null;
@@ -292,18 +353,26 @@ export function startServer(options: ServerOptions): Promise<void> {
             transcriptHistory,
             segment,
             direct ? "direct" : "observer",
+            responseChannel,
           );
           llmMs = Math.round(performance.now() - llmStartedAt);
           usedWebSearch = turn.usedWebSearch;
 
           if (turn.action === "speak" && turn.cue) {
             decision = { ...decision, activated: true, cue: turn.cue };
-            if (decision.reason === "wake-word") {
+            if (decision.reason === "wake-word" && responseChannel === "voice") {
               dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
-            } else if (decision.reason === "conversation-follow-up") {
+            } else if (
+              decision.reason === "conversation-follow-up" ||
+              responseChannel === "chat"
+            ) {
               dialogueActiveUntil = 0;
             }
-            retainAvatarCue(turn.cue);
+            retainAvatarCue(
+              turn.cue,
+              responseChannel === "chat" ? "chat" : "speech",
+              segment,
+            );
           } else if (turn.action === "request-to-speak" && turn.cue) {
             const createdAt = new Date();
             const request: AvatarInterventionRequest = {
@@ -352,7 +421,11 @@ export function startServer(options: ServerOptions): Promise<void> {
       }
     }
 
-    if (rendererArmed && decision.cue?.provider === "openai") {
+    if (
+      responseChannel === "voice" &&
+      rendererArmed &&
+      decision.cue?.provider === "openai"
+    ) {
       try {
         const rendererStartedAt = performance.now();
         delivery = await renderer.deliver(decision.cue, {
@@ -385,6 +458,104 @@ export function startServer(options: ServerOptions): Promise<void> {
       },
       usedWebSearch,
       warning,
+      responseChannel,
+    };
+  };
+
+  const rememberChatMessage = (key: string) => {
+    seenChatMessageKeys.add(key);
+    while (seenChatMessageKeys.size > maxSeenChatMessages) {
+      const oldest = seenChatMessageKeys.values().next().value;
+      if (!oldest) break;
+      seenChatMessageKeys.delete(oldest);
+    }
+  };
+
+  const processChatMessage = async (input: ChatMessageInput) => {
+    const segment: TranscriptSegment = {
+      id: randomUUID(),
+      speakerName: input.speakerName,
+      text: input.text,
+      isFinal: true,
+      capturedAt: input.capturedAt ?? new Date().toISOString(),
+      source: "chat",
+      platform: input.platform,
+      meetingId: input.meetingId,
+      externalId: input.messageId,
+    };
+    const isSelfMessage = input.senderIsAvatar === true ||
+      input.speakerName.localeCompare(runtimeConfig.name, undefined, { sensitivity: "accent" }) === 0;
+    if (isSelfMessage) {
+      return {
+        accepted: false,
+        reason: "self-message",
+        segment,
+        command: null,
+        turn: null,
+        outboundMessages: [] as OutboundChatMessage[],
+      };
+    }
+
+    const command = matchChatCommand(
+      input.text,
+      runtimeConfig.name,
+      runtimeConfig.chatCommandAliases,
+    );
+
+    if (command?.kind === "raise-hand" || command?.kind === "lower-hand") {
+      retainSegment(segment);
+      let warning: string | null = null;
+      if (command.kind === "lower-hand") pendingRequest = null;
+      if (rendererArmed) {
+        try {
+          if (command.kind === "raise-hand") {
+            await renderer.raiseHand(runtimeConfig.name);
+          } else {
+            await renderer.lowerHand(runtimeConfig.name);
+          }
+        } catch (error: unknown) {
+          warning = error instanceof Error ? error.message : "Comando gesto non riuscito.";
+        }
+      } else {
+        warning = "Il comando è stato acquisito, ma il renderer non è armato.";
+      }
+      return {
+        accepted: true,
+        reason: "command",
+        segment,
+        command,
+        action: command.kind,
+        warning,
+        turn: null,
+        outboundMessages: [] as OutboundChatMessage[],
+      };
+    }
+
+    const responseChannel = command?.kind === "summarize-in-chat" ||
+      command?.kind === "reply-in-chat"
+      ? "chat"
+      : "voice";
+    const turn = await processSegment(segment, responseChannel);
+    const outboundMessages: OutboundChatMessage[] = [];
+    if (responseChannel === "chat" && turn.decision.cue?.sentences.length) {
+      outboundMessages.push({
+        id: randomUUID(),
+        platform: input.platform,
+        meetingId: input.meetingId,
+        replyToMessageId: input.messageId,
+        speakerName: runtimeConfig.name,
+        text: turn.decision.cue.sentences.map((sentence) => sentence.text).join(" "),
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return {
+      accepted: true,
+      reason: command ? "command" : "message",
+      segment,
+      command,
+      action: command?.kind ?? null,
+      turn,
+      outboundMessages,
     };
   };
 
@@ -418,6 +589,8 @@ export function startServer(options: ServerOptions): Promise<void> {
           wakeWord: runtimeConfig.name,
           webSearchEnabled: runtimeConfig.webSearchEnabled,
           requestToSpeakEnabled: runtimeConfig.requestToSpeakEnabled,
+          chatEnabled: runtimeConfig.chatEnabled,
+          supportedChatPlatforms: chatPlatforms,
           dialogue: contextSnapshot().dialogue,
           participationRequest: participationSnapshot(),
           listener: listener?.status ?? null,
@@ -583,6 +756,17 @@ export function startServer(options: ServerOptions): Promise<void> {
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/chat/status") {
+        sendJson(response, 200, {
+          enabled: runtimeConfig.chatEnabled,
+          avatarName: runtimeConfig.name,
+          platforms: chatPlatforms,
+          commandAliases: runtimeConfig.chatCommandAliases,
+          retainedChatMessages: transcriptHistory.filter((segment) => segment.source === "chat").length,
+        });
+        return;
+      }
+
       if (request.method === "GET" && url.pathname === "/api/renderer/status") {
         const status = await renderer.status();
         if (status.playerUrl) rendererPlayerUrl = status.playerUrl;
@@ -651,8 +835,59 @@ export function startServer(options: ServerOptions): Promise<void> {
           text: input.text,
           isFinal: true,
           capturedAt: new Date().toISOString(),
+          source: "manual",
         };
         sendJson(response, 200, await processSegment(segment));
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/chat/messages") {
+        const input = parseChatMessageInput(await readJsonBody(request));
+        if (!input) {
+          sendJson(response, 400, { error: "Invalid chat message payload" });
+          return;
+        }
+        if (!runtimeConfig.chatEnabled) {
+          sendJson(response, 200, {
+            accepted: false,
+            reason: "chat-disabled",
+            command: null,
+            turn: null,
+            outboundMessages: [],
+          });
+          return;
+        }
+
+        const key = `${input.platform}\u0000${input.meetingId}\u0000${input.messageId}`;
+        if (seenChatMessageKeys.has(key)) {
+          sendJson(response, 200, {
+            accepted: false,
+            duplicate: true,
+            reason: "duplicate",
+            command: null,
+            turn: null,
+            outboundMessages: [],
+          });
+          return;
+        }
+        if (activeChatMessageKeys.has(key)) {
+          sendJson(response, 202, {
+            accepted: false,
+            processing: true,
+            reason: "processing",
+            outboundMessages: [],
+          });
+          return;
+        }
+
+        activeChatMessageKeys.add(key);
+        try {
+          const result = await processChatMessage(input);
+          rememberChatMessage(key);
+          sendJson(response, 200, result);
+        } finally {
+          activeChatMessageKeys.delete(key);
+        }
         return;
       }
 
@@ -705,6 +940,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           text,
           isFinal: true,
           capturedAt: new Date().toISOString(),
+          source: "speech",
         };
         sendJson(response, 200, {
           ...(await processSegment(segment)),
