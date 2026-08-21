@@ -8,290 +8,218 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="hero">
-        <div>
-          <p class="eyebrow">CONCLAVIA LAB</p>
-          <h1>Meeting Avatar</h1>
-          <p class="lede">Configura e porta un partecipante virtuale Conclavia dentro il tuo meeting.</p>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">C</div>
+          <div>
+            <p class="eyebrow">CONCLAVIA LAB</p>
+            <h1>Meeting Avatar</h1>
+          </div>
         </div>
-        <div class="runtime">
-          <span class="phase">POC · FASE 1</span>
-          <span id="provider-status" class="provider-status">OpenAI: controllo…</span>
+        <nav class="workspace-nav" aria-label="Area di lavoro">
+          <button class="nav-button active" type="button" data-view="meeting">Sala test</button>
+          <button class="nav-button" type="button" data-view="settings">Configurazione</button>
+          <button class="nav-button" type="button" data-view="diagnostics">Diagnostica</button>
+        </nav>
+        <div class="runtime-summary">
+          <span id="provider-status" class="status-pill">OpenAI: controllo…</span>
+          <span id="renderer-pill" class="status-pill">Avatar: controllo…</span>
+          <span id="listener-pill" class="status-pill">Ascolto: fermo</span>
         </div>
       </header>
 
-      <section class="flow" aria-label="Flusso del sistema">
-        <span id="meeting-platform-name">Meeting</span><b>→</b><span>Trascrizione continua</span><b>→</b><span>Memoria LLM</span><b>→</b><span>Partecipazione</span><b>→</b><span>MetaHuman</span><b>→</b><span>OBS</span>
+      <section id="meeting-view" class="workspace-view active" data-view-panel="meeting">
+        <header class="meeting-header">
+          <div>
+            <div class="meeting-title-line">
+              <span class="live-dot" aria-hidden="true"></span>
+              <h2>Riunione di prova</h2>
+              <span id="meeting-platform-badge" class="platform-badge">Microsoft Teams</span>
+            </div>
+            <p>Simula voce, trascrizione, chat e regia prima di entrare in un meeting reale.</p>
+          </div>
+          <div class="meeting-meta">
+            <span id="meeting-clock">00:00</span>
+            <span id="participant-count">2 partecipanti</span>
+            <button id="reset-meeting-button" class="text-button danger" type="button">Nuova sessione</button>
+          </div>
+        </header>
+
+        <div class="meeting-layout">
+          <section class="stage-column" aria-label="Stage del meeting">
+            <div class="video-stage">
+              <div id="renderer-preview" class="renderer-preview">
+                <div class="stage-placeholder">
+                  <div class="avatar-orbit" aria-hidden="true"><span>C</span></div>
+                  <strong id="stage-avatar-name">Mary</strong>
+                  <p>Avvia il MetaHuman per collegare il video Pixel Streaming.</p>
+                </div>
+              </div>
+              <div class="stage-top-overlay">
+                <span id="stage-live-state" class="stage-badge">OFFLINE</span>
+                <span id="stage-listening-state" class="stage-badge muted-badge">IN ASCOLTO</span>
+              </div>
+              <div class="stage-bottom-overlay">
+                <div class="speaker-identity">
+                  <span class="speaker-avatar" aria-hidden="true">C</span>
+                  <div>
+                    <strong id="stage-speaker-name">Mary</strong>
+                    <small id="stage-speaker-detail">Partecipante virtuale</small>
+                  </div>
+                </div>
+                <span id="stage-mood" class="mood-badge" hidden>attentive · L2</span>
+              </div>
+              <section id="participation-request" class="participation-request" aria-live="polite" hidden>
+                <div class="request-icon" aria-hidden="true">✋</div>
+                <div class="request-copy">
+                  <strong id="participation-title">Mary chiede la parola</strong>
+                  <p id="participation-reason"></p>
+                </div>
+                <div class="request-actions">
+                  <button id="participation-grant" type="button">Dalle la parola</button>
+                  <button id="participation-dismiss" class="secondary" type="button">Ignora</button>
+                </div>
+              </section>
+            </div>
+
+            <div class="meeting-controls" aria-label="Controlli riunione">
+              <button id="record-button" class="control-button" type="button"><span class="control-icon">●</span><span>Microfono</span></button>
+              <button id="stop-button" class="control-button danger" type="button" disabled><span class="control-icon">■</span><span>Stop e invia</span></button>
+              <button id="listener-start-button" class="control-button" type="button"><span class="control-icon">◉</span><span>Ascolta meeting</span></button>
+              <button id="listener-stop-button" class="control-button" type="button" disabled><span class="control-icon">○</span><span>Ferma ascolto</span></button>
+              <button id="renderer-start-button" class="control-button primary-control" type="button"><span class="control-icon">▶</span><span>Avvia avatar</span></button>
+              <button id="renderer-stop-button" class="control-button" type="button" disabled><span class="control-icon">■</span><span>Ferma avatar</span></button>
+            </div>
+
+            <div class="live-status-strip">
+              <span id="recording-status">Microfono pronto.</span>
+              <span id="listener-status">Ascolto continuo fermo.</span>
+              <span id="listener-partial" class="live-partial" aria-live="polite"></span>
+              <span id="listener-turn-count">0 turni</span>
+            </div>
+
+            <form id="meeting-composer-form" class="meeting-composer">
+              <div class="composer-topline">
+                <label>Partecipa come<input id="speaker-name" name="speakerName" value="Vincenzo" maxlength="80" required /></label>
+                <div class="channel-switch" role="group" aria-label="Canale del messaggio">
+                  <button class="channel-button active" type="button" data-channel="voice">Parlato</button>
+                  <button class="channel-button" type="button" data-channel="chat">Chat</button>
+                </div>
+              </div>
+              <label class="composer-field">
+                <span id="composer-label">Intervento nella riunione</span>
+                <textarea id="meeting-message" name="text" rows="3" maxlength="4000" placeholder="Scrivi come se stessi parlando nel meeting…" required></textarea>
+              </label>
+              <div class="composer-footer">
+                <p id="composer-hint">Ogni intervento viene letto e aggiunto alla memoria. Per una risposta diretta, interpella Mary.</p>
+                <button id="meeting-send-button" type="submit">Invia nel meeting</button>
+              </div>
+            </form>
+
+            <section class="command-dock" aria-labelledby="command-dock-title">
+              <div class="command-dock-heading">
+                <div><p class="eyebrow">REGIA RAPIDA</p><h3 id="command-dock-title">Prova tutti i comandi</h3></div>
+                <span>inviati attraverso la chat reale</span>
+              </div>
+              <div id="quick-commands" class="quick-commands">
+                <button type="button" data-command="raiseHand"><span>✋</span> Alza la mano</button>
+                <button type="button" data-command="lowerHand"><span>✓</span> Abbassa la mano</button>
+                <button type="button" data-command="summarizeInChat"><span>≡</span> Riassumi in chat</button>
+                <button type="button" data-command="replyInChat"><span>↩</span> Rispondi in chat</button>
+                <button type="button" data-command="speak"><span>◉</span> Intervieni a voce</button>
+              </div>
+            </section>
+          </section>
+
+          <aside class="meeting-sidebar" aria-label="Conversazione del meeting">
+            <div class="sidebar-tabs" role="tablist" aria-label="Pannelli riunione">
+              <button class="sidebar-tab active" type="button" role="tab" data-side-panel="transcript">Trascrizione</button>
+              <button class="sidebar-tab" type="button" role="tab" data-side-panel="chat">Chat</button>
+              <button class="sidebar-tab" type="button" role="tab" data-side-panel="participants">Persone</button>
+            </div>
+            <div class="sidebar-summary"><span id="context-count">0 interventi</span><span id="dialogue-state">Mary in ascolto</span></div>
+            <div id="context-results" class="conversation-feed" aria-live="polite">
+              <div class="feed-empty"><strong>La riunione è pronta</strong><p>Parla, scrivi in chat o usa un comando rapido per iniziare il test.</p></div>
+            </div>
+            <div id="sidebar-chat-composer" class="sidebar-chat-composer" hidden>
+              <textarea id="sidebar-chat-text" rows="2" maxlength="4000" placeholder="Scrivi nella chat del meeting…"></textarea>
+              <button id="sidebar-chat-send" type="button" aria-label="Invia in chat">↑</button>
+            </div>
+          </aside>
+        </div>
+
+        <section class="meeting-result" aria-live="polite">
+          <div><span id="decision-indicator" class="decision-indicator"></span><p id="decision-status">In attesa del primo intervento.</p></div>
+          <div id="latency-summary" class="latency-summary">LLM — · Avatar —</div>
+        </section>
+        <div id="mary-response" class="mary-response" aria-live="polite"></div>
+        <p id="chat-test-status" class="sr-only" aria-live="polite">Chat pronta.</p>
       </section>
 
-      <section class="panel config-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">00 · IDENTITÀ</p>
-            <h2>Configura il partecipante virtuale</h2>
-          </div>
+      <section id="settings-view" class="workspace-view" data-view-panel="settings" hidden>
+        <div class="section-heading">
+          <div><p class="eyebrow">IDENTITÀ E COMPORTAMENTO</p><h2>Configura il partecipante virtuale</h2><p>Nome, modello, voce, autonomia e comandi vengono applicati senza riavviare il companion.</p></div>
           <span id="config-summary" class="config-summary">Caricamento…</span>
         </div>
-        <p class="muted">Nome e personalità guidano la partecipazione; il nome diventa anche il trigger vocale. Le modifiche sono applicate senza riavviare il companion.</p>
         <form id="avatar-config-form" class="config-form" autocomplete="off">
-          <div class="config-grid">
-            <label>
-              Avatar
-              <select id="avatar-profile" name="avatarProfile" required></select>
-            </label>
-            <label>
-              Piattaforma meeting
-              <select id="meeting-platform" name="meetingPlatform"></select>
-            </label>
-            <label>
-              Nome e trigger
-              <input id="avatar-name" name="name" maxlength="40" required />
-            </label>
-            <label>
-              Modello LLM
-              <input id="response-model" name="responseModel" list="model-suggestions" maxlength="120" required />
-              <datalist id="model-suggestions">
-                <option value="gpt-5.4-mini"></option>
-                <option value="gpt-5.4"></option>
-                <option value="gpt-5-mini"></option>
-              </datalist>
-            </label>
-            <label>
-              Stile della voce
-              <select id="voice-style" name="voiceStyle">
-                <option value="lively">Vivace e reattiva</option>
-                <option value="natural">Naturale</option>
-                <option value="authoritative">Autorevole</option>
-              </select>
-            </label>
-            <label>
-              Voce italiana
-              <select id="italian-voice" name="italianVoice"></select>
-            </label>
-            <label>
-              English voice
-              <select id="english-voice" name="englishVoice"></select>
-            </label>
-            <label>
-              Audio del meeting da ascoltare
-              <input id="meeting-audio-device" name="meetingAudioDevice" maxlength="160" required />
-            </label>
-            <label>
-              Nome speaker trascrizione
-              <input id="meeting-speaker-name" name="meetingSpeakerName" maxlength="80" required />
-            </label>
-          </div>
-          <label>
-            OpenAI API key
-            <input id="openai-api-key" name="apiKey" type="password" maxlength="500" placeholder="Lascia vuoto per mantenere la chiave attuale" spellcheck="false" />
-            <span id="api-key-state" class="field-note">La chiave non viene mai restituita al browser.</span>
-          </label>
-          <label>
-            Scopo
-            <textarea id="avatar-purpose" name="purpose" rows="2" maxlength="1500" required></textarea>
-          </label>
-          <label>
-            Personalità
-            <textarea id="avatar-personality" name="personality" rows="2" maxlength="1500" required></textarea>
-          </label>
-          <label>
-            System prompt
-            <textarea id="avatar-system-prompt" name="systemPrompt" rows="4" maxlength="6000" required></textarea>
-          </label>
-          <div class="config-toggles">
-            <label class="toggle-row">
-              <input id="web-search-enabled" name="webSearchEnabled" type="checkbox" />
-              <span><strong>Ricerca web</strong><small>Cerca dati aggiornati quando una domanda diretta lo richiede.</small></span>
-            </label>
-            <label class="toggle-row">
-              <input id="request-to-speak-enabled" name="requestToSpeakEnabled" type="checkbox" />
-              <span><strong>Request to speak</strong><small>Può proporre un intervento, ma parla solo dopo l’autorizzazione.</small></span>
-            </label>
-            <label class="toggle-row">
-              <input id="chat-enabled" name="chatEnabled" type="checkbox" />
-              <span><strong>Chat del meeting</strong><small>Acquisisce messaggi da Teams, Meet o adapter generici e applica i comandi configurati.</small></span>
-            </label>
-          </div>
-          <section class="command-config" aria-labelledby="command-config-title">
-            <div>
-              <h3 id="command-config-title">Comandi chat</h3>
-              <p>Alias separati da virgola. Il comando è eseguito soltanto quando il messaggio inizia con il nome dell’avatar.</p>
+          <section class="settings-card">
+            <div class="settings-card-heading"><span>01</span><div><h3>Identità</h3><p>Chi è l’avatar e come si presenta nel meeting.</p></div></div>
+            <div class="config-grid three-columns">
+              <label>Avatar<select id="avatar-profile" name="avatarProfile" required></select></label>
+              <label>Piattaforma meeting<select id="meeting-platform" name="meetingPlatform"></select></label>
+              <label>Nome e trigger<input id="avatar-name" name="name" maxlength="40" required /></label>
+              <label>Modello LLM<input id="response-model" name="responseModel" list="model-suggestions" maxlength="120" required /><datalist id="model-suggestions"><option value="gpt-5.4-mini"></option><option value="gpt-5.4"></option><option value="gpt-5-mini"></option></datalist></label>
+              <label>Stile della voce<select id="voice-style" name="voiceStyle"><option value="lively">Vivace e reattiva</option><option value="natural">Naturale</option><option value="authoritative">Autorevole</option></select></label>
+              <label>Voce italiana<select id="italian-voice" name="italianVoice"></select></label>
+              <label>English voice<select id="english-voice" name="englishVoice"></select></label>
+              <label>Audio meeting da ascoltare<input id="meeting-audio-device" name="meetingAudioDevice" maxlength="160" required /></label>
+              <label>Nome speaker trascrizione<input id="meeting-speaker-name" name="meetingSpeakerName" maxlength="80" required /></label>
             </div>
-            <div class="command-grid">
-              <label>
-                Alza la mano
-                <input id="command-raise-hand" maxlength="500" />
-              </label>
-              <label>
-                Abbassa la mano
-                <input id="command-lower-hand" maxlength="500" />
-              </label>
-              <label>
-                Riassumi nella chat
-                <input id="command-summarize-chat" maxlength="500" />
-              </label>
-              <label>
-                Rispondi nella chat
-                <input id="command-reply-chat" maxlength="500" />
-              </label>
-              <label>
-                Intervieni a voce
-                <input id="command-speak" maxlength="500" />
-              </label>
+            <label>OpenAI API key<input id="openai-api-key" name="apiKey" type="password" maxlength="500" placeholder="Lascia vuoto per mantenere la chiave attuale" spellcheck="false" /><span id="api-key-state" class="field-note">La chiave non viene mai restituita al browser.</span></label>
+          </section>
+
+          <section class="settings-card">
+            <div class="settings-card-heading"><span>02</span><div><h3>Scopo e personalità</h3><p>Le istruzioni che governano tutte le risposte.</p></div></div>
+            <label>Scopo<textarea id="avatar-purpose" name="purpose" rows="2" maxlength="1500" required></textarea></label>
+            <label>Personalità<textarea id="avatar-personality" name="personality" rows="2" maxlength="1500" required></textarea></label>
+            <label>System prompt<textarea id="avatar-system-prompt" name="systemPrompt" rows="5" maxlength="6000" required></textarea></label>
+          </section>
+
+          <section class="settings-card">
+            <div class="settings-card-heading"><span>03</span><div><h3>Partecipazione</h3><p>Decidi cosa può osservare e quando può intervenire.</p></div></div>
+            <div class="config-toggles">
+              <label class="toggle-row"><input id="web-search-enabled" name="webSearchEnabled" type="checkbox" /><span><strong>Ricerca web</strong><small>Usa dati aggiornati quando servono.</small></span></label>
+              <label class="toggle-row"><input id="request-to-speak-enabled" name="requestToSpeakEnabled" type="checkbox" /><span><strong>Request to speak</strong><small>Propone un intervento e attende il permesso.</small></span></label>
+              <label class="toggle-row"><input id="chat-enabled" name="chatEnabled" type="checkbox" /><span><strong>Chat del meeting</strong><small>Legge Teams, Meet e adapter generici.</small></span></label>
             </div>
           </section>
-          <div class="config-submit">
-            <button id="config-save-button" type="submit">Salva configurazione</button>
-            <p id="config-status" class="field-note" aria-live="polite">Nessuna modifica in attesa.</p>
-          </div>
+
+          <section class="settings-card">
+            <div class="settings-card-heading"><span>04</span><div><h3>Comandi chat</h3><p>Alias separati da virgola; il messaggio deve iniziare con il nome dell’avatar.</p></div></div>
+            <div class="command-grid">
+              <label>Alza la mano<input id="command-raise-hand" maxlength="500" /></label>
+              <label>Abbassa la mano<input id="command-lower-hand" maxlength="500" /></label>
+              <label>Riassumi nella chat<input id="command-summarize-chat" maxlength="500" /></label>
+              <label>Rispondi nella chat<input id="command-reply-chat" maxlength="500" /></label>
+              <label>Intervieni a voce<input id="command-speak" maxlength="500" /></label>
+            </div>
+          </section>
+          <div class="config-submit"><button id="config-save-button" type="submit">Salva e applica</button><p id="config-status" class="field-note" aria-live="polite">Nessuna modifica in attesa.</p></div>
         </form>
       </section>
 
-      <div class="grid">
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">01 · MAC</p>
-              <h2>Preflight dispositivi</h2>
-            </div>
-            <button id="preflight-button" type="button">Controlla</button>
-          </div>
-          <p class="muted">Verifica gli strumenti necessari prima di aprire una riunione vera.</p>
-          <div id="preflight-results" class="results" aria-live="polite">
-            <p class="empty">Nessun controllo eseguito.</p>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">02 · ASCOLTO</p>
-              <h2 id="avatar-chat-title">Parla con Mary</h2>
-            </div>
-          </div>
-          <form id="simulation-form">
-            <label>
-              Partecipante per i test manuali
-              <input id="speaker-name" name="speakerName" value="Vincenzo" maxlength="80" required />
-            </label>
-            <section class="microphone-card meeting-listener-card" aria-labelledby="listener-title">
-              <div class="listener-heading">
-                <div>
-                  <h3 id="listener-title">Audio continuo del meeting</h3>
-                  <p>Legge BlackHole 16ch senza interruzioni. Ogni frase entra nella memoria LLM; solo “Mary” abilita la risposta.</p>
-                </div>
-                <span id="listener-turn-count" class="listener-turn-count">0 turni</span>
-              </div>
-              <div class="microphone-actions">
-                <button id="listener-start-button" type="button">Avvia ascolto meeting</button>
-                <button id="listener-stop-button" class="secondary" type="button" disabled>Ferma ascolto</button>
-              </div>
-              <p id="listener-status" class="recording-status" aria-live="polite">Ascolto continuo fermo.</p>
-              <p id="listener-partial" class="listener-partial" aria-live="polite"></p>
-              <p class="listener-note">La trascrizione streaming non assegna ancora i nomi dei singoli partecipanti: le battute usano il nome speaker configurato, ma il testo completo viene conservato.</p>
-            </section>
-            <section class="microphone-card chat-adapter-card" aria-labelledby="chat-adapter-title">
-              <div class="listener-heading">
-                <div>
-                  <h3 id="chat-adapter-title">Chat multipiattaforma</h3>
-                  <p>Simula lo stesso evento prodotto dagli adapter Teams e Google Meet. Le risposte destinate alla chat vengono restituite all’adapter.</p>
-                </div>
-                <span class="listener-turn-count">API CHAT</span>
-              </div>
-              <div class="chat-test-grid">
-                <label>
-                  Origine
-                  <select id="chat-test-platform">
-                    <option value="teams">Microsoft Teams</option>
-                    <option value="google-meet">Google Meet</option>
-                    <option value="generic">Generica</option>
-                  </select>
-                </label>
-                <label>
-                  Meeting ID
-                  <input id="chat-test-meeting-id" value="demo-meeting" maxlength="240" />
-                </label>
-              </div>
-              <label>
-                Messaggio chat di test
-                <textarea id="chat-test-text" rows="3" maxlength="4000">Mary, alza la mano</textarea>
-              </label>
-              <button id="chat-test-button" type="button">Invia come messaggio chat</button>
-              <p id="chat-test-status" class="recording-status" aria-live="polite">Adapter in attesa.</p>
-              <pre id="chat-test-result" class="console compact-console" aria-live="polite">Nessun messaggio chat inviato.</pre>
-            </section>
-            <section id="participation-request" class="participation-request" aria-live="polite" hidden>
-              <div class="request-icon" aria-hidden="true">✋</div>
-              <div class="request-copy">
-                <strong id="participation-title">Mary chiede la parola</strong>
-                <p id="participation-reason"></p>
-              </div>
-              <div class="request-actions">
-                <button id="participation-grant" type="button">Dalle la parola</button>
-                <button id="participation-dismiss" class="secondary" type="button">Ignora</button>
-              </div>
-            </section>
-            <section class="microphone-card" aria-labelledby="microphone-title">
-              <div>
-                <h3 id="microphone-title">Microfono reale</h3>
-                <p>Registra una frase, poi fermati. L’audio viene trascritto e aggiunto alla riunione.</p>
-              </div>
-              <div class="microphone-actions">
-                <button id="record-button" type="button">Registra</button>
-                <button id="stop-button" class="secondary" type="button" disabled>Stop e invia</button>
-              </div>
-              <p id="recording-status" class="recording-status" aria-live="polite">In attesa del microfono.</p>
-            </section>
-            <div class="manual-test">
-              <p class="eyebrow">TEST SENZA AUDIO</p>
-            </div>
-            <label>
-              Frase intercettata
-              <textarea name="text" rows="4" maxlength="2000" required>Mary, cosa ne pensi di questa idea?</textarea>
-            </label>
-            <p id="activation-note" class="muted form-note">Ogni frase finale entra nel contesto. Mary risponde quando viene chiamata o chiede prima la parola.</p>
-            <button type="submit">Invia testo alla conversazione</button>
-          </form>
-          <p id="decision-status" class="decision-status" aria-live="polite">In attesa di una frase…</p>
-          <div id="mary-response" class="mary-response" aria-live="polite"></div>
-          <pre id="simulation-result" class="console" aria-live="polite">In attesa di una frase…</pre>
-          <div class="memory-heading">
-            <h3>Memoria LLM</h3>
-            <span id="context-count">0 frasi</span>
-          </div>
-          <div id="context-results" class="context-results" aria-live="polite">
-            <p class="empty">La conversazione è ancora vuota.</p>
-          </div>
-        </section>
-
-        <section class="panel renderer-panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">03 · CONCLAVIA</p>
-              <h2>MetaHuman per il meeting</h2>
-            </div>
-            <div class="renderer-actions">
-              <button id="renderer-start-button" type="button">Avvia MetaHuman</button>
-              <button id="renderer-stop-button" class="secondary" type="button" disabled>Ferma</button>
-            </div>
-          </div>
-          <p class="muted">Avvia il renderer Unreal già costruito da Conclavia. Quando Mary risponde, lo stesso audio pilota voce, labiale e mood.</p>
-          <p id="renderer-status" class="decision-status" aria-live="polite">Controllo del renderer…</p>
-          <div id="renderer-preview" class="renderer-preview">
-            <p class="empty">Il video Pixel Streaming apparirà qui dopo l’avvio.</p>
-          </div>
-          <div class="teams-route">
-            <strong>Uscita verso il meeting</strong>
-            <p>OBS cattura il player MetaHuman e lo espone come Virtual Camera. L’audio dell’avatar va al microfono virtuale su un bus separato dall’audio della riunione.</p>
-            <a id="renderer-output-link" href="#" target="_blank" rel="noreferrer" hidden>Apri il solo output MetaHuman per OBS ↗</a>
-          </div>
-        </section>
-      </div>
-
-      <footer>
-        Il flusso completo separa l’audio della riunione su BlackHole 16ch dalla voce di Mary su BlackHole 2ch, evitando che l’avatar riascolti sé stesso.
-      </footer>
+      <section id="diagnostics-view" class="workspace-view" data-view-panel="diagnostics" hidden>
+        <div class="section-heading">
+          <div><p class="eyebrow">CONTROL ROOM</p><h2>Diagnostica end-to-end</h2><p>Preflight del Mac, stato del renderer e payload dell’ultimo turno.</p></div>
+          <button id="preflight-button" type="button">Esegui preflight</button>
+        </div>
+        <div class="diagnostics-grid">
+          <section class="diagnostic-card"><h3>Dispositivi</h3><div id="preflight-results" class="results" aria-live="polite"><p class="empty">Nessun controllo eseguito.</p></div></section>
+          <section class="diagnostic-card"><h3>Renderer</h3><p id="renderer-status" class="diagnostic-status">Controllo del renderer…</p><a id="renderer-output-link" href="#" target="_blank" rel="noreferrer" hidden>Apri output pulito per OBS ↗</a><p>OBS usa il player come Virtual Camera; l’audio dell’avatar passa sul bus virtuale separato.</p></section>
+          <section class="diagnostic-card full-width"><div class="diagnostic-heading"><h3>Ultimo evento</h3><span id="chat-test-result-label">JSON</span></div><pre id="simulation-result" class="console" aria-live="polite">In attesa di un evento…</pre></section>
+        </div>
+      </section>
     </main>
     <script type="module" src="/app.js"></script>
   </body>

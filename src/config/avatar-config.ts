@@ -6,6 +6,8 @@ import type { ChatCommandAliases } from "../domain/protocol.js";
 export const avatarProfiles = [
   { id: "aera", label: "Aera · MetaHuman" },
   { id: "ada", label: "Ada · MetaHuman" },
+  { id: "vivian", label: "Vivian · MetaHuman" },
+  { id: "jelena", label: "Jelena · MetaHuman" },
 ] as const;
 
 export const italianVoices = [

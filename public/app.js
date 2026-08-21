@@ -1,83 +1,103 @@
-const preflightButton = document.querySelector("#preflight-button");
-const preflightResults = document.querySelector("#preflight-results");
-const simulationForm = document.querySelector("#simulation-form");
-const simulationResult = document.querySelector("#simulation-result");
-const decisionStatus = document.querySelector("#decision-status");
-const contextCount = document.querySelector("#context-count");
-const contextResults = document.querySelector("#context-results");
-const providerStatus = document.querySelector("#provider-status");
-const speakerNameInput = document.querySelector("#speaker-name");
-const recordButton = document.querySelector("#record-button");
-const stopButton = document.querySelector("#stop-button");
-const recordingStatus = document.querySelector("#recording-status");
-const maryResponse = document.querySelector("#mary-response");
-const rendererStartButton = document.querySelector("#renderer-start-button");
-const rendererStopButton = document.querySelector("#renderer-stop-button");
-const rendererStatus = document.querySelector("#renderer-status");
-const rendererPreview = document.querySelector("#renderer-preview");
-const rendererOutputLink = document.querySelector("#renderer-output-link");
-const listenerStartButton = document.querySelector("#listener-start-button");
-const listenerStopButton = document.querySelector("#listener-stop-button");
-const listenerStatus = document.querySelector("#listener-status");
-const listenerPartial = document.querySelector("#listener-partial");
-const listenerTurnCount = document.querySelector("#listener-turn-count");
-const configForm = document.querySelector("#avatar-config-form");
-const configSummary = document.querySelector("#config-summary");
-const configStatus = document.querySelector("#config-status");
-const configSaveButton = document.querySelector("#config-save-button");
-const avatarProfileInput = document.querySelector("#avatar-profile");
-const meetingPlatformInput = document.querySelector("#meeting-platform");
-const meetingPlatformName = document.querySelector("#meeting-platform-name");
-const avatarNameInput = document.querySelector("#avatar-name");
-const responseModelInput = document.querySelector("#response-model");
-const voiceStyleInput = document.querySelector("#voice-style");
-const italianVoiceInput = document.querySelector("#italian-voice");
-const englishVoiceInput = document.querySelector("#english-voice");
-const meetingAudioDeviceInput = document.querySelector("#meeting-audio-device");
-const meetingSpeakerNameInput = document.querySelector("#meeting-speaker-name");
-const apiKeyInput = document.querySelector("#openai-api-key");
-const apiKeyState = document.querySelector("#api-key-state");
-const purposeInput = document.querySelector("#avatar-purpose");
-const personalityInput = document.querySelector("#avatar-personality");
-const systemPromptInput = document.querySelector("#avatar-system-prompt");
-const webSearchInput = document.querySelector("#web-search-enabled");
-const requestToSpeakInput = document.querySelector("#request-to-speak-enabled");
-const chatEnabledInput = document.querySelector("#chat-enabled");
-const commandRaiseHandInput = document.querySelector("#command-raise-hand");
-const commandLowerHandInput = document.querySelector("#command-lower-hand");
-const commandSummarizeChatInput = document.querySelector("#command-summarize-chat");
-const commandReplyChatInput = document.querySelector("#command-reply-chat");
-const commandSpeakInput = document.querySelector("#command-speak");
-const chatTestPlatformInput = document.querySelector("#chat-test-platform");
-const chatTestMeetingIdInput = document.querySelector("#chat-test-meeting-id");
-const chatTestTextInput = document.querySelector("#chat-test-text");
-const chatTestButton = document.querySelector("#chat-test-button");
-const chatTestStatus = document.querySelector("#chat-test-status");
-const chatTestResult = document.querySelector("#chat-test-result");
-const avatarChatTitle = document.querySelector("#avatar-chat-title");
-const activationNote = document.querySelector("#activation-note");
-const participationRequest = document.querySelector("#participation-request");
-const participationTitle = document.querySelector("#participation-title");
-const participationReason = document.querySelector("#participation-reason");
-const participationGrant = document.querySelector("#participation-grant");
-const participationDismiss = document.querySelector("#participation-dismiss");
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
 
+const elements = {
+  providerStatus: $("#provider-status"),
+  rendererPill: $("#renderer-pill"),
+  listenerPill: $("#listener-pill"),
+  meetingClock: $("#meeting-clock"),
+  meetingPlatformBadge: $("#meeting-platform-badge"),
+  participantCount: $("#participant-count"),
+  resetMeetingButton: $("#reset-meeting-button"),
+  rendererPreview: $("#renderer-preview"),
+  stageAvatarName: $("#stage-avatar-name"),
+  stageSpeakerName: $("#stage-speaker-name"),
+  stageSpeakerDetail: $("#stage-speaker-detail"),
+  stageLiveState: $("#stage-live-state"),
+  stageListeningState: $("#stage-listening-state"),
+  stageMood: $("#stage-mood"),
+  recordButton: $("#record-button"),
+  stopButton: $("#stop-button"),
+  recordingStatus: $("#recording-status"),
+  listenerStartButton: $("#listener-start-button"),
+  listenerStopButton: $("#listener-stop-button"),
+  listenerStatus: $("#listener-status"),
+  listenerPartial: $("#listener-partial"),
+  listenerTurnCount: $("#listener-turn-count"),
+  rendererStartButton: $("#renderer-start-button"),
+  rendererStopButton: $("#renderer-stop-button"),
+  rendererStatus: $("#renderer-status"),
+  rendererOutputLink: $("#renderer-output-link"),
+  meetingComposerForm: $("#meeting-composer-form"),
+  meetingMessage: $("#meeting-message"),
+  meetingSendButton: $("#meeting-send-button"),
+  speakerName: $("#speaker-name"),
+  composerLabel: $("#composer-label"),
+  composerHint: $("#composer-hint"),
+  quickCommands: $("#quick-commands"),
+  contextCount: $("#context-count"),
+  dialogueState: $("#dialogue-state"),
+  contextResults: $("#context-results"),
+  sidebarChatComposer: $("#sidebar-chat-composer"),
+  sidebarChatText: $("#sidebar-chat-text"),
+  sidebarChatSend: $("#sidebar-chat-send"),
+  decisionIndicator: $("#decision-indicator"),
+  decisionStatus: $("#decision-status"),
+  latencySummary: $("#latency-summary"),
+  maryResponse: $("#mary-response"),
+  chatTestStatus: $("#chat-test-status"),
+  participationRequest: $("#participation-request"),
+  participationTitle: $("#participation-title"),
+  participationReason: $("#participation-reason"),
+  participationGrant: $("#participation-grant"),
+  participationDismiss: $("#participation-dismiss"),
+  configForm: $("#avatar-config-form"),
+  configSummary: $("#config-summary"),
+  configStatus: $("#config-status"),
+  configSaveButton: $("#config-save-button"),
+  avatarProfile: $("#avatar-profile"),
+  meetingPlatform: $("#meeting-platform"),
+  avatarName: $("#avatar-name"),
+  responseModel: $("#response-model"),
+  voiceStyle: $("#voice-style"),
+  italianVoice: $("#italian-voice"),
+  englishVoice: $("#english-voice"),
+  meetingAudioDevice: $("#meeting-audio-device"),
+  meetingSpeakerName: $("#meeting-speaker-name"),
+  apiKey: $("#openai-api-key"),
+  apiKeyState: $("#api-key-state"),
+  purpose: $("#avatar-purpose"),
+  personality: $("#avatar-personality"),
+  systemPrompt: $("#avatar-system-prompt"),
+  webSearch: $("#web-search-enabled"),
+  requestToSpeak: $("#request-to-speak-enabled"),
+  chatEnabled: $("#chat-enabled"),
+  commandRaiseHand: $("#command-raise-hand"),
+  commandLowerHand: $("#command-lower-hand"),
+  commandSummarizeChat: $("#command-summarize-chat"),
+  commandReplyChat: $("#command-reply-chat"),
+  commandSpeak: $("#command-speak"),
+  preflightButton: $("#preflight-button"),
+  preflightResults: $("#preflight-results"),
+  simulationResult: $("#simulation-result"),
+  chatTestResultLabel: $("#chat-test-result-label"),
+};
+
+let avatarName = "Mary";
+let currentConfig = null;
+let currentContext = { retainedSegmentCount: 0, recentSegments: [], dialogue: { active: false } };
+let currentChannel = "voice";
+let currentSidePanel = "transcript";
 let mediaRecorder = null;
 let mediaStream = null;
 let audioChunks = [];
 let lastListenerSegmentId = null;
-let avatarName = "Mary";
-
-function renderCheck(check) {
-  const action = check.action ? `<p class="action">${escapeHtml(check.action)}</p>` : "";
-  return `<article class="check">
-    <header><span>${escapeHtml(check.label)}</span><span class="status ${check.level}">${escapeHtml(check.level)}</span></header>
-    <p>${escapeHtml(check.detail)}</p>${action}
-  </article>`;
-}
+let stageModeTimer = null;
+let meetingStartedAt = Date.now();
+const meetingId = `conclavia-gui-${crypto.randomUUID()}`;
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>'"]/g, (character) => ({
+  return String(value ?? "").replace(/[&<>'"]/g, (character) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -86,20 +106,77 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function applyAvatarName(name, requestToSpeakEnabled = true) {
-  avatarName = name || "Mary";
-  avatarChatTitle.textContent = `Parla con ${avatarName}`;
-  activationNote.textContent = requestToSpeakEnabled
-    ? `Ogni frase finale entra nel contesto. ${avatarName} risponde quando viene chiamata o chiede prima la parola.`
-    : `Ogni frase finale entra nel contesto. ${avatarName} risponde quando viene chiamata.`;
+function initials(value) {
+  return String(value || "?")
+    .trim()
+    .split(/\s+/u)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "?";
 }
 
-function applyMeetingPlatform(platform) {
-  meetingPlatformName.textContent = platform === "google-meet"
-    ? "Google Meet"
-    : platform === "teams"
-      ? "Microsoft Teams"
-      : "Meeting";
+function platformLabel(platform) {
+  if (platform === "google-meet") return "Google Meet";
+  if (platform === "teams") return "Microsoft Teams";
+  return "Meeting generico";
+}
+
+function formatTime(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : new Intl.DateTimeFormat("it-IT", { hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function renderDebug(value, label = "ULTIMO TURNO") {
+  elements.chatTestResultLabel.textContent = label;
+  elements.simulationResult.textContent = JSON.stringify(value, null, 2);
+}
+
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, { cache: "no-store", ...options });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+  return payload;
+}
+
+function setDecision(message, state = "listening") {
+  elements.decisionStatus.textContent = message;
+  elements.decisionIndicator.className = `decision-indicator ${state}`;
+}
+
+function setStageMode(mode, detail) {
+  window.clearTimeout(stageModeTimer);
+  elements.stageSpeakerDetail.textContent = detail;
+  elements.stageListeningState.className = "stage-badge muted-badge";
+  if (mode === "speaking") {
+    elements.stageListeningState.textContent = "STA PARLANDO";
+    elements.stageListeningState.classList.add("active");
+  } else if (mode === "requesting") {
+    elements.stageListeningState.textContent = "MANO ALZATA";
+    elements.stageListeningState.classList.add("active");
+  } else {
+    elements.stageListeningState.textContent = "IN ASCOLTO";
+  }
+}
+
+function settleStageAfter(durationMs = 4_000) {
+  window.clearTimeout(stageModeTimer);
+  stageModeTimer = window.setTimeout(() => {
+    if (currentContext.avatarHandRaised) return;
+    setStageMode("listening", "Partecipante virtuale");
+    elements.stageMood.hidden = true;
+  }, Math.max(1_000, durationMs));
+}
+
+function applyAvatarIdentity(config) {
+  avatarName = config.name || "Mary";
+  elements.stageAvatarName.textContent = avatarName;
+  elements.stageSpeakerName.textContent = avatarName;
+  elements.composerHint.textContent = config.requestToSpeakEnabled
+    ? `Ogni intervento viene letto e aggiunto alla memoria. Interpella ${avatarName} per una risposta; in autonomia alzerà prima la mano.`
+    : `Ogni intervento viene letto e aggiunto alla memoria. Interpella ${avatarName} per ottenere una risposta.`;
+  elements.meetingPlatformBadge.textContent = platformLabel(config.meetingPlatform);
 }
 
 function renderCommandAliases(input, aliases) {
@@ -109,389 +186,498 @@ function renderCommandAliases(input, aliases) {
 function parseCommandAliases(input) {
   return [...new Set(input.value
     .split(",")
-    .map((alias) => alias.trim().replace(/\s+/g, " "))
+    .map((alias) => alias.trim().replace(/\s+/gu, " "))
     .filter(Boolean))];
 }
 
 function renderConfig(payload) {
   const { config, options } = payload;
-  avatarProfileInput.innerHTML = options.avatarProfiles.map((profile) =>
+  currentConfig = config;
+  elements.avatarProfile.innerHTML = options.avatarProfiles.map((profile) =>
     `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.label)}</option>`
   ).join("");
-  avatarProfileInput.value = config.avatarProfile;
-  meetingPlatformInput.innerHTML = options.meetingPlatforms.map((platform) => {
-    const label = platform === "google-meet"
-      ? "Google Meet"
-      : platform === "teams"
-        ? "Microsoft Teams"
-        : "Generica";
-    return `<option value="${escapeHtml(platform)}">${escapeHtml(label)}</option>`;
-  }).join("");
-  meetingPlatformInput.value = config.meetingPlatform;
-  avatarNameInput.value = config.name;
-  responseModelInput.value = config.responseModel;
-  voiceStyleInput.value = config.voiceStyle;
-  italianVoiceInput.innerHTML = options.italianVoices.map((voice) =>
+  elements.avatarProfile.value = config.avatarProfile;
+  elements.meetingPlatform.innerHTML = options.meetingPlatforms.map((platform) =>
+    `<option value="${escapeHtml(platform)}">${escapeHtml(platformLabel(platform))}</option>`
+  ).join("");
+  elements.meetingPlatform.value = config.meetingPlatform;
+  elements.avatarName.value = config.name;
+  elements.responseModel.value = config.responseModel;
+  elements.voiceStyle.value = config.voiceStyle;
+  elements.italianVoice.innerHTML = options.italianVoices.map((voice) =>
     `<option value="${escapeHtml(voice.id)}">${escapeHtml(voice.label)}</option>`
   ).join("");
-  italianVoiceInput.value = config.italianVoice;
-  englishVoiceInput.innerHTML = options.englishVoices.map((voice) =>
+  elements.italianVoice.value = config.italianVoice;
+  elements.englishVoice.innerHTML = options.englishVoices.map((voice) =>
     `<option value="${escapeHtml(voice.id)}">${escapeHtml(voice.label)}</option>`
   ).join("");
-  englishVoiceInput.value = config.englishVoice;
-  meetingAudioDeviceInput.value = config.meetingAudioDevice;
-  meetingSpeakerNameInput.value = config.meetingSpeakerName;
-  purposeInput.value = config.purpose;
-  personalityInput.value = config.personality;
-  systemPromptInput.value = config.systemPrompt;
-  webSearchInput.checked = config.webSearchEnabled;
-  requestToSpeakInput.checked = config.requestToSpeakEnabled;
-  chatEnabledInput.checked = config.chatEnabled;
-  renderCommandAliases(commandRaiseHandInput, config.chatCommandAliases.raiseHand);
-  renderCommandAliases(commandLowerHandInput, config.chatCommandAliases.lowerHand);
-  renderCommandAliases(commandSummarizeChatInput, config.chatCommandAliases.summarizeInChat);
-  renderCommandAliases(commandReplyChatInput, config.chatCommandAliases.replyInChat);
-  renderCommandAliases(commandSpeakInput, config.chatCommandAliases.speak);
-  apiKeyInput.value = "";
-  apiKeyState.textContent = config.apiKeyConfigured
-    ? `Chiave configurata (${config.apiKeySource === "environment" ? "ambiente" : "archivio locale protetto"}). Lascia vuoto per mantenerla.`
+  elements.englishVoice.value = config.englishVoice;
+  elements.meetingAudioDevice.value = config.meetingAudioDevice;
+  elements.meetingSpeakerName.value = config.meetingSpeakerName;
+  elements.purpose.value = config.purpose;
+  elements.personality.value = config.personality;
+  elements.systemPrompt.value = config.systemPrompt;
+  elements.webSearch.checked = config.webSearchEnabled;
+  elements.requestToSpeak.checked = config.requestToSpeakEnabled;
+  elements.chatEnabled.checked = config.chatEnabled;
+  renderCommandAliases(elements.commandRaiseHand, config.chatCommandAliases.raiseHand);
+  renderCommandAliases(elements.commandLowerHand, config.chatCommandAliases.lowerHand);
+  renderCommandAliases(elements.commandSummarizeChat, config.chatCommandAliases.summarizeInChat);
+  renderCommandAliases(elements.commandReplyChat, config.chatCommandAliases.replyInChat);
+  renderCommandAliases(elements.commandSpeak, config.chatCommandAliases.speak);
+  elements.apiKey.value = "";
+  elements.apiKeyState.textContent = config.apiKeyConfigured
+    ? `Chiave configurata (${config.apiKeySource === "environment" ? "ambiente" : "archivio locale"}). Lascia vuoto per mantenerla.`
     : "Nessuna chiave configurata. La chiave non viene mai restituita al browser.";
-  configSummary.textContent = `${config.name} · ${config.responseModel}`;
-  applyAvatarName(config.name, config.requestToSpeakEnabled);
-  applyMeetingPlatform(config.meetingPlatform);
+  elements.configSummary.textContent = `${config.name} · ${config.avatarProfile} · ${config.responseModel}`;
+  applyAvatarIdentity(config);
+  renderSidePanel();
 }
 
 async function refreshConfig() {
   try {
-    const response = await fetch("/api/config", { cache: "no-store" });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
-    renderConfig(payload);
+    renderConfig(await requestJson("/api/config"));
   } catch (error) {
-    configStatus.textContent = `Configurazione non disponibile: ${error.message}`;
+    elements.configStatus.textContent = `Configurazione non disponibile: ${error.message}`;
   }
 }
 
-configForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  configSaveButton.disabled = true;
-  configStatus.textContent = "Salvataggio e applicazione in corso…";
-  try {
-    const response = await fetch("/api/config", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        avatarProfile: avatarProfileInput.value,
-        meetingPlatform: meetingPlatformInput.value,
-        name: avatarNameInput.value,
-        responseModel: responseModelInput.value,
-        voiceStyle: voiceStyleInput.value,
-        italianVoice: italianVoiceInput.value,
-        englishVoice: englishVoiceInput.value,
-        meetingAudioDevice: meetingAudioDeviceInput.value,
-        meetingSpeakerName: meetingSpeakerNameInput.value,
-        apiKey: apiKeyInput.value,
-        purpose: purposeInput.value,
-        personality: personalityInput.value,
-        systemPrompt: systemPromptInput.value,
-        webSearchEnabled: webSearchInput.checked,
-        requestToSpeakEnabled: requestToSpeakInput.checked,
-        chatEnabled: chatEnabledInput.checked,
-        chatCommandAliases: {
-          raiseHand: parseCommandAliases(commandRaiseHandInput),
-          lowerHand: parseCommandAliases(commandLowerHandInput),
-          summarizeInChat: parseCommandAliases(commandSummarizeChatInput),
-          replyInChat: parseCommandAliases(commandReplyChatInput),
-          speak: parseCommandAliases(commandSpeakInput),
-        },
-      }),
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    await refreshConfig();
-    await refreshHealth();
-    await refreshListenerStatus();
-    configStatus.textContent = result.listenerWarning
-      ? `Configurazione salvata; ascolto non riavviato: ${result.listenerWarning}`
-      : result.listenerRestarted
-        ? "Configurazione salvata. L’ascolto del meeting è stato riavviato."
-        : "Configurazione salvata e applicata.";
-  } catch (error) {
-    configStatus.textContent = `Salvataggio fallito: ${error.message}`;
-  } finally {
-    configSaveButton.disabled = false;
-  }
-});
-
-function renderParticipationRequest(request) {
-  participationRequest.hidden = !request;
-  if (!request) return;
-  participationTitle.textContent = `${request.speakerName || avatarName} chiede la parola`;
-  participationReason.textContent = request.reason || "Ha un contributo utile alla conversazione.";
+function sourceLabel(segment) {
+  if (segment.source === "chat") return `Chat · ${platformLabel(segment.platform)}`;
+  if (segment.source === "manual") return "Parlato simulato";
+  return "Voce trascritta";
 }
 
-async function refreshParticipation() {
-  try {
-    const response = await fetch("/api/participation", { cache: "no-store" });
-    const payload = await response.json();
-    if (response.ok) renderParticipationRequest(payload.request);
-  } catch {
-    // The request also remains visible in the most recent turn result.
-  }
+function isAvatarSegment(segment) {
+  return segment.speakerName?.localeCompare(avatarName, undefined, { sensitivity: "accent" }) === 0;
 }
 
-participationGrant.addEventListener("click", async () => {
-  participationGrant.disabled = true;
-  participationDismiss.disabled = true;
-  participationReason.textContent = `Sto dando la parola a ${avatarName}…`;
-  try {
-    const response = await fetch("/api/participation/grant", { method: "POST" });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    renderParticipationRequest(null);
-    renderMaryResponse({ activated: true, cue: result.cue });
-    decisionStatus.className = "decision-status responding";
-    decisionStatus.textContent = `${avatarName} ha ricevuto la parola e sta rispondendo.`;
-    if (result.delivery) {
-      rendererStatus.className = "decision-status responding";
-      rendererStatus.textContent = `${avatarName} è in onda sul MetaHuman.`;
-    }
-    await refreshContext();
-  } catch (error) {
-    participationReason.textContent = `Impossibile dare la parola: ${error.message}`;
-  } finally {
-    participationGrant.disabled = false;
-    participationDismiss.disabled = false;
-  }
-});
+function eventMarkup(segment) {
+  const avatar = isAvatarSegment(segment);
+  const className = avatar ? "avatar-event" : segment.source === "chat" ? "chat-event" : "";
+  return `<article class="timeline-event ${className}">
+    <span class="timeline-avatar" aria-hidden="true">${escapeHtml(initials(segment.speakerName))}</span>
+    <div class="timeline-copy">
+      <div class="timeline-heading"><strong>${escapeHtml(segment.speakerName)}</strong><span>${escapeHtml(formatTime(segment.capturedAt))}</span></div>
+      <p>${escapeHtml(segment.text)}</p>
+      <span class="timeline-source">${escapeHtml(sourceLabel(segment))}</span>
+    </div>
+  </article>`;
+}
 
-participationDismiss.addEventListener("click", async () => {
-  participationGrant.disabled = true;
-  participationDismiss.disabled = true;
-  try {
-    const response = await fetch("/api/participation", { method: "DELETE" });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    renderParticipationRequest(null);
-  } catch (error) {
-    participationReason.textContent = `Chiusura non riuscita: ${error.message}`;
-  } finally {
-    participationGrant.disabled = false;
-    participationDismiss.disabled = false;
+function participantMarkup(name, detail, isAvatar = false) {
+  const hand = isAvatar && currentContext.avatarHandRaised ? "✋" : "●";
+  return `<article class="participant-row">
+    <span class="timeline-avatar" style="${isAvatar ? "background:var(--accent)" : ""}" aria-hidden="true">${escapeHtml(initials(name))}</span>
+    <div><strong>${escapeHtml(name)}</strong><small>${escapeHtml(detail)}</small></div>
+    <span class="participant-state" aria-label="${isAvatar && currentContext.avatarHandRaised ? "Mano alzata" : "Connesso"}">${hand}</span>
+  </article>`;
+}
+
+function meetingParticipants() {
+  const names = new Map();
+  names.set(avatarName.toLocaleLowerCase(), { name: avatarName, isAvatar: true });
+  const localSpeaker = elements.speakerName.value.trim();
+  if (localSpeaker && localSpeaker.localeCompare(avatarName, undefined, { sensitivity: "accent" }) !== 0) {
+    names.set(localSpeaker.toLocaleLowerCase(), { name: localSpeaker, isAvatar: false });
   }
-});
+  for (const segment of currentContext.recentSegments ?? []) {
+    const key = segment.speakerName.toLocaleLowerCase();
+    if (!names.has(key)) names.set(key, { name: segment.speakerName, isAvatar: isAvatarSegment(segment) });
+  }
+  return [...names.values()];
+}
+
+function renderSidePanel() {
+  if (!elements.contextResults) return;
+  const segments = currentContext.recentSegments ?? [];
+  if (currentSidePanel === "participants") {
+    elements.contextResults.innerHTML = meetingParticipants().map((participant) => participantMarkup(
+      participant.name,
+      participant.isAvatar ? "Avatar Conclavia · audio e video" : "Partecipante di prova",
+      participant.isAvatar,
+    )).join("");
+    return;
+  }
+
+  const visible = currentSidePanel === "chat"
+    ? segments.filter((segment) => segment.source === "chat")
+    : segments;
+  if (!visible.length) {
+    const title = currentSidePanel === "chat" ? "La chat è vuota" : "La riunione è pronta";
+    const copy = currentSidePanel === "chat"
+      ? "Scrivi qui o usa un comando rapido. L’avatar leggerà il messaggio attraverso lo stesso endpoint usato dagli adapter."
+      : "Parla, scrivi in chat o usa un comando rapido per iniziare il test.";
+    elements.contextResults.innerHTML = `<div class="feed-empty"><strong>${title}</strong><p>${copy}</p></div>`;
+  } else {
+    elements.contextResults.innerHTML = visible.map(eventMarkup).join("");
+    elements.contextResults.scrollTop = elements.contextResults.scrollHeight;
+  }
+}
 
 function renderContext(context) {
+  currentContext = context;
   const count = context.retainedSegmentCount ?? 0;
-  contextCount.textContent = `${count} ${count === 1 ? "frase" : "frasi"}`;
-  if (!context.recentSegments?.length) {
-    contextResults.innerHTML = '<p class="empty">La conversazione è ancora vuota.</p>';
-    return;
-  }
-  contextResults.innerHTML = context.recentSegments.map((segment) => `
-    <article class="context-turn">
-      <strong>${escapeHtml(segment.speakerName)} <span>${escapeHtml(segment.source === "chat" ? `CHAT · ${segment.platform || "generic"}` : segment.source || "VOICE")}</span></strong>
-      <p>${escapeHtml(segment.text)}</p>
-    </article>
-  `).join("");
+  const participants = meetingParticipants();
+  elements.participantCount.textContent = `${participants.length} ${participants.length === 1 ? "partecipante" : "partecipanti"}`;
+  elements.contextCount.textContent = `${count} ${count === 1 ? "intervento" : "interventi"}`;
+  elements.dialogueState.textContent = context.dialogue?.active
+    ? `${avatarName} nel dialogo`
+    : context.avatarHandRaised
+      ? `${avatarName} chiede la parola`
+      : `${avatarName} in ascolto`;
+  if (context.avatarHandRaised) setStageMode("requesting", "In attesa del permesso");
+  else if (elements.stageListeningState.textContent === "MANO ALZATA") setStageMode("listening", "Partecipante virtuale");
+  renderParticipationRequest(context.participationRequest ?? null);
+  renderSidePanel();
 }
-
-chatTestButton.addEventListener("click", async () => {
-  const speakerName = speakerNameInput.value.trim();
-  const meetingId = chatTestMeetingIdInput.value.trim();
-  const text = chatTestTextInput.value.trim();
-  if (!speakerName || !meetingId || !text) {
-    chatTestStatus.textContent = "Inserisci speaker, meeting ID e messaggio.";
-    return;
-  }
-
-  chatTestButton.disabled = true;
-  chatTestStatus.className = "recording-status listening";
-  chatTestStatus.textContent = "Invio al command router…";
-  try {
-    const response = await fetch("/api/chat/messages", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        platform: chatTestPlatformInput.value,
-        meetingId,
-        messageId: crypto.randomUUID(),
-        speakerName,
-        text,
-        capturedAt: new Date().toISOString(),
-      }),
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    if (result.turn) renderTurn(result.turn);
-    await refreshContext();
-
-    const outbound = result.outboundMessages?.[0];
-    if (outbound) {
-      chatTestStatus.textContent = `${outbound.speakerName} ha risposto nella chat: “${outbound.text}”`;
-    } else if (result.action === "raise-hand") {
-      chatTestStatus.textContent = `${avatarName} ha eseguito il gesto: mano alzata.`;
-    } else if (result.action === "lower-hand") {
-      chatTestStatus.textContent = `${avatarName} ha eseguito il gesto: mano abbassata.`;
-    } else if (result.turn?.decision?.activated) {
-      chatTestStatus.textContent = `${avatarName} ha ricevuto il comando e interviene a voce.`;
-    } else if (result.reason === "self-message") {
-      chatTestStatus.textContent = "Messaggio dell’avatar ignorato per prevenire un loop.";
-    } else {
-      chatTestStatus.textContent = "Messaggio acquisito come contesto; nessuna azione immediata.";
-    }
-    chatTestResult.textContent = JSON.stringify(result, null, 2);
-  } catch (error) {
-    chatTestStatus.className = "recording-status";
-    chatTestStatus.textContent = `Messaggio chat non acquisito: ${error.message}`;
-    chatTestResult.textContent = `Errore: ${error.message}`;
-  } finally {
-    chatTestButton.disabled = false;
-  }
-});
 
 async function refreshContext() {
   try {
-    const response = await fetch("/api/context");
-    if (response.ok) renderContext(await response.json());
+    renderContext(await requestJson("/api/context"));
   } catch {
-    // The simulation still works if the optional context refresh fails.
+    // A failed background refresh must not interrupt an active meeting control.
   }
+}
+
+function renderParticipationRequest(request) {
+  elements.participationRequest.hidden = !request;
+  if (!request) return;
+  elements.participationTitle.textContent = `${request.speakerName || avatarName} chiede la parola`;
+  elements.participationReason.textContent = request.reason || "Ha un contributo utile alla conversazione.";
+  setStageMode("requesting", "In attesa del permesso");
+  setDecision(`${avatarName} ha alzato la mano: scegli se darle la parola.`, "requesting");
 }
 
 function renderMaryResponse(decision) {
-  const sentences = decision.cue?.sentences;
-  if (!decision.activated || !sentences?.length) {
-    maryResponse.innerHTML = "";
+  const sentences = decision?.cue?.sentences;
+  if (!decision?.activated || !sentences?.length) {
+    elements.maryResponse.innerHTML = "";
     return;
   }
-
   const provider = decision.cue.provider === "openai" ? "OPENAI" : "DIAGNOSTICA";
   const sources = decision.cue.webSources ?? [];
-  maryResponse.innerHTML = `
-    <div class="mary-response-heading">
-      <strong>${escapeHtml(decision.cue.speakerName || avatarName)}</strong>
-      <span>${provider}${decision.cue.model ? ` · ${escapeHtml(decision.cue.model)}` : ""}</span>
-    </div>
-    ${sentences.map((sentence) => `
-      <article class="mary-sentence">
-        <p>${escapeHtml(sentence.text)}</p>
-        <span>${escapeHtml(sentence.mood)} · L${escapeHtml(sentence.level ?? 3)}</span>
-      </article>
-    `).join("")}
-    ${sources.length ? `<ul class="web-sources">${sources.map((source) =>
-      `<li><a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">${escapeHtml(source.title)}</a></li>`
-    ).join("")}</ul>` : ""}
-  `;
+  elements.maryResponse.innerHTML = `
+    <div class="mary-response-heading"><strong>${escapeHtml(decision.cue.speakerName || avatarName)}</strong><span>${provider}${decision.cue.model ? ` · ${escapeHtml(decision.cue.model)}` : ""}</span></div>
+    ${sentences.map((sentence) => `<article class="mary-sentence"><p>${escapeHtml(sentence.text)}</p><span>${escapeHtml(sentence.mood)} · L${escapeHtml(sentence.level ?? 3)} · ${escapeHtml(sentence.language)}</span></article>`).join("")}
+    ${sources.length ? `<ul class="web-sources">${sources.map((source) => `<li><a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">${escapeHtml(source.title)}</a></li>`).join("")}</ul>` : ""}`;
+  const lastSentence = sentences.at(-1);
+  elements.stageMood.textContent = `${lastSentence.mood} · L${lastSentence.level ?? 3}`;
+  elements.stageMood.hidden = false;
+  setStageMode("speaking", `Risponde a ${decision.cue.addressedTo || "meeting"}`);
 }
 
 function renderTurn(result) {
-  renderContext(result.llmContext);
+  if (result.llmContext) renderContext(result.llmContext);
   renderMaryResponse(result.decision);
-  renderParticipationRequest(result.decision.request ?? result.llmContext?.participationRequest ?? null);
-  decisionStatus.className = `decision-status ${result.decision.activated ? "responding" : "listening"}`;
+  renderParticipationRequest(result.decision?.request ?? result.llmContext?.participationRequest ?? null);
 
-  if (result.decision.activated && result.decision.cue?.provider === "openai") {
-    decisionStatus.textContent = `Ascoltata e aggiunta al contesto. ${avatarName} ha letto la conversazione e ha risposto${result.usedWebSearch ? " usando la ricerca web" : ""}.`;
-  } else if (result.decision.activated) {
-    decisionStatus.textContent = `${avatarName} è stata chiamata, ma sta usando la risposta diagnostica: configura OpenAI per la risposta reale.`;
-  } else if (result.decision.reason === "autonomous-request") {
-    decisionStatus.textContent = `${avatarName} ha un contributo e ha chiesto la parola senza interrompere.`;
+  if (result.decision?.activated && result.decision.cue?.provider === "openai") {
+    setDecision(`${avatarName} ha letto la conversazione e sta rispondendo${result.usedWebSearch ? " con ricerca web" : ""}.`, "responding");
+  } else if (result.decision?.activated) {
+    setDecision(`${avatarName} è stata chiamata, ma usa la risposta diagnostica: configura OpenAI per la risposta reale.`, "responding");
+  } else if (result.decision?.reason === "autonomous-request") {
+    setDecision(`${avatarName} ha un contributo e ha chiesto la parola senza interrompere.`, "requesting");
   } else {
-    decisionStatus.textContent = `Ascoltata e aggiunta al contesto. ${avatarName} continua ad ascoltare senza rispondere.`;
+    setDecision(`Intervento acquisito. ${avatarName} continua ad ascoltare senza rispondere.`, "listening");
   }
+  if (result.warning) elements.decisionStatus.textContent += ` ${result.warning}`;
 
-  if (result.warning) decisionStatus.textContent += ` ${result.warning}`;
+  const llm = result.latency?.llmMs == null ? "—" : `${result.latency.llmMs} ms`;
+  const renderer = result.latency?.rendererMs == null ? "—" : `${result.latency.rendererMs} ms`;
+  const total = result.latency?.totalMs == null ? "—" : `${result.latency.totalMs} ms`;
+  elements.latencySummary.textContent = `LLM ${llm} · Avatar ${renderer} · Totale ${total}`;
   if (result.renderer?.delivery) {
-    rendererStatus.className = "decision-status responding";
-    rendererStatus.textContent = `${avatarName} è in onda sul MetaHuman · ${Math.round(result.renderer.delivery.durationMs / 100) / 10}s · ${result.renderer.delivery.sentenceCount} ${result.renderer.delivery.sentenceCount === 1 ? "frase" : "frasi"}.`;
+    elements.rendererStatus.textContent = `${avatarName} in onda · ${Math.round(result.renderer.delivery.durationMs / 100) / 10}s · ${result.renderer.delivery.sentenceCount} frasi.`;
   }
-  simulationResult.textContent = JSON.stringify({
-    transcription: result.segment.text,
-    decision: result.decision,
-  }, null, 2);
+  const speakingDuration = result.renderer?.delivery?.durationMs ?? 4_000;
+  if (result.decision?.activated) settleStageAfter(speakingDuration + 800);
+  renderDebug(result);
 }
+
+async function sendVoiceMessage(text) {
+  return requestJson("/api/simulate", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ speakerName: elements.speakerName.value.trim(), text }),
+  });
+}
+
+async function sendChatMessage(text) {
+  return requestJson("/api/chat/messages", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      platform: currentConfig?.meetingPlatform ?? "generic",
+      meetingId,
+      messageId: crypto.randomUUID(),
+      speakerName: elements.speakerName.value.trim(),
+      text,
+      capturedAt: new Date().toISOString(),
+    }),
+  });
+}
+
+function describeChatResult(result) {
+  const outbound = result.outboundMessages?.[0];
+  if (outbound) return `${outbound.speakerName} ha scritto nella chat.`;
+  if (result.action === "raise-hand") return `${avatarName} ha alzato fisicamente la mano.`;
+  if (result.action === "lower-hand") return `${avatarName} ha abbassato la mano.`;
+  if (result.turn?.decision?.activated) return `${avatarName} interviene a voce.`;
+  if (result.reason === "chat-disabled") return "La lettura chat è disattivata nella configurazione.";
+  if (result.reason === "self-message") return "Messaggio dell’avatar ignorato per evitare un loop.";
+  return `Messaggio letto e conservato. ${avatarName} resta in ascolto.`;
+}
+
+async function submitMeetingMessage(channel, text) {
+  const speakerName = elements.speakerName.value.trim();
+  const cleanText = text.trim();
+  if (!speakerName || !cleanText) throw new Error("Inserisci il partecipante e un messaggio.");
+  elements.meetingSendButton.disabled = true;
+  setDecision(channel === "chat" ? "Invio nella chat del meeting…" : "Trascrizione simulata inviata all’ascolto…", "listening");
+  try {
+    if (channel === "chat") {
+      const result = await sendChatMessage(cleanText);
+      if (result.turn) renderTurn(result.turn);
+      else {
+        setDecision(describeChatResult(result), result.action === "raise-hand" ? "requesting" : "listening");
+        renderDebug(result, "EVENTO CHAT");
+      }
+      elements.chatTestStatus.textContent = describeChatResult(result);
+      await refreshContext();
+      return result;
+    }
+    const result = await sendVoiceMessage(cleanText);
+    renderTurn(result);
+    await refreshContext();
+    return result;
+  } finally {
+    elements.meetingSendButton.disabled = false;
+  }
+}
+
+function selectChannel(channel) {
+  currentChannel = channel;
+  $$(".channel-button").forEach((button) => button.classList.toggle("active", button.dataset.channel === channel));
+  elements.composerLabel.textContent = channel === "chat" ? "Messaggio nella chat del meeting" : "Intervento nella riunione";
+  elements.meetingMessage.placeholder = channel === "chat"
+    ? `Scrivi in chat. ${avatarName} leggerà anche i messaggi non indirizzati…`
+    : `Scrivi come se stessi parlando nel meeting. Interpella ${avatarName} per una risposta…`;
+}
+
+elements.meetingComposerForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    await submitMeetingMessage(currentChannel, elements.meetingMessage.value);
+    elements.meetingMessage.value = "";
+  } catch (error) {
+    setDecision(`Invio non riuscito: ${error.message}`, "listening");
+  }
+});
+
+elements.meetingMessage.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+    event.preventDefault();
+    elements.meetingComposerForm.requestSubmit();
+  }
+});
+
+$$('.channel-button').forEach((button) => button.addEventListener("click", () => selectChannel(button.dataset.channel)));
+
+async function sendSidebarChat() {
+  const text = elements.sidebarChatText.value.trim();
+  if (!text) return;
+  elements.sidebarChatSend.disabled = true;
+  try {
+    await submitMeetingMessage("chat", text);
+    elements.sidebarChatText.value = "";
+  } catch (error) {
+    setDecision(`Chat non inviata: ${error.message}`, "listening");
+  } finally {
+    elements.sidebarChatSend.disabled = false;
+  }
+}
+
+elements.sidebarChatSend.addEventListener("click", sendSidebarChat);
+elements.sidebarChatText.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    void sendSidebarChat();
+  }
+});
+
+function quickCommandText(kind) {
+  const aliases = currentConfig?.chatCommandAliases?.[kind] ?? [];
+  const alias = aliases[0];
+  if (!alias) return null;
+  const argument = {
+    summarizeInChat: "i punti principali emersi finora",
+    replyInChat: "con il punto più utile per proseguire",
+    speak: "riportando la discussione sul punto principale",
+  }[kind];
+  return `${avatarName}, ${alias}${argument ? ` ${argument}` : ""}`;
+}
+
+elements.quickCommands.addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-command]");
+  if (!button) return;
+  const text = quickCommandText(button.dataset.command);
+  if (!text) {
+    setDecision("Questo comando non ha alias configurati.", "listening");
+    return;
+  }
+  $$("#quick-commands button").forEach((candidate) => { candidate.disabled = true; });
+  try {
+    await submitMeetingMessage("chat", text);
+  } catch (error) {
+    setDecision(`Comando non riuscito: ${error.message}`, "listening");
+  } finally {
+    $$("#quick-commands button").forEach((candidate) => { candidate.disabled = false; });
+  }
+});
+
+$$('.sidebar-tab').forEach((button) => button.addEventListener("click", () => {
+  currentSidePanel = button.dataset.sidePanel;
+  $$(".sidebar-tab").forEach((candidate) => candidate.classList.toggle("active", candidate === button));
+  elements.sidebarChatComposer.hidden = currentSidePanel !== "chat";
+  renderSidePanel();
+}));
+
+$$('.nav-button').forEach((button) => button.addEventListener("click", () => {
+  const view = button.dataset.view;
+  $$(".nav-button").forEach((candidate) => candidate.classList.toggle("active", candidate === button));
+  $$('[data-view-panel]').forEach((panel) => {
+    const active = panel.dataset.viewPanel === view;
+    panel.hidden = !active;
+    panel.classList.toggle("active", active);
+  });
+}));
+
+elements.speakerName.addEventListener("input", renderSidePanel);
+
+elements.participationGrant.addEventListener("click", async () => {
+  elements.participationGrant.disabled = true;
+  elements.participationDismiss.disabled = true;
+  elements.participationReason.textContent = `Sto dando la parola a ${avatarName}…`;
+  try {
+    const result = await requestJson("/api/participation/grant", { method: "POST" });
+    renderParticipationRequest(null);
+    renderMaryResponse({ activated: true, cue: result.cue });
+    setDecision(`${avatarName} ha ricevuto la parola e sta rispondendo.`, "responding");
+    settleStageAfter(result.delivery?.durationMs ? result.delivery.durationMs + 800 : 4_000);
+    renderDebug(result, "PAROLA CONCESSA");
+    await refreshContext();
+  } catch (error) {
+    elements.participationReason.textContent = `Impossibile dare la parola: ${error.message}`;
+  } finally {
+    elements.participationGrant.disabled = false;
+    elements.participationDismiss.disabled = false;
+  }
+});
+
+elements.participationDismiss.addEventListener("click", async () => {
+  elements.participationGrant.disabled = true;
+  elements.participationDismiss.disabled = true;
+  try {
+    const result = await requestJson("/api/participation", { method: "DELETE" });
+    renderParticipationRequest(null);
+    setStageMode("listening", "Partecipante virtuale");
+    setDecision(`${avatarName} ha ritirato la richiesta e continua ad ascoltare.`, "listening");
+    renderDebug(result, "RICHIESTA IGNORATA");
+    await refreshContext();
+  } catch (error) {
+    elements.participationReason.textContent = `Chiusura non riuscita: ${error.message}`;
+  } finally {
+    elements.participationGrant.disabled = false;
+    elements.participationDismiss.disabled = false;
+  }
+});
+
+elements.resetMeetingButton.addEventListener("click", async () => {
+  if (!window.confirm("Azzerare trascrizione, chat e richiesta di parola di questa sessione di prova?")) return;
+  elements.resetMeetingButton.disabled = true;
+  try {
+    const context = await requestJson("/api/context", { method: "DELETE" });
+    meetingStartedAt = Date.now();
+    elements.maryResponse.innerHTML = "";
+    elements.stageMood.hidden = true;
+    elements.simulationResult.textContent = "Nuova sessione avviata.";
+    renderContext(context);
+    setStageMode("listening", "Partecipante virtuale");
+    setDecision("Nuova sessione pronta. La memoria del meeting è vuota.", "listening");
+  } catch (error) {
+    setDecision(`Reset non riuscito: ${error.message}`, "listening");
+  } finally {
+    elements.resetMeetingButton.disabled = false;
+  }
+});
 
 function renderListenerStatus(status) {
   const active = status.phase === "running" || status.phase === "starting";
-  listenerStartButton.disabled = active || status.phase === "unavailable";
-  listenerStopButton.disabled = !active;
-  listenerTurnCount.textContent = `${status.completedTurns ?? 0} ${status.completedTurns === 1 ? "turno" : "turni"}`;
-  listenerPartial.textContent = status.partialTranscript
-    ? `In ascolto: “${status.partialTranscript}”`
-    : "";
-
+  elements.listenerStartButton.disabled = active || status.phase === "unavailable";
+  elements.listenerStopButton.disabled = !active;
+  elements.listenerTurnCount.textContent = `${status.completedTurns ?? 0} ${status.completedTurns === 1 ? "turno" : "turni"}`;
+  elements.listenerPartial.textContent = status.partialTranscript ? `“${status.partialTranscript}”` : "";
+  elements.listenerPill.className = `status-pill ${active ? "live" : ""}`;
   if (status.phase === "running") {
-    listenerStatus.className = `recording-status ${status.speechDetected ? "active" : "listening"}`;
-    listenerStatus.textContent = status.speechDetected
-      ? "Voce rilevata: trascrizione in corso…"
-      : `${avatarName} sta leggendo l’audio da ${status.resolvedAudioDevice || status.audioDevice}.`;
+    elements.listenerPill.textContent = status.speechDetected ? "Ascolto: voce" : "Ascolto: live";
+    elements.listenerStatus.textContent = status.speechDetected
+      ? "Voce rilevata, trascrizione in corso."
+      : `${avatarName} legge ${status.resolvedAudioDevice || status.audioDevice}.`;
   } else if (status.phase === "starting") {
-    listenerStatus.className = "recording-status listening";
-    listenerStatus.textContent = "Connessione a OpenAI Realtime e apertura del bus del meeting…";
+    elements.listenerPill.textContent = "Ascolto: avvio";
+    elements.listenerStatus.textContent = "Connessione Realtime e apertura del bus audio.";
   } else if (status.phase === "error") {
-    listenerStatus.className = "recording-status";
-    listenerStatus.textContent = `Ascolto fermato per errore: ${status.lastError || "errore sconosciuto"}`;
+    elements.listenerPill.className = "status-pill warning";
+    elements.listenerPill.textContent = "Ascolto: errore";
+    elements.listenerStatus.textContent = status.lastError || "Errore di ascolto.";
   } else if (status.phase === "unavailable") {
-    listenerStatus.className = "recording-status";
-    listenerStatus.textContent = status.lastError || "OpenAI non configurato.";
+    elements.listenerPill.className = "status-pill warning";
+    elements.listenerPill.textContent = "Ascolto: non disponibile";
+    elements.listenerStatus.textContent = status.lastError || "OpenAI non configurato.";
   } else {
-    listenerStatus.className = "recording-status";
-    listenerStatus.textContent = status.lastError
-      ? `Ascolto continuo fermo. Ultimo dettaglio: ${status.lastError}`
-      : "Ascolto continuo fermo.";
+    elements.listenerPill.textContent = "Ascolto: fermo";
+    elements.listenerStatus.textContent = status.lastError ? `Fermo: ${status.lastError}` : "Ascolto continuo fermo.";
   }
-
   const result = status.lastResult;
   if (result?.segment?.id && result.segment.id !== lastListenerSegmentId) {
     lastListenerSegmentId = result.segment.id;
     renderTurn(result);
+    void refreshContext();
   }
 }
 
 async function refreshListenerStatus() {
   try {
-    const response = await fetch("/api/listener/status");
-    const status = await response.json();
-    if (!response.ok) throw new Error(status.error || `HTTP ${response.status}`);
-    renderListenerStatus(status);
+    renderListenerStatus(await requestJson("/api/listener/status"));
   } catch (error) {
-    listenerStartButton.disabled = true;
-    listenerStopButton.disabled = true;
-    listenerStatus.className = "recording-status";
-    listenerStatus.textContent = `Controllo ascolto fallito: ${error.message}`;
+    elements.listenerStartButton.disabled = true;
+    elements.listenerStopButton.disabled = true;
+    elements.listenerPill.className = "status-pill warning";
+    elements.listenerPill.textContent = "Ascolto: offline";
+    elements.listenerStatus.textContent = `Controllo fallito: ${error.message}`;
   }
 }
 
-listenerStartButton.addEventListener("click", async () => {
-  listenerStartButton.disabled = true;
-  listenerStatus.className = "recording-status listening";
-  listenerStatus.textContent = "Avvio ascolto continuo…";
+elements.listenerStartButton.addEventListener("click", async () => {
+  elements.listenerStartButton.disabled = true;
+  elements.listenerStatus.textContent = "Avvio ascolto continuo…";
   try {
-    const response = await fetch("/api/listener/start", { method: "POST" });
-    const status = await response.json();
-    if (!response.ok) throw new Error(status.error || `HTTP ${response.status}`);
-    renderListenerStatus(status);
+    renderListenerStatus(await requestJson("/api/listener/start", { method: "POST" }));
   } catch (error) {
-    listenerStatus.className = "recording-status";
-    listenerStatus.textContent = `Avvio ascolto fallito: ${error.message}`;
-    listenerStartButton.disabled = false;
+    elements.listenerStatus.textContent = `Avvio fallito: ${error.message}`;
+    elements.listenerStartButton.disabled = false;
   }
 });
 
-listenerStopButton.addEventListener("click", async () => {
-  listenerStopButton.disabled = true;
-  listenerStatus.className = "recording-status listening";
-  listenerStatus.textContent = "Arresto dell’ascolto continuo…";
+elements.listenerStopButton.addEventListener("click", async () => {
+  elements.listenerStopButton.disabled = true;
+  elements.listenerStatus.textContent = "Arresto dell’ascolto…";
   try {
-    const response = await fetch("/api/listener/session", { method: "DELETE" });
-    const status = await response.json();
-    if (!response.ok) throw new Error(status.error || `HTTP ${response.status}`);
-    renderListenerStatus(status);
+    renderListenerStatus(await requestJson("/api/listener/session", { method: "DELETE" }));
   } catch (error) {
-    listenerStatus.className = "recording-status";
-    listenerStatus.textContent = `Arresto ascolto fallito: ${error.message}`;
-    listenerStopButton.disabled = false;
+    elements.listenerStatus.textContent = `Arresto fallito: ${error.message}`;
+    elements.listenerStopButton.disabled = false;
   }
 });
 
@@ -506,122 +692,84 @@ function pixelStreamingUrl(value) {
 function mountRendererPlayer(playerUrl) {
   if (!playerUrl) return;
   const outputUrl = pixelStreamingUrl(playerUrl);
-  const currentFrame = rendererPreview.querySelector("iframe");
-  if (!currentFrame || currentFrame.dataset.source !== playerUrl) {
-    rendererPreview.innerHTML = `<iframe title="Conclavia MetaHuman" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>`;
+  const frame = elements.rendererPreview.querySelector("iframe");
+  if (!frame || frame.dataset.source !== playerUrl) {
+    elements.rendererPreview.innerHTML = `<iframe title="Conclavia MetaHuman" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>`;
   }
-  rendererOutputLink.href = outputUrl;
-  rendererOutputLink.hidden = false;
+  elements.rendererOutputLink.href = outputUrl;
+  elements.rendererOutputLink.hidden = false;
 }
 
 function renderRendererStatus(status) {
   const reachable = status.serverStatus !== "unreachable";
-  rendererStartButton.disabled = !status.configured || !reachable || status.armed;
-  rendererStopButton.disabled = !status.armed;
+  elements.rendererStartButton.disabled = !status.configured || !reachable || status.armed;
+  elements.rendererStopButton.disabled = !status.armed;
+  elements.rendererPill.className = `status-pill ${status.armed && status.available ? "ready" : status.configured ? "" : "warning"}`;
+  elements.stageLiveState.className = `stage-badge ${status.armed ? "ready" : ""}`;
+  elements.stageLiveState.textContent = status.armed ? "LIVE" : "OFFLINE";
 
   if (!status.configured) {
-    rendererStatus.className = "decision-status";
-    rendererStatus.textContent = "Bridge Conclavia non configurato.";
+    elements.rendererPill.textContent = "Avatar: non configurato";
+    elements.rendererStatus.textContent = "Bridge Conclavia non configurato.";
   } else if (!reachable) {
-    rendererStatus.className = "decision-status";
-    rendererStatus.textContent = "Avvia conclavia-frontend sulla porta 3000 per raggiungere le API Unreal.";
+    elements.rendererPill.className = "status-pill warning";
+    elements.rendererPill.textContent = "Avatar: bridge offline";
+    elements.rendererStatus.textContent = "Avvia conclavia-frontend sulla porta 3000 per raggiungere le API Unreal.";
   } else if (status.armed && status.available) {
-    rendererStatus.className = "decision-status responding";
-    rendererStatus.textContent = `MetaHuman pronto e armato: la prossima risposta di ${avatarName} andrà in onda.`;
+    elements.rendererPill.textContent = "Avatar: pronto";
+    elements.rendererStatus.textContent = `MetaHuman pronto: la prossima risposta di ${avatarName} andrà in onda.`;
   } else if (status.armed) {
-    rendererStatus.className = "decision-status listening";
-    rendererStatus.textContent = "MetaHuman armato; il renderer sta completando l’avvio.";
+    elements.rendererPill.textContent = "Avatar: avvio";
+    elements.rendererStatus.textContent = "MetaHuman armato; il renderer sta completando l’avvio.";
   } else if (status.available) {
-    rendererStatus.className = "decision-status listening";
-    rendererStatus.textContent = `Renderer già online. Premi “Avvia MetaHuman” per collegarlo a ${avatarName}.`;
+    elements.rendererPill.textContent = "Avatar: online";
+    elements.rendererStatus.textContent = `Renderer online. Premi “Avvia avatar” per collegarlo a ${avatarName}.`;
   } else {
-    rendererStatus.className = "decision-status listening";
-    rendererStatus.textContent = `Renderer ${status.serverStatus || "non ancora avviato"}. L’avvio può accendere l’host GPU.`;
+    elements.rendererPill.textContent = "Avatar: fermo";
+    elements.rendererStatus.textContent = `Renderer ${status.serverStatus || "non avviato"}. L’avvio può accendere l’host GPU.`;
   }
   if (status.playerUrl) mountRendererPlayer(status.playerUrl);
 }
 
 async function refreshRendererStatus() {
   try {
-    const response = await fetch("/api/renderer/status");
-    const status = await response.json();
-    if (!response.ok) throw new Error(status.error || `HTTP ${response.status}`);
-    renderRendererStatus(status);
+    renderRendererStatus(await requestJson("/api/renderer/status"));
   } catch (error) {
-    rendererStartButton.disabled = true;
-    rendererStopButton.disabled = true;
-    rendererStatus.className = "decision-status";
-    rendererStatus.textContent = `Controllo MetaHuman fallito: ${error.message}`;
+    elements.rendererStartButton.disabled = true;
+    elements.rendererStopButton.disabled = true;
+    elements.rendererPill.className = "status-pill warning";
+    elements.rendererPill.textContent = "Avatar: offline";
+    elements.rendererStatus.textContent = `Controllo fallito: ${error.message}`;
   }
 }
 
-rendererStartButton.addEventListener("click", async () => {
-  rendererStartButton.disabled = true;
-  rendererStatus.className = "decision-status listening";
-  rendererStatus.textContent = "Avvio del MetaHuman e verifica del flusso Pixel Streaming… può richiedere alcuni minuti.";
+elements.rendererStartButton.addEventListener("click", async () => {
+  elements.rendererStartButton.disabled = true;
+  elements.rendererStatus.textContent = "Avvio MetaHuman e Pixel Streaming; può richiedere alcuni minuti.";
+  elements.rendererPill.textContent = "Avatar: avvio";
   try {
-    const response = await fetch("/api/renderer/start", { method: "POST" });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    renderRendererStatus({
-      configured: true,
-      available: true,
-      armed: true,
-      serverStatus: result.serverStatus,
-      playerUrl: result.playerUrl,
-    });
+    const result = await requestJson("/api/renderer/start", { method: "POST" });
+    renderRendererStatus({ configured: true, available: true, armed: true, serverStatus: result.serverStatus, playerUrl: result.playerUrl });
   } catch (error) {
-    rendererStatus.className = "decision-status";
-    rendererStatus.textContent = `Avvio MetaHuman fallito: ${error.message}`;
-    rendererStartButton.disabled = false;
+    elements.rendererStatus.textContent = `Avvio fallito: ${error.message}`;
+    elements.rendererStartButton.disabled = false;
   }
 });
 
-rendererStopButton.addEventListener("click", async () => {
-  rendererStopButton.disabled = true;
-  rendererStatus.className = "decision-status listening";
-  rendererStatus.textContent = "Arresto del renderer…";
+elements.rendererStopButton.addEventListener("click", async () => {
+  elements.rendererStopButton.disabled = true;
+  elements.rendererStatus.textContent = "Arresto del renderer…";
   try {
-    const response = await fetch("/api/renderer/session", { method: "DELETE" });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    rendererPreview.innerHTML = '<p class="empty">Renderer fermato.</p>';
-    rendererOutputLink.hidden = true;
-    renderRendererStatus({
-      configured: true,
-      available: false,
-      armed: false,
-      serverStatus: "off",
-    });
+    await requestJson("/api/renderer/session", { method: "DELETE" });
+    elements.rendererPreview.innerHTML = `<div class="stage-placeholder"><div class="avatar-orbit" aria-hidden="true"><span>C</span></div><strong id="stage-avatar-name">${escapeHtml(avatarName)}</strong><p>Renderer fermato. Riavvialo quando vuoi riprendere il test.</p></div>`;
+    elements.stageAvatarName = $("#stage-avatar-name");
+    elements.rendererOutputLink.hidden = true;
+    renderRendererStatus({ configured: true, available: false, armed: false, serverStatus: "off" });
   } catch (error) {
-    rendererStatus.className = "decision-status";
-    rendererStatus.textContent = `Arresto MetaHuman fallito: ${error.message}`;
-    rendererStopButton.disabled = false;
+    elements.rendererStatus.textContent = `Arresto fallito: ${error.message}`;
+    elements.rendererStopButton.disabled = false;
   }
 });
-
-async function refreshHealth() {
-  try {
-    const response = await fetch("/api/health");
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const health = await response.json();
-    providerStatus.className = `provider-status ${health.openaiConfigured ? "ready" : "missing"}`;
-    providerStatus.textContent = health.openaiConfigured
-      ? `OpenAI pronto · ${health.responseModel}${health.webSearchEnabled ? " · web" : ""}`
-      : "OpenAI non configurato";
-    recordButton.disabled = !health.openaiConfigured || !window.MediaRecorder;
-    if (!health.openaiConfigured) {
-      recordingStatus.textContent = "Inserisci la OpenAI API key nel pannello di configurazione.";
-    } else if (!window.MediaRecorder) {
-      recordingStatus.textContent = "Questo browser non supporta la registrazione MediaRecorder.";
-    }
-  } catch (error) {
-    providerStatus.className = "provider-status missing";
-    providerStatus.textContent = "Server non raggiungibile";
-    recordButton.disabled = true;
-    recordingStatus.textContent = `Controllo fallito: ${error.message}`;
-  }
-}
 
 function preferredAudioMimeType() {
   const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
@@ -633,15 +781,14 @@ function releaseMicrophone() {
   mediaStream = null;
 }
 
-recordButton.addEventListener("click", async () => {
-  const speakerName = speakerNameInput.value.trim();
+elements.recordButton.addEventListener("click", async () => {
+  const speakerName = elements.speakerName.value.trim();
   if (!speakerName) {
-    recordingStatus.textContent = "Inserisci prima il nome del partecipante.";
-    speakerNameInput.focus();
+    elements.recordingStatus.textContent = "Inserisci prima il nome del partecipante.";
+    elements.speakerName.focus();
     return;
   }
-
-  recordButton.disabled = true;
+  elements.recordButton.disabled = true;
   audioChunks = [];
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -654,90 +801,144 @@ recordButton.addEventListener("click", async () => {
       const recordedMimeType = mediaRecorder.mimeType || audioChunks[0]?.type || "audio/webm";
       const audio = new Blob(audioChunks, { type: recordedMimeType });
       releaseMicrophone();
-      stopButton.disabled = true;
-      recordingStatus.className = "recording-status";
-      recordingStatus.textContent = "Trascrizione e analisi in corso…";
+      elements.stopButton.disabled = true;
+      elements.recordingStatus.textContent = "Trascrizione e analisi in corso…";
       try {
-        const response = await fetch(`/api/transcribe?speakerName=${encodeURIComponent(speakerName)}`, {
+        const result = await requestJson(`/api/transcribe?speakerName=${encodeURIComponent(speakerName)}`, {
           method: "POST",
           headers: { "content-type": recordedMimeType },
           body: audio,
         });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
         renderTurn(result);
-        recordingStatus.textContent = `Trascritto: “${result.segment.text}”`;
+        elements.recordingStatus.textContent = `Trascritto: “${result.segment.text}”`;
+        await refreshContext();
       } catch (error) {
-        recordingStatus.textContent = `Errore: ${error.message}`;
+        elements.recordingStatus.textContent = `Errore: ${error.message}`;
       } finally {
-        recordButton.disabled = false;
+        elements.recordButton.disabled = false;
         mediaRecorder = null;
         audioChunks = [];
       }
     }, { once: true });
     mediaRecorder.start();
-    stopButton.disabled = false;
-    recordingStatus.className = "recording-status active";
-    recordingStatus.textContent = "Registrazione attiva: parla, poi premi “Stop e invia”.";
+    elements.stopButton.disabled = false;
+    elements.recordingStatus.textContent = "Registrazione attiva: parla, poi premi Stop e invia.";
   } catch (error) {
     releaseMicrophone();
-    recordButton.disabled = false;
-    recordingStatus.textContent = `Microfono non disponibile: ${error.message}`;
+    elements.recordButton.disabled = false;
+    elements.recordingStatus.textContent = `Microfono non disponibile: ${error.message}`;
   }
 });
 
-stopButton.addEventListener("click", () => {
+elements.stopButton.addEventListener("click", () => {
   if (mediaRecorder?.state === "recording") {
-    stopButton.disabled = true;
+    elements.stopButton.disabled = true;
     mediaRecorder.stop();
   }
 });
 
-preflightButton.addEventListener("click", async () => {
-  preflightButton.disabled = true;
-  preflightButton.textContent = "Controllo…";
-  preflightResults.innerHTML = '<p class="empty">Analisi del Mac in corso…</p>';
+async function refreshHealth() {
   try {
-    const response = await fetch("/api/preflight");
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const report = await response.json();
-    preflightResults.innerHTML = report.checks.map(renderCheck).join("");
+    const health = await requestJson("/api/health");
+    elements.providerStatus.className = `status-pill ${health.openaiConfigured ? "ready" : "warning"}`;
+    elements.providerStatus.textContent = health.openaiConfigured
+      ? `OpenAI: ${health.responseModel}${health.webSearchEnabled ? " + web" : ""}`
+      : "OpenAI: non configurato";
+    elements.recordButton.disabled = !health.openaiConfigured || !window.MediaRecorder;
+    if (!health.openaiConfigured) elements.recordingStatus.textContent = "Configura OpenAI per usare il microfono.";
+    else if (!window.MediaRecorder) elements.recordingStatus.textContent = "MediaRecorder non supportato dal browser.";
   } catch (error) {
-    preflightResults.innerHTML = `<p class="empty">Controllo fallito: ${escapeHtml(error.message)}</p>`;
-  } finally {
-    preflightButton.disabled = false;
-    preflightButton.textContent = "Controlla";
+    elements.providerStatus.className = "status-pill warning";
+    elements.providerStatus.textContent = "Server: offline";
+    elements.recordButton.disabled = true;
+    elements.recordingStatus.textContent = `Server non raggiungibile: ${error.message}`;
   }
+}
+
+elements.configForm.addEventListener("input", () => {
+  elements.configStatus.textContent = "Modifiche non ancora salvate.";
 });
 
-simulationForm.addEventListener("submit", async (event) => {
+elements.configForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const data = new FormData(simulationForm);
-  simulationResult.textContent = "Elaborazione…";
+  elements.configSaveButton.disabled = true;
+  elements.configStatus.textContent = "Salvataggio e applicazione in corso…";
   try {
-    const response = await fetch("/api/simulate", {
-      method: "POST",
+    const result = await requestJson("/api/config", {
+      method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        speakerName: data.get("speakerName"),
-        text: data.get("text"),
+        avatarProfile: elements.avatarProfile.value,
+        meetingPlatform: elements.meetingPlatform.value,
+        name: elements.avatarName.value,
+        responseModel: elements.responseModel.value,
+        voiceStyle: elements.voiceStyle.value,
+        italianVoice: elements.italianVoice.value,
+        englishVoice: elements.englishVoice.value,
+        meetingAudioDevice: elements.meetingAudioDevice.value,
+        meetingSpeakerName: elements.meetingSpeakerName.value,
+        apiKey: elements.apiKey.value,
+        purpose: elements.purpose.value,
+        personality: elements.personality.value,
+        systemPrompt: elements.systemPrompt.value,
+        webSearchEnabled: elements.webSearch.checked,
+        requestToSpeakEnabled: elements.requestToSpeak.checked,
+        chatEnabled: elements.chatEnabled.checked,
+        chatCommandAliases: {
+          raiseHand: parseCommandAliases(elements.commandRaiseHand),
+          lowerHand: parseCommandAliases(elements.commandLowerHand),
+          summarizeInChat: parseCommandAliases(elements.commandSummarizeChat),
+          replyInChat: parseCommandAliases(elements.commandReplyChat),
+          speak: parseCommandAliases(elements.commandSpeak),
+        },
       }),
     });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    renderTurn(result);
+    await refreshConfig();
+    await Promise.all([refreshHealth(), refreshListenerStatus(), refreshContext()]);
+    elements.configStatus.textContent = result.listenerWarning
+      ? `Salvata; ascolto non riavviato: ${result.listenerWarning}`
+      : result.listenerRestarted
+        ? "Configurazione salvata; ascolto riavviato."
+        : "Configurazione salvata e applicata.";
   } catch (error) {
-    decisionStatus.className = "decision-status";
-    decisionStatus.textContent = "La frase non è stata acquisita.";
-    simulationResult.textContent = `Errore: ${error.message}`;
+    elements.configStatus.textContent = `Salvataggio fallito: ${error.message}`;
+  } finally {
+    elements.configSaveButton.disabled = false;
   }
 });
 
-void refreshConfig().then(refreshHealth);
-void refreshContext();
-void refreshRendererStatus();
-void refreshListenerStatus();
-void refreshParticipation();
+function renderCheck(check) {
+  const action = check.action ? `<p class="action">${escapeHtml(check.action)}</p>` : "";
+  return `<article class="check"><header><span>${escapeHtml(check.label)}</span><span class="status ${escapeHtml(check.level)}">${escapeHtml(check.level)}</span></header><p>${escapeHtml(check.detail)}</p>${action}</article>`;
+}
+
+elements.preflightButton.addEventListener("click", async () => {
+  elements.preflightButton.disabled = true;
+  elements.preflightButton.textContent = "Controllo…";
+  elements.preflightResults.innerHTML = '<p class="empty">Analisi del Mac in corso…</p>';
+  try {
+    const report = await requestJson("/api/preflight");
+    elements.preflightResults.innerHTML = report.checks.map(renderCheck).join("");
+    renderDebug(report, "PREFLIGHT");
+  } catch (error) {
+    elements.preflightResults.innerHTML = `<p class="empty">Controllo fallito: ${escapeHtml(error.message)}</p>`;
+  } finally {
+    elements.preflightButton.disabled = false;
+    elements.preflightButton.textContent = "Esegui preflight";
+  }
+});
+
+function updateMeetingClock() {
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - meetingStartedAt) / 1_000));
+  const minutes = Math.floor(elapsedSeconds / 60).toString().padStart(2, "0");
+  const seconds = (elapsedSeconds % 60).toString().padStart(2, "0");
+  elements.meetingClock.textContent = `${minutes}:${seconds}`;
+}
+
+await refreshConfig();
+await Promise.all([refreshHealth(), refreshContext(), refreshRendererStatus(), refreshListenerStatus()]);
+updateMeetingClock();
+window.setInterval(updateMeetingClock, 1_000);
+window.setInterval(refreshListenerStatus, 900);
+window.setInterval(refreshContext, 1_500);
 window.setInterval(refreshRendererStatus, 8_000);
-window.setInterval(refreshListenerStatus, 1_000);
-window.setInterval(refreshParticipation, 750);

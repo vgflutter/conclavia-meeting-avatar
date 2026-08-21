@@ -248,12 +248,14 @@ export function startServer(options: ServerOptions): Promise<void> {
   let rendererPlayerUrl: string | undefined;
   let dialogueActiveUntil = 0;
   let pendingRequest: AvatarInterventionRequest | null = null;
+  let avatarHandRaised = false;
 
   const isDialogueActive = () => Date.now() < dialogueActiveUntil;
 
   const participationSnapshot = () => {
     if (pendingRequest && Date.now() >= Date.parse(pendingRequest.expiresAt)) {
       pendingRequest = null;
+      avatarHandRaised = false;
     }
     return pendingRequest;
   };
@@ -284,12 +286,13 @@ export function startServer(options: ServerOptions): Promise<void> {
 
   const contextSnapshot = () => ({
     retainedSegmentCount: transcriptHistory.length,
-    recentSegments: transcriptHistory.slice(-8),
+    recentSegments: transcriptHistory.slice(-50),
     dialogue: {
       active: isDialogueActive(),
       activeUntil: isDialogueActive() ? new Date(dialogueActiveUntil).toISOString() : null,
     },
     participationRequest: participationSnapshot(),
+    avatarHandRaised,
   });
 
   const processSegment = async (
@@ -313,6 +316,7 @@ export function startServer(options: ServerOptions): Promise<void> {
 
     if (isDialogueDismissal(segment.text, runtimeConfig.name)) {
       pendingRequest = null;
+      avatarHandRaised = false;
       dialogueActiveUntil = 0;
       decision = {
         ingested: decision.ingested,
@@ -328,6 +332,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       }
     } else if (currentRequest && isFloorGrant(segment.text, runtimeConfig.name)) {
       pendingRequest = null;
+      avatarHandRaised = false;
       decision = {
         ingested: true,
         activated: true,
@@ -385,6 +390,7 @@ export function startServer(options: ServerOptions): Promise<void> {
               expiresAt: new Date(createdAt.getTime() + interventionRequestTtlMs).toISOString(),
             };
             pendingRequest = request;
+            avatarHandRaised = true;
             decision = {
               ingested: decision.ingested,
               activated: false,
@@ -506,6 +512,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       retainSegment(segment);
       let warning: string | null = null;
       if (command.kind === "lower-hand") pendingRequest = null;
+      avatarHandRaised = command.kind === "raise-hand";
       if (rendererArmed) {
         try {
           if (command.kind === "raise-hand") {
@@ -634,6 +641,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         intelligence = createIntelligence(runtimeConfig);
         listener = createListener();
         pendingRequest = null;
+        avatarHandRaised = false;
         dialogueActiveUntil = 0;
 
         let listenerWarning: string | null = null;
@@ -667,6 +675,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           return;
         }
         pendingRequest = null;
+        avatarHandRaised = false;
         dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
         retainAvatarCue(intervention.proposedCue);
         let delivery: Awaited<ReturnType<ConclaviaRenderer["deliver"]>> | null = null;
@@ -698,6 +707,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       if (request.method === "DELETE" && url.pathname === "/api/participation") {
         const intervention = participationSnapshot();
         pendingRequest = null;
+        avatarHandRaised = false;
         if (intervention && rendererArmed) {
           try {
             await renderer.settleRequest(runtimeConfig.name);
@@ -752,6 +762,22 @@ export function startServer(options: ServerOptions): Promise<void> {
       }
 
       if (request.method === "GET" && url.pathname === "/api/context") {
+        sendJson(response, 200, contextSnapshot());
+        return;
+      }
+
+      if (request.method === "DELETE" && url.pathname === "/api/context") {
+        transcriptHistory.length = 0;
+        pendingRequest = null;
+        avatarHandRaised = false;
+        dialogueActiveUntil = 0;
+        if (rendererArmed) {
+          try {
+            await renderer.settleRequest(runtimeConfig.name);
+          } catch {
+            // Resetting the local simulation must still succeed if the gesture endpoint is unavailable.
+          }
+        }
         sendJson(response, 200, contextSnapshot());
         return;
       }

@@ -28,11 +28,11 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 - Configurable OpenAI response model, API key, purpose, personality, and system prompt.
 - Structured LLM output with one mood and one intensity level for every sentence.
 - Sentence-level language selection with separate native Italian and US English voices.
-- Selectable MetaHuman identity, Italian voice, English voice, and delivery style.
+- Selectable Aera, Ada, Vivian, or Jelena MetaHuman identity, Italian voice, English voice, and delivery style.
 - Conclavia speech synthesis, lip-sync, and sentence-level Unreal performance cues.
 - Embedded Pixel Streaming preview and a clean OBS output page.
 - macOS preflight checks for ffmpeg, OBS Studio, and virtual audio devices.
-- Browser microphone and text simulation modes for testing without Teams.
+- Full browser meeting room for testing spoken turns, microphone transcription, continuous meeting audio, chat, command aliases, participants, hand raising, floor approval, latency, and MetaHuman output without opening Teams or Meet.
 
 ## Participation model
 
@@ -152,6 +152,8 @@ Open [http://127.0.0.1:4310](http://127.0.0.1:4310).
 
 The web application can configure the meeting platform, avatar profile, name/trigger, model, native Italian and English voices, delivery style, API key, purpose, personality, system prompt, web search, and autonomous requests to speak. Saving applies the new configuration without restarting the companion; if the meeting listener was active, it is restarted automatically. Changing the MetaHuman profile is applied the next time the renderer starts.
 
+The default **Test room** is an end-to-end meeting simulator rather than a mocked UI. Text entered as speech uses the normal activation and meeting-memory pipeline; chat messages use the canonical Teams/Meet adapter endpoint; quick actions use the currently configured command aliases; and browser microphone input uses the production transcription path. The transcript, chat, participant list, physical hand state, pending floor request, per-sentence moods, renderer delivery, and latency are visible in one place. **New session** clears the in-memory meeting history and resets pending participation state without changing avatar configuration.
+
 You can alternatively provide the API key through the environment:
 
 ```dotenv
@@ -207,9 +209,7 @@ The current realtime transcript uses the configured generic speaker name; it doe
 7. Say `Thank you, Mary` to close the dialogue early; otherwise it closes after the first follow-up or its timeout.
 8. Inspect the turn JSON: every spoken sentence must include its own `mood`, `level`, and `language`.
 
-The **Record** button performs the same flow through the browser microphone. The manual text field is the fastest option for deterministic protocol tests.
-
-The **Chat multipiattaforma** panel calls the production chat endpoint. It can test Teams, Google Meet, or generic events before a platform adapter is connected. The equivalent CLI command is:
+The **Microphone** control performs the same flow through the browser microphone. The **Spoken** composer is the fastest option for deterministic protocol tests. Switch the composer to **Chat**, use the chat sidebar, or select one of the five quick commands to call the production chat endpoint before a platform adapter is connected. The equivalent CLI command is:
 
 ```bash
 npm run chat:simulate -- teams Vincenzo "Mary, riassumi in chat"

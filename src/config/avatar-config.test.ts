@@ -56,6 +56,20 @@ await test("rejects an unsupported avatar profile", () => {
   assert.throws(() => store.update({ avatarProfile: "unknown" }), /non supportato/u);
 });
 
+await test("accepts Vivian as a selectable MetaHuman profile", () => {
+  const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
+  const store = new AvatarConfigStore(path, defaults);
+  assert.equal(store.update({ avatarProfile: "vivian" }).avatarProfile, "vivian");
+  assert.equal(store.publicConfig.avatarProfile, "vivian");
+});
+
+await test("accepts Jelena as a selectable MetaHuman profile", () => {
+  const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
+  const store = new AvatarConfigStore(path, defaults);
+  assert.equal(store.update({ avatarProfile: "jelena" }).avatarProfile, "jelena");
+  assert.equal(store.publicConfig.avatarProfile, "jelena");
+});
+
 await test("persists configurable chat commands and returns defensive copies", () => {
   const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
   const store = new AvatarConfigStore(path, defaults);
