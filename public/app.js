@@ -100,6 +100,9 @@ let lastListenerSegmentId = null;
 let stageModeTimer = null;
 let meetingStartedAt = Date.now();
 let activeAvatarProfile = null;
+let rendererActionInProgress = false;
+let rendererActionProfile = null;
+let rendererWasAvailable = false;
 const meetingId = `conclavia-gui-${crypto.randomUUID()}`;
 
 function escapeHtml(value) {
@@ -733,12 +736,37 @@ function pixelStreamingUrl(value) {
   return url.toString();
 }
 
+function renderRendererPlaceholder(message, { loading = false } = {}) {
+  const label = rendererActionProfile || currentConfig?.avatarProfile || activeAvatarProfile || "MetaHuman";
+  elements.rendererPreview.innerHTML = `
+    <div class="stage-placeholder ${loading ? "loading" : ""}">
+      <div class="avatar-orbit" aria-hidden="true"><span>${loading ? "◌" : "C"}</span></div>
+      <strong id="stage-avatar-name">${escapeHtml(avatarName)}</strong>
+      <p>${escapeHtml(message)}</p>
+      ${loading ? `<small>Profilo ${escapeHtml(label)} · il primo avvio può richiedere 1–2 minuti</small>` : ""}
+    </div>`;
+  elements.stageAvatarName = $("#stage-avatar-name");
+}
+
 function mountRendererPlayer(playerUrl, force = false) {
   if (!playerUrl) return;
   const outputUrl = pixelStreamingUrl(playerUrl);
   const frame = elements.rendererPreview.querySelector("iframe");
   if (force || !frame || frame.dataset.source !== playerUrl) {
-    elements.rendererPreview.innerHTML = `<iframe title="Conclavia MetaHuman" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>`;
+    elements.rendererPreview.innerHTML = `
+      <div class="renderer-frame-shell">
+        <iframe title="Conclavia MetaHuman" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
+        <div class="renderer-frame-state" aria-live="polite"><span class="renderer-spinner" aria-hidden="true"></span>Collegamento al video…</div>
+      </div>`;
+    const mountedFrame = elements.rendererPreview.querySelector("iframe");
+    const frameState = elements.rendererPreview.querySelector(".renderer-frame-state");
+    mountedFrame?.addEventListener("load", () => frameState?.remove(), { once: true });
+    window.setTimeout(() => frameState?.remove(), 8_000);
+    mountedFrame?.addEventListener("error", () => {
+      if (!frameState) return;
+      frameState.classList.add("error");
+      frameState.innerHTML = "Il video non ha risposto. La riconnessione è automatica.";
+    }, { once: true });
   }
   elements.rendererOutputLink.href = outputUrl;
   elements.rendererOutputLink.hidden = false;
@@ -746,14 +774,18 @@ function mountRendererPlayer(playerUrl, force = false) {
 
 function renderRendererStatus(status) {
   const reachable = status.serverStatus !== "unreachable";
-  elements.rendererStartButton.disabled = !status.configured || !reachable || status.armed;
-  elements.rendererStopButton.disabled = !status.armed;
-  elements.rendererStartButton.innerHTML = status.armed
+  const starting = rendererActionInProgress && !status.available;
+  elements.rendererStartButton.disabled = rendererActionInProgress || !status.configured || !reachable || status.armed;
+  elements.rendererStopButton.disabled = rendererActionInProgress || !status.armed;
+  elements.meetingAvatarSwitchButton.disabled = rendererActionInProgress;
+  elements.rendererStartButton.innerHTML = rendererActionInProgress
+    ? '<span class="control-icon">◌</span><span>Avvio…</span>'
+    : status.armed
     ? '<span class="control-icon">✓</span><span>Avatar attivo</span>'
     : '<span class="control-icon">▶</span><span>Avvia avatar</span>';
   elements.rendererPill.className = `status-pill ${status.armed && status.available ? "ready" : status.configured ? "" : "warning"}`;
-  elements.stageLiveState.className = `stage-badge ${status.armed ? "ready" : ""}`;
-  elements.stageLiveState.textContent = status.armed ? "LIVE" : "OFFLINE";
+  elements.stageLiveState.className = `stage-badge ${status.armed && status.available ? "ready" : ""}`;
+  elements.stageLiveState.textContent = starting ? "AVVIO…" : status.armed && status.available ? "LIVE" : "OFFLINE";
   if (status.avatarProfile) {
     activeAvatarProfile = status.avatarProfile;
     const label = status.avatarProfile.charAt(0).toUpperCase() + status.avatarProfile.slice(1);
@@ -764,7 +796,12 @@ function renderRendererStatus(status) {
     elements.activeAvatarLabel.textContent = `${currentConfig?.avatarProfile ?? "Avatar"} · configurato`;
   }
 
-  if (!status.configured) {
+  if (starting) {
+    elements.rendererPill.textContent = "Avatar: avvio";
+    elements.rendererStatus.textContent = "Accensione di Unreal e Pixel Streaming in corso. Attendi: il primo avvio può richiedere 1–2 minuti.";
+    elements.avatarSwitchStatus.className = "switching";
+    elements.avatarSwitchStatus.textContent = `Sto caricando ${rendererActionProfile || currentConfig?.avatarProfile || "il MetaHuman"}; la pagina si collegherà automaticamente.`;
+  } else if (!status.configured) {
     elements.rendererPill.textContent = "Avatar: non configurato";
     elements.rendererStatus.textContent = "Bridge Conclavia non configurato.";
     elements.avatarSwitchStatus.className = "";
@@ -798,7 +835,19 @@ function renderRendererStatus(status) {
     elements.avatarSwitchStatus.className = "";
     elements.avatarSwitchStatus.textContent = "Avvia il renderer per caricare il MetaHuman selezionato.";
   }
-  if (status.playerUrl) mountRendererPlayer(status.playerUrl);
+  if (status.available && status.playerUrl) {
+    mountRendererPlayer(status.playerUrl, !rendererWasAvailable);
+    rendererWasAvailable = true;
+  } else {
+    rendererWasAvailable = false;
+    elements.rendererOutputLink.hidden = true;
+    renderRendererPlaceholder(
+      starting
+        ? "Sto avviando Unreal Engine e preparando il collegamento video…"
+        : "Il renderer video è fermo. Premi “Avvia avatar” per collegarlo.",
+      { loading: starting },
+    );
+  }
 }
 
 async function refreshRendererStatus() {
@@ -814,6 +863,8 @@ async function refreshRendererStatus() {
 }
 
 elements.rendererStartButton.addEventListener("click", async () => {
+  rendererActionInProgress = true;
+  rendererActionProfile = currentConfig?.avatarProfile || activeAvatarProfile;
   elements.rendererStartButton.disabled = true;
   elements.rendererStartButton.innerHTML = '<span class="control-icon">◌</span><span>Avvio…</span>';
   elements.rendererStatus.textContent = "Avvio MetaHuman e Pixel Streaming; può richiedere alcuni minuti.";
@@ -822,29 +873,40 @@ elements.rendererStartButton.addEventListener("click", async () => {
   elements.stageLiveState.textContent = "AVVIO…";
   elements.avatarSwitchStatus.className = "switching";
   elements.avatarSwitchStatus.textContent = "Collegamento del renderer e abilitazione delle risposte in corso…";
+  renderRendererPlaceholder("Sto avviando Unreal Engine e preparando il collegamento video…", { loading: true });
   setDecision(`Sto attivando ${avatarName}.`, "listening");
   try {
     const result = await requestJson("/api/renderer/start", { method: "POST" });
+    rendererActionInProgress = false;
     renderRendererStatus({ configured: true, available: true, armed: true, serverStatus: result.serverStatus, playerUrl: result.playerUrl, avatarProfile: currentConfig?.avatarProfile });
     elements.avatarSwitchStatus.className = "ready";
     elements.avatarSwitchStatus.textContent = `${avatarName} è attiva e pronta a parlare.`;
     setDecision(`${avatarName} è attiva: il prossimo intervento verrà riprodotto dal MetaHuman.`, "responding");
     renderDebug(result, "AVATAR ATTIVATO");
   } catch (error) {
+    rendererActionInProgress = false;
     elements.rendererStatus.textContent = `Avvio fallito: ${error.message}`;
     elements.avatarSwitchStatus.className = "";
     elements.avatarSwitchStatus.textContent = `Avvio non riuscito: ${error.message}`;
     elements.stageLiveState.textContent = "OFFLINE";
     elements.rendererStartButton.innerHTML = '<span class="control-icon">▶</span><span>Riprova</span>';
     elements.rendererStartButton.disabled = false;
+    renderRendererPlaceholder(`Avvio non riuscito: ${error.message}`);
+  } finally {
+    rendererActionProfile = null;
   }
 });
 
 elements.meetingAvatarSwitchButton.addEventListener("click", async () => {
   const avatarProfile = elements.meetingAvatarSelect.value;
+  rendererActionInProgress = true;
+  rendererActionProfile = avatarProfile;
   elements.meetingAvatarSwitchButton.disabled = true;
   elements.avatarSwitchStatus.className = "switching";
   elements.avatarSwitchStatus.textContent = `Sto caricando ${avatarProfile}. Il renderer può impiegare alcuni minuti…`;
+  elements.stageLiveState.className = "stage-badge";
+  elements.stageLiveState.textContent = "AVVIO…";
+  renderRendererPlaceholder("Cambio MetaHuman: riavvio di Unreal Engine e del collegamento video…", { loading: true });
   setDecision(`Cambio MetaHuman in corso: ${avatarProfile}.`, "listening");
   try {
     const result = await requestJson("/api/renderer/avatar", {
@@ -855,6 +917,7 @@ elements.meetingAvatarSwitchButton.addEventListener("click", async () => {
     currentConfig = result.config;
     activeAvatarProfile = avatarProfile;
     await refreshConfig();
+    rendererActionInProgress = false;
     renderRendererStatus({
       configured: true,
       available: true,
@@ -869,11 +932,14 @@ elements.meetingAvatarSwitchButton.addEventListener("click", async () => {
     setDecision(`${avatarName} ora usa il MetaHuman ${avatarProfile}.`, "responding");
     renderDebug(result, "CAMBIO AVATAR");
   } catch (error) {
+    rendererActionInProgress = false;
     elements.avatarSwitchStatus.className = "";
     elements.avatarSwitchStatus.textContent = `Cambio non riuscito: ${error.message}`;
     setDecision(`Cambio avatar non riuscito: ${error.message}`, "listening");
     await refreshRendererStatus();
   } finally {
+    rendererActionInProgress = false;
+    rendererActionProfile = null;
     elements.meetingAvatarSwitchButton.disabled = false;
   }
 });
@@ -883,8 +949,8 @@ elements.rendererStopButton.addEventListener("click", async () => {
   elements.rendererStatus.textContent = "Arresto del renderer…";
   try {
     await requestJson("/api/renderer/session", { method: "DELETE" });
-    elements.rendererPreview.innerHTML = `<div class="stage-placeholder"><div class="avatar-orbit" aria-hidden="true"><span>C</span></div><strong id="stage-avatar-name">${escapeHtml(avatarName)}</strong><p>Renderer fermato. Riavvialo quando vuoi riprendere il test.</p></div>`;
-    elements.stageAvatarName = $("#stage-avatar-name");
+    rendererWasAvailable = false;
+    renderRendererPlaceholder("Renderer fermato. Riavvialo quando vuoi riprendere il test.");
     elements.rendererOutputLink.hidden = true;
     renderRendererStatus({ configured: true, available: false, armed: false, serverStatus: "off" });
   } catch (error) {
