@@ -23,6 +23,14 @@ function selectDiagnosticMood(text: string): AvatarMood {
   return moodRules.find(([pattern]) => pattern.test(text))?.[1] ?? "attentive";
 }
 
+export function isDialogueFollowUpCandidate(text: string): boolean {
+  const value = text.trim();
+  if (!value) return false;
+
+  return /\b(?:secondo\s+te|tu\s+cosa|che\s+ne\s+pensi|cosa\s+ne\s+pensi|puoi|potresti|riesci|dimmi|spiegami|continua|approfondisci|ripeti|elabora|rispondi|what\s+do\s+you|do\s+you|can\s+you|could\s+you|would\s+you|tell\s+(?:me|us)|explain|continue|elaborate|repeat)\b/iu.test(value)
+    || /^(?:(?:e|ma|quindi|allora)[\s,]+)?(?:perch[eéè]|come|quando|dove|quale|quali|in\s+che\s+senso)(?=$|[\s,.:;!?-])[^.]*\??$/iu.test(value);
+}
+
 export function decideActivation(
   segment: TranscriptSegment,
   wakeWord: string,
@@ -34,7 +42,10 @@ export function decideActivation(
 
   const wakeWordPattern = new RegExp(`\\b${escapeRegExp(wakeWord)}\\b`, "i");
   const containsWakeWord = wakeWordPattern.test(segment.text);
-  if (!containsWakeWord && !conversationActive) {
+  if (
+    !containsWakeWord &&
+    !(conversationActive && isDialogueFollowUpCandidate(segment.text))
+  ) {
     return { ingested: true, activated: false, reason: "not-addressed" };
   }
 

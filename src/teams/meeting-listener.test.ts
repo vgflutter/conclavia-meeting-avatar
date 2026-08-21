@@ -22,7 +22,7 @@ await test("speculates only when a useful partial turn addresses Mary", () => {
   assert.equal(canSpeculateAddressedTurn("Parlo con Mario", "Mary"), false);
 });
 
-await test("allows useful follow-up turns to speculate during an active dialogue", () => {
+await test("recognizes partial turns long enough for speculative processing", () => {
   assert.equal(canSpeculateTurn("E perché no?"), true);
   assert.equal(canSpeculateTurn("Perché?"), false);
 });

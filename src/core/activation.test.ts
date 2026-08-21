@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   decideActivation,
   isAutonomyCandidate,
+  isDialogueFollowUpCandidate,
   isDialogueDismissal,
   isFloorGrant,
 } from "./activation.js";
@@ -64,6 +65,20 @@ await test("keeps responding to natural follow-up turns while dialogue is active
   assert.equal(decision.ingested, true);
   assert.equal(decision.activated, true);
   assert.equal(decision.reason, "conversation-follow-up");
+});
+
+await test("does not treat unrelated meeting chatter as an active-dialogue follow-up", () => {
+  const decision = decideActivation(
+    segment({ text: "Il preventivo del fornitore arriva domani mattina." }),
+    "Mary",
+    true,
+  );
+
+  assert.equal(decision.activated, false);
+  assert.equal(decision.reason, "not-addressed");
+  assert.equal(isDialogueFollowUpCandidate("Puoi approfondire questo punto?"), true);
+  assert.equal(isDialogueFollowUpCandidate("E perché?"), true);
+  assert.equal(isDialogueFollowUpCandidate("Parliamo del preventivo domani."), false);
 });
 
 await test("recognizes explicit dialogue dismissal phrases", () => {

@@ -143,7 +143,7 @@ Default settings:
 PORT=4310
 HOST=127.0.0.1
 CONCLAVIA_WAKE_WORD=Mary
-CONCLAVIA_DIALOGUE_TIMEOUT_MS=120000
+CONCLAVIA_DIALOGUE_TIMEOUT_MS=45000
 CONCLAVIA_CONFIG_PATH=.conclavia/avatar-config.json
 CONCLAVIA_RENDERER_URL=http://127.0.0.1:3000
 CONCLAVIA_MEETING_AUDIO_DEVICE=BlackHole 16ch
@@ -175,11 +175,11 @@ The current realtime transcript uses the configured generic speaker name; it doe
 
 1. Say a normal sentence without the avatar name. It must appear in memory without an immediate answer.
 2. Ask `Mary, what was said before?`. Mary should answer with the retained context.
-3. Continue with `And what do you suggest?` without repeating the name. The active dialogue should allow the follow-up.
+3. Continue with `And what do you suggest?` without repeating the name. One clearly directed natural follow-up is allowed during the short dialogue window.
 4. Ask for a current fact. With web search enabled, the turn result should report web usage and expose its sources in the console.
 5. Continue a human-only discussion with a substantial point. If Mary has a genuinely useful contribution, her right hand rises without audio.
 6. Approve it in the console or say `Mary, go ahead`; only then should speech and animation start.
-7. Say `Thank you, Mary` to close the dialogue before its timeout.
+7. Say `Thank you, Mary` to close the dialogue early; otherwise it closes after the first follow-up or its timeout.
 8. Inspect the turn JSON: every spoken sentence must include its own `mood`, `level`, and `language`.
 
 The **Record** button performs the same flow through the browser microphone. The manual text field is the fastest option for deterministic protocol tests.

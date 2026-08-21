@@ -298,7 +298,11 @@ export function startServer(options: ServerOptions): Promise<void> {
 
           if (turn.action === "speak" && turn.cue) {
             decision = { ...decision, activated: true, cue: turn.cue };
-            dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
+            if (decision.reason === "wake-word") {
+              dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
+            } else if (decision.reason === "conversation-follow-up") {
+              dialogueActiveUntil = 0;
+            }
             retainAvatarCue(turn.cue);
           } else if (turn.action === "request-to-speak" && turn.cue) {
             const createdAt = new Date();
@@ -329,6 +333,7 @@ export function startServer(options: ServerOptions): Promise<void> {
               }
             }
           } else {
+            if (decision.reason === "conversation-follow-up") dialogueActiveUntil = 0;
             decision = {
               ingested: decision.ingested,
               activated: false,

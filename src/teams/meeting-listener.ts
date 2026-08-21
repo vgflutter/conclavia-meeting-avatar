@@ -5,6 +5,7 @@ import type { Readable } from "node:stream";
 import OpenAI from "openai";
 import { OpenAIRealtimeWS } from "openai/realtime/ws";
 
+import { isDialogueFollowUpCandidate } from "../core/activation.js";
 import type { TranscriptSegment } from "../domain/protocol.js";
 import {
   findAvfoundationAudioDevice,
@@ -338,7 +339,9 @@ export class MeetingListener {
       itemId &&
       partial &&
       (canSpeculateAddressedTurn(partial, this.#options.wakeWord) ||
-        (this.#options.isConversationActive?.() === true && canSpeculateTurn(partial))) &&
+        (this.#options.isConversationActive?.() === true &&
+          canSpeculateTurn(partial) &&
+          isDialogueFollowUpCandidate(partial))) &&
       !this.#speculativeByItem.has(itemId)
     ) {
       this.#speculativeByItem.set(itemId, this.#enqueueTranscript(partial, itemId));
