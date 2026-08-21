@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Conclavia Meeting Avatar</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">CONCLAVIA LAB</p>
+          <h1>Meeting Avatar</h1>
+          <p class="lede">Il banco di prova locale per portare un avatar Conclavia dentro Teams.</p>
+        </div>
+        <div class="runtime">
+          <span class="phase">POC · FASE 1</span>
+          <span id="provider-status" class="provider-status">OpenAI: controllo…</span>
+        </div>
+      </header>
+
+      <section class="flow" aria-label="Flusso del sistema">
+        <span>Teams</span><b>→</b><span>Trascrizione continua</span><b>→</b><span>Memoria LLM</span><b>→</b><span>Gate “Mary”</span><b>→</b><span>MetaHuman</span><b>→</b><span>OBS</span>
+      </section>
+
+      <div class="grid">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">01 · MAC</p>
+              <h2>Preflight dispositivi</h2>
+            </div>
+            <button id="preflight-button" type="button">Controlla</button>
+          </div>
+          <p class="muted">Verifica gli strumenti necessari prima di aprire una riunione vera.</p>
+          <div id="preflight-results" class="results" aria-live="polite">
+            <p class="empty">Nessun controllo eseguito.</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">02 · ASCOLTO</p>
+              <h2>Parla con Mary</h2>
+            </div>
+          </div>
+          <form id="simulation-form">
+            <label>
+              Partecipante per i test manuali
+              <input id="speaker-name" name="speakerName" value="Vincenzo" maxlength="80" required />
+            </label>
+            <section class="microphone-card meeting-listener-card" aria-labelledby="listener-title">
+              <div class="listener-heading">
+                <div>
+                  <h3 id="listener-title">Audio continuo di Teams</h3>
+                  <p>Legge BlackHole 16ch senza interruzioni. Ogni frase entra nella memoria LLM; solo “Mary” abilita la risposta.</p>
+                </div>
+                <span id="listener-turn-count" class="listener-turn-count">0 turni</span>
+              </div>
+              <div class="microphone-actions">
+                <button id="listener-start-button" type="button">Avvia ascolto Teams</button>
+                <button id="listener-stop-button" class="secondary" type="button" disabled>Ferma ascolto</button>
+              </div>
+              <p id="listener-status" class="recording-status" aria-live="polite">Ascolto continuo fermo.</p>
+              <p id="listener-partial" class="listener-partial" aria-live="polite"></p>
+              <p class="listener-note">La trascrizione streaming non assegna ancora i nomi dei singoli partecipanti: le battute arrivano come “Partecipante Teams”, ma il testo completo viene conservato.</p>
+            </section>
+            <section class="microphone-card" aria-labelledby="microphone-title">
+              <div>
+                <h3 id="microphone-title">Microfono reale</h3>
+                <p>Registra una frase, poi fermati. L’audio viene trascritto e aggiunto alla riunione.</p>
+              </div>
+              <div class="microphone-actions">
+                <button id="record-button" type="button">Registra</button>
+                <button id="stop-button" class="secondary" type="button" disabled>Stop e invia</button>
+              </div>
+              <p id="recording-status" class="recording-status" aria-live="polite">In attesa del microfono.</p>
+            </section>
+            <div class="manual-test">
+              <p class="eyebrow">TEST SENZA AUDIO</p>
+            </div>
+            <label>
+              Frase intercettata
+              <textarea name="text" rows="4" maxlength="2000" required>Mary, cosa ne pensi di questa idea?</textarea>
+            </label>
+            <p class="muted form-note">Ogni frase finale entra nel contesto. Mary risponde soltanto quando viene chiamata.</p>
+            <button type="submit">Invia testo alla conversazione</button>
+          </form>
+          <p id="decision-status" class="decision-status" aria-live="polite">In attesa di una frase…</p>
+          <div id="mary-response" class="mary-response" aria-live="polite"></div>
+          <pre id="simulation-result" class="console" aria-live="polite">In attesa di una frase…</pre>
+          <div class="memory-heading">
+            <h3>Memoria LLM</h3>
+            <span id="context-count">0 frasi</span>
+          </div>
+          <div id="context-results" class="context-results" aria-live="polite">
+            <p class="empty">La conversazione è ancora vuota.</p>
+          </div>
+        </section>
+
+        <section class="panel renderer-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">03 · CONCLAVIA</p>
+              <h2>MetaHuman per Teams</h2>
+            </div>
+            <div class="renderer-actions">
+              <button id="renderer-start-button" type="button">Avvia MetaHuman</button>
+              <button id="renderer-stop-button" class="secondary" type="button" disabled>Ferma</button>
+            </div>
+          </div>
+          <p class="muted">Avvia il renderer Unreal già costruito da Conclavia. Quando Mary risponde, lo stesso audio pilota voce, labiale e mood.</p>
+          <p id="renderer-status" class="decision-status" aria-live="polite">Controllo del renderer…</p>
+          <div id="renderer-preview" class="renderer-preview">
+            <p class="empty">Il video Pixel Streaming apparirà qui dopo l’avvio.</p>
+          </div>
+          <div class="teams-route">
+            <strong>Uscita verso Teams</strong>
+            <p>OBS cattura il player MetaHuman e lo espone come Virtual Camera. L’audio di Mary va al microfono virtuale Teams su un bus separato dall’audio della riunione.</p>
+            <a id="renderer-output-link" href="#" target="_blank" rel="noreferrer" hidden>Apri il solo output MetaHuman per OBS ↗</a>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        Il flusso completo separa l’audio della riunione su BlackHole 16ch dalla voce di Mary su BlackHole 2ch, evitando che l’avatar riascolti sé stesso.
+      </footer>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

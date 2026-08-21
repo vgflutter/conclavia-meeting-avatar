@@ -1,0 +1,75 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { performanceBeatsForCue, speechTextForCue } from "./renderer.js";
+import type { AvatarSpeechCue } from "../domain/protocol.js";
+
+const cue: AvatarSpeechCue = {
+  id: "cue-1",
+  kind: "speak",
+  provider: "openai",
+  model: "gpt-5.4-mini",
+  sentences: [
+    { text: "Sono d'accordo.", mood: "confident" },
+    { text: "Ma verifichiamo questo rischio con attenzione.", mood: "concerned" },
+  ],
+  addressedTo: "Vincenzo",
+  sourceSegmentIds: ["segment-1", "segment-2"],
+  createdAt: "2026-08-21T10:00:00.000Z",
+};
+
+await test("combines all Mary sentences for one synchronized speech", () => {
+  assert.equal(
+    speechTextForCue(cue),
+    "Sono d'accordo. Ma verifichiamo questo rischio con attenzione.",
+  );
+});
+
+await test("maps sentence moods to timed Unreal performance beats", () => {
+  assert.deepEqual(performanceBeatsForCue(cue, 6_000), [
+    {
+      atMs: 0,
+      mood: "confidence",
+      intensity: 1,
+      focus: "camera",
+      gesture: "nod",
+    },
+    {
+      atMs: 1_080,
+      mood: "confidence",
+      intensity: 0.18,
+      focus: "camera",
+      gesture: "none",
+    },
+    {
+      atMs: 1_430,
+      mood: "fear",
+      intensity: 0.18,
+      focus: "thought",
+      gesture: "none",
+    },
+    {
+      atMs: 1_760,
+      mood: "fear",
+      intensity: 0.92,
+      focus: "thought",
+      gesture: "tilt",
+    },
+  ]);
+});
+
+await test("uses a clearly visible intensity for a single non-neutral mood", () => {
+  assert.deepEqual(
+    performanceBeatsForCue(
+      { ...cue, sentences: [{ text: "Davvero?", mood: "surprised" }] },
+      3_000,
+    ),
+    [{
+      atMs: 0,
+      mood: "surprise",
+      intensity: 1,
+      focus: "camera",
+      gesture: "emphasis",
+    }],
+  );
+});
