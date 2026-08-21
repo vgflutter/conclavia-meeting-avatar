@@ -92,6 +92,17 @@
               <button id="renderer-stop-button" class="control-button" type="button" disabled><span class="control-icon">■</span><span>Ferma avatar</span></button>
             </div>
 
+            <div class="avatar-switcher">
+              <div>
+                <span class="avatar-switcher-label">MetaHuman in scena</span>
+                <strong id="active-avatar-label">Controllo…</strong>
+              </div>
+              <label class="sr-only" for="meeting-avatar-select">Scegli MetaHuman</label>
+              <select id="meeting-avatar-select" aria-label="Scegli MetaHuman"></select>
+              <button id="meeting-avatar-switch-button" type="button">Cambia avatar</button>
+              <span id="avatar-switch-status" aria-live="polite">Puoi cambiarlo anche mentre il renderer è acceso.</span>
+            </div>
+
             <div class="live-status-strip">
               <span id="recording-status">Microfono pronto.</span>
               <span id="listener-status">Ascolto continuo fermo.</span>
@@ -165,6 +176,7 @@
         <form id="avatar-config-form" class="config-form" autocomplete="off">
           <section class="settings-card">
             <div class="settings-card-heading"><span>01</span><div><h3>Identità</h3><p>Chi è l’avatar e come si presenta nel meeting.</p></div></div>
+            <div id="avatar-choice-grid" class="avatar-choice-grid" aria-label="Preset MetaHuman disponibili"></div>
             <div class="config-grid three-columns">
               <label>Avatar<select id="avatar-profile" name="avatarProfile" required></select></label>
               <label>Piattaforma meeting<select id="meeting-platform" name="meetingPlatform"></select></label>

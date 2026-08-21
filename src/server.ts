@@ -625,6 +625,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       if (request.method === "PUT" && url.pathname === "/api/config") {
         const input = await readJsonBody(request) as AvatarConfigInput;
         const wasListening = listener?.status.running === true;
+        const previousAvatarProfile = runtimeConfig.avatarProfile;
         let nextConfig: AvatarConfig;
         try {
           nextConfig = configStore.update(input);
@@ -654,11 +655,28 @@ export function startServer(options: ServerOptions): Promise<void> {
               : "Riavvio dell'ascolto del meeting non riuscito.";
           }
         }
+        let rendererRestarted = false;
+        let rendererWarning: string | null = null;
+        if (rendererArmed && previousAvatarProfile !== runtimeConfig.avatarProfile) {
+          rendererArmed = false;
+          try {
+            const session = await renderer.start(runtimeConfig.avatarProfile);
+            rendererPlayerUrl = session.playerUrl;
+            rendererArmed = true;
+            rendererRestarted = true;
+          } catch (error: unknown) {
+            rendererWarning = error instanceof Error
+              ? error.message
+              : "Cambio del MetaHuman non riuscito.";
+          }
+        }
         sendJson(response, 200, {
           ok: true,
           config: configStore.publicConfig,
           listenerRestarted: wasListening && listener?.status.running === true,
           listenerWarning,
+          rendererRestarted,
+          rendererWarning,
         });
         return;
       }
@@ -804,6 +822,42 @@ export function startServer(options: ServerOptions): Promise<void> {
           armed: rendererArmed,
           playerUrl: rendererPlayerUrl ?? status.playerUrl ?? null,
         });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/renderer/avatar") {
+        const body = await readJsonBody(request) as { avatarProfile?: unknown };
+        const avatarProfile = typeof body.avatarProfile === "string"
+          ? body.avatarProfile.trim()
+          : "";
+        if (!avatarProfiles.some((profile) => profile.id === avatarProfile)) {
+          sendJson(response, 400, { error: "Profilo avatar non supportato." });
+          return;
+        }
+
+        runtimeConfig = configStore.update({ avatarProfile });
+        pendingRequest = null;
+        avatarHandRaised = false;
+        rendererArmed = false;
+        try {
+          const session = await renderer.start(avatarProfile);
+          rendererPlayerUrl = session.playerUrl;
+          rendererArmed = true;
+          sendJson(response, 200, {
+            ok: true,
+            avatarProfile,
+            armed: true,
+            playerUrl: rendererPlayerUrl,
+            serverStatus: session.serverStatus,
+            config: configStore.publicConfig,
+          });
+        } catch (error: unknown) {
+          console.error("Conclavia MetaHuman switch failed:", error);
+          sendJson(response, 502, {
+            error: error instanceof Error ? error.message : "Cambio MetaHuman non riuscito.",
+            avatarProfile,
+          });
+        }
         return;
       }
 

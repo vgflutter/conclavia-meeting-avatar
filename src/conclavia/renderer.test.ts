@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { performanceBeatsForCue, speechTextForCue } from "./renderer.js";
+import {
+  ConclaviaRenderer,
+  performanceBeatsForCue,
+  speechTextForCue,
+} from "./renderer.js";
 import type { AvatarSpeechCue } from "../domain/protocol.js";
 
 const cue: AvatarSpeechCue = {
@@ -85,4 +89,27 @@ await test("uses a clearly visible intensity for a single non-neutral mood", () 
       gesture: "emphasis",
     }],
   );
+});
+
+await test("reports the MetaHuman profile currently loaded by Unreal", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = () => Promise.resolve(new Response(JSON.stringify({
+    configured: true,
+    available: true,
+    serverStatus: "ready",
+    playerUrl: "http://renderer.example/player",
+    health: { avatarId: "jelena" },
+  }), { status: 200, headers: { "content-type": "application/json" } }));
+  try {
+    const renderer = new ConclaviaRenderer("http://conclavia.example");
+    assert.deepEqual(await renderer.status(), {
+      configured: true,
+      available: true,
+      serverStatus: "ready",
+      playerUrl: "http://renderer.example/player",
+      avatarProfile: "jelena",
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

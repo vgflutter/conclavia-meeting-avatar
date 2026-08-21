@@ -50,6 +50,7 @@ export interface ConclaviaRendererStatus {
   available: boolean;
   serverStatus: string;
   playerUrl?: string;
+  avatarProfile?: string;
   error?: string;
 }
 
@@ -248,6 +249,7 @@ export class ConclaviaRenderer {
         available?: boolean;
         serverStatus?: string;
         playerUrl?: string;
+        health?: { avatarId?: string };
         error?: string;
       };
       if (!response.ok) {
@@ -258,6 +260,7 @@ export class ConclaviaRenderer {
         available: payload.available === true,
         serverStatus: payload.serverStatus ?? "unknown",
         ...(payload.playerUrl ? { playerUrl: payload.playerUrl } : {}),
+        ...(payload.health?.avatarId ? { avatarProfile: payload.health.avatarId } : {}),
       };
     } catch (error: unknown) {
       return {

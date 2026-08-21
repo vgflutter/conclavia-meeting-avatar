@@ -28,6 +28,10 @@ const elements = {
   rendererStopButton: $("#renderer-stop-button"),
   rendererStatus: $("#renderer-status"),
   rendererOutputLink: $("#renderer-output-link"),
+  meetingAvatarSelect: $("#meeting-avatar-select"),
+  meetingAvatarSwitchButton: $("#meeting-avatar-switch-button"),
+  avatarSwitchStatus: $("#avatar-switch-status"),
+  activeAvatarLabel: $("#active-avatar-label"),
   meetingComposerForm: $("#meeting-composer-form"),
   meetingMessage: $("#meeting-message"),
   meetingSendButton: $("#meeting-send-button"),
@@ -55,6 +59,7 @@ const elements = {
   configSummary: $("#config-summary"),
   configStatus: $("#config-status"),
   configSaveButton: $("#config-save-button"),
+  avatarChoiceGrid: $("#avatar-choice-grid"),
   avatarProfile: $("#avatar-profile"),
   meetingPlatform: $("#meeting-platform"),
   avatarName: $("#avatar-name"),
@@ -94,6 +99,7 @@ let audioChunks = [];
 let lastListenerSegmentId = null;
 let stageModeTimer = null;
 let meetingStartedAt = Date.now();
+let activeAvatarProfile = null;
 const meetingId = `conclavia-gui-${crypto.randomUUID()}`;
 
 function escapeHtml(value) {
@@ -190,6 +196,25 @@ function parseCommandAliases(input) {
     .filter(Boolean))];
 }
 
+function updateAvatarChoiceSelection(profile) {
+  $$(".avatar-choice").forEach((button) => {
+    button.classList.toggle("selected", button.dataset.profile === profile);
+  });
+}
+
+function renderAvatarChoices(profiles, selectedProfile) {
+  elements.meetingAvatarSelect.innerHTML = profiles.map((profile) =>
+    `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.label)}</option>`
+  ).join("");
+  elements.meetingAvatarSelect.value = selectedProfile;
+  elements.avatarChoiceGrid.innerHTML = profiles.map((profile) => `
+    <button class="avatar-choice ${profile.id === selectedProfile ? "selected" : ""}" type="button" data-profile="${escapeHtml(profile.id)}">
+      <span class="avatar-choice-portrait" aria-hidden="true">${escapeHtml(initials(profile.label.split("·")[0]))}</span>
+      <span><strong>${escapeHtml(profile.label.split("·")[0].trim())}</strong><small>MetaHuman disponibile</small></span>
+    </button>
+  `).join("");
+}
+
 function renderConfig(payload) {
   const { config, options } = payload;
   currentConfig = config;
@@ -197,6 +222,7 @@ function renderConfig(payload) {
     `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.label)}</option>`
   ).join("");
   elements.avatarProfile.value = config.avatarProfile;
+  renderAvatarChoices(options.avatarProfiles, config.avatarProfile);
   elements.meetingPlatform.innerHTML = options.meetingPlatforms.map((platform) =>
     `<option value="${escapeHtml(platform)}">${escapeHtml(platformLabel(platform))}</option>`
   ).join("");
@@ -484,6 +510,24 @@ elements.meetingMessage.addEventListener("keydown", (event) => {
 
 $$('.channel-button').forEach((button) => button.addEventListener("click", () => selectChannel(button.dataset.channel)));
 
+elements.avatarChoiceGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-profile]");
+  if (!button) return;
+  elements.avatarProfile.value = button.dataset.profile;
+  elements.meetingAvatarSelect.value = button.dataset.profile;
+  updateAvatarChoiceSelection(button.dataset.profile);
+  elements.configStatus.textContent = "Avatar selezionato. Salva per applicarlo.";
+});
+
+elements.avatarProfile.addEventListener("change", () => {
+  elements.meetingAvatarSelect.value = elements.avatarProfile.value;
+  updateAvatarChoiceSelection(elements.avatarProfile.value);
+});
+
+elements.meetingAvatarSelect.addEventListener("change", () => {
+  updateAvatarChoiceSelection(elements.meetingAvatarSelect.value);
+});
+
 async function sendSidebarChat() {
   const text = elements.sidebarChatText.value.trim();
   if (!text) return;
@@ -689,11 +733,11 @@ function pixelStreamingUrl(value) {
   return url.toString();
 }
 
-function mountRendererPlayer(playerUrl) {
+function mountRendererPlayer(playerUrl, force = false) {
   if (!playerUrl) return;
   const outputUrl = pixelStreamingUrl(playerUrl);
   const frame = elements.rendererPreview.querySelector("iframe");
-  if (!frame || frame.dataset.source !== playerUrl) {
+  if (force || !frame || frame.dataset.source !== playerUrl) {
     elements.rendererPreview.innerHTML = `<iframe title="Conclavia MetaHuman" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>`;
   }
   elements.rendererOutputLink.href = outputUrl;
@@ -707,6 +751,15 @@ function renderRendererStatus(status) {
   elements.rendererPill.className = `status-pill ${status.armed && status.available ? "ready" : status.configured ? "" : "warning"}`;
   elements.stageLiveState.className = `stage-badge ${status.armed ? "ready" : ""}`;
   elements.stageLiveState.textContent = status.armed ? "LIVE" : "OFFLINE";
+  if (status.avatarProfile) {
+    activeAvatarProfile = status.avatarProfile;
+    const label = status.avatarProfile.charAt(0).toUpperCase() + status.avatarProfile.slice(1);
+    elements.activeAvatarLabel.textContent = `${label} · ${avatarName}`;
+    elements.meetingAvatarSelect.value = status.avatarProfile;
+    elements.stageSpeakerDetail.textContent = `MetaHuman ${label}`;
+  } else if (!activeAvatarProfile) {
+    elements.activeAvatarLabel.textContent = `${currentConfig?.avatarProfile ?? "Avatar"} · configurato`;
+  }
 
   if (!status.configured) {
     elements.rendererPill.textContent = "Avatar: non configurato";
@@ -716,13 +769,13 @@ function renderRendererStatus(status) {
     elements.rendererPill.textContent = "Avatar: bridge offline";
     elements.rendererStatus.textContent = "Avvia conclavia-frontend sulla porta 3000 per raggiungere le API Unreal.";
   } else if (status.armed && status.available) {
-    elements.rendererPill.textContent = "Avatar: pronto";
+    elements.rendererPill.textContent = `Avatar: ${status.avatarProfile ?? activeAvatarProfile ?? "pronto"}`;
     elements.rendererStatus.textContent = `MetaHuman pronto: la prossima risposta di ${avatarName} andrà in onda.`;
   } else if (status.armed) {
     elements.rendererPill.textContent = "Avatar: avvio";
     elements.rendererStatus.textContent = "MetaHuman armato; il renderer sta completando l’avvio.";
   } else if (status.available) {
-    elements.rendererPill.textContent = "Avatar: online";
+    elements.rendererPill.textContent = `Avatar: ${status.avatarProfile ?? activeAvatarProfile ?? "online"}`;
     elements.rendererStatus.textContent = `Renderer online. Premi “Avvia avatar” per collegarlo a ${avatarName}.`;
   } else {
     elements.rendererPill.textContent = "Avatar: fermo";
@@ -749,10 +802,48 @@ elements.rendererStartButton.addEventListener("click", async () => {
   elements.rendererPill.textContent = "Avatar: avvio";
   try {
     const result = await requestJson("/api/renderer/start", { method: "POST" });
-    renderRendererStatus({ configured: true, available: true, armed: true, serverStatus: result.serverStatus, playerUrl: result.playerUrl });
+    renderRendererStatus({ configured: true, available: true, armed: true, serverStatus: result.serverStatus, playerUrl: result.playerUrl, avatarProfile: currentConfig?.avatarProfile });
   } catch (error) {
     elements.rendererStatus.textContent = `Avvio fallito: ${error.message}`;
     elements.rendererStartButton.disabled = false;
+  }
+});
+
+elements.meetingAvatarSwitchButton.addEventListener("click", async () => {
+  const avatarProfile = elements.meetingAvatarSelect.value;
+  elements.meetingAvatarSwitchButton.disabled = true;
+  elements.avatarSwitchStatus.className = "switching";
+  elements.avatarSwitchStatus.textContent = `Sto caricando ${avatarProfile}. Il renderer può impiegare alcuni minuti…`;
+  setDecision(`Cambio MetaHuman in corso: ${avatarProfile}.`, "listening");
+  try {
+    const result = await requestJson("/api/renderer/avatar", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ avatarProfile }),
+    });
+    currentConfig = result.config;
+    activeAvatarProfile = avatarProfile;
+    await refreshConfig();
+    renderRendererStatus({
+      configured: true,
+      available: true,
+      armed: true,
+      serverStatus: result.serverStatus,
+      playerUrl: result.playerUrl,
+      avatarProfile,
+    });
+    mountRendererPlayer(result.playerUrl, true);
+    elements.avatarSwitchStatus.className = "ready";
+    elements.avatarSwitchStatus.textContent = `${avatarProfile} è ora il MetaHuman attivo.`;
+    setDecision(`${avatarName} ora usa il MetaHuman ${avatarProfile}.`, "responding");
+    renderDebug(result, "CAMBIO AVATAR");
+  } catch (error) {
+    elements.avatarSwitchStatus.className = "";
+    elements.avatarSwitchStatus.textContent = `Cambio non riuscito: ${error.message}`;
+    setDecision(`Cambio avatar non riuscito: ${error.message}`, "listening");
+    await refreshRendererStatus();
+  } finally {
+    elements.meetingAvatarSwitchButton.disabled = false;
   }
 });
 
@@ -894,12 +985,13 @@ elements.configForm.addEventListener("submit", async (event) => {
       }),
     });
     await refreshConfig();
-    await Promise.all([refreshHealth(), refreshListenerStatus(), refreshContext()]);
-    elements.configStatus.textContent = result.listenerWarning
-      ? `Salvata; ascolto non riavviato: ${result.listenerWarning}`
-      : result.listenerRestarted
-        ? "Configurazione salvata; ascolto riavviato."
-        : "Configurazione salvata e applicata.";
+    await Promise.all([refreshHealth(), refreshListenerStatus(), refreshRendererStatus(), refreshContext()]);
+    const statusMessages = ["Configurazione salvata e applicata."];
+    if (result.listenerRestarted) statusMessages.push("Ascolto riavviato.");
+    if (result.listenerWarning) statusMessages.push(`Ascolto non riavviato: ${result.listenerWarning}`);
+    if (result.rendererRestarted) statusMessages.push("Nuovo MetaHuman caricato nel renderer.");
+    if (result.rendererWarning) statusMessages.push(`Cambio MetaHuman non riuscito: ${result.rendererWarning}`);
+    elements.configStatus.textContent = statusMessages.join(" ");
   } catch (error) {
     elements.configStatus.textContent = `Salvataggio fallito: ${error.message}`;
   } finally {

@@ -29,6 +29,7 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 - Structured LLM output with one mood and one intensity level for every sentence.
 - Sentence-level language selection with separate native Italian and US English voices.
 - Selectable Aera, Ada, Vivian, or Jelena MetaHuman identity, Italian voice, English voice, and delivery style.
+- In-meeting MetaHuman switcher that shows the profile actually loaded by Unreal and can replace it without manually stopping the renderer.
 - Conclavia speech synthesis, lip-sync, and sentence-level Unreal performance cues.
 - Embedded Pixel Streaming preview and a clean OBS output page.
 - macOS preflight checks for ffmpeg, OBS Studio, and virtual audio devices.
