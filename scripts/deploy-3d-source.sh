@@ -44,7 +44,7 @@ done
 ARCHIVE_SHA=$(shasum -a 256 "$ARCHIVE" | awk '{print $1}')
 OBJECT_KEY="source/$REVISION/conclavia-studio-source.zip"
 
-echo "Pubblico il sorgente Unreal versionato $REVISION…"
+echo "Pubblico il sorgente Unreal versionato ${REVISION}..."
 aws s3 cp "$ARCHIVE" "s3://$SOURCE_BUCKET/$OBJECT_KEY" \
   --region "$AWS_REGION" \
   --only-show-errors
