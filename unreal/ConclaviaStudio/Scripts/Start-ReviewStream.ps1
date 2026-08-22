@@ -41,8 +41,8 @@ $commercialAssetScript = "C:\ConclaviaMeetingAvatar\Scripts\ensure_commercial_li
 $grade1Map = "/Game/Conclavia/Grade1/L_Grade1HeroPop"
 $grade1MapFile = "C:\ConclaviaLipSyncLab56\RMHLipSyncDemo\Content\Conclavia\Grade1\L_Grade1HeroPop.umap"
 $grade1BuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_grade1_hero_studio.py"
-$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar"
-$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar.umap"
+$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v2"
+$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v2.umap"
 $meetingBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_avatar_stage.py"
 $meetingBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-stage-builder.sha256"
 

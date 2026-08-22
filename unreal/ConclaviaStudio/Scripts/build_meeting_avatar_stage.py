@@ -15,7 +15,8 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-LEVEL_PATH = "/Game/Conclavia/Meeting/L_MeetingAvatar"
+STAGE_REVISION = "v2"
+LEVEL_PATH = f"/Game/Conclavia/Meeting/L_MeetingAvatar_{STAGE_REVISION}"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 
 CUBE = "/Engine/BasicShapes/Cube.Cube"
@@ -218,15 +219,15 @@ def build() -> None:
     anchor = keep_single_avatar_anchor()
     materials = {
         "ink": make_material(
-            "M_MeetingInk",
+            f"M_MeetingInk_{STAGE_REVISION}",
             unreal.LinearColor(0.002, 0.004, 0.008, 1.0),
         ),
         "amber": make_material(
-            "M_MeetingAmber",
+            f"M_MeetingAmber_{STAGE_REVISION}",
             unreal.LinearColor(0.075, 0.018, 0.003, 1.0),
         ),
         "red": make_material(
-            "M_MeetingRed",
+            f"M_MeetingRed_{STAGE_REVISION}",
             unreal.LinearColor(0.095, 0.003, 0.002, 1.0),
         ),
     }
