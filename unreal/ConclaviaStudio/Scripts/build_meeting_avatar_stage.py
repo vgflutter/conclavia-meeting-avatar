@@ -199,8 +199,16 @@ def keep_single_avatar_anchor() -> unreal.Actor:
 
 
 def build() -> None:
-    unreal.EditorLoadingAndSavingUtils.new_blank_map(False)
+    # The meeting level is also the project's editor/game default. On a warm
+    # rebuild Unreal may therefore keep its package loaded even after opening a
+    # transient blank map, causing delete_asset to fail and duplicate_asset to
+    # preserve the stale scene. Load the immutable source level explicitly so
+    # the destination package is fully released before replacement.
+    if not unreal.EditorLoadingAndSavingUtils.load_map(SOURCE_LEVEL_PATH):
+        raise RuntimeError(f"Could not load source map: {SOURCE_LEVEL_PATH}")
     delete_asset(LEVEL_PATH)
+    if unreal.EditorAssetLibrary.does_asset_exist(LEVEL_PATH):
+        raise RuntimeError(f"Could not release previous meeting map: {LEVEL_PATH}")
     if not unreal.EditorAssetLibrary.duplicate_asset(SOURCE_LEVEL_PATH, LEVEL_PATH):
         raise RuntimeError(f"Could not duplicate source map: {SOURCE_LEVEL_PATH}")
     if not unreal.EditorLoadingAndSavingUtils.load_map(LEVEL_PATH):
