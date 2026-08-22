@@ -163,7 +163,7 @@ function setStageMode(mode, detail) {
     elements.stageListeningState.textContent = "STA PARLANDO";
     elements.stageListeningState.classList.add("active");
   } else if (mode === "requesting") {
-    elements.stageListeningState.textContent = "MANO ALZATA";
+    elements.stageListeningState.textContent = "CHIEDE PAROLA";
     elements.stageListeningState.classList.add("active");
   } else {
     elements.stageListeningState.textContent = "IN ASCOLTO";
@@ -357,7 +357,7 @@ function renderContext(context) {
       ? `${avatarName} chiede la parola`
       : `${avatarName} in ascolto`;
   if (context.avatarHandRaised) setStageMode("requesting", "In attesa del permesso");
-  else if (elements.stageListeningState.textContent === "MANO ALZATA") setStageMode("listening", "Partecipante virtuale");
+  else if (elements.stageListeningState.textContent === "CHIEDE PAROLA") setStageMode("listening", "Partecipante virtuale");
   const listeningReaction = context.listeningReaction;
   const reactionIsCurrent = listeningReaction?.holdUntil &&
     Date.parse(listeningReaction.holdUntil) > Date.now();
@@ -460,7 +460,7 @@ async function sendChatMessage(text) {
 function describeChatResult(result) {
   const outbound = result.outboundMessages?.[0];
   if (outbound) return `${outbound.speakerName} ha scritto nella chat.`;
-  if (result.action === "raise-hand") return `${avatarName} ha alzato fisicamente la mano.`;
+  if (result.action === "raise-hand") return `${avatarName} ha chiesto la parola.`;
   if (result.action === "lower-hand") return `${avatarName} ha abbassato la mano.`;
   if (result.turn?.decision?.activated) return `${avatarName} interviene a voce.`;
   if (result.reason === "chat-disabled") return "La lettura chat è disattivata nella configurazione.";

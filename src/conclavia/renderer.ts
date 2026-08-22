@@ -293,7 +293,7 @@ export class ConclaviaRenderer {
     const response = await fetch(`${baseUrl}/api/unreal/session`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ profile: "lipsync58", avatarId: avatarProfile }),
+      body: JSON.stringify({ profile: "meeting", avatarId: avatarProfile }),
       signal: this.#signal(185_000),
     });
     const payload = (await response.json().catch(() => ({}))) as JsonError & {

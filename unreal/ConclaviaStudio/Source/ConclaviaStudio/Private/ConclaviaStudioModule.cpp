@@ -707,8 +707,11 @@ public:
         FParse::Value(FCommandLine::Get(), TEXT("ConclaviaStudioProfile="), StudioProfile);
         if (StudioProfile.IsEmpty())
         {
-            StudioProfile = TEXT("pop");
+            StudioProfile = TEXT("meeting");
         }
+        bMeetingAvatar = StudioProfile.Equals(
+            TEXT("meeting"),
+            ESearchCase::IgnoreCase);
         bLipSyncLab = FParse::Param(FCommandLine::Get(), TEXT("ConclaviaLipSyncLab"));
         FParse::Value(FCommandLine::Get(), TEXT("ConclaviaAvatar="), AvatarId);
         AvatarId = AvatarId.ToLower();
@@ -884,7 +887,10 @@ private:
         }
 
         ++StageDiscoveryAttempts;
-        bStageReady = Cameras.Num() >= 9;
+        bStageReady = bMeetingAvatar
+            ? Cameras.Contains(TEXT("CAM_Meeting_Portrait"))
+                && Cameras.Contains(TEXT("CAM_Meeting_Gesture"))
+            : Cameras.Num() >= 9;
         if (!bStageReady && StageDiscoveryAttempts < 25)
         {
             return;
@@ -893,7 +899,11 @@ private:
         StudioWorld->GetTimerManager().ClearTimer(StageDiscoveryTimer);
         if (!bStageReady)
         {
-            UE_LOG(LogConclaviaStudio, Error, TEXT("Premium studio camera package was not found"));
+            UE_LOG(
+                LogConclaviaStudio,
+                Error,
+                TEXT("Required %s camera package was not found"),
+                bMeetingAvatar ? TEXT("meeting-avatar") : TEXT("premium-studio"));
             return;
         }
 
@@ -915,10 +925,17 @@ private:
         }
 
         SwitchCamera(
-            bLipSyncLab ? TEXT("CAM_Seat_1_Close") : TEXT("CAM_Wide_Master"),
+            bMeetingAvatar
+                ? TEXT("CAM_Meeting_Portrait")
+                : bLipSyncLab
+                    ? TEXT("CAM_Seat_1_Close")
+                    : TEXT("CAM_Wide_Master"),
             0.0f,
             true);
-        BuildBroadcastOverlay();
+        if (!bMeetingAvatar)
+        {
+            BuildBroadcastOverlay();
+        }
         // The validation profile must leave the assembled MetaHuman animation
         // stack untouched. PlayAnimation switches Body to AnimationSingleNode
         // and prevents the LiveLinkInstance selected by the generated
@@ -958,7 +975,7 @@ private:
         UE_LOG(
             LogConclaviaStudio,
             Display,
-            TEXT("Premium studio ready: %d cameras, %s profile"),
+            TEXT("Renderer stage ready: %d cameras, %s profile"),
             Cameras.Num(),
             *StudioProfile);
     }
@@ -1230,9 +1247,28 @@ private:
     {
         if (!BodyGestureSequence.IsValid())
         {
+            FString AnimationPath;
+            if (bMeetingAvatar)
+            {
+                GConfig->GetString(
+                    TEXT("ConclaviaStudio"),
+                    TEXT("MeetingHandRaiseAnimation"),
+                    AnimationPath,
+                    GEngineIni);
+            }
+            else
+            {
+                AnimationPath =
+                    TEXT("/Game/Conclavia/Studio/Animations/AS_Conclavia_MetaHumanHandRaise.AS_Conclavia_MetaHumanHandRaise");
+            }
+            if (AnimationPath.IsEmpty())
+            {
+                bPhysicalGestureReady = false;
+                return nullptr;
+            }
             BodyGestureSequence = LoadObject<UAnimSequence>(
                 nullptr,
-                TEXT("/Game/Conclavia/Studio/Animations/AS_Conclavia_MetaHumanHandRaise.AS_Conclavia_MetaHumanHandRaise"));
+                *AnimationPath);
         }
         bPhysicalGestureReady = BodyGestureSequence.IsValid();
         return BodyGestureSequence.Get();
@@ -3432,6 +3468,21 @@ private:
         }
 
         ClearCameraSequence();
+        if (bMeetingAvatar)
+        {
+            const bool bNeedsGestureFraming =
+                bPhysicalGestureReady
+                && (ActiveBodyGesture == TEXT("raise-hand")
+                    || BodyGesturePhase == TEXT("raising")
+                    || BodyGesturePhase == TEXT("held"));
+            SwitchCamera(
+                bNeedsGestureFraming
+                    ? TEXT("CAM_Meeting_Gesture")
+                    : TEXT("CAM_Meeting_Portrait"),
+                0.0f,
+                true);
+            return;
+        }
         if (bLipSyncLab)
         {
             // Keep ordinary listening and speech on the stable portrait, but
@@ -3550,16 +3601,20 @@ private:
                 }
             }
         }
-        const FString RuntimeRevision = bLipSyncLab
-            ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
-            : TEXT("commercial-lipsync-v9");
+        const FString RuntimeRevision = bMeetingAvatar
+            ? TEXT("ue58-commercial-lipsync-v15-meeting-stage")
+            : bLipSyncLab
+                ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
+                : TEXT("commercial-lipsync-v9");
         const FString EngineVersion = FEngineVersion::Current().ToString();
-        const FString CameraPackage = bLipSyncLab
-            ? TEXT("premium-studio-58")
+        const FString CameraPackage = bMeetingAvatar
+            ? TEXT("meeting-avatar-58")
+            : bLipSyncLab
+                ? TEXT("premium-studio-58")
             : TEXT("production-studio-58");
         const int32 CastCount = bLipSyncLab ? 1 : ParticipantFaces.Num();
         FString Body = FString::Printf(
-            TEXT("{\"ok\":true,\"service\":\"conclavia-studio\",\"runtimeRevision\":\"%s\",\"engineVersion\":\"%s\",\"profile\":\"%s\",\"avatarId\":\"%s\",\"stageReady\":%s,\"cameraCount\":%d,\"cameraPackage\":\"%s\",\"castCount\":%d,\"activeCamera\":\"%s\",\"lastCueAt\":\"%s\",\"audioSubjectReady\":%s,\"audioSubjectValid\":%s,\"faceDrivenByLiveLink\":%s,\"commercialLipSyncReady\":%s,\"commercialModelReady\":%s,\"commercialModelRouteReady\":%s,\"commercialGeneratorBound\":%s,\"commercialControlsBound\":%s,\"commercialSpeechActive\":%s,\"commercialControlCount\":%d,\"commercialMaxControl\":%.6f,\"commercialMaxMouthControl\":%.6f,\"commercialMaxMouthControlName\":\"%s\",\"commercialJawInput\":%.6f,\"commercialJawCurve\":%.6f,\"commercialBoundNodeCount\":%d,\"commercialSolverChunksSubmitted\":%d,\"commercialSolverCursor\":%d,\"bodyAnimationMode\":%d,\"bodyAnimClass\":\"%s\",\"bodyAnimInstance\":\"%s\",\"pcmBytesReceived\":%lld,\"activeFaceIndex\":%d}"),
+            TEXT("{\"ok\":true,\"service\":\"conclavia-meeting-avatar-renderer\",\"runtimeRevision\":\"%s\",\"engineVersion\":\"%s\",\"profile\":\"%s\",\"avatarId\":\"%s\",\"stageReady\":%s,\"cameraCount\":%d,\"cameraPackage\":\"%s\",\"castCount\":%d,\"activeCamera\":\"%s\",\"lastCueAt\":\"%s\",\"audioSubjectReady\":%s,\"audioSubjectValid\":%s,\"faceDrivenByLiveLink\":%s,\"commercialLipSyncReady\":%s,\"commercialModelReady\":%s,\"commercialModelRouteReady\":%s,\"commercialGeneratorBound\":%s,\"commercialControlsBound\":%s,\"commercialSpeechActive\":%s,\"commercialControlCount\":%d,\"commercialMaxControl\":%.6f,\"commercialMaxMouthControl\":%.6f,\"commercialMaxMouthControlName\":\"%s\",\"commercialJawInput\":%.6f,\"commercialJawCurve\":%.6f,\"commercialBoundNodeCount\":%d,\"commercialSolverChunksSubmitted\":%d,\"commercialSolverCursor\":%d,\"bodyAnimationMode\":%d,\"bodyAnimClass\":\"%s\",\"bodyAnimInstance\":\"%s\",\"pcmBytesReceived\":%lld,\"activeFaceIndex\":%d}"),
             *RuntimeRevision.ReplaceCharWithEscapedChar(),
             *EngineVersion.ReplaceCharWithEscapedChar(),
             *StudioProfile.ReplaceCharWithEscapedChar(),
@@ -3628,8 +3683,12 @@ private:
             *BodyGesturePhase.ReplaceCharWithEscapedChar(),
             bPhysicalGestureReady ? TEXT("true") : TEXT("false"),
             bPhysicalGestureReady
-                ? TEXT("ue58-metahuman-control-rig-backwards-solve-ik-bake")
-                : TEXT("unavailable"),
+                ? bMeetingAvatar
+                    ? TEXT("ue58-authored-full-body-retarget")
+                    : TEXT("ue58-metahuman-control-rig-backwards-solve-ik-bake")
+                : bMeetingAvatar
+                    ? TEXT("awaiting-authored-full-body-animation")
+                    : TEXT("unavailable"),
             bListeningReactionActive ? TEXT("true") : TEXT("false"),
             bListeningModelReady ? TEXT("true") : TEXT("false"),
             ListeningSolverChunksSubmitted,
@@ -3969,7 +4028,7 @@ private:
     }
 
     uint32 ControlPort = 8081;
-    FString StudioProfile = TEXT("pop");
+    FString StudioProfile = TEXT("meeting");
     FString AvatarId = TEXT("aera");
     TSharedPtr<IHttpRouter> Router;
     FHttpRouteHandle HealthRoute;
@@ -4078,6 +4137,7 @@ private:
     int32 ListeningSolverChunksSubmitted = 0;
     int32 ActiveFaceIndex = -1;
     bool bLipSyncLab = false;
+    bool bMeetingAvatar = false;
     bool bNativeLiveLinkProfile = false;
     int32 StageDiscoveryAttempts = 0;
     bool bStageReady = false;

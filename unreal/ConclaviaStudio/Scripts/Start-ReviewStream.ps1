@@ -1,6 +1,6 @@
 param(
-    [ValidateSet("pop", "serious", "lipsync", "lipsync58")]
-    [string]$Profile = "pop",
+    [ValidateSet("meeting", "pop", "serious", "lipsync", "lipsync58")]
+    [string]$Profile = "meeting",
     [ValidateSet("aera", "ada", "vivian", "jelena")]
     [string]$AvatarId = "aera",
     [int]$PlayerPort = 8080,
@@ -14,7 +14,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $isLegacyLipSync = $Profile -eq "lipsync"
-$isUnreal58LipSync = $Profile -eq "lipsync58"
+$isMeetingAvatar = $Profile -eq "meeting"
+$isUnreal58LipSync = $Profile -in @("meeting", "lipsync58")
 $isCommercialLipSync = $isLegacyLipSync -or $isUnreal58LipSync
 $engineRoot = if ($isLegacyLipSync) {
     "C:\Program Files\Epic Games\UE_5.6"
@@ -24,22 +25,26 @@ $engineRoot = if ($isLegacyLipSync) {
 $projectPath = if ($isLegacyLipSync) {
     "C:\ConclaviaLipSyncLab56\RMHLipSyncDemo\RMHLipSyncDemo.uproject"
 } else {
-    "C:\ConclaviaStudio\ConclaviaStudio.uproject"
+    "C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject"
 }
 $infrastructureRoot = "C:\PixelStreamingInfrastructure"
 $editor = Join-Path $engineRoot "Engine\Binaries\Win64\UnrealEditor.exe"
 $editorCmd = Join-Path $engineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 $serverScript = Join-Path $infrastructureRoot "SignallingWebServer\platform_scripts\cmd\start_with_turn.bat"
 $playerRoot = Join-Path $infrastructureRoot "SignallingWebServer\www"
-$artifacts = "C:\ConclaviaStudio\Saved\PixelStreaming"
+$artifacts = "C:\ConclaviaMeetingAvatar\Saved\PixelStreaming"
 $pidFile = Join-Path $artifacts "review-processes.json"
 $readyFile = Join-Path $artifacts "review-ready.json"
-$commercialPlugin = "C:\ConclaviaStudio\Plugins\RuntimeMetaHumanLipSync\RuntimeMetaHumanLipSync.uplugin"
-$commercialSkeleton = "C:\ConclaviaStudio\Content\MetaHumans\Common\Face\Face_Archetype_Skeleton.uasset"
-$commercialAssetScript = "C:\ConclaviaStudio\Scripts\ensure_commercial_lipsync_assets.py"
+$commercialPlugin = "C:\ConclaviaMeetingAvatar\Plugins\RuntimeMetaHumanLipSync\RuntimeMetaHumanLipSync.uplugin"
+$commercialSkeleton = "C:\ConclaviaMeetingAvatar\Content\MetaHumans\Common\Face\Face_Archetype_Skeleton.uasset"
+$commercialAssetScript = "C:\ConclaviaMeetingAvatar\Scripts\ensure_commercial_lipsync_assets.py"
 $grade1Map = "/Game/Conclavia/Grade1/L_Grade1HeroPop"
 $grade1MapFile = "C:\ConclaviaLipSyncLab56\RMHLipSyncDemo\Content\Conclavia\Grade1\L_Grade1HeroPop.umap"
-$grade1BuildScript = "C:\ConclaviaStudio\Scripts\build_grade1_hero_studio.py"
+$grade1BuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_grade1_hero_studio.py"
+$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar"
+$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar.umap"
+$meetingBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_avatar_stage.py"
+$meetingBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-stage-builder.sha256"
 
 New-Item -ItemType Directory -Force -Path $artifacts | Out-Null
 Remove-Item $readyFile -Force -ErrorAction SilentlyContinue
@@ -108,7 +113,7 @@ if (Test-Path $pidFile) {
 if ($isUnreal58LipSync -and $AvatarId -eq "jelena") {
     $legacyMetaHumans = "C:\ConclaviaLipSyncLab56\RMHLipSyncDemo\Content\MetaHumans"
     $jelenaSource = Join-Path $legacyMetaHumans "Jelena"
-    $jelenaTarget = "C:\ConclaviaStudio\Content\MetaHumans\Jelena"
+    $jelenaTarget = "C:\ConclaviaMeetingAvatar\Content\MetaHumans\Jelena"
     $jelenaBlueprint = Join-Path $jelenaTarget "BP_Jelena.uasset"
     if (-not (Test-Path $jelenaBlueprint)) {
         if (-not (Test-Path (Join-Path $jelenaSource "BP_Jelena.uasset"))) {
@@ -119,7 +124,7 @@ if ($isUnreal58LipSync -and $AvatarId -eq "jelena") {
     }
 
     $optionalSource = Join-Path $legacyMetaHumans "Common\Optional"
-    $optionalTarget = "C:\ConclaviaStudio\Content\MetaHumans\Common\Optional"
+    $optionalTarget = "C:\ConclaviaMeetingAvatar\Content\MetaHumans\Common\Optional"
     $jelenaShirtMaterial = Join-Path $optionalTarget "Clothing\DefaultGarment\ClothAssets\bodyShapeE\Materials\M_DG_bodyShapeE_Shirt.uasset"
     if (-not (Test-Path $jelenaShirtMaterial)) {
         if (-not (Test-Path $optionalSource)) {
@@ -203,6 +208,60 @@ if ($isLegacyLipSync -and -not (Test-Path $grade1MapFile)) {
     if (-not (Test-Path $grade1MapFile) -or -not $grade1ReadyMarker) {
         throw "Grade 1 studio authoring failed (exit $($grade1Process.ExitCode)). See $grade1Log"
     }
+}
+
+# The meeting renderer owns a separate map. Rebuild it only when the versioned
+# builder changes. This prevents a stale podcast-derived map from surviving a
+# deploy without paying the commandlet and shader warm-up cost on every avatar
+# switch or renderer restart.
+if ($isMeetingAvatar) {
+    if (-not (Test-Path $meetingBuildScript)) {
+        throw "Meeting avatar stage builder is missing: $meetingBuildScript"
+    }
+    $meetingBuilderHash = (Get-FileHash $meetingBuildScript -Algorithm SHA256).Hash.ToLowerInvariant()
+    $installedMeetingBuilderHash = if (Test-Path $meetingBuildRevisionFile) {
+        (Get-Content $meetingBuildRevisionFile -Raw).Trim().ToLowerInvariant()
+    } else {
+        ""
+    }
+    $meetingStageNeedsBuild = -not (Test-Path $meetingMapFile) -or
+        $installedMeetingBuilderHash -ne $meetingBuilderHash
+}
+if ($isMeetingAvatar -and $meetingStageNeedsBuild) {
+    $meetingBuildLog = Join-Path $artifacts "meeting-stage-build.log"
+    Remove-Item $meetingBuildLog -Force -ErrorAction SilentlyContinue
+    $meetingBuildProcess = Start-Process `
+        -FilePath $editorCmd `
+        -ArgumentList @(
+            "`"$projectPath`"",
+            "-run=pythonscript",
+            "-script=`"$meetingBuildScript`"",
+            "-unattended",
+            "-nop4",
+            "-nosplash",
+            "-nullrhi",
+            "-stdout",
+            "-FullStdOutLogOutput",
+            "-abslog=`"$meetingBuildLog`""
+        ) `
+        -Wait `
+        -PassThru
+    $meetingReadyMarker = (Test-Path $meetingBuildLog) -and (
+        Select-String `
+            -Path $meetingBuildLog `
+            -SimpleMatch "CONCLAVIA_MEETING_STAGE: READY" `
+            -Quiet
+    )
+    if ($meetingBuildProcess.ExitCode -ne 0 -or
+        -not (Test-Path $meetingMapFile) -or
+        -not $meetingReadyMarker) {
+        throw "Meeting avatar stage authoring failed (exit $($meetingBuildProcess.ExitCode)). See $meetingBuildLog"
+    }
+    Set-Content `
+        -Path $meetingBuildRevisionFile `
+        -Value $meetingBuilderHash `
+        -NoNewline `
+        -Encoding ASCII
 }
 
 # Publish a clean broadcast surface beside Epic's stock player. The stock
@@ -371,6 +430,8 @@ if ($response.StatusCode -ne 200) {
 
 $map = if ($isLegacyLipSync) {
     $grade1Map
+} elseif ($isMeetingAvatar) {
+    $meetingMap
 } elseif ($Profile -eq "serious") {
     "/Game/Conclavia/Studio/L_EditorialStudio"
 } else {
@@ -484,7 +545,7 @@ if ($isCommercialLipSync) {
         $unreal58Ready = $isUnreal58LipSync -and
             $bridgeHealth.commercialLipSyncReady -eq $true -and
             $bridgeHealth.stageReady -eq $true -and
-            $bridgeHealth.cameraCount -ge 9 -and
+            $bridgeHealth.cameraCount -ge $(if ($isMeetingAvatar) { 2 } else { 9 }) -and
             $bridgeHealth.runtimeRevision -like "ue58-commercial-lipsync-v*"
     } until ($legacyReady -or $unreal58Ready -or (Get-Date) -gt $healthDeadline)
     if (-not $legacyReady -and -not $unreal58Ready) {
@@ -513,10 +574,17 @@ if ($isCommercialLipSync) {
         $portraitHealth = Invoke-RestMethod `
             -Uri "http://127.0.0.1:8081/health" `
             -TimeoutSec 5
-        $heroCameraReady = $portraitHealth.activeCamera -in @(
-            "CAM_Seat_1_Close",
-            "CAM_Wide_Slider_Left"
-        )
+        $heroCameraReady = if ($isMeetingAvatar) {
+            $portraitHealth.activeCamera -in @(
+                "CAM_Meeting_Portrait",
+                "CAM_Meeting_Gesture"
+            )
+        } else {
+            $portraitHealth.activeCamera -in @(
+                "CAM_Seat_1_Close",
+                "CAM_Wide_Slider_Left"
+            )
+        }
         if (-not $heroCameraReady) {
             Stop-Process -Id $unreal.Id -Force -ErrorAction SilentlyContinue
             Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue
@@ -524,7 +592,7 @@ if ($isCommercialLipSync) {
         }
     }
 
-    $readinessScript = "C:\ConclaviaStudio\Scripts\Verify-SingleHeroReadiness.cjs"
+    $readinessScript = "C:\ConclaviaMeetingAvatar\Scripts\Verify-SingleHeroReadiness.cjs"
     $readinessDirectory = Join-Path $artifacts "single-hero-readiness"
     $readinessStdout = Join-Path $readinessDirectory "readiness.stdout.log"
     $readinessStderr = Join-Path $readinessDirectory "readiness.stderr.log"

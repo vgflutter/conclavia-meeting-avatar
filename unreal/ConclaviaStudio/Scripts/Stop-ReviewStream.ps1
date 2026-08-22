@@ -1,6 +1,6 @@
 param(
-    [string]$PidFile = "C:\ConclaviaStudio\Saved\PixelStreaming\review-processes.json",
-    [string]$ReadyFile = "C:\ConclaviaStudio\Saved\PixelStreaming\review-ready.json"
+    [string]$PidFile = "C:\ConclaviaMeetingAvatar\Saved\PixelStreaming\review-processes.json",
+    [string]$ReadyFile = "C:\ConclaviaMeetingAvatar\Saved\PixelStreaming\review-ready.json"
 )
 
 $ErrorActionPreference = "Stop"
@@ -17,9 +17,8 @@ foreach ($processId in @($state.unreal, $state.server)) {
 }
 Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
     Where-Object {
-        ($_.Name -in @("UnrealEditor.exe", "ConclaviaStudio.exe", "RMHLipSyncDemo.exe") -and
-            ($_.CommandLine -like "*ConclaviaStudio.uproject*" -or
-                $_.CommandLine -like "*RMHLipSyncDemo.uproject*")) -or
+        ($_.Name -in @("UnrealEditor.exe", "ConclaviaStudio.exe") -and
+            $_.CommandLine -like "*C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject*") -or
         ($_.Name -eq "node.exe" -and $_.CommandLine -like "*SignallingWebServer*") -or
         ($_.Name -eq "turnserver.exe" -and $_.CommandLine -like "*PixelStreaming*") -or
         ($_.Name -eq "cmd.exe" -and $_.CommandLine -like "*start_with_turn.bat*")

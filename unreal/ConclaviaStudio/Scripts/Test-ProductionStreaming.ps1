@@ -4,7 +4,7 @@ param(
     [ValidateSet("close-up", "wide", "two-shot")]
     [string]$Shot = "close-up",
     [string]$EngineRoot = "C:\Epic\UE_5.8",
-    [string]$ProjectPath = "C:\ConclaviaStudio\ConclaviaStudio.uproject",
+    [string]$ProjectPath = "C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject",
     [string]$InfrastructureRoot = "C:\PixelStreamingInfrastructure",
     [int]$PlayerPort = 8080,
     [int]$StreamerPort = 8888,

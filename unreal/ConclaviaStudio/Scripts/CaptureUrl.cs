@@ -3,7 +3,7 @@ using System.IO;
 
 internal static class CaptureUrl
 {
-    private const string OutputPath = @"C:\ConclaviaStudio\Saved\Logs\EOSDeviceAuth.url";
+    private const string OutputPath = @"C:\ConclaviaMeetingAvatar\Saved\Logs\EOSDeviceAuth.url";
 
     public static int Main(string[] args)
     {

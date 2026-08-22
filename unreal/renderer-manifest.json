@@ -12,10 +12,10 @@
     ]
   },
   "project": {
-    "root": "C:\\ConclaviaStudio",
+    "root": "C:\\ConclaviaMeetingAvatar",
     "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
     "editorTarget": "ConclaviaStudioEditor",
-    "runtimeRevision": "ue58-commercial-lipsync-v14-attentive-idle"
+    "runtimeRevision": "ue58-commercial-lipsync-v15-meeting-stage"
   },
   "pixelStreamingInfrastructure": {
     "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",
@@ -26,27 +26,26 @@
     {
       "name": "RuntimeMetaHumanLipSync",
       "version": "1.0",
-      "destination": "C:\\ConclaviaStudio\\Plugins\\RuntimeMetaHumanLipSync",
+      "destination": "C:\\ConclaviaMeetingAvatar\\Plugins\\RuntimeMetaHumanLipSync",
       "redistributable": false,
       "note": "Install from the licensed Marketplace or vendor package. It is intentionally excluded from Git."
     },
     {
       "name": "Epic MetaHuman preset and generated content",
-      "destination": "C:\\ConclaviaStudio\\Content",
+      "destination": "C:\\ConclaviaMeetingAvatar\\Content",
       "redistributable": false,
       "note": "Regenerate Aera, Ada, Vivian and Jelena from the installed Epic preset library with the checked-in Python builders."
     }
   ],
   "generatedAssets": [
+    "/Game/Conclavia/Meeting/L_MeetingAvatar",
     "/Game/Conclavia/Studio/L_PremiumStudio",
-    "/Game/Conclavia/Animation/AS_Conclavia_MetaHumanHandRaise",
-    "/Game/Conclavia/Animation/AS_Conclavia_SeatedIdle",
-    "/Game/Conclavia/Animation/LS_Conclavia_MetaHumanHandRaise_Source"
+    "/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle"
   ],
   "canonicalBuilders": [
+    "unreal/ConclaviaStudio/Scripts/build_meeting_avatar_stage.py",
     "unreal/ConclaviaStudio/Scripts/build_premium_studio.py",
     "unreal/ConclaviaStudio/Scripts/build_metahuman_cast.py",
-    "unreal/ConclaviaStudio/Scripts/build_metahuman_hand_raise.py",
     "unreal/ConclaviaStudio/Scripts/build_seated_idle.py",
     "unreal/ConclaviaStudio/Scripts/ensure_commercial_lipsync_assets.py"
   ]

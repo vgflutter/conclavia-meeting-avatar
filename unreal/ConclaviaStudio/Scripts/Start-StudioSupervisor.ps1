@@ -1,15 +1,15 @@
 param(
     [int]$Port = 8090,
-    [string]$TokenFile = "C:\ConclaviaStudio\Saved\supervisor.token"
+    [string]$TokenFile = "C:\ConclaviaMeetingAvatar\Saved\supervisor.token"
 )
 
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Net.Http
-$pidFile = "C:\ConclaviaStudio\Saved\PixelStreaming\review-processes.json"
-$readyFile = "C:\ConclaviaStudio\Saved\PixelStreaming\review-ready.json"
-$startScript = "C:\ConclaviaStudio\Scripts\Start-ReviewStream.ps1"
-$stopScript = "C:\ConclaviaStudio\Scripts\Stop-ReviewStream.ps1"
-$pcmBridgeScript = "C:\ConclaviaStudio\Scripts\Start-PcmBridge.ps1"
+$pidFile = "C:\ConclaviaMeetingAvatar\Saved\PixelStreaming\review-processes.json"
+$readyFile = "C:\ConclaviaMeetingAvatar\Saved\PixelStreaming\review-ready.json"
+$startScript = "C:\ConclaviaMeetingAvatar\Scripts\Start-ReviewStream.ps1"
+$stopScript = "C:\ConclaviaMeetingAvatar\Scripts\Stop-ReviewStream.ps1"
+$pcmBridgeScript = "C:\ConclaviaMeetingAvatar\Scripts\Start-PcmBridge.ps1"
 $pcmBridgePort = 8091
 
 if (-not (Test-Path $TokenFile)) {
@@ -48,8 +48,7 @@ function Get-UnrealProcess {
     return Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
         Where-Object {
             $_.Name -in @("UnrealEditor.exe", "ConclaviaStudio.exe") -and
-            ($_.CommandLine -like "*ConclaviaStudio.uproject*" -or
-                $_.CommandLine -like "*RMHLipSyncDemo.uproject*")
+            $_.CommandLine -like "*C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject*"
         } |
         Select-Object -First 1
 }
@@ -57,7 +56,7 @@ function Get-UnrealProcess {
 function Get-RunningProfile {
     $process = Get-UnrealProcess
     if (-not $process) { return $null }
-    if ($process.CommandLine -match "-ConclaviaStudioProfile=(lipsync58|lipsync|serious|pop)") {
+    if ($process.CommandLine -match "-ConclaviaStudioProfile=(meeting|lipsync58|lipsync|serious|pop)") {
         return $Matches[1]
     }
     return $null
@@ -81,8 +80,7 @@ function Stop-StudioProcesses {
     Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
         Where-Object {
             ($_.Name -in @("UnrealEditor.exe", "ConclaviaStudio.exe") -and
-                ($_.CommandLine -like "*ConclaviaStudio.uproject*" -or
-                    $_.CommandLine -like "*RMHLipSyncDemo.uproject*")) -or
+                $_.CommandLine -like "*C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject*") -or
             ($_.Name -eq "node.exe" -and $_.CommandLine -like "*SignallingWebServer*") -or
             ($_.Name -eq "turnserver.exe" -and $_.CommandLine -like "*PixelStreaming*") -or
             ($_.Name -eq "cmd.exe" -and $_.CommandLine -like "*start_with_turn.bat*")
@@ -119,7 +117,7 @@ function Get-State {
     }
     $payload = [ordered]@{
         ok = $false
-        service = "conclavia-studio-supervisor"
+        service = "conclavia-meeting-avatar-supervisor"
         running = $running
         starting = (Test-Starting)
         verified = $verified
@@ -261,7 +259,9 @@ try {
                 $raw = $reader.ReadToEnd()
                 $reader.Dispose()
                 $body = if ($raw) { $raw | ConvertFrom-Json } else { @{} }
-                $profile = if ($body.profile -eq "serious") {
+                $profile = if ($body.profile -eq "meeting") {
+                    "meeting"
+                } elseif ($body.profile -eq "serious") {
                     "serious"
                 } elseif ($body.profile -eq "lipsync58") {
                     "lipsync58"
@@ -301,7 +301,7 @@ try {
                 }
                 if (-not $state.running) {
                     if (-not (Test-Starting)) {
-                        $artifacts = "C:\ConclaviaStudio\Saved\PixelStreaming"
+                        $artifacts = "C:\ConclaviaMeetingAvatar\Saved\PixelStreaming"
                         New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
                         Start-Process `
                             -FilePath "powershell.exe" `

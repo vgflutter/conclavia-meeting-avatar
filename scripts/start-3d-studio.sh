@@ -120,6 +120,22 @@ if [[ "$PING" != "Online" ]]; then
   exit 1
 fi
 
+# The meeting avatar and the legacy podcast renderer may share the same EC2
+# host, but they never share a project directory or supervisor. Select the
+# meeting workload explicitly and release the old renderer's ports only when
+# an old-root process is actually present.
+RUNTIME_COMMAND_ID=$(aws ssm send-command \
+  --region "$AWS_REGION" \
+  --instance-ids "$INSTANCE_ID" \
+  --document-name AWS-RunPowerShellScript \
+  --parameters 'commands=["$ErrorActionPreference=\"Stop\"","Stop-ScheduledTask -TaskName \"ConclaviaStudioSupervisor\" -ErrorAction SilentlyContinue","$old = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like \"*C:\\ConclaviaStudio\\*\" })","if ($old.Count -gt 0) { $old | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { ($_.Name -eq \"node.exe\" -and $_.CommandLine -like \"*SignallingWebServer*\") -or $_.Name -eq \"turnserver.exe\" -or ($_.Name -eq \"cmd.exe\" -and $_.CommandLine -like \"*start_with_turn.bat*\") } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } }","$task = Get-ScheduledTask -TaskName \"ConclaviaMeetingAvatarSupervisor\" -ErrorAction Stop","if ($task.State -ne \"Running\") { Start-ScheduledTask -TaskName \"ConclaviaMeetingAvatarSupervisor\" }"]' \
+  --query Command.CommandId \
+  --output text)
+aws ssm wait command-executed \
+  --region "$AWS_REGION" \
+  --command-id "$RUNTIME_COMMAND_ID" \
+  --instance-id "$INSTANCE_ID"
+
 echo "Imposto lo spegnimento automatico a ${AUTO_STOP_MINUTES} minuti…"
 AUTO_STOP_OBJECT="automation/install-3d-auto-stop.ps1"
 aws s3 cp \
@@ -136,8 +152,8 @@ const url = process.env.AUTO_STOP_URL;
 const minutes = Number(process.env.AUTO_STOP_MINUTES);
 process.stdout.write(JSON.stringify({ commands: [
   "$ErrorActionPreference = \"Stop\"",
-  "Invoke-WebRequest -Uri \"" + url + "\" -OutFile \"C:\\ConclaviaStudio\\Scripts\\Install-ConclaviaAutoStop.ps1\" -UseBasicParsing",
-  "& \"C:\\ConclaviaStudio\\Scripts\\Install-ConclaviaAutoStop.ps1\" -MaxRuntimeMinutes " + minutes,
+  "Invoke-WebRequest -Uri \"" + url + "\" -OutFile \"C:\\ConclaviaMeetingAvatar\\Scripts\\Install-ConclaviaAutoStop.ps1\" -UseBasicParsing",
+  "& \"C:\\ConclaviaMeetingAvatar\\Scripts\\Install-ConclaviaAutoStop.ps1\" -MaxRuntimeMinutes " + minutes,
 ] }));
 NODE
 )
@@ -187,7 +203,7 @@ COMMAND_ID=$(aws ssm send-command \
   --region "$AWS_REGION" \
   --instance-ids "$INSTANCE_ID" \
   --document-name AWS-RunPowerShellScript \
-  --parameters 'commands=["Get-Content C:\ConclaviaStudio\Saved\supervisor.token -Raw"]' \
+  --parameters 'commands=["Get-Content C:\ConclaviaMeetingAvatar\Saved\supervisor.token -Raw"]' \
   --query Command.CommandId \
   --output text)
 aws ssm wait command-executed \
@@ -220,7 +236,7 @@ const replacements = {
   UNREAL_STUDIO_CONTROL_URL: `http://${ip}:8090`,
   UNREAL_STUDIO_SUPERVISOR_URL: `http://${ip}:8090`,
   UNREAL_STUDIO_TOKEN: token,
-  UNREAL_STUDIO_PROFILE: "lipsync58",
+  UNREAL_STUDIO_PROFILE: "meeting",
   UNREAL_STUDIO_AWS_REGION: process.env.AWS_REGION || "eu-central-1",
   UNREAL_STUDIO_INSTANCE_ID: process.env.INSTANCE_ID,
   AWS_REGION: process.env.AWS_REGION || "eu-central-1",

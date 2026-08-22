@@ -6,9 +6,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$taskName = "Conclavia-Unreal-AutoStop"
-$currentBootTaskName = "Conclavia-Unreal-AutoStop-CurrentBoot"
-$savedDirectory = "C:\ConclaviaStudio\Saved"
+$taskName = "Conclavia-Meeting-Avatar-AutoStop"
+$currentBootTaskName = "Conclavia-Meeting-Avatar-AutoStop-CurrentBoot"
+$savedDirectory = "C:\ConclaviaMeetingAvatar\Saved"
 $statusPath = Join-Path $savedDirectory "auto-stop.json"
 $shutdownMessage = "Conclavia: limite massimo della sessione GPU raggiunto. Arresto tra 60 secondi."
 $shutdownArguments = "/s /f /t 60 /d p:0:0 /c `"$shutdownMessage`""

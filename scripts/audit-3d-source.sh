@@ -21,9 +21,9 @@ LOCAL_SUPERVISOR_SHA=$(shasum -a 256 "$SUPERVISOR" | awk '{print $1}')
 PARAMETERS=$(node <<'NODE'
 process.stdout.write(JSON.stringify({ commands: [
   '$ErrorActionPreference = "Stop"',
-  '$revision = Get-Content "C:\\ConclaviaStudio\\Saved\\source-revision.json" -Raw | ConvertFrom-Json',
-  '$main = (Get-FileHash "C:\\ConclaviaStudio\\Source\\ConclaviaStudio\\Private\\ConclaviaStudioModule.cpp" -Algorithm SHA256).Hash.ToLowerInvariant()',
-  '$supervisor = (Get-FileHash "C:\\ConclaviaStudio\\Scripts\\Start-StudioSupervisor.ps1" -Algorithm SHA256).Hash.ToLowerInvariant()',
+  '$revision = Get-Content "C:\\ConclaviaMeetingAvatar\\Saved\\source-revision.json" -Raw | ConvertFrom-Json',
+  '$main = (Get-FileHash "C:\\ConclaviaMeetingAvatar\\Source\\ConclaviaStudio\\Private\\ConclaviaStudioModule.cpp" -Algorithm SHA256).Hash.ToLowerInvariant()',
+  '$supervisor = (Get-FileHash "C:\\ConclaviaMeetingAvatar\\Scripts\\Start-StudioSupervisor.ps1" -Algorithm SHA256).Hash.ToLowerInvariant()',
   '@{ commit = $revision.commit; mainSha256 = $main; supervisorSha256 = $supervisor } | ConvertTo-Json -Compress',
 ] }));
 NODE

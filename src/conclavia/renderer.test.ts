@@ -191,7 +191,7 @@ await test("reports the MetaHuman profile currently loaded by Unreal", async () 
   }
 });
 
-await test("starts the UE 5.8 profile through the companion renderer gateway", async () => {
+await test("starts the isolated UE 5.8 meeting profile through the companion renderer gateway", async () => {
   const requests: Array<{ url: string; body: unknown }> = [];
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (input, init) => {
@@ -217,6 +217,6 @@ await test("starts the UE 5.8 profile through the companion renderer gateway", a
   }
   assert.deepEqual(requests, [{
     url: "http://127.0.0.1:4310/api/unreal/session",
-    body: { profile: "lipsync58", avatarId: "vivian" },
+    body: { profile: "meeting", avatarId: "vivian" },
   }]);
 });

@@ -6,7 +6,7 @@ import { fromIni } from "@aws-sdk/credential-providers";
 
 import { startLocalStudioInfrastructure } from "./studio-lifecycle.js";
 
-export type UnrealStudioProfile = "pop" | "serious" | "lipsync" | "lipsync58";
+export type UnrealStudioProfile = "meeting" | "pop" | "serious" | "lipsync" | "lipsync58";
 export const unrealAvatarIds = ["aera", "ada", "vivian", "jelena"] as const;
 export type UnrealAvatarId = (typeof unrealAvatarIds)[number];
 
@@ -143,13 +143,14 @@ export function getConfiguredUnrealStudioProfile(): UnrealStudioProfile {
   const configured = runtimeEnvironment().UNREAL_STUDIO_PROFILE?.trim()
     || process.env.UNREAL_STUDIO_PROFILE?.trim();
   switch (configured) {
+    case "meeting":
     case "pop":
     case "serious":
     case "lipsync":
     case "lipsync58":
       return configured;
     default:
-      return "lipsync58";
+      return "meeting";
   }
 }
 
@@ -245,12 +246,13 @@ export function isGrade1HeroStudio(health: UnrealStudioHealth): boolean {
 }
 
 export function isUnreal58HeroStudio(health: UnrealStudioHealth): boolean {
+  const meetingProfile = health.profile === "meeting";
   return Boolean(
     health.runtimeRevision?.includes("ue58-commercial-lipsync-v")
-      && health.profile === "lipsync58"
+      && (meetingProfile || health.profile === "lipsync58")
       && health.stageReady === true
       && health.castCount === 1
-      && (health.cameraCount ?? 0) >= 9
+      && (health.cameraCount ?? 0) >= (meetingProfile ? 2 : 9)
       && health.commercialModelRouteReady === true
       && health.commercialLipSyncReady === true,
   );
@@ -285,7 +287,7 @@ async function waitForStudioReady(
       && latest.avatarId === avatarId
       && (profile === "lipsync"
         ? isGrade1HeroStudio(latest)
-        : profile === "lipsync58"
+        : profile === "lipsync58" || profile === "meeting"
           ? isUnreal58HeroStudio(latest)
           : true)
     ) {
@@ -316,7 +318,7 @@ export async function startUnrealStudio(
     && current.avatarId === avatarId
     && (profile === "lipsync"
       ? isGrade1HeroStudio(current)
-      : profile === "lipsync58"
+      : profile === "lipsync58" || profile === "meeting"
         ? isUnreal58HeroStudio(current)
         : true);
   if (!isCurrent) {
@@ -449,7 +451,7 @@ export async function standaloneRendererStatus(): Promise<Record<string, unknown
     health.ok
       && health.stageReady
       && health.commercialLipSyncReady
-      && (profile === "lipsync58"
+      && (profile === "lipsync58" || profile === "meeting"
         ? isUnreal58HeroStudio(health)
         : profile === "lipsync"
           ? isGrade1HeroStudio(health)

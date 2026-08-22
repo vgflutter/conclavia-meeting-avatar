@@ -1,6 +1,6 @@
 param(
     [string]$EngineRoot = "C:\Epic\UE_5.8",
-    [string]$ProjectPath = "C:\ConclaviaStudio\ConclaviaStudio.uproject",
+    [string]$ProjectPath = "C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject",
     [string]$InfrastructureRoot = "C:\PixelStreamingInfrastructure",
     [ValidateSet("pop", "serious")]
     [string]$Profile = "pop",

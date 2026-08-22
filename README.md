@@ -18,13 +18,13 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 - Canonical speaker-attributed caption ingestion for safe natural dialogue in multi-participant Teams, Meet, and generic meetings.
 - Persistent meeting memory: every final utterance is retained and evaluated by the LLM, including turns that do not address the avatar.
 - Platform-neutral chat ingestion for Teams, Google Meet browser bridges, and generic adapters, merged chronologically with voice memory.
-- Configurable chat commands for physical gestures, voice interventions, chat replies, and meeting summaries.
+- Configurable chat commands for semantic gesture requests, voice interventions, chat replies, and meeting summaries.
 - Chat message idempotency and avatar self-message filtering to prevent duplicate actions and response loops.
 - Configurable avatar name, which is also the direct voice trigger.
 - Speaker-scoped dialogue leases: invoke the avatar once, then continue naturally for up to two relevant follow-ups without repeating its name.
 - Automatic Realtime transcription reconnection after provider session expiry or a transient socket failure, with bounded exponential backoff.
 - Conservative participation control that keeps the avatar silent for fillers, incomplete remarks, and conversations between human participants.
-- `request-to-speak` autonomy: the avatar may prepare a useful contribution and physically raise its hand, but it cannot speak until a participant grants the floor.
+- `request-to-speak` autonomy: the avatar may prepare a useful contribution and visibly request the floor, but it cannot speak until a participant grants permission.
 - Floor approval from the web console or by saying phrases such as `Mary, go ahead` or `Go ahead, Mary`.
 - Optional live web search for direct questions that require current or external information.
 - Configurable OpenAI response model, API key, purpose, personality, and system prompt.
@@ -44,9 +44,9 @@ The avatar has three possible actions for each evaluated turn:
 
 1. `silence`: retain the utterance as context and do not interrupt.
 2. `speak`: answer immediately when addressed directly or during an active follow-up dialogue.
-3. `request-to-speak`: prepare a concise answer, raise the MetaHuman's right hand, show a matching output indicator, and wait for approval.
+3. `request-to-speak`: prepare a concise answer, show a matching output indicator, request the configured authored body gesture when available, and wait for approval.
 
-A pending request expires after 45 seconds. Granting the floor uses the already prepared response, reducing perceived latency. Dismissing it produces no speech and lowers the hand. Body gestures are semantic requests for an authored Unreal animation state; the runtime does not construct arm poses bone by bone.
+A pending request expires after 45 seconds. Granting the floor uses the already prepared response, reducing perceived latency. Dismissing it produces no speech and clears the request. Body gestures are semantic requests for an authored Unreal animation state; the runtime does not construct arm poses bone by bone. The old procedural hand-raise prototype is explicitly disabled in the production `meeting` profile. Until a captured or authored full-body clip passes the visual gate, the request remains an interface state rather than showing a poor physical pose.
 
 ### Dialogue and floor control
 
@@ -139,7 +139,7 @@ The current realtime speaking-face path uses the commercial Realistic MetaHuman 
 
 Listening is a different state: no fake speech audio is sent to a lip-sync solver. The LLM emits a silent semantic reaction, the face layer renders a low-intensity expression, and authored MetaHuman animation owns the body. Mood changes have a minimum hold and automatically settle to neutral.
 
-The body path uses Epic-authored MetaHuman `AnimSequence` assets and is being moved to an Animation Blueprint state machine with linked upper-body layers. The runtime bridge publishes semantic states such as listening, speaking, and request-to-speak; it must not synthesize random per-frame head, breathing, or arm rotations. Epic's native [Audio Driven Animation](https://dev.epicgames.com/documentation/en-us/metahuman/audio-driven-animation) remains an evaluated backend, but its realtime audio algorithm does not produce head motion. Native [Animation Blueprints](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprints-in-unreal-engine), [State Machines](https://dev.epicgames.com/documentation/en-us/unreal-engine/state-machines-in-unreal-engine), and [Linked Anim Layers](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprint-linking-in-unreal-engine) are therefore the correct body/listening architecture regardless of which facial speech solver is selected.
+The body path uses Epic-authored MetaHuman `AnimSequence` assets and is being moved to an Animation Blueprint state machine with linked upper-body layers. The runtime bridge publishes semantic states such as listening, speaking, and request-to-speak; it must not synthesize random per-frame head, breathing, or arm rotations. A production hand raise must be authored or captured as a coherent full-body performance and retargeted through `RTG_MH_IKRig`. If that asset is absent, health reports `physicalGestureReady=false` and the portrait camera stays fixed. Epic's native [Audio Driven Animation](https://dev.epicgames.com/documentation/en-us/metahuman/audio-driven-animation) remains an evaluated backend, but its realtime audio algorithm does not produce head motion. Native [Animation Blueprints](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprints-in-unreal-engine), [State Machines](https://dev.epicgames.com/documentation/en-us/unreal-engine/state-machines-in-unreal-engine), and [Linked Anim Layers](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprint-linking-in-unreal-engine) are therefore the correct body/listening architecture regardless of which facial speech solver is selected.
 
 ## Requirements
 
@@ -167,7 +167,7 @@ Open [http://127.0.0.1:4310](http://127.0.0.1:4310).
 
 The web application can configure the meeting platform, avatar profile, name/trigger, model, native Italian and English voices, delivery style, API key, purpose, personality, system prompt, web search, and autonomous requests to speak. Saving applies the new configuration without restarting the companion; if the meeting listener was active, it is restarted automatically. Changing the MetaHuman profile switches the warm Unreal performer immediately and does not require a second **Start avatar** action.
 
-The default **Test room** is an end-to-end meeting simulator rather than a mocked UI. Text entered as speech uses the normal activation and meeting-memory pipeline; chat messages use the canonical Teams/Meet adapter endpoint; quick actions use the currently configured command aliases; and browser microphone input uses the production transcription path. The transcript, chat, participant list, physical hand state, pending floor request, per-sentence moods, renderer delivery, and latency are visible in one place. **New session** clears the in-memory meeting history and resets pending participation state without changing avatar configuration.
+The default **Test room** is an end-to-end meeting simulator rather than a mocked UI. Text entered as speech uses the normal activation and meeting-memory pipeline; chat messages use the canonical Teams/Meet adapter endpoint; quick actions use the currently configured command aliases; and browser microphone input uses the production transcription path. The transcript, chat, participant list, pending floor request, physical-gesture readiness, per-sentence moods, renderer delivery, and latency are visible in one place. **New session** clears the in-memory meeting history and resets pending participation state without changing avatar configuration.
 
 You can alternatively provide the API key through the environment:
 
@@ -230,7 +230,7 @@ The BlackHole realtime transcript uses the configured generic speaker name becau
 2. Ask `Mary, what was said before?`. Mary should answer with the retained context.
 3. Continue with `And what do you suggest?` and then `And for tomorrow?` without repeating the name. Both clearly directed follow-ups belong to the original speaker.
 4. Ask for a current fact. With web search enabled, the turn result should report web usage and expose its sources in the console.
-5. Continue a human-only discussion with a substantial point. If Mary has a genuinely useful contribution, her right hand rises without audio.
+5. Continue a human-only discussion with a substantial point. If Mary has a genuinely useful contribution, she requests the floor without audio. A physical hand raise is shown only when Unreal reports a validated authored gesture asset.
 6. Approve it in the console or say `Mary, go ahead`; only then should speech and animation start.
 7. Say `Thank you, Mary` or `Mary, stop` to close the dialogue early; otherwise it closes after two follow-ups or its timeout.
 8. Inspect the turn JSON: every spoken sentence must include its own `mood`, `level`, and `language`.

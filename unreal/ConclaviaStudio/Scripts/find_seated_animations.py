@@ -26,6 +26,14 @@ TERMS = (
     "emote",
     "explain",
     "present",
+    "raise",
+    "raised",
+    "hand",
+    "wave",
+    "question",
+    "greet",
+    "hello",
+    "signal",
 )
 
 

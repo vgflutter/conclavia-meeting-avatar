@@ -1,10 +1,10 @@
 param(
     [int]$Port = 8091,
-    [string]$TokenFile = "C:\ConclaviaStudio\Saved\supervisor.token"
+    [string]$TokenFile = "C:\ConclaviaMeetingAvatar\Saved\supervisor.token"
 )
 
 $ErrorActionPreference = "Stop"
-$root = "C:\ConclaviaStudio"
+$root = "C:\ConclaviaMeetingAvatar"
 $source = Join-Path $root "Scripts\ConclaviaPcmBridge.cs"
 $binary = Join-Path $root "Binaries\PcmBridge\ConclaviaPcmBridge.exe"
 $artifacts = Join-Path $root "Saved\PixelStreaming"

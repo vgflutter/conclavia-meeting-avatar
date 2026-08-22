@@ -1,19 +1,23 @@
-# Conclavia Studio (Unreal Engine 5.8 commercial lab)
+# Conclavia Meeting Avatar Renderer (Unreal Engine 5.8)
 
-Real-time rendering POC for Conclavia. The project enables MetaHuman Character,
-MetaHuman SDK and Pixel Streaming 2 and exposes a local director control plane.
+Dedicated real-time renderer for the standalone Conclavia Meeting Avatar. The
+project enables MetaHuman Character, MetaHuman SDK and Pixel Streaming 2 and
+exposes a private local control plane.
 
-## Current web validation path: UE 5.8 single hero
+## Production path: isolated UE 5.8 meeting profile
 
-The standalone meeting companion launches the deliberately isolated `lipsync58`
-profile by default. It runs one warmed Cine-quality MetaHuman in the UE 5.8
-premium studio with a fixed portrait camera. Aera, Ada, Vivian and Jelena use
+The standalone companion launches the `meeting` profile by default from
+`C:\ConclaviaMeetingAvatar`. It owns a dedicated level, supervisor task and
+artifact directory; the legacy `C:\ConclaviaStudio` podcast project is neither
+launched nor modified. The meeting level contains one warmed Cine-quality
+MetaHuman, two deterministic video-call cameras and a restrained abstract
+background. It contains no podcast desk, microphone, broadcast bug, lower third
+or automatic studio direction. Aera, Ada, Vivian and Jelena use
 the same audited commercial face pipeline and can be switched at runtime without
 restarting Pixel Streaming. Jelena's UE 5.6 character package and shared
 clothing/groom dependencies are migrated automatically on first use when they
 are present on the studio instance. The UE 5.6 `lipsync` profile remains an
-explicit rollback, while the duet and five-person levels remain experiments
-rather than production claims.
+explicit rollback outside the meeting profile.
 
 The 5.8 control plane accepts bounded mono PCM16 at 16 kHz, plays it inside
 Unreal and feeds the same samples to the commercial full-face generator.
@@ -23,8 +27,10 @@ are the only control endpoints used by the web application. Audible playback
 and facial inference therefore share the Unreal render clock instead of being
 synchronized by browser timers.
 
-The persisted 5.8 package provides sixteen named cameras and keeps the verified
-session on `CAM_Seat_1_Close`. It keeps the hero warm at Cine LOD0 with strand
+The meeting package provides `CAM_Meeting_Portrait` and
+`CAM_Meeting_Gesture`; ordinary listening and speech remain on the portrait.
+The wider camera is eligible only when a validated authored full-body gesture
+is installed. It keeps the hero warm at Cine LOD0 with strand
 hair and full-resolution subsurface skin. Pixel Streaming 2 codec negotiation
 is enabled in `Config/DefaultGame.ini`, matching the 5.8 plugin configuration
 class and preventing a WebRTC offer from failing before the first frame.
@@ -35,18 +41,19 @@ Startup uses a private browser as a render-readiness gate: it requires a decoded
 the public player is mounted. A connected-but-black peer, a missing hairstyle
 or a blocked composition can no longer be called ready.
 
-The 22 August 2026 5.8 validation decoded the 1920×1080 Pixel Streaming 2 feed
+The 22 August 2026 face-pipeline validation decoded the 1920×1080 Pixel Streaming 2 feed
 at 30.34 fps with no 100 ms frame gaps. The commercial speech audit measured a
 peak jaw input of `0.224960`, a rendered jaw curve of `0.223365` and a maximum
 tracking error of `0.001595`. The browser audio audit found one live WebRTC
 audio track, peak RMS `0.04447`, 146 audible samples and no browser errors. The
-runtime revision is `ue58-commercial-lipsync-v14-attentive-idle`; readiness also
+meeting runtime revision is `ue58-commercial-lipsync-v15-meeting-stage`; readiness also
 requires the Face AnimBP to report that its `Realistic` model route is active.
 
-This is a stable single-performer laboratory, not a finished show and not yet a
-claim that Unreal beats LiveAvatar. The current gate covers speech, listening
-reactions, authored waiting motion and request-to-speak. Additional identities
-and shot-dependent LOD still require the same visual/performance audit.
+The procedural IK hand-raise prototype is excluded from this production
+profile. `MeetingHandRaiseAnimation` must reference an authored or captured
+full-body clip retargeted for MetaHuman; otherwise health deliberately reports
+`physicalGestureReady=false` and request-to-speak remains a UI state. This is a
+quality gate, not a silent fallback to the rejected animation.
 Proprietary Marketplace binaries and sample content are excluded from Git; only
 the integration bridge and automation belong in this repository.
 
@@ -76,31 +83,20 @@ Example cue:
 }
 ```
 
-`expectedDurationMs` lets the runtime edit the contribution instead of showing
-one static angle. A direct response opens on both participants, moves to the
-speaker only when the answer is long enough, allows at most one contextual
-breath in a long contribution, and prepares the handoff on a two-shot or the
-master. A new cue cancels every pending cut, so an early speech end can never
-leave a stale camera change behind.
+The meeting profile deliberately ignores podcast shot direction. It retains a
+stable portrait during listening and speech; `expectedDurationMs` still drives
+expression and performance timing. The gesture camera is reserved for a
+validated full-body motion.
 
 Override the port and visual profile at launch:
 
 ```text
--ConclaviaControlPort=8081 -ConclaviaStudioProfile=pop
+-ConclaviaControlPort=8081 -ConclaviaStudioProfile=meeting
 ```
 
-Supported profiles are `lipsync58`, the UE 5.6 rollback `lipsync`, and the
-experimental `pop` and `serious` stages. The studio build script imports two
-bespoke premium 16:9 plates, creates persistent cast positions and named
-broadcast cameras, then saves a deterministic production level. Runtime
-direction only switches real level cameras; it never rebuilds geometry.
-
-The output includes a restrained native broadcast package: a compact channel
-bug, a live badge, and a 340 px lower third. The lower third uses the actual
-speaker and addressee names, appears for 3.1 seconds at the start of a turn, and
-then leaves the picture clear. Captions remain off by default. The master camera
-uses a calibrated 16:9 filmback and shows all five seats in both profiles;
-automatic exposure is disabled to prevent brightness pumping between cuts.
+`meeting` is the production profile. `lipsync58`, the UE 5.6 rollback
+`lipsync`, and the old `pop` and `serious` stages remain diagnostic profiles and
+must not be used by the standalone companion.
 
 ## Web control-room supervisor
 
@@ -109,7 +105,7 @@ control room can operate. It listens on port `8090`, requires the bearer token
 stored in `Saved/supervisor.token`, and exposes:
 
 - `GET /health` — process plus real Unreal stage/camera health
-- `POST /start` with `{ "profile": "pop" }` or `serious`
+- `POST /start` with `{ "profile": "meeting", "avatarId": "aera" }`
 - `POST /director/cue` — authenticated proxy to Unreal on localhost `8081`
 - `POST /stop` — terminates the complete Unreal and signalling process trees
 
@@ -118,13 +114,14 @@ TLS and an IP allow-list/private network; never publish the local Unreal control
 port. The browser needs only the Pixel Streaming player. The companion server
 holds the supervisor token and returns only sanitized status and player data.
 
-Build or rebuild the premium level from Unreal's Python environment:
+Build or rebuild the dedicated meeting level from Unreal's Python environment:
 
 ```powershell
 & C:\Epic\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe `
-  C:\ConclaviaStudio\ConclaviaStudio.uproject `
+  C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject `
   -unattended -nop4 -nosplash -nullrhi `
-  '-ExecutePythonScript=C:\ConclaviaStudio\Scripts\build_premium_studio.py'
+  -run=pythonscript `
+  '-script=C:\ConclaviaMeetingAvatar\Scripts\build_meeting_avatar_stage.py'
 ```
 
 ## Remote smoke test
@@ -134,7 +131,7 @@ exercise both control-plane routes:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-& C:\ConclaviaStudio\Scripts\Test-ControlPlane.ps1 -Profile pop
+& C:\ConclaviaMeetingAvatar\Scripts\Test-ControlPlane.ps1 -Profile meeting
 ```
 
 The script starts Unreal with hardware rendering, waits for `/health`, sends a
@@ -147,7 +144,7 @@ test. This initializes a real MetaHuman character and verifies its generated
 face, body, texture and material assets:
 
 ```powershell
-& C:\ConclaviaStudio\Scripts\Test-MetaHuman.ps1
+& C:\ConclaviaMeetingAvatar\Scripts\Test-MetaHuman.ps1
 ```
 
 The Epic Games Launcher installation must include **MetaHuman Creator Core
@@ -163,7 +160,7 @@ installed Unreal release to `C:\PixelStreamingInfrastructure`, build it once,
 then run:
 
 ```powershell
-& C:\ConclaviaStudio\Scripts\Test-PixelStreaming.ps1 `
+& C:\ConclaviaMeetingAvatar\Scripts\Test-PixelStreaming.ps1 `
   -Profile pop `
   -Shot close-up
 ```
@@ -222,7 +219,7 @@ editor and stream a clean immersive viewport without requiring a packaged
 build:
 
 ```powershell
-& C:\ConclaviaStudio\Scripts\Test-MetaHumanPreviewStreaming.ps1 `
+& C:\ConclaviaMeetingAvatar\Scripts\Test-MetaHumanPreviewStreaming.ps1 `
   -Shot close-up `
   -SpeakerId participant-3
 ```
@@ -249,7 +246,7 @@ the preview path deliberately does not modify those assets.
 Build all five persisted Cinematic characters with:
 
 ```powershell
-& C:\ConclaviaStudio\Scripts\Build-ProductionCast.ps1
+& C:\ConclaviaMeetingAvatar\Scripts\Build-ProductionCast.ps1
 ```
 
 The resumable build creates Elena Riva, Lorenzo Vitale, Giulia Ferri, Marco
@@ -270,14 +267,14 @@ its compact audit from Unreal's Python environment:
 
 ```powershell
 & C:\Epic\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe `
-  C:\ConclaviaStudio\ConclaviaStudio.uproject `
+  C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject `
   -unattended -nop4 -nosplash -nullrhi `
-  '-ExecutePythonScript=C:\ConclaviaStudio\Scripts\tune_production_lookdev.py'
+  '-ExecutePythonScript=C:\ConclaviaMeetingAvatar\Scripts\tune_production_lookdev.py'
 
 & C:\Epic\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe `
-  C:\ConclaviaStudio\ConclaviaStudio.uproject `
+  C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject `
   -unattended -nop4 -nosplash -nullrhi `
-  '-ExecutePythonScript=C:\ConclaviaStudio\Scripts\audit_lookdev_parameters.py'
+  '-ExecutePythonScript=C:\ConclaviaMeetingAvatar\Scripts\audit_lookdev_parameters.py'
 ```
 
 The tuning pass applies the same calibrated skin, eye, close-camera and portrait
@@ -298,9 +295,9 @@ cropping most of the virtual floor behind the desk.
 Validate the complete rendered chain with:
 
 ```powershell
-& C:\ConclaviaStudio\Scripts\Test-ProductionStreaming.ps1 `
+& C:\ConclaviaMeetingAvatar\Scripts\Test-ProductionStreaming.ps1 `
   -Profile pop -Shot close-up -GraphicsAdapter 1
-& C:\ConclaviaStudio\Scripts\Test-ProductionStreaming.ps1 `
+& C:\ConclaviaMeetingAvatar\Scripts\Test-ProductionStreaming.ps1 `
   -Profile serious -Shot wide -GraphicsAdapter 1
 ```
 
@@ -341,10 +338,10 @@ Use the browser acceptance script to capture idle, active-listening and settled
 frames together with the corresponding health telemetry:
 
 ```powershell
-node C:\ConclaviaStudio\Scripts\Capture-ListeningPresence.cjs `
+node C:\ConclaviaMeetingAvatar\Scripts\Capture-ListeningPresence.cjs `
   http://127.0.0.1:8080/conclavia.html `
   http://127.0.0.1:8081 `
-  C:\ConclaviaStudio\Saved\ListeningPresence
+  C:\ConclaviaMeetingAvatar\Saved\ListeningPresence
 ```
 
 Rebuild the solver-authored gesture after changing the staged MetaHuman or the
@@ -352,9 +349,9 @@ source idle:
 
 ```powershell
 & C:\Epic\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe `
-  C:\ConclaviaStudio\ConclaviaStudio.uproject `
+  C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject `
   -unattended -nop4 -nosplash -nullrhi `
-  '-ExecutePythonScript=C:\ConclaviaStudio\Scripts\build_metahuman_hand_raise.py'
+  '-ExecutePythonScript=C:\ConclaviaMeetingAvatar\Scripts\build_metahuman_hand_raise.py'
 ```
 
 ## Real-time facial audio
@@ -376,7 +373,7 @@ so a moving video is not accepted as proof of working lip sync by itself.
 The deterministic direct-PCM gate remains useful for low-level diagnostics:
 
 ```powershell
-& C:\ConclaviaStudio\Scripts\Test-DirectPcmSubject.ps1
+& C:\ConclaviaMeetingAvatar\Scripts\Test-DirectPcmSubject.ps1
 ```
 
 For the current web path, the stronger acceptance test is an alternating Aera /
