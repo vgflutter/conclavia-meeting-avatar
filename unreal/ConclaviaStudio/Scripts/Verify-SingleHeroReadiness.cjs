@@ -64,7 +64,13 @@ function percentile(values, quantile) {
       heroCanvas.width = 72;
       heroCanvas.height = 36;
       const heroContext = heroCanvas.getContext("2d", { willReadFrequently: true });
-      if (!fullContext || !heroContext) {
+      const exposureCanvas = document.createElement("canvas");
+      exposureCanvas.width = 48;
+      exposureCanvas.height = 48;
+      const exposureContext = exposureCanvas.getContext("2d", {
+        willReadFrequently: true
+      });
+      if (!fullContext || !heroContext || !exposureContext) {
         throw new Error("Canvas sampling is unavailable.");
       }
 
@@ -89,6 +95,21 @@ function percentile(values, quantile) {
             heroCanvas.width,
             heroCanvas.height
           );
+          // Sample the stable head-and-upper-torso area independently from the
+          // decorative background. A technically moving 1080p stream is not
+          // production-ready when skin and a white shirt are clipped by an
+          // incorrectly placed lighting rig.
+          exposureContext.drawImage(
+            video,
+            video.videoWidth * 0.34,
+            video.videoHeight * 0.10,
+            video.videoWidth * 0.32,
+            video.videoHeight * 0.68,
+            0,
+            0,
+            exposureCanvas.width,
+            exposureCanvas.height
+          );
           const full = fullContext.getImageData(
             0,
             0,
@@ -100,6 +121,12 @@ function percentile(values, quantile) {
             0,
             heroCanvas.width,
             heroCanvas.height
+          ).data;
+          const exposure = exposureContext.getImageData(
+            0,
+            0,
+            exposureCanvas.width,
+            exposureCanvas.height
           ).data;
 
           const normalizedDelta = (current, previous) => {
@@ -115,12 +142,25 @@ function percentile(values, quantile) {
             return total / (samples * 255);
           };
 
+          let lumaTotal = 0;
+          let nearWhite = 0;
+          const exposurePixels = exposure.length / 4;
+          for (let index = 0; index < exposure.length; index += 4) {
+            const luma = exposure[index] * 0.2126
+              + exposure[index + 1] * 0.7152
+              + exposure[index + 2] * 0.0722;
+            lumaTotal += luma;
+            if (luma >= 242) nearWhite += 1;
+          }
+
           result.push({
             now,
             mediaTime: metadata.mediaTime,
             presentedFrames: metadata.presentedFrames,
             fullDelta: normalizedDelta(full, previousFull),
-            heroDelta: normalizedDelta(hero, previousHero)
+            heroDelta: normalizedDelta(hero, previousHero),
+            exposureMeanLuma: lumaTotal / exposurePixels,
+            exposureNearWhiteRatio: nearWhite / exposurePixels
           });
           previousFull = new Uint8ClampedArray(full);
           previousHero = new Uint8ClampedArray(hero);
@@ -145,6 +185,7 @@ function percentile(values, quantile) {
     );
     const fullDeltas = frames.frames.slice(1).map((frame) => frame.fullDelta);
     const heroDeltas = frames.frames.slice(1).map((frame) => frame.heroDelta);
+    const finalExposure = frames.frames.at(-1);
     const duration = frames.frames.length > 1
       ? frames.frames.at(-1).mediaTime - frames.frames[0].mediaTime
       : 0;
@@ -162,7 +203,10 @@ function percentile(values, quantile) {
         // killing an otherwise healthy stream for a 52 ms scheduling jitter.
         && percentile(intervals, 0.95) <= 67
         && intervals.filter((value) => value >= 100).length <= 1
-        && percentile(heroDeltas, 0.99) <= 0.12,
+        && percentile(heroDeltas, 0.99) <= 0.12
+        && finalExposure.exposureMeanLuma >= 38
+        && finalExposure.exposureMeanLuma <= 220
+        && finalExposure.exposureNearWhiteRatio <= 0.38,
       width: frames.width,
       height: frames.height,
       decodedFrameCount: frames.frames.length,
@@ -174,7 +218,9 @@ function percentile(values, quantile) {
       fullDeltaP99: percentile(fullDeltas, 0.99),
       fullDeltaMax: Math.max(0, ...fullDeltas),
       heroDeltaP99: percentile(heroDeltas, 0.99),
-      heroDeltaMax: Math.max(0, ...heroDeltas)
+      heroDeltaMax: Math.max(0, ...heroDeltas),
+      exposureMeanLuma: finalExposure.exposureMeanLuma,
+      exposureNearWhiteRatio: finalExposure.exposureNearWhiteRatio
     };
 
     await page.locator("video").first().screenshot({

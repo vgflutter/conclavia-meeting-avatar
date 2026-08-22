@@ -211,15 +211,15 @@ def build() -> None:
     materials = {
         "ink": make_material(
             "M_MeetingInk",
-            unreal.LinearColor(0.004, 0.007, 0.012, 1.0),
+            unreal.LinearColor(0.002, 0.004, 0.008, 1.0),
         ),
         "amber": make_material(
             "M_MeetingAmber",
-            unreal.LinearColor(0.29, 0.082, 0.012, 1.0),
+            unreal.LinearColor(0.075, 0.018, 0.003, 1.0),
         ),
         "red": make_material(
             "M_MeetingRed",
-            unreal.LinearColor(0.36, 0.012, 0.008, 1.0),
+            unreal.LinearColor(0.095, 0.003, 0.002, 1.0),
         ),
     }
 
@@ -249,41 +249,41 @@ def build() -> None:
         "CAM_Meeting_Portrait",
         unreal.Vector(-300.0, 0.0, 174.0),
         face_target,
-        78.0,
+        105.0,
     )
     add_camera(
         "CAM_Meeting_Gesture",
         unreal.Vector(-520.0, 0.0, 178.0),
         unreal.Vector(0.0, 0.0, 174.0),
-        58.0,
+        70.0,
     )
 
     add_rect_light(
         "MEETING_Key",
-        unreal.Vector(-165.0, -175.0, 330.0),
+        unreal.Vector(-330.0, -360.0, 510.0),
         face_target,
         unreal.LinearColor(1.0, 0.91, 0.84, 1.0),
-        205.0,
         230.0,
-        180.0,
+        520.0,
+        300.0,
     )
     add_rect_light(
         "MEETING_Fill",
-        unreal.Vector(-120.0, 210.0, 260.0),
+        unreal.Vector(-250.0, 490.0, 390.0),
         face_target,
-        unreal.LinearColor(0.42, 0.68, 1.0, 1.0),
-        68.0,
-        250.0,
-        190.0,
+        unreal.LinearColor(0.26, 0.64, 1.0, 1.0),
+        65.0,
+        440.0,
+        260.0,
     )
     add_rect_light(
         "MEETING_Rim",
-        unreal.Vector(170.0, -120.0, 310.0),
+        unreal.Vector(330.0, -260.0, 440.0),
         face_target,
         unreal.LinearColor(1.0, 0.34, 0.15, 1.0),
-        105.0,
-        190.0,
-        140.0,
+        145.0,
+        400.0,
+        220.0,
     )
     skylight = spawn_actor(
         unreal.SkyLight,
@@ -291,7 +291,7 @@ def build() -> None:
         "MEETING_Ambient",
     )
     sky_component = skylight.get_component_by_class(unreal.SkyLightComponent)
-    sky_component.set_editor_property("intensity", 0.12)
+    sky_component.set_editor_property("intensity", 0.09)
     sky_component.set_editor_property("real_time_capture", False)
     sky_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     skylight.tags = [unreal.Name("ConclaviaMeetingSet")]
