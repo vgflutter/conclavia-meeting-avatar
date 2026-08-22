@@ -12,7 +12,9 @@ import {
   isFloorGrant,
 } from "./core/activation.js";
 import { ListeningReactionStabilizer } from "./core/listening-reaction.js";
-import { matchChatCommand } from "./core/chat-commands.js";
+import { DialogueLease } from "./core/dialogue-lease.js";
+import { chatResponseChannel, matchChatCommand } from "./core/chat-commands.js";
+import { dialogueParticipantKey } from "./core/participant-identity.js";
 import { ConclaviaRenderer } from "./conclavia/renderer.js";
 import {
   avatarProfiles,
@@ -30,6 +32,7 @@ import type {
   AvatarInterventionRequest,
   AvatarSpeechCue,
   ChatMessageInput,
+  MeetingTranscriptInput,
   OutboundChatMessage,
   TranscriptSegment,
 } from "./domain/protocol.js";
@@ -49,6 +52,7 @@ const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
 ] as const);
 const maxRetainedSegments = 200;
 const maxSeenChatMessages = 2_000;
+const maxSeenTranscriptSegments = 4_000;
 const maxAudioBytes = 20 * 1024 * 1024;
 const interventionRequestTtlMs = 45_000;
 
@@ -127,6 +131,9 @@ function parseChatMessageInput(value: unknown): ChatMessageInput | null {
   const meetingId = record.meetingId.trim();
   const messageId = record.messageId.trim();
   const speakerName = record.speakerName.trim();
+  const speakerId = typeof record.speakerId === "string"
+    ? record.speakerId.trim()
+    : "";
   const text = record.text.trim();
   if (
     !meetingId || meetingId.length > 240 ||
@@ -143,12 +150,58 @@ function parseChatMessageInput(value: unknown): ChatMessageInput | null {
     platform: record.platform as ChatMessageInput["platform"],
     meetingId,
     messageId,
+    ...(speakerId && speakerId.length <= 240 ? { speakerId } : {}),
     speakerName,
     text,
     ...(Number.isFinite(requestedCapturedAt)
       ? { capturedAt: new Date(requestedCapturedAt).toISOString() }
       : {}),
     senderIsAvatar: record.senderIsAvatar === true,
+  };
+}
+
+function parseMeetingTranscriptInput(value: unknown): MeetingTranscriptInput | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.platform !== "string" ||
+    !chatPlatforms.includes(record.platform as MeetingTranscriptInput["platform"]) ||
+    typeof record.meetingId !== "string" ||
+    typeof record.segmentId !== "string" ||
+    typeof record.speakerId !== "string" ||
+    typeof record.speakerName !== "string" ||
+    typeof record.text !== "string"
+  ) {
+    return null;
+  }
+  const meetingId = record.meetingId.trim();
+  const segmentId = record.segmentId.trim();
+  const speakerId = record.speakerId.trim();
+  const speakerName = record.speakerName.trim();
+  const text = record.text.trim();
+  if (
+    !meetingId || meetingId.length > 240 ||
+    !segmentId || segmentId.length > 240 ||
+    !speakerId || speakerId.length > 240 ||
+    !speakerName || speakerName.length > 80 ||
+    !text || text.length > 4_000
+  ) {
+    return null;
+  }
+  const requestedCapturedAt = typeof record.capturedAt === "string"
+    ? Date.parse(record.capturedAt)
+    : Number.NaN;
+  return {
+    platform: record.platform as MeetingTranscriptInput["platform"],
+    meetingId,
+    segmentId,
+    speakerId,
+    speakerName,
+    text,
+    ...(Number.isFinite(requestedCapturedAt)
+      ? { capturedAt: new Date(requestedCapturedAt).toISOString() }
+      : {}),
+    isFinal: record.isFinal !== false,
   };
 }
 
@@ -194,6 +247,7 @@ export interface ServerOptions {
   port: number;
   wakeWord: string;
   dialogueTimeoutMs: number;
+  dialogueMaxFollowUps: number;
   configPath: string;
   openaiApiKey: string | undefined;
   responseModel: string;
@@ -208,6 +262,8 @@ export function startServer(options: ServerOptions): Promise<void> {
   const transcriptHistory: TranscriptSegment[] = [];
   const seenChatMessageKeys = new Set<string>();
   const activeChatMessageKeys = new Set<string>();
+  const seenTranscriptSegmentKeys = new Set<string>();
+  const activeTranscriptSegmentKeys = new Set<string>();
   const configStore = new AvatarConfigStore(options.configPath, {
     avatarProfile: "aera",
     name: options.wakeWord,
@@ -253,7 +309,10 @@ export function startServer(options: ServerOptions): Promise<void> {
   let rendererStartError: string | null = null;
   let rendererStartGeneration = 0;
   let rendererPlayerUrl: string | undefined;
-  let dialogueActiveUntil = 0;
+  const dialogueLease = new DialogueLease(
+    options.dialogueTimeoutMs,
+    options.dialogueMaxFollowUps,
+  );
   let pendingRequest: AvatarInterventionRequest | null = null;
   let avatarHandRaised = false;
   const listeningReactions = new ListeningReactionStabilizer();
@@ -331,8 +390,6 @@ export function startServer(options: ServerOptions): Promise<void> {
     }
   };
 
-  const isDialogueActive = () => Date.now() < dialogueActiveUntil;
-
   const participationSnapshot = () => {
     if (pendingRequest && Date.now() >= Date.parse(pendingRequest.expiresAt)) {
       pendingRequest = null;
@@ -368,10 +425,7 @@ export function startServer(options: ServerOptions): Promise<void> {
   const contextSnapshot = () => ({
     retainedSegmentCount: transcriptHistory.length,
     recentSegments: transcriptHistory.slice(-50),
-    dialogue: {
-      active: isDialogueActive(),
-      activeUntil: isDialogueActive() ? new Date(dialogueActiveUntil).toISOString() : null,
-    },
+    dialogue: dialogueLease.snapshot(),
     participationRequest: participationSnapshot(),
     avatarHandRaised,
     listeningReaction: listeningReactions.snapshot,
@@ -385,10 +439,11 @@ export function startServer(options: ServerOptions): Promise<void> {
     let llmMs: number | null = null;
     let rendererMs: number | null = null;
     let usedWebSearch = false;
+    const participantKey = dialogueParticipantKey(segment);
     let decision: ActivationDecision = decideActivation(
       segment,
       runtimeConfig.name,
-      isDialogueActive(),
+      participantKey !== null && dialogueLease.isActiveFor(participantKey),
     );
     if (decision.ingested) retainSegment(segment);
 
@@ -397,9 +452,10 @@ export function startServer(options: ServerOptions): Promise<void> {
     const currentRequest = participationSnapshot();
 
     if (isDialogueDismissal(segment.text, runtimeConfig.name)) {
+      intelligence?.abortPending();
       pendingRequest = null;
       avatarHandRaised = false;
-      dialogueActiveUntil = 0;
+      dialogueLease.close();
       decision = {
         ingested: decision.ingested,
         activated: false,
@@ -407,7 +463,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       };
       if (rendererArmed) {
         try {
-          await renderer.settleRequest(runtimeConfig.name);
+          await renderer.interruptSpeech(runtimeConfig.name);
         } catch {
           // The verbal command still closes the local state if Unreal is unavailable.
         }
@@ -421,7 +477,8 @@ export function startServer(options: ServerOptions): Promise<void> {
         reason: "conversation-follow-up",
         cue: currentRequest.proposedCue,
       };
-      dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
+      if (participantKey) dialogueLease.open(participantKey, segment.speakerName);
+      else dialogueLease.close();
       retainAvatarCue(currentRequest.proposedCue);
     } else {
       const direct = decision.activated;
@@ -463,15 +520,22 @@ export function startServer(options: ServerOptions): Promise<void> {
             }
           }
 
-          if (turn.action === "speak" && turn.cue) {
+          // The floor controller is authoritative. Observer-mode output can
+          // request the floor, but it can never make Mary speak directly.
+          if (turn.action === "speak" && turn.cue && direct) {
             decision = { ...decision, activated: true, cue: turn.cue };
             if (decision.reason === "wake-word" && responseChannel === "voice") {
-              dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
+              if (participantKey) {
+                dialogueLease.open(participantKey, segment.speakerName);
+              } else {
+                dialogueLease.close();
+              }
             } else if (
-              decision.reason === "conversation-follow-up" ||
-              responseChannel === "chat"
+              decision.reason === "conversation-follow-up" &&
+              responseChannel === "voice" &&
+              participantKey
             ) {
-              dialogueActiveUntil = 0;
+              dialogueLease.consumeFollowUp(participantKey);
             }
             retainAvatarCue(
               turn.cue,
@@ -512,7 +576,13 @@ export function startServer(options: ServerOptions): Promise<void> {
               }
             }
           } else {
-            if (decision.reason === "conversation-follow-up") dialogueActiveUntil = 0;
+            if (
+              decision.reason === "conversation-follow-up" &&
+              responseChannel === "voice" &&
+              participantKey
+            ) {
+              dialogueLease.consumeFollowUp(participantKey);
+            }
             decision = {
               ingested: decision.ingested,
               activated: false,
@@ -581,9 +651,19 @@ export function startServer(options: ServerOptions): Promise<void> {
     }
   };
 
+  const rememberTranscriptSegment = (key: string) => {
+    seenTranscriptSegmentKeys.add(key);
+    while (seenTranscriptSegmentKeys.size > maxSeenTranscriptSegments) {
+      const oldest = seenTranscriptSegmentKeys.values().next().value;
+      if (!oldest) break;
+      seenTranscriptSegmentKeys.delete(oldest);
+    }
+  };
+
   const processChatMessage = async (input: ChatMessageInput) => {
     const segment: TranscriptSegment = {
       id: randomUUID(),
+      ...(input.speakerId ? { speakerId: input.speakerId } : {}),
       speakerName: input.speakerName,
       text: input.text,
       isFinal: true,
@@ -642,10 +722,16 @@ export function startServer(options: ServerOptions): Promise<void> {
       };
     }
 
-    const responseChannel = command?.kind === "summarize-in-chat" ||
-      command?.kind === "reply-in-chat"
-      ? "chat"
-      : "voice";
+    // Chat remains silent by default: an @mention receives a written reply.
+    // Voice is reserved for an explicit speak command or for granting a
+    // pending request to speak, so a busy meeting cannot be hijacked by a
+    // harmless chat question.
+    const responseChannel = chatResponseChannel(
+      input.text,
+      runtimeConfig.name,
+      command,
+      participationSnapshot() !== null,
+    );
     const turn = await processSegment(segment, responseChannel);
     const outboundMessages: OutboundChatMessage[] = [];
     if (responseChannel === "chat" && turn.decision.cue?.sentences.length) {
@@ -748,7 +834,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         listener = createListener();
         pendingRequest = null;
         avatarHandRaised = false;
-        dialogueActiveUntil = 0;
+        dialogueLease.close();
 
         let listenerWarning: string | null = null;
         if (wasListening && listener) {
@@ -792,7 +878,10 @@ export function startServer(options: ServerOptions): Promise<void> {
         }
         pendingRequest = null;
         avatarHandRaised = false;
-        dialogueActiveUntil = Date.now() + options.dialogueTimeoutMs;
+        // A dashboard approval grants one prepared intervention, not an open
+        // dialogue with an unknown participant. A verbal grant is attributed
+        // to its actual speaker and opens the short lease above.
+        dialogueLease.close();
         retainAvatarCue(intervention.proposedCue);
         let delivery: Awaited<ReturnType<ConclaviaRenderer["deliver"]>> | null = null;
         if (rendererArmed) {
@@ -886,7 +975,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         transcriptHistory.length = 0;
         pendingRequest = null;
         avatarHandRaised = false;
-        dialogueActiveUntil = 0;
+        dialogueLease.close();
         if (rendererArmed) {
           try {
             await renderer.settleRequest(runtimeConfig.name);
@@ -1004,13 +1093,65 @@ export function startServer(options: ServerOptions): Promise<void> {
 
         const segment: TranscriptSegment = {
           id: randomUUID(),
+          speakerId: input.speakerName,
           speakerName: input.speakerName,
           text: input.text,
           isFinal: true,
           capturedAt: new Date().toISOString(),
           source: "manual",
+          platform: "generic",
+          meetingId: "test-room",
         };
         sendJson(response, 200, await processSegment(segment));
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/transcript/segments") {
+        const input = parseMeetingTranscriptInput(await readJsonBody(request));
+        if (!input) {
+          sendJson(response, 400, { error: "Invalid meeting transcript payload" });
+          return;
+        }
+
+        const key = `${input.platform}\u0000${input.meetingId}\u0000${input.segmentId}`;
+        if (input.isFinal !== false && seenTranscriptSegmentKeys.has(key)) {
+          sendJson(response, 200, {
+            accepted: false,
+            duplicate: true,
+            reason: "duplicate",
+          });
+          return;
+        }
+        if (activeTranscriptSegmentKeys.has(key)) {
+          sendJson(response, 202, {
+            accepted: false,
+            processing: true,
+            reason: "processing",
+          });
+          return;
+        }
+
+        const segment: TranscriptSegment = {
+          id: randomUUID(),
+          speakerId: input.speakerId,
+          speakerName: input.speakerName,
+          text: input.text,
+          isFinal: input.isFinal !== false,
+          capturedAt: input.capturedAt ?? new Date().toISOString(),
+          source: "speech",
+          platform: input.platform,
+          meetingId: input.meetingId,
+          externalId: input.segmentId,
+        };
+
+        activeTranscriptSegmentKeys.add(key);
+        try {
+          const result = await processSegment(segment);
+          if (segment.isFinal) rememberTranscriptSegment(key);
+          sendJson(response, 200, { accepted: true, ...result });
+        } finally {
+          activeTranscriptSegmentKeys.delete(key);
+        }
         return;
       }
 
@@ -1109,11 +1250,14 @@ export function startServer(options: ServerOptions): Promise<void> {
 
         const segment: TranscriptSegment = {
           id: randomUUID(),
+          speakerId: speakerName,
           speakerName,
           text,
           isFinal: true,
           capturedAt: new Date().toISOString(),
           source: "speech",
+          platform: "generic",
+          meetingId: "test-room",
         };
         sendJson(response, 200, {
           ...(await processSegment(segment)),

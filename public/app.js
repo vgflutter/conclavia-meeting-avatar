@@ -352,7 +352,7 @@ function renderContext(context) {
   elements.participantCount.textContent = `${participants.length} ${participants.length === 1 ? "partecipante" : "partecipanti"}`;
   elements.contextCount.textContent = `${count} ${count === 1 ? "intervento" : "interventi"}`;
   elements.dialogueState.textContent = context.dialogue?.active
-    ? `${avatarName} nel dialogo`
+    ? `${avatarName} con ${context.dialogue.speakerName || "partecipante"} · ${context.dialogue.remainingFollowUps} follow-up`
     : context.avatarHandRaised
       ? `${avatarName} chiede la parola`
       : `${avatarName} in ascolto`;

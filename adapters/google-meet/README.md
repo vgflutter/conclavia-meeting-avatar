@@ -2,7 +2,7 @@
 
 Google Meet does not currently expose live in-meeting chat messages through the Meet REST API. That API exposes meeting spaces, conferences, participants, recordings, and transcripts. Live chat ingestion therefore requires an isolated browser bridge.
 
-The proposed bridge is a browser extension with host access limited to `https://meet.google.com/*`. It observes the open chat panel, converts each newly rendered human message into the canonical `POST /api/chat/messages` payload, and posts returned `outboundMessages` through the same chat panel.
+The proposed bridge is a browser extension with host access limited to `https://meet.google.com/*`. It observes the open chat panel, converts each newly rendered human message into the canonical `POST /api/chat/messages` payload, and posts returned `outboundMessages` through the same chat panel. It also observes finalized visible captions and forwards them through the [transcript adapter contract](../../docs/transcript-adapter-contract.md), preserving a stable participant identity for dialogue ownership.
 
 DOM extraction and message posting must remain inside this adapter because Meet's rendered markup is not a stable public API. The command router, meeting memory, LLM, voice, gestures, and configuration must never depend on Meet selectors.
 

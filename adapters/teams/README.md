@@ -12,6 +12,8 @@ For each incoming message activity:
 4. send every returned `outboundMessages` item through the Teams conversation;
 5. never forward the adapter's own outgoing activity back as a human message.
 
+For natural spoken follow-ups in a multi-participant meeting, the companion also needs speaker-attributed finalized captions. A Teams caption or transcript bridge sends them to `POST /api/transcript/segments` using the [transcript adapter contract](../../docs/transcript-adapter-contract.md). The BlackHole audio listener remains a useful fallback for complete meeting memory, but mixed device audio has no reliable participant identity and therefore accepts only explicit `Mary, ...` invocations.
+
 During local development, the Teams messaging endpoint and the companion relay must be reachable through an authenticated HTTPS development tunnel. In production, place the adapter in a small public service and connect it to the local companion through an authenticated outbound WebSocket or message relay. Do not expose port 4310 directly.
 
 Microsoft documentation:

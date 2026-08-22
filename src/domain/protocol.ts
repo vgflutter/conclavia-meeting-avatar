@@ -41,6 +41,7 @@ export interface ChatCommandAliases {
 
 export interface TranscriptSegment {
   id: string;
+  speakerId?: string;
   speakerName: string;
   text: string;
   isFinal: boolean;
@@ -55,10 +56,22 @@ export interface ChatMessageInput {
   platform: ChatPlatform;
   meetingId: string;
   messageId: string;
+  speakerId?: string;
   speakerName: string;
   text: string;
   capturedAt?: string;
   senderIsAvatar?: boolean;
+}
+
+export interface MeetingTranscriptInput {
+  platform: ChatPlatform;
+  meetingId: string;
+  segmentId: string;
+  speakerId: string;
+  speakerName: string;
+  text: string;
+  capturedAt?: string;
+  isFinal?: boolean;
 }
 
 export interface MatchedChatCommand {

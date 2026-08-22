@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   decideActivation,
+  isAddressedToAvatar,
   isAutonomyCandidate,
   isDialogueFollowUpCandidate,
   isDialogueDismissal,
@@ -78,7 +79,19 @@ await test("does not treat unrelated meeting chatter as an active-dialogue follo
   assert.equal(decision.reason, "not-addressed");
   assert.equal(isDialogueFollowUpCandidate("Puoi approfondire questo punto?"), true);
   assert.equal(isDialogueFollowUpCandidate("E perché?"), true);
+  assert.equal(isDialogueFollowUpCandidate("E per domani?"), true);
   assert.equal(isDialogueFollowUpCandidate("Parliamo del preventivo domani."), false);
+});
+
+await test("distinguishes addressing Mary from talking about Mary", () => {
+  assert.equal(isAddressedToAvatar("Mary, cosa suggerisci?", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Che cosa suggerisci, Mary?", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Mary ha già risposto a questa domanda.", "Mary"), false);
+  assert.equal(
+    decideActivation(segment({ text: "Mary ha già risposto a questa domanda." }), "Mary")
+      .activated,
+    false,
+  );
 });
 
 await test("recognizes explicit dialogue dismissal phrases", () => {

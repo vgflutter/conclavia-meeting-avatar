@@ -11,6 +11,7 @@ The companion treats meeting chat as a platform-neutral event stream. A Teams ag
   "platform": "teams",
   "meetingId": "19:meeting-thread-id",
   "messageId": "1700000000000",
+  "speakerId": "8:orgid:stable-participant-id",
   "speakerName": "Vincenzo",
   "text": "Mary, riassumi in chat",
   "capturedAt": "2026-08-21T18:00:00.000Z",
@@ -18,7 +19,7 @@ The companion treats meeting chat as a platform-neutral event stream. A Teams ag
 }
 ```
 
-`platform` is `teams`, `google-meet`, or `generic`. The tuple `platform + meetingId + messageId` is the idempotency key. Replayed messages are ignored. Adapters must convert platform HTML or rich text to plain text before sending it.
+`platform` is `teams`, `google-meet`, or `generic`. The tuple `platform + meetingId + messageId` is the idempotency key. Replayed messages are ignored. `speakerId` is optional for backwards compatibility but should contain the platform's stable participant identity when available. Adapters must convert platform HTML or rich text to plain text before sending it.
 
 Set `senderIsAvatar` for a message previously posted by the adapter on behalf of the avatar. The companion also ignores messages whose speaker name equals the configured avatar name. These two checks prevent response loops.
 

@@ -138,6 +138,35 @@ await test("sends a bounded silent listening reaction to Unreal", async () => {
   }]);
 });
 
+await test("sends a high-priority interrupt cue to stop accepted speech", async () => {
+  const requests: Array<Record<string, unknown>> = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (_input, init) => {
+    if (typeof init?.body !== "string") throw new Error("Expected JSON body");
+    requests.push(JSON.parse(init.body) as Record<string, unknown>);
+    return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+  };
+  try {
+    await new ConclaviaRenderer("http://renderer.test").interruptSpeech("Mary");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.deepEqual(requests, [{
+    speakerId: "participant-1",
+    targetId: "meeting-participant",
+    speakerName: "Mary",
+    shot: "close-up",
+    intent: "interrupt",
+    bodyGesture: "lower-hand",
+    expectedDurationMs: 0,
+    performanceBeats: [],
+  }]);
+});
+
 await test("reports the MetaHuman profile currently loaded by Unreal", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = () => Promise.resolve(new Response(JSON.stringify({

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { defaultChatCommandAliases } from "../config/avatar-config.js";
-import { matchChatCommand } from "./chat-commands.js";
+import { chatResponseChannel, matchChatCommand } from "./chat-commands.js";
 
 await test("matches configurable commands only when the avatar is addressed first", () => {
   assert.deepEqual(
@@ -39,4 +39,19 @@ await test("supports multilingual aliases and a configurable avatar name", () =>
     matchChatCommand("Mary, lower your hand", "Mary", defaultChatCommandAliases)?.kind,
     "lower-hand",
   );
+});
+
+await test("keeps ordinary chat questions silent unless voice is explicit", () => {
+  assert.equal(chatResponseChannel("@Mary, cosa ne pensi?", "Mary", null, false), "chat");
+  assert.equal(
+    chatResponseChannel(
+      "Mary, intervieni sul budget",
+      "Mary",
+      { kind: "speak", alias: "intervieni", argument: "sul budget" },
+      false,
+    ),
+    "voice",
+  );
+  assert.equal(chatResponseChannel("Mary, vai pure", "Mary", null, true), "voice");
+  assert.equal(chatResponseChannel("Mary, vai pure", "Mary", null, false), "chat");
 });

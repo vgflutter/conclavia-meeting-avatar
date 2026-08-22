@@ -3,6 +3,7 @@ import type {
   ChatCommandKind,
   MatchedChatCommand,
 } from "../domain/protocol.js";
+import { isFloorGrant } from "./activation.js";
 
 const commandKeys: ReadonlyArray<readonly [keyof ChatCommandAliases, ChatCommandKind]> = [
   ["raiseHand", "raise-hand"],
@@ -58,4 +59,15 @@ export function matchChatCommand(
     };
   }
   return null;
+}
+
+export function chatResponseChannel(
+  text: string,
+  avatarName: string,
+  command: MatchedChatCommand | null,
+  hasPendingFloorRequest: boolean,
+): "voice" | "chat" {
+  if (command?.kind === "speak") return "voice";
+  if (hasPendingFloorRequest && isFloorGrant(text, avatarName)) return "voice";
+  return "chat";
 }

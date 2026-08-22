@@ -15,12 +15,13 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 ## Current capabilities
 
 - Continuous meeting audio capture from BlackHole 16ch using ffmpeg and OpenAI Realtime transcription.
+- Canonical speaker-attributed caption ingestion for safe natural dialogue in multi-participant Teams, Meet, and generic meetings.
 - Persistent meeting memory: every final utterance is retained and evaluated by the LLM, including turns that do not address the avatar.
 - Platform-neutral chat ingestion for Teams, Google Meet browser bridges, and generic adapters, merged chronologically with voice memory.
 - Configurable chat commands for physical gestures, voice interventions, chat replies, and meeting summaries.
 - Chat message idempotency and avatar self-message filtering to prevent duplicate actions and response loops.
 - Configurable avatar name, which is also the direct voice trigger.
-- Natural follow-up dialogue, so the trigger does not need to be repeated for every sentence.
+- Speaker-scoped dialogue leases: invoke the avatar once, then continue naturally for up to two relevant follow-ups without repeating its name.
 - Conservative participation control that keeps the avatar silent for fillers, incomplete remarks, and conversations between human participants.
 - `request-to-speak` autonomy: the avatar may prepare a useful contribution and physically raise its hand, but it cannot speak until a participant grants the floor.
 - Floor approval from the web console or by saying phrases such as `Mary, go ahead` or `Go ahead, Mary`.
@@ -44,7 +45,13 @@ The avatar has three possible actions for each evaluated turn:
 2. `speak`: answer immediately when addressed directly or during an active follow-up dialogue.
 3. `request-to-speak`: prepare a concise answer, raise the MetaHuman's right hand, show a matching output indicator, and wait for approval.
 
-A pending request expires after 45 seconds. Granting the floor uses the already prepared response, reducing perceived latency. Dismissing it produces no speech and lowers the hand. The physical pose is implemented as an arm-only Unreal layer so it does not interfere with the face, head, or lip-sync animation clocks.
+A pending request expires after 45 seconds. Granting the floor uses the already prepared response, reducing perceived latency. Dismissing it produces no speech and lowers the hand. Body gestures are semantic requests for an authored Unreal animation state; the runtime does not construct arm poses bone by bone.
+
+### Dialogue and floor control
+
+An explicit voice invocation such as `Mary, what are the main risks?` opens a short dialogue lease for that platform participant ID. The same person can ask up to two relevant follow-up questions during the 45-second window without repeating `Mary`. Remarks from other participants are still retained and evaluated, but they cannot consume or inherit that lease, even if their display names happen to match. A different participant starts their own lease by addressing Mary explicitly.
+
+`Mary, stop`, `Thank you, Mary`, and equivalent dismissal phrases immediately close the lease and send an interrupt cue to the renderer. Human-only discussion never grants Mary the floor. If she has an autonomous contribution, she must use `request-to-speak` and wait for a verbal or dashboard approval.
 
 ## Sentence-level performance contract
 
@@ -88,6 +95,7 @@ concerned, surprised, empathetic, assertive, frustrated, reflective
 Teams agent ─────────┐
 Meet browser bridge ─┼──► canonical chat events ──┐
 Generic adapter ─────┘                             │
+attributed captions ─────► canonical speech events ┤
                                                   ▼
 meeting audio ──► live STT ──► chronological memory ──► command router / participation LLM
       ▲                                                            │
@@ -120,9 +128,9 @@ The management application enables chat ingestion and edits comma-separated alia
 Mary, intervieni riportando la discussione sul rispetto della consegna
 ```
 
-Messages that do not contain a command still enter meeting memory. They follow the same conservative direct-response and `request-to-speak` policy as voice input.
+Messages that do not contain a command still enter meeting memory. Chat is silent by default: `@Mary, what do you think?` receives a written reply. Voice starts only for the configured `speak` command, such as `Mary, intervieni ...`, or when chat explicitly grants a pending request to speak. Unaddressed chat can inform memory or cause a conservative `request-to-speak`, but cannot make the avatar speak immediately.
 
-Teams uses an installed agent with `groupchat` scope and resource-specific `ChatMessage.Read.Chat` consent. Google Meet does not expose live chat through its REST API, so Meet uses an isolated browser adapter; a Meet DOM change cannot affect the companion core. See the [chat adapter contract](docs/chat-adapter-contract.md), [Teams adapter template](adapters/teams/README.md), and [Google Meet adapter design](adapters/google-meet/README.md).
+Teams uses an installed agent with `groupchat` scope and resource-specific `ChatMessage.Read.Chat` consent. Google Meet does not expose live chat through its REST API, so Meet uses an isolated browser adapter; a Meet DOM change cannot affect the companion core. See the [chat adapter contract](docs/chat-adapter-contract.md), [transcript adapter contract](docs/transcript-adapter-contract.md), [Teams adapter template](adapters/teams/README.md), and [Google Meet adapter design](adapters/google-meet/README.md).
 
 ## Facial animation architecture
 
@@ -175,6 +183,7 @@ PORT=4310
 HOST=127.0.0.1
 CONCLAVIA_WAKE_WORD=Mary
 CONCLAVIA_DIALOGUE_TIMEOUT_MS=45000
+CONCLAVIA_DIALOGUE_MAX_FOLLOW_UPS=2
 CONCLAVIA_CONFIG_PATH=.conclavia/avatar-config.json
 CONCLAVIA_RENDERER_URL=http://127.0.0.1:3000
 CONCLAVIA_MEETING_AUDIO_DEVICE=BlackHole 16ch
@@ -202,23 +211,31 @@ npm run dev
 5. Route the MetaHuman/Pixel Streaming audio to BlackHole 2ch and select BlackHole 2ch as the meeting microphone.
 6. Start the MetaHuman from the companion console.
 
-The current realtime transcript uses the configured generic speaker name; it does not yet identify individual participants automatically. This does not affect transcript memory. Teams and Google Meet use the same OS-level adapter: the companion does not depend on a vendor-specific meeting API.
+The BlackHole realtime transcript uses the configured generic speaker name because a mixed audio device cannot reveal who spoke. It still feeds complete meeting memory, but natural follow-ups are intentionally disabled on this unattributed path. A Teams or Meet caption adapter posts stable `speakerId` values to `/api/transcript/segments`; that attributed path enables the two-turn dialogue lease safely in a room of 5–10 people. Direct `Mary, ...` invocations continue to work on either path.
 
 ## Suggested end-to-end test
 
 1. Say a normal sentence without the avatar name. It must appear in memory without an immediate answer.
 2. Ask `Mary, what was said before?`. Mary should answer with the retained context.
-3. Continue with `And what do you suggest?` without repeating the name. One clearly directed natural follow-up is allowed during the short dialogue window.
+3. Continue with `And what do you suggest?` and then `And for tomorrow?` without repeating the name. Both clearly directed follow-ups belong to the original speaker.
 4. Ask for a current fact. With web search enabled, the turn result should report web usage and expose its sources in the console.
 5. Continue a human-only discussion with a substantial point. If Mary has a genuinely useful contribution, her right hand rises without audio.
 6. Approve it in the console or say `Mary, go ahead`; only then should speech and animation start.
-7. Say `Thank you, Mary` to close the dialogue early; otherwise it closes after the first follow-up or its timeout.
+7. Say `Thank you, Mary` or `Mary, stop` to close the dialogue early; otherwise it closes after two follow-ups or its timeout.
 8. Inspect the turn JSON: every spoken sentence must include its own `mood`, `level`, and `language`.
 
 The **Microphone** control performs the same flow through the browser microphone. The **Spoken** composer is the fastest option for deterministic protocol tests. Switch the composer to **Chat**, use the chat sidebar, or select one of the five quick commands to call the production chat endpoint before a platform adapter is connected. The equivalent CLI command is:
 
 ```bash
 npm run chat:simulate -- teams Vincenzo "Mary, riassumi in chat"
+```
+
+To simulate two attributed speakers without a platform adapter:
+
+```bash
+npm run transcript:simulate -- teams user-vincenzo Vincenzo "Mary, what are the main risks?"
+npm run transcript:simulate -- teams user-laura Laura "And for tomorrow?"
+npm run transcript:simulate -- teams user-vincenzo Vincenzo "And what should we do first?"
 ```
 
 ## Commands
@@ -252,11 +269,11 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 
 - Stream TTS generation and playback to reduce time to first audio further.
 - Finish the asset-driven request-to-speak Montage and listening state set; no runtime-authored arm or head pose should remain.
-- Improve participant attribution using Teams captions or dedicated diarization.
+- Calibrate and package the Teams caption bridge against the production client accessibility tree.
 - Finish and calibrate the isolated Google Meet browser bridge against the current Meet accessibility tree.
 - Deploy the Teams RSC agent and authenticated relay from the included manifest template.
 - Separate and expose transcription, participation, LLM, web search, TTS, and renderer latency metrics.
-- Add optional platform-specific participant identities while preserving the local host-account mode.
+- Add optional diarization for conferencing clients that cannot expose attributed captions.
 
 ## License
 

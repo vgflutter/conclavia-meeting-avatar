@@ -13,6 +13,7 @@ if (!text) {
       platform,
       meetingId: "generic-cli",
       messageId: crypto.randomUUID(),
+      speakerId: speakerName,
       speakerName,
       text,
       capturedAt: new Date().toISOString(),

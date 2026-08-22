@@ -38,6 +38,10 @@ async function main(): Promise<void> {
     process.env.CONCLAVIA_DIALOGUE_TIMEOUT_MS ?? "45000",
     10,
   );
+  const dialogueMaxFollowUps = Number.parseInt(
+    process.env.CONCLAVIA_DIALOGUE_MAX_FOLLOW_UPS ?? "2",
+    10,
+  );
   const host = process.env.HOST?.trim() || "127.0.0.1";
   if (!Number.isInteger(port) || port < 1 || port > 65_535) {
     throw new Error("PORT must be an integer between 1 and 65535");
@@ -45,12 +49,20 @@ async function main(): Promise<void> {
   if (!Number.isInteger(dialogueTimeoutMs) || dialogueTimeoutMs < 10_000) {
     throw new Error("CONCLAVIA_DIALOGUE_TIMEOUT_MS must be an integer of at least 10000");
   }
+  if (
+    !Number.isInteger(dialogueMaxFollowUps) ||
+    dialogueMaxFollowUps < 1 ||
+    dialogueMaxFollowUps > 5
+  ) {
+    throw new Error("CONCLAVIA_DIALOGUE_MAX_FOLLOW_UPS must be between 1 and 5");
+  }
 
   await startServer({
     host,
     port,
     wakeWord,
     dialogueTimeoutMs,
+    dialogueMaxFollowUps,
     configPath:
       process.env.CONCLAVIA_CONFIG_PATH?.trim() || ".conclavia/avatar-config.json",
     openaiApiKey: process.env.OPENAI_API_KEY,

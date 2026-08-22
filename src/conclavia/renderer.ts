@@ -346,6 +346,22 @@ export class ConclaviaRenderer {
     await this.lowerHand(speakerName);
   }
 
+  async interruptSpeech(speakerName: string): Promise<void> {
+    // Cancel synthesis or delivery still in flight, then tell Unreal to stop
+    // any PCM that has already been accepted for playback.
+    this.abortPending();
+    await this.#postJson("/api/unreal/cue", {
+      speakerId: "participant-1",
+      targetId: "meeting-participant",
+      speakerName,
+      shot: "close-up",
+      intent: "interrupt",
+      bodyGesture: "lower-hand",
+      expectedDurationMs: 0,
+      performanceBeats: [],
+    });
+  }
+
   async reactToListening(reaction: StableListeningReaction): Promise<void> {
     const mood = moodMap[reaction.mood];
     await this.#postJson("/api/unreal/cue", {

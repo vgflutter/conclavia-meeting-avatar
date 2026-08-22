@@ -397,9 +397,9 @@ export class MeetingIntelligence {
     responseChannel: "voice" | "chat",
   ): string {
     const directRules = [
-      `Se l'ultimo intervento si rivolge a ${this.#options.avatarName} o continua chiaramente un dialogo con lei, usa action=speak.`,
-      "Se le persone parlano tra loro, usano un intercalare, assentono soltanto o la frase è incompleta o ambigua, usa action=silence.",
-      "Nel dubbio resta in silenzio.",
+      `Il floor controller ha già verificato che l'ultimo intervento si rivolge a ${this.#options.avatarName} o appartiene alla breve conversazione dello stesso interlocutore.`,
+      "Per una domanda, una richiesta o un follow-up usa action=speak. Se il riferimento è ambiguo, chiedi una precisazione molto breve invece di restare in silenzio.",
+      "Usa action=silence soltanto se l'intervento è chiaramente un intercalare, un semplice assenso, un ringraziamento o una frase incompleta senza alcuna richiesta.",
     ];
     const observerRules = [
       "Non puoi parlare in autonomia.",

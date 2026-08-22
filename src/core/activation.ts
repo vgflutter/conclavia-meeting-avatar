@@ -27,8 +27,45 @@ export function isDialogueFollowUpCandidate(text: string): boolean {
   const value = text.trim();
   if (!value) return false;
 
+  if (value.endsWith("?") && value.split(/\s+/u).length >= 2) return true;
   return /\b(?:secondo\s+te|tu\s+cosa|che\s+ne\s+pensi|cosa\s+ne\s+pensi|puoi|potresti|riesci|dimmi|spiegami|continua|approfondisci|ripeti|elabora|rispondi|what\s+do\s+you|do\s+you|can\s+you|could\s+you|would\s+you|tell\s+(?:me|us)|explain|continue|elaborate|repeat)\b/iu.test(value)
-    || /^(?:(?:e|ma|quindi|allora)[\s,]+)?(?:perch[eéè]|come|quando|dove|quale|quali|in\s+che\s+senso)(?=$|[\s,.:;!?-])[^.]*\??$/iu.test(value);
+    || /^(?:(?:e|ma|quindi|allora)[\s,]+)?(?:perch[eéè]|come|quando|dove|quale|quali|chi|cosa|quanto|quanta|quanti|quante|in\s+che\s+senso|per\s+(?:domani|oggi|quest[oa]|il|la|i|le)|invece)(?=$|[\s,.:;!?-])[^.]*\??$/iu.test(value);
+}
+
+export function isAddressedToAvatar(text: string, wakeWord: string): boolean {
+  const value = text.trim();
+  if (!value) return false;
+  const escapedWakeWord = escapeRegExp(wakeWord);
+  const atStart = new RegExp(
+    `^(?<mention>@\\s*)?${escapedWakeWord}(?<separator>[\\s,.:;!?-]*)(?<remainder>.*)$`,
+    "iu",
+  ).exec(value);
+  if (atStart?.groups) {
+    const separator = atStart.groups.separator ?? "";
+    const remainder = atStart.groups.remainder?.trim() ?? "";
+    const explicitPunctuation = /[,.:;!?-]/u.test(separator);
+    const directQuestion = value.endsWith("?") ||
+      isDialogueFollowUpCandidate(remainder) ||
+      /^(?:sei|hai|sai|vuoi|devi|pensi|credi|ricordi|ritieni|puoi|potresti|riesci)(?=$|[\s,.:;!?-])/iu
+        .test(remainder);
+    if (atStart.groups.mention || explicitPunctuation || !remainder || directQuestion) {
+      return true;
+    }
+  }
+
+  // Also accept the natural vocative at the end of a question or directive,
+  // while ignoring third-person references such as "Mary ha già risposto".
+  const atEnd = new RegExp(
+    `(?:^|[\\s,.:;!?-])${escapedWakeWord}[\\s,.:;!?-]*$`,
+    "iu",
+  ).test(value);
+  return atEnd && (
+    value.endsWith("?") ||
+    isDialogueFollowUpCandidate(value.replace(
+      new RegExp(`${escapedWakeWord}[\\s,.:;!?-]*$`, "iu"),
+      "",
+    ))
+  );
 }
 
 export function decideActivation(
@@ -40,10 +77,9 @@ export function decideActivation(
     return { ingested: false, activated: false, reason: "not-final" };
   }
 
-  const wakeWordPattern = new RegExp(`\\b${escapeRegExp(wakeWord)}\\b`, "i");
-  const containsWakeWord = wakeWordPattern.test(segment.text);
+  const directlyAddressed = isAddressedToAvatar(segment.text, wakeWord);
   if (
-    !containsWakeWord &&
+    !directlyAddressed &&
     !(conversationActive && isDialogueFollowUpCandidate(segment.text))
   ) {
     return { ingested: true, activated: false, reason: "not-addressed" };
@@ -70,7 +106,7 @@ export function decideActivation(
   return {
     ingested: true,
     activated: true,
-    reason: containsWakeWord ? "wake-word" : "conversation-follow-up",
+    reason: directlyAddressed ? "wake-word" : "conversation-follow-up",
     cue,
   };
 }

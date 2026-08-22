@@ -5,7 +5,10 @@ import type { Readable } from "node:stream";
 import OpenAI from "openai";
 import { OpenAIRealtimeWS } from "openai/realtime/ws";
 
-import { isDialogueFollowUpCandidate } from "../core/activation.js";
+import {
+  isAddressedToAvatar,
+  isDialogueFollowUpCandidate,
+} from "../core/activation.js";
 import type { TranscriptSegment } from "../domain/protocol.js";
 import {
   findAvfoundationAudioDevice,
@@ -30,9 +33,7 @@ export function pcm16Rms(chunk: Buffer): number {
 
 export function canSpeculateAddressedTurn(text: string, wakeWord: string): boolean {
   if (!canSpeculateTurn(text)) return false;
-  const escapedWakeWord = wakeWord.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-  return new RegExp(`(?:^|[^\\p{L}\\p{N}_])${escapedWakeWord}(?=$|[^\\p{L}\\p{N}_])`, "iu")
-    .test(text);
+  return isAddressedToAvatar(text, wakeWord);
 }
 
 export function canSpeculateTurn(text: string): boolean {
