@@ -318,13 +318,15 @@ The asset bake attenuates the technical loop's broad upper-spine and neck dips
 toward the MetaHuman reference pose; those motions are useful in an animation
 review but read as prolonged eye closure in a meeting close-up.
 
-Request-to-speak uses `AS_Conclavia_MetaHumanHandRaise`. The build script loads
-the seated idle into Epic's `/Game/MetaHumans/Common/Common/MetaHuman_ControlRig`
-through Backwards Solve, drives the right-hand IK target and exports a complete
-raise, hold and lower animation. The target is derived from the active
-character's head and upper-arm positions, so it is not a hand-authored set of
-bone rotations. Runtime telemetry exposes `physicalGestureReady`,
-`physicalGestureDriver`, `bodyGesturePhase` and `bodyGestureAlpha`.
+The production `meeting` profile deliberately does not use the legacy
+`AS_Conclavia_MetaHumanHandRaise` prototype. Its single synthesized IK target
+did not contain the coherent clavicle, torso, elbow, wrist and finger
+performance required for a believable camera-close gesture. Request-to-speak
+therefore remains a control-plane state until `MeetingHandRaiseAnimation`
+references a captured or authored full-body `AnimSequence` retargeted through
+Epic's `RTG_MH_IKRig`. Runtime telemetry exposes `physicalGestureReady`,
+`physicalGestureDriver`, `bodyGesturePhase` and `bodyGestureAlpha`, and the
+meeting camera stays on the portrait shot while the asset is unavailable.
 
 Listening reactions use the purchased Runtime MetaHuman Lip Sync full-face
 model even when the avatar is silent. A `listen-react` cue carries a semantic
@@ -344,8 +346,8 @@ node C:\ConclaviaMeetingAvatar\Scripts\Capture-ListeningPresence.cjs `
   C:\ConclaviaMeetingAvatar\Saved\ListeningPresence
 ```
 
-Rebuild the solver-authored gesture after changing the staged MetaHuman or the
-source idle:
+The old solver-authored gesture can still be rebuilt for diagnostics, but it
+must not be configured as the production meeting gesture:
 
 ```powershell
 & C:\Epic\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe `
@@ -387,9 +389,9 @@ MetaHuman Creator Core Data must be enabled from the engine version's
 Sync full-face model is the primary facial path and does not require OpenAI
 speech or NVIDIA ACE. Slow breathing, listener attention and restrained
 upper-spine, neck and head motion come from the authored animation and facial
-model. The current single-hero path uses Epic's authored technical idle, the
-solver-baked request-to-speak gesture and semantic full-face listening moods;
-it does not add procedural per-bone motion. The remaining production work is
-three additional distinct commercial MetaHumans, licensed wardrobe and
-shot-dependent LOD before the complete five-person stage can replace the duet
-laboratory.
+model. The current single-hero meeting path uses Epic's authored technical idle
+and semantic full-face listening moods; it does not add procedural per-bone
+motion. A licensed or captured request-to-speak performance still has to be
+retargeted and pass the visual acceptance gate before `physicalGestureReady`
+can be enabled. The remaining production work also includes licensed wardrobe
+and shot-dependent LOD.

@@ -59,8 +59,8 @@ Commands are deterministic only when the message starts with the configured avat
 
 | Command | Default examples | Result |
 | --- | --- | --- |
-| `raise-hand` | `Mary, alza la mano` | Immediately raises the MetaHuman hand. |
-| `lower-hand` | `Mary, abbassa la mano` | Immediately lowers the hand and clears a pending autonomous request. |
+| `raise-hand` | `Mary, alza la mano` | Opens a request-to-speak state and plays the validated authored body gesture when one is installed. |
+| `lower-hand` | `Mary, abbassa la mano` | Clears the pending request and returns from the authored gesture when one is active. |
 | `summarize-in-chat` | `Mary, riassumi in chat` | Uses meeting memory and returns text to the adapter without speaking. |
 | `reply-in-chat` | `Mary, rispondi in chat ...` | Answers the free-form directive in chat without speaking. |
 | `speak` | `Mary, intervieni ...` | Uses the free-form directive to generate voice, mood, lip-sync, and body performance. |

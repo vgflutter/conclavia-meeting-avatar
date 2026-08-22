@@ -35,6 +35,29 @@ async function cue(bodyGesture) {
   }
 }
 
+async function health() {
+  const response = await fetch(`${controlUrl.replace(/\/$/u, "")}/health`, {
+    cache: "no-store"
+  });
+  if (!response.ok) {
+    throw new Error(`Health failed (${response.status}): ${await response.text()}`);
+  }
+  return response.json();
+}
+
+async function waitForHealth(predicate, label, timeoutMs = 8_000) {
+  const deadline = Date.now() + timeoutMs;
+  let latest = null;
+  while (Date.now() < deadline) {
+    latest = await health();
+    if (predicate(latest)) return latest;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(
+    `${label} was not observed before timeout. Latest health: ${JSON.stringify(latest)}`
+  );
+}
+
 async function captureAfter(video, startedAt, targetMs, filename) {
   const waitMs = Math.max(0, targetMs - (Date.now() - startedAt));
   await new Promise((resolve) => setTimeout(resolve, waitMs));
@@ -78,8 +101,18 @@ async function captureAfter(video, startedAt, targetMs, filename) {
     await page.waitForTimeout(2_000);
 
     const video = page.locator("video").first();
+    const initialHealth = await health();
+    if (!initialHealth.physicalGestureReady) {
+      throw new Error(
+        `Physical gesture is gated: ${initialHealth.physicalGestureDriver || "no validated authored animation"}`
+      );
+    }
     await cue("lower-hand");
-    await page.waitForTimeout(2_000);
+    const idleHealth = await waitForHealth(
+      (candidate) => candidate.bodyGesturePhase === "idle"
+        && candidate.bodyGesture === "none",
+      "idle body state"
+    );
     await video.screenshot({
       path: path.join(outputDirectory, "00-idle.jpg"),
       type: "jpeg",
@@ -88,6 +121,11 @@ async function captureAfter(video, startedAt, targetMs, filename) {
 
     await cue("raise-hand");
     const raiseStartedAt = Date.now();
+    const raisedHealth = await waitForHealth(
+      (candidate) => candidate.bodyGesture === "raise-hand"
+        && ["raising", "held"].includes(candidate.bodyGesturePhase),
+      "authored raise-hand state"
+    );
     for (const targetMs of [120, 280, 480, 760, 1_100, 1_650, 2_400]) {
       await captureAfter(
         video,
@@ -99,6 +137,10 @@ async function captureAfter(video, startedAt, targetMs, filename) {
 
     await cue("lower-hand");
     const lowerStartedAt = Date.now();
+    const loweringHealth = await waitForHealth(
+      (candidate) => ["lowering", "idle"].includes(candidate.bodyGesturePhase),
+      "authored lower-hand state"
+    );
     for (const targetMs of [120, 320, 620, 1_000, 1_600]) {
       await captureAfter(
         video,
@@ -107,10 +149,26 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         `lower-${String(targetMs).padStart(4, "0")}ms.jpg`
       );
     }
+    const settledHealth = await waitForHealth(
+      (candidate) => candidate.bodyGesturePhase === "idle"
+        && candidate.bodyGesture === "none",
+      "settled idle body state"
+    );
 
     fs.writeFileSync(
       path.join(outputDirectory, "sequence.json"),
-      JSON.stringify({ ok: true, raiseFrames: 7, lowerFrames: 5 }, null, 2)
+      JSON.stringify({
+        ok: true,
+        raiseFrames: 7,
+        lowerFrames: 5,
+        physicalGestureDriver: initialHealth.physicalGestureDriver,
+        phases: {
+          idle: idleHealth.bodyGesturePhase,
+          raised: raisedHealth.bodyGesturePhase,
+          lowering: loweringHealth.bodyGesturePhase,
+          settled: settledHealth.bodyGesturePhase
+        }
+      }, null, 2)
     );
     process.stdout.write(JSON.stringify({ ok: true, outputDirectory }));
   } finally {
