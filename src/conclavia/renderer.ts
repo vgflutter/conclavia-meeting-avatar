@@ -56,6 +56,7 @@ export interface ConclaviaRendererStatus {
   serverStatus: string;
   playerUrl?: string;
   avatarProfile?: string;
+  streamId?: string;
   error?: string;
 }
 
@@ -264,7 +265,11 @@ export class ConclaviaRenderer {
         available?: boolean;
         serverStatus?: string;
         playerUrl?: string;
-        health?: { avatarId?: string };
+        health?: {
+          avatarId?: string;
+          processId?: number;
+          runtimeRevision?: string;
+        };
         error?: string;
       };
       if (!response.ok) {
@@ -276,6 +281,14 @@ export class ConclaviaRenderer {
         serverStatus: payload.serverStatus ?? "unknown",
         ...(payload.playerUrl ? { playerUrl: payload.playerUrl } : {}),
         ...(payload.health?.avatarId ? { avatarProfile: payload.health.avatarId } : {}),
+        ...(payload.health?.processId
+          ? {
+              streamId: [
+                payload.health.runtimeRevision ?? "unreal",
+                payload.health.processId,
+              ].join(":"),
+            }
+          : {}),
       };
     } catch (error: unknown) {
       return {

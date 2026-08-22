@@ -1,7 +1,7 @@
 const stage = document.querySelector("#stage");
 const status = document.querySelector("#status");
 let playerFrame = null;
-let mountedPlayerUrl = null;
+let mountedStreamKey = null;
 
 function playerUrl(value) {
   const url = new URL(value);
@@ -15,9 +15,10 @@ function requestAudioUnlock() {
   playerFrame?.contentWindow?.postMessage({ type: "conclavia:unmute" }, "*");
 }
 
-function mountPlayer(url) {
-  if (mountedPlayerUrl === url && playerFrame) return;
-  mountedPlayerUrl = url;
+function mountPlayer(url, streamId) {
+  const streamKey = `${url}|${streamId || "unknown"}`;
+  if (mountedStreamKey === streamKey && playerFrame) return;
+  mountedStreamKey = streamKey;
   const frame = document.createElement("iframe");
   frame.title = "Conclavia MetaHuman";
   frame.src = playerUrl(url);
@@ -42,7 +43,7 @@ async function refresh() {
       status.textContent = "MetaHuman non ancora avviato.";
       return;
     }
-    mountPlayer(renderer.playerUrl);
+    mountPlayer(renderer.playerUrl, renderer.streamId);
   } catch (error) {
     status.className = "";
     status.textContent = `Output non disponibile: ${error.message}`;

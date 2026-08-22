@@ -15,7 +15,7 @@
     "root": "C:\\ConclaviaMeetingAvatar",
     "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
     "editorTarget": "ConclaviaStudioEditor",
-    "runtimeRevision": "ue58-commercial-lipsync-v15-meeting-stage"
+    "runtimeRevision": "ue58-commercial-lipsync-v16-meeting-presence"
   },
   "pixelStreamingInfrastructure": {
     "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",
@@ -38,12 +38,14 @@
     }
   ],
   "generatedAssets": [
-    "/Game/Conclavia/Meeting/L_MeetingAvatar_v2",
+    "/Game/Conclavia/Meeting/L_MeetingAvatar_v3",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1",
     "/Game/Conclavia/Studio/L_PremiumStudio",
     "/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle"
   ],
   "canonicalBuilders": [
     "unreal/ConclaviaStudio/Scripts/build_meeting_avatar_stage.py",
+    "unreal/ConclaviaStudio/Scripts/build_meeting_attentive_idle.py",
     "unreal/ConclaviaStudio/Scripts/build_premium_studio.py",
     "unreal/ConclaviaStudio/Scripts/build_metahuman_cast.py",
     "unreal/ConclaviaStudio/Scripts/build_seated_idle.py",

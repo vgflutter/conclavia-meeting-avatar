@@ -46,7 +46,7 @@ at 30.34 fps with no 100 ms frame gaps. The commercial speech audit measured a
 peak jaw input of `0.224960`, a rendered jaw curve of `0.223365` and a maximum
 tracking error of `0.001595`. The browser audio audit found one live WebRTC
 audio track, peak RMS `0.04447`, 146 audible samples and no browser errors. The
-meeting runtime revision is `ue58-commercial-lipsync-v15-meeting-stage`; readiness also
+meeting runtime revision is `ue58-commercial-lipsync-v16-meeting-presence`; readiness also
 requires the Face AnimBP to report that its `Realistic` model route is active.
 
 The procedural IK hand-raise prototype is excluded from this production
@@ -310,13 +310,14 @@ itself is not accepted. The generated audit frames are written to
 ## Listening presence and request-to-speak
 
 The single-hero runtime never synthesizes body motion by rotating MetaHuman
-bones at runtime. Waiting uses `AS_Conclavia_SeatedIdle`, a loop assembled from
-Epic's UE 5.8 MetaHuman technical upper-body idle and the seated lower-body
-pose. It runs at `0.58x`, preserving breathing, small weight shifts and shoulder
-motion without competing animation evaluators or repetitive procedural noise.
-The asset bake attenuates the technical loop's broad upper-spine and neck dips
-toward the MetaHuman reference pose; those motions are useful in an animation
-review but read as prolonged eye closure in a meeting close-up.
+bones at runtime. The `meeting` profile waits in
+`AS_MeetingAttentiveIdle_v1`, a product-owned standing loop baked from Epic's
+UE 5.8 technical idle. Every animated bone is stabilized around the authored
+relaxed first frame, broad spine/shoulder shifts retain at most 12% of their
+source range, and playback runs at `0.24x`. This preserves a slow trace of
+breathing without the fast rocking that the original seated podcast loop
+produced in a fixed webcam crop. Legacy studio profiles keep their separate
+idle and cannot alter this asset.
 
 The production `meeting` profile deliberately does not use the legacy
 `AS_Conclavia_MetaHumanHandRaise` prototype. Its single synthesized IK target
@@ -389,9 +390,9 @@ MetaHuman Creator Core Data must be enabled from the engine version's
 Sync full-face model is the primary facial path and does not require OpenAI
 speech or NVIDIA ACE. Slow breathing, listener attention and restrained
 upper-spine, neck and head motion come from the authored animation and facial
-model. The current single-hero meeting path uses Epic's authored technical idle
-and semantic full-face listening moods; it does not add procedural per-bone
-motion. A licensed or captured request-to-speak performance still has to be
+model. The current single-hero meeting path uses the restrained authored
+standing idle and semantic full-face listening moods; it does not add
+procedural per-bone motion. A licensed or captured request-to-speak performance still has to be
 retargeted and pass the visual acceptance gate before `physicalGestureReady`
 can be enabled. The remaining production work also includes licensed wardrobe
 and shot-dependent LOD.

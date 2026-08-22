@@ -91,12 +91,12 @@ function Stop-StudioProcesses {
 }
 
 function Get-State {
-    $running = Test-Running
+    $process = Get-UnrealProcess
+    $running = [bool]$process
     $verified = $false
     if ($running -and (Test-Path $readyFile)) {
         try {
             $readyState = Get-Content $readyFile -Raw | ConvertFrom-Json
-            $process = Get-UnrealProcess
             $verified = $readyState.ready -eq $true -and
                 $process -and
                 [int]$readyState.unreal -eq [int]$process.ProcessId
@@ -107,6 +107,7 @@ function Get-State {
     }
     $profile = Get-RunningProfile
     $avatarId = Get-RunningAvatar
+    $processId = if ($process) { [int]$process.ProcessId } else { 0 }
     if (Test-Path $pidFile) {
         if (-not $profile) {
             try { $profile = (Get-Content $pidFile -Raw | ConvertFrom-Json).profile } catch {}
@@ -123,6 +124,7 @@ function Get-State {
         verified = $verified
         profile = $profile
         avatarId = $avatarId
+        processId = $processId
     }
     if ($running) {
         try {

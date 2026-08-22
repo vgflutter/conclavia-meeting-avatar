@@ -51,6 +51,12 @@ The scheduled task is `ConclaviaMeetingAvatarSupervisor`. The old
 the podcast and meeting renderers cannot contend for the GPU or shared Pixel
 Streaming ports.
 
+The supervisor publishes the current Unreal process ID as the stream identity.
+The management room and clean OBS page remount their Pixel Streaming iframe
+whenever this identity changes, even though the public player URL is stable.
+This prevents a browser tab from continuing to display a stale podcast peer
+after a meeting-renderer restart.
+
 ## Normal release discipline
 
 `npm run studio:source:deploy` refuses a dirty working tree. Every AWS source

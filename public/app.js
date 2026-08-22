@@ -758,14 +758,19 @@ function renderRendererPlaceholder(message, { loading = false } = {}) {
   elements.stageAvatarName = $("#stage-avatar-name");
 }
 
-function mountRendererPlayer(playerUrl, force = false) {
+function mountRendererPlayer(playerUrl, force = false, streamId = "") {
   if (!playerUrl) return;
   const outputUrl = pixelStreamingUrl(playerUrl);
   const frame = elements.rendererPreview.querySelector("iframe");
-  if (force || !frame || frame.dataset.source !== playerUrl) {
+  if (
+    force ||
+    !frame ||
+    frame.dataset.source !== playerUrl ||
+    frame.dataset.stream !== streamId
+  ) {
     elements.rendererPreview.innerHTML = `
       <div class="renderer-frame-shell">
-        <iframe title="Conclavia MetaHuman" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
+        <iframe title="Conclavia MetaHuman" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" data-stream="${escapeHtml(streamId)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
         <div class="renderer-frame-state" aria-live="polite"><span class="renderer-spinner" aria-hidden="true"></span>Collegamento al video…</div>
       </div>`;
     const mountedFrame = elements.rendererPreview.querySelector("iframe");
@@ -856,7 +861,7 @@ function renderRendererStatus(status) {
     elements.avatarSwitchStatus.textContent = "Avvia il renderer per caricare il MetaHuman selezionato.";
   }
   if (!starting && status.available && status.playerUrl) {
-    mountRendererPlayer(status.playerUrl, !rendererWasAvailable);
+    mountRendererPlayer(status.playerUrl, !rendererWasAvailable, status.streamId || "");
     rendererWasAvailable = true;
   } else {
     rendererWasAvailable = false;

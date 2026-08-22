@@ -1164,18 +1164,24 @@ private:
             return;
         }
 
-        UAnimSequence* SeatedIdle = LoadObject<UAnimSequence>(
-            nullptr,
-            TEXT("/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle.AS_Conclavia_SeatedIdle"));
-        if (!SeatedIdle)
+        const TCHAR* IdlePath = bMeetingAvatar
+            ? TEXT("/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1.AS_MeetingAttentiveIdle_v1")
+            : TEXT("/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle.AS_Conclavia_SeatedIdle");
+        const float IdlePlayRate = bMeetingAvatar ? 0.24f : 0.58f;
+        UAnimSequence* BodyIdle = LoadObject<UAnimSequence>(nullptr, IdlePath);
+        if (!BodyIdle)
         {
-            UE_LOG(LogConclaviaStudio, Error, TEXT("Production seated idle was not found"));
+            UE_LOG(
+                LogConclaviaStudio,
+                Error,
+                TEXT("Production body idle was not found: %s"),
+                IdlePath);
             return;
         }
 
         int32 ParticipantIndex = 0;
         int32 AnimatedComponents = 0;
-        const float IdleDuration = FMath::Max(SeatedIdle->GetPlayLength(), 0.1f);
+        const float IdleDuration = FMath::Max(BodyIdle->GetPlayLength(), 0.1f);
         for (TActorIterator<AActor> It(StudioWorld.Get()); It; ++It)
         {
             if (!It->Tags.Contains(TEXT("ConclaviaProductionCast")))
@@ -1196,13 +1202,13 @@ private:
                     continue;
                 }
 
-                // This asset keeps the analytically-authored seated lower body
-                // but takes the entire upper-body performance from Epic's UE
-                // 5.8 MetaHuman technical idle.  Running it slowly gives the
-                // remote participant breathing, weight shifts and shoulder
-                // life without procedural per-bone noise or animation fights.
-                Component->PlayAnimation(SeatedIdle, true);
-                Component->SetPlayRate(0.58f);
+                // The meeting profile owns a restrained standing sequence
+                // baked from Epic's authored source. It deliberately removes
+                // the broad technical-review sway that reads as rocking in a
+                // fixed webcam shot. Other studio profiles retain their
+                // separately authored body layer.
+                Component->PlayAnimation(BodyIdle, true);
+                Component->SetPlayRate(IdlePlayRate);
                 Component->SetPosition(
                     FMath::Fmod(ParticipantIndex * 7.13f, IdleDuration),
                     false);
@@ -1216,7 +1222,9 @@ private:
         UE_LOG(
             LogConclaviaStudio,
             Display,
-            TEXT("Seated body layer ready: %d participants, %d components"),
+            TEXT("Body idle ready: path=%s rate=%.2f participants=%d components=%d"),
+            IdlePath,
+            IdlePlayRate,
             ParticipantIndex,
             AnimatedComponents);
     }
@@ -1263,6 +1271,19 @@ private:
             }
             if (AnimationPath.IsEmpty())
             {
+                bPhysicalGestureReady = false;
+                return nullptr;
+            }
+            if (bMeetingAvatar
+                && !AnimationPath.StartsWith(
+                    TEXT("/Game/Conclavia/Meeting/Animations/"),
+                    ESearchCase::CaseSensitive))
+            {
+                UE_LOG(
+                    LogConclaviaStudio,
+                    Error,
+                    TEXT("Rejected non-meeting gesture asset: %s"),
+                    *AnimationPath);
                 bPhysicalGestureReady = false;
                 return nullptr;
             }
@@ -3602,7 +3623,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v15-meeting-stage")
+            ? TEXT("ue58-commercial-lipsync-v16-meeting-presence")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -3613,6 +3634,10 @@ private:
                 ? TEXT("premium-studio-58")
             : TEXT("production-studio-58");
         const int32 CastCount = bLipSyncLab ? 1 : ParticipantFaces.Num();
+        const FString BodyIdleDriver = bMeetingAvatar
+            ? TEXT("ue58-metahuman-authored-restrained-standing-v1")
+            : TEXT("ue58-metahuman-authored-attentive-loop");
+        const float BodyIdlePlayRate = bMeetingAvatar ? 0.24f : 0.58f;
         FString Body = FString::Printf(
             TEXT("{\"ok\":true,\"service\":\"conclavia-meeting-avatar-renderer\",\"runtimeRevision\":\"%s\",\"engineVersion\":\"%s\",\"profile\":\"%s\",\"avatarId\":\"%s\",\"stageReady\":%s,\"cameraCount\":%d,\"cameraPackage\":\"%s\",\"castCount\":%d,\"activeCamera\":\"%s\",\"lastCueAt\":\"%s\",\"audioSubjectReady\":%s,\"audioSubjectValid\":%s,\"faceDrivenByLiveLink\":%s,\"commercialLipSyncReady\":%s,\"commercialModelReady\":%s,\"commercialModelRouteReady\":%s,\"commercialGeneratorBound\":%s,\"commercialControlsBound\":%s,\"commercialSpeechActive\":%s,\"commercialControlCount\":%d,\"commercialMaxControl\":%.6f,\"commercialMaxMouthControl\":%.6f,\"commercialMaxMouthControlName\":\"%s\",\"commercialJawInput\":%.6f,\"commercialJawCurve\":%.6f,\"commercialBoundNodeCount\":%d,\"commercialSolverChunksSubmitted\":%d,\"commercialSolverCursor\":%d,\"bodyAnimationMode\":%d,\"bodyAnimClass\":\"%s\",\"bodyAnimInstance\":\"%s\",\"pcmBytesReceived\":%lld,\"activeFaceIndex\":%d}"),
             *RuntimeRevision.ReplaceCharWithEscapedChar(),
@@ -3650,7 +3675,7 @@ private:
             ActiveFaceIndex);
         Body.RemoveFromEnd(TEXT("}"));
         Body += FString::Printf(
-            TEXT(",\"commercialModel\":\"mood-full-face\",\"commercialMood\":\"%s\",\"commercialMoodIntensity\":%.3f,\"commercialLookaheadMs\":40,\"commercialMaxUpperFaceControl\":%.6f,\"commercialMaxUpperFaceControlName\":\"%s\",\"commercialSpeechPeakMouthControl\":%.6f,\"commercialSpeechPeakMouthControlName\":\"%s\",\"commercialSpeechPeakUpperFaceControl\":%.6f,\"commercialSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechPeakMouthControl\":%.6f,\"commercialLastSpeechPeakMouthControlName\":\"%s\",\"commercialLastSpeechPeakUpperFaceControl\":%.6f,\"commercialLastSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechSolverChunks\":%d,\"commercialLastSpeechSolverCursor\":%d,\"commercialCompletedSpeechCount\":%d,\"performancePlanReady\":%s,\"performanceBeatCount\":%d,\"performanceSolverBeatIndex\":%d,\"performanceMood\":\"%s\",\"performanceTargetIntensity\":%.3f,\"performanceFocus\":\"%s\",\"performanceGesture\":\"%s\",\"performanceAppliedBeatCount\":%d,\"bodyGesture\":\"%s\",\"bodyGestureAlpha\":%.3f,\"bodyGesturePhase\":\"%s\",\"physicalGestureReady\":%s,\"physicalGestureDriver\":\"%s\",\"bodyIdleDriver\":\"ue58-metahuman-authored-attentive-loop\",\"bodyIdlePlayRate\":0.58,\"listeningReactionActive\":%s,\"listeningModelReady\":%s,\"listeningSolverChunks\":%d,\"naturalGazeEnabled\":%s,\"naturalGazeDriver\":\"runtime-metahuman-eyes-aim\"}"),
+            TEXT(",\"commercialModel\":\"mood-full-face\",\"commercialMood\":\"%s\",\"commercialMoodIntensity\":%.3f,\"commercialLookaheadMs\":40,\"commercialMaxUpperFaceControl\":%.6f,\"commercialMaxUpperFaceControlName\":\"%s\",\"commercialSpeechPeakMouthControl\":%.6f,\"commercialSpeechPeakMouthControlName\":\"%s\",\"commercialSpeechPeakUpperFaceControl\":%.6f,\"commercialSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechPeakMouthControl\":%.6f,\"commercialLastSpeechPeakMouthControlName\":\"%s\",\"commercialLastSpeechPeakUpperFaceControl\":%.6f,\"commercialLastSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechSolverChunks\":%d,\"commercialLastSpeechSolverCursor\":%d,\"commercialCompletedSpeechCount\":%d,\"performancePlanReady\":%s,\"performanceBeatCount\":%d,\"performanceSolverBeatIndex\":%d,\"performanceMood\":\"%s\",\"performanceTargetIntensity\":%.3f,\"performanceFocus\":\"%s\",\"performanceGesture\":\"%s\",\"performanceAppliedBeatCount\":%d,\"bodyGesture\":\"%s\",\"bodyGestureAlpha\":%.3f,\"bodyGesturePhase\":\"%s\",\"physicalGestureReady\":%s,\"physicalGestureDriver\":\"%s\",\"bodyIdleDriver\":\"%s\",\"bodyIdlePlayRate\":%.2f,\"listeningReactionActive\":%s,\"listeningModelReady\":%s,\"listeningSolverChunks\":%d,\"naturalGazeEnabled\":%s,\"naturalGazeDriver\":\"runtime-metahuman-eyes-aim\"}"),
             *ActiveMoodName.ReplaceCharWithEscapedChar(),
             ActiveMoodIntensity,
             LastCommercialMaxUpperFaceControl,
@@ -3689,6 +3714,8 @@ private:
                 : bMeetingAvatar
                     ? TEXT("awaiting-authored-full-body-animation")
                     : TEXT("unavailable"),
+            *BodyIdleDriver.ReplaceCharWithEscapedChar(),
+            BodyIdlePlayRate,
             bListeningReactionActive ? TEXT("true") : TEXT("false"),
             bListeningModelReady ? TEXT("true") : TEXT("false"),
             ListeningSolverChunksSubmitted,

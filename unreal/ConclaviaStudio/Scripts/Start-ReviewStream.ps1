@@ -41,10 +41,13 @@ $commercialAssetScript = "C:\ConclaviaMeetingAvatar\Scripts\ensure_commercial_li
 $grade1Map = "/Game/Conclavia/Grade1/L_Grade1HeroPop"
 $grade1MapFile = "C:\ConclaviaLipSyncLab56\RMHLipSyncDemo\Content\Conclavia\Grade1\L_Grade1HeroPop.umap"
 $grade1BuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_grade1_hero_studio.py"
-$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v2"
-$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v2.umap"
+$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v3"
+$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v3.umap"
 $meetingBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_avatar_stage.py"
 $meetingBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-stage-builder.sha256"
+$meetingIdleFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\Animations\AS_MeetingAttentiveIdle_v1.uasset"
+$meetingIdleBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_attentive_idle.py"
+$meetingIdleBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-idle-builder.sha256"
 
 New-Item -ItemType Directory -Force -Path $artifacts | Out-Null
 Remove-Item $readyFile -Force -ErrorAction SilentlyContinue
@@ -263,6 +266,59 @@ if ($isMeetingAvatar -and $meetingStageNeedsBuild) {
     Set-Content `
         -Path $meetingBuildRevisionFile `
         -Value $meetingBuilderHash `
+        -NoNewline `
+        -Encoding ASCII
+}
+
+# The meeting avatar must not inherit the podcast's seated technical loop.
+# Build a product-owned standing idle from Epic's authored source, with its
+# broad spine and shoulder shifts attenuated for a fixed webcam crop. The hash
+# sentinel makes the asset reproducible while keeping ordinary starts fast.
+if ($isMeetingAvatar) {
+    if (-not (Test-Path $meetingIdleBuildScript)) {
+        throw "Meeting attentive-idle builder is missing: $meetingIdleBuildScript"
+    }
+    $meetingIdleBuilderHash = (Get-FileHash $meetingIdleBuildScript -Algorithm SHA256).Hash.ToLowerInvariant()
+    $installedMeetingIdleBuilderHash = if (Test-Path $meetingIdleBuildRevisionFile) {
+        (Get-Content $meetingIdleBuildRevisionFile -Raw).Trim().ToLowerInvariant()
+    } else {
+        ""
+    }
+    $meetingIdleNeedsBuild = -not (Test-Path $meetingIdleFile) -or
+        $installedMeetingIdleBuilderHash -ne $meetingIdleBuilderHash
+}
+if ($isMeetingAvatar -and $meetingIdleNeedsBuild) {
+    $meetingIdleBuildLog = Join-Path $artifacts "meeting-idle-build.log"
+    Remove-Item $meetingIdleBuildLog -Force -ErrorAction SilentlyContinue
+    $meetingIdleBuildProcess = Start-Process `
+        -FilePath $editorCmd `
+        -ArgumentList @(
+            "`"$projectPath`"",
+            "-run=pythonscript",
+            "-script=`"$meetingIdleBuildScript`"",
+            "-unattended",
+            "-nop4",
+            "-nosplash",
+            "-nullrhi",
+            "-stdout",
+            "-FullStdOutLogOutput",
+            "-abslog=`"$meetingIdleBuildLog`""
+        ) `
+        -Wait `
+        -PassThru
+    $meetingIdleReadyMarker = (Test-Path $meetingIdleBuildLog) -and (
+        Select-String `
+            -Path $meetingIdleBuildLog `
+            -SimpleMatch "CONCLAVIA_MEETING_IDLE: READY" `
+            -Quiet
+    )
+    if (-not (Test-Path $meetingIdleFile) -or
+        -not $meetingIdleReadyMarker) {
+        throw "Meeting attentive-idle authoring failed (exit $($meetingIdleBuildProcess.ExitCode)). See $meetingIdleBuildLog"
+    }
+    Set-Content `
+        -Path $meetingIdleBuildRevisionFile `
+        -Value $meetingIdleBuilderHash `
         -NoNewline `
         -Encoding ASCII
 }

@@ -175,7 +175,11 @@ await test("reports the MetaHuman profile currently loaded by Unreal", async () 
     available: true,
     serverStatus: "ready",
     playerUrl: "http://renderer.example/player",
-    health: { avatarId: "jelena" },
+    health: {
+      avatarId: "jelena",
+      processId: 7840,
+      runtimeRevision: "ue58-commercial-lipsync-v16-meeting-presence",
+    },
   }), { status: 200, headers: { "content-type": "application/json" } }));
   try {
     const renderer = new ConclaviaRenderer("http://conclavia.example");
@@ -185,6 +189,7 @@ await test("reports the MetaHuman profile currently loaded by Unreal", async () 
       serverStatus: "ready",
       playerUrl: "http://renderer.example/player",
       avatarProfile: "jelena",
+      streamId: "ue58-commercial-lipsync-v16-meeting-presence:7840",
     });
   } finally {
     globalThis.fetch = originalFetch;

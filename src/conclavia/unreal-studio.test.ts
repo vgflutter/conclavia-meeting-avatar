@@ -19,7 +19,7 @@ await test("accepts only a ready isolated meeting stage as the production UE 5.8
   const health = {
     ok: true,
     profile: "meeting" as const,
-    runtimeRevision: "ue58-commercial-lipsync-v15-meeting-stage",
+    runtimeRevision: "ue58-commercial-lipsync-v16-meeting-presence",
     stageReady: true,
     castCount: 1,
     cameraCount: 2,
