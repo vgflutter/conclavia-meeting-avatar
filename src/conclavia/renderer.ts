@@ -1,5 +1,6 @@
 import type {
   AvatarInterventionRequest,
+  AvatarListeningReaction,
   AvatarMood,
   AvatarSpeechCue,
   AvatarSpeechSentence,
@@ -37,6 +38,10 @@ interface UnrealPerformanceBeat {
     | "settle"
     | "raise-hand"
     | "lower-hand";
+}
+
+export interface StableListeningReaction extends AvatarListeningReaction {
+  holdMs: number;
 }
 
 export interface ConclaviaVoiceConfig {
@@ -89,6 +94,16 @@ const moodMap: Readonly<Record<AvatarMood, UnrealMood>> = {
   frustrated: "anger",
   reflective: "neutral",
 };
+
+function listeningMoodIntensity(
+  mood: UnrealMood,
+  level: AvatarListeningReaction["level"],
+): number {
+  if (mood === "neutral") return 0;
+  const base = [0, 0.12, 0.22, 0.34, 0.48, 0.62][level] ?? 0.22;
+  const scale = mood === "anger" || mood === "disgust" ? 0.72 : 1;
+  return Math.round(base * scale * 100) / 100;
+}
 
 function configuredBaseUrl(value: string | undefined): string | null {
   if (!value?.trim()) return null;
@@ -329,6 +344,21 @@ export class ConclaviaRenderer {
 
   async settleRequest(speakerName: string): Promise<void> {
     await this.lowerHand(speakerName);
+  }
+
+  async reactToListening(reaction: StableListeningReaction): Promise<void> {
+    const mood = moodMap[reaction.mood];
+    await this.#postJson("/api/unreal/cue", {
+      speakerId: "participant-1",
+      targetId: "meeting-participant",
+      targetName: reaction.observedSpeakerName,
+      shot: "reaction",
+      intent: "listen-react",
+      bodyGesture: "none",
+      listenerMood: mood,
+      listenerMoodIntensity: listeningMoodIntensity(mood, reaction.level),
+      expectedDurationMs: reaction.holdMs,
+    });
   }
 
   async lowerHand(speakerName: string): Promise<void> {

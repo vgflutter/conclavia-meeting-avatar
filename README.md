@@ -15,7 +15,7 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 ## Current capabilities
 
 - Continuous meeting audio capture from BlackHole 16ch using ffmpeg and OpenAI Realtime transcription.
-- Persistent meeting memory: every final utterance is retained and included in the LLM context when a turn is evaluated.
+- Persistent meeting memory: every final utterance is retained and evaluated by the LLM, including turns that do not address the avatar.
 - Platform-neutral chat ingestion for Teams, Google Meet browser bridges, and generic adapters, merged chronologically with voice memory.
 - Configurable chat commands for physical gestures, voice interventions, chat replies, and meeting summaries.
 - Chat message idempotency and avatar self-message filtering to prevent duplicate actions and response loops.
@@ -27,6 +27,7 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 - Optional live web search for direct questions that require current or external information.
 - Configurable OpenAI response model, API key, purpose, personality, and system prompt.
 - Structured LLM output with one mood and one intensity level for every sentence.
+- Separate semantic listening reactions: the LLM selects how the avatar socially reacts to what it hears, even when its action is `silence`.
 - Sentence-level language selection with separate native Italian and US English voices.
 - Selectable Aera, Ada, Vivian, or Jelena MetaHuman identity, Italian voice, English voice, and delivery style.
 - In-meeting MetaHuman switcher that shows the profile actually loaded by Unreal and can replace it without manually stopping the renderer.
@@ -53,6 +54,8 @@ The LLM returns structured output for each spoken sentence:
 {
   "action": "speak",
   "reason": "Direct answer",
+  "listeningMood": "attentive",
+  "listeningLevel": 2,
   "sentences": [
     {
       "text": "The connection is working correctly.",
@@ -70,7 +73,7 @@ The LLM returns structured output for each spoken sentence:
 }
 ```
 
-`level` ranges from `1` (barely perceptible) to `5` (strong). Levels 2 and 3 are the normal range; higher values are reserved for content that genuinely warrants a stronger expression. `language` is `it-IT` or `en-US`. The renderer synthesizes up to two sentences in parallel with the selected native-language voices, concatenates their PCM streams, and maps every mood and level to an accurately timed Unreal performance beat.
+`listeningMood` is Mary's socially appropriate reaction to the latest participant, rather than a mechanical copy of the participant's emotion. `listeningLevel` is deliberately conservative and is stabilized for approximately 5–9 seconds so the face does not flicker between sentences. The same `1` (barely perceptible) to `5` (strong) range is used for spoken sentences. Levels 2 and 3 are the normal range; higher values are reserved for content that genuinely warrants a stronger expression. `language` is `it-IT` or `en-US`. The renderer synthesizes up to two sentences in parallel with the selected native-language voices, concatenates their PCM streams, and maps every spoken mood and level to an accurately timed Unreal performance beat.
 
 Supported moods are:
 
@@ -123,9 +126,11 @@ Teams uses an installed agent with `groupchat` scope and resource-specific `Chat
 
 ## Facial animation architecture
 
-The current realtime face path uses the commercial Realistic MetaHuman LipSync plugin. It accepts the same streamed PCM used for playback and exposes realtime mood and intensity on the lip-sync clock. This is why the current `mood` values are not yet driven by Epic's native MetaHuman speech solver.
+The current realtime speaking-face path uses the commercial Realistic MetaHuman LipSync plugin. It accepts the same streamed PCM used for playback and exposes realtime mood and intensity on the lip-sync clock. This remains the production default because it is already synchronized and validated in the live path.
 
-The body path is independent and native to Unreal/MetaHuman. Physical gestures such as `raise-hand` and `lower-hand` affect only the body skeleton. The intended architecture keeps the face backend selectable: the commercial solver remains the stable realtime default while the native MetaHuman Animator/Speech2Face path is benchmarked for latency, GPU cost, expression quality, and synchronization. The commercial dependency can be removed when the native realtime path meets those gates.
+Listening is a different state: no fake speech audio is sent to a lip-sync solver. The LLM emits a silent semantic reaction, the face layer renders a low-intensity expression, and authored MetaHuman animation owns the body. Mood changes have a minimum hold and automatically settle to neutral.
+
+The body path uses Epic-authored MetaHuman `AnimSequence` assets and is being moved to an Animation Blueprint state machine with linked upper-body layers. The runtime bridge publishes semantic states such as listening, speaking, and request-to-speak; it must not synthesize random per-frame head, breathing, or arm rotations. Epic's native [Audio Driven Animation](https://dev.epicgames.com/documentation/en-us/metahuman/audio-driven-animation) remains an evaluated backend, but its realtime audio algorithm does not produce head motion. Native [Animation Blueprints](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprints-in-unreal-engine), [State Machines](https://dev.epicgames.com/documentation/en-us/unreal-engine/state-machines-in-unreal-engine), and [Linked Anim Layers](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprint-linking-in-unreal-engine) are therefore the correct body/listening architecture regardless of which facial speech solver is selected.
 
 ## Requirements
 
@@ -246,7 +251,7 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 ## Roadmap
 
 - Stream TTS generation and playback to reduce time to first audio further.
-- Replace the first arm-layer hand pose with a polished authored AnimSequence or Control Rig gesture after visual calibration.
+- Finish the asset-driven request-to-speak Montage and listening state set; no runtime-authored arm or head pose should remain.
 - Improve participant attribution using Teams captions or dedicated diarization.
 - Finish and calibrate the isolated Google Meet browser bridge against the current Meet accessibility tree.
 - Deploy the Teams RSC agent and authenticated relay from the included manifest template.

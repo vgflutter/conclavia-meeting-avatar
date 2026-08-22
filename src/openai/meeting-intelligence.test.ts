@@ -41,12 +41,30 @@ await test("turns an observer response into a request instead of autonomous spee
     {
       action: "request-to-speak",
       reason: "Ho un dato utile.",
+      listeningMood: "attentive",
+      listeningLevel: 2,
       sentences: [{
         text: "Posso aggiungere un dato.",
         mood: "attentive",
         level: 2,
         language: "it-IT",
       }],
+    },
+  );
+});
+
+await test("parses the social reaction to what Mary heard even when she stays silent", () => {
+  assert.deepEqual(
+    parseMaryTurn(
+      '{"action":"silence","reason":"Sto ascoltando.","listeningMood":"empathetic","listeningLevel":3,"sentences":[]}',
+      "observer",
+    ),
+    {
+      action: "silence",
+      reason: "Sto ascoltando.",
+      listeningMood: "empathetic",
+      listeningLevel: 3,
+      sentences: [],
     },
   );
 });

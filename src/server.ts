@@ -11,6 +11,7 @@ import {
   isDialogueDismissal,
   isFloorGrant,
 } from "./core/activation.js";
+import { ListeningReactionStabilizer } from "./core/listening-reaction.js";
 import { matchChatCommand } from "./core/chat-commands.js";
 import { ConclaviaRenderer } from "./conclavia/renderer.js";
 import {
@@ -255,6 +256,7 @@ export function startServer(options: ServerOptions): Promise<void> {
   let dialogueActiveUntil = 0;
   let pendingRequest: AvatarInterventionRequest | null = null;
   let avatarHandRaised = false;
+  const listeningReactions = new ListeningReactionStabilizer();
 
   const markRendererReady = (playerUrl?: string): void => {
     const shouldRestoreRaisedHand = !rendererArmed && avatarHandRaised;
@@ -372,6 +374,7 @@ export function startServer(options: ServerOptions): Promise<void> {
     },
     participationRequest: participationSnapshot(),
     avatarHandRaised,
+    listeningReaction: listeningReactions.snapshot,
   });
 
   const processSegment = async (
@@ -422,7 +425,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       retainAvatarCue(currentRequest.proposedCue);
     } else {
       const direct = decision.activated;
-      const shouldObserve =
+      const allowAutonomousRequest =
         !direct &&
         !currentRequest &&
         runtimeConfig.requestToSpeakEnabled &&
@@ -430,7 +433,10 @@ export function startServer(options: ServerOptions): Promise<void> {
 
       if (direct && currentRequest) pendingRequest = null;
 
-      if ((direct || shouldObserve) && intelligence) {
+      // Every finalized participant turn reaches the meeting intelligence.
+      // Small turns still inform Mary's listening reaction, but cannot trigger
+      // an autonomous request to speak unless they pass the stricter gate.
+      if (decision.ingested && intelligence) {
         try {
           const llmStartedAt = performance.now();
           const turn = await intelligence.evaluateTurn(
@@ -441,6 +447,21 @@ export function startServer(options: ServerOptions): Promise<void> {
           );
           llmMs = Math.round(performance.now() - llmStartedAt);
           usedWebSearch = turn.usedWebSearch;
+
+          const shouldPerformListeningReaction = turn.action === "silence" ||
+            (turn.action === "request-to-speak" && !allowAutonomousRequest);
+          const stableReaction = shouldPerformListeningReaction
+            ? listeningReactions.consider(turn.listeningReaction)
+            : null;
+          if (stableReaction && rendererArmed) {
+            try {
+              const rendererStartedAt = performance.now();
+              await renderer.reactToListening(stableReaction);
+              rendererMs = Math.round(performance.now() - rendererStartedAt);
+            } catch (error: unknown) {
+              console.error("Conclavia listening-reaction cue failed:", error);
+            }
+          }
 
           if (turn.action === "speak" && turn.cue) {
             decision = { ...decision, activated: true, cue: turn.cue };
@@ -457,7 +478,11 @@ export function startServer(options: ServerOptions): Promise<void> {
               responseChannel === "chat" ? "chat" : "speech",
               segment,
             );
-          } else if (turn.action === "request-to-speak" && turn.cue) {
+          } else if (
+            turn.action === "request-to-speak" &&
+            turn.cue &&
+            allowAutonomousRequest
+          ) {
             const createdAt = new Date();
             const request: AvatarInterventionRequest = {
               id: randomUUID(),

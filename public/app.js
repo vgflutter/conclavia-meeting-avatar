@@ -358,6 +358,15 @@ function renderContext(context) {
       : `${avatarName} in ascolto`;
   if (context.avatarHandRaised) setStageMode("requesting", "In attesa del permesso");
   else if (elements.stageListeningState.textContent === "MANO ALZATA") setStageMode("listening", "Partecipante virtuale");
+  const listeningReaction = context.listeningReaction;
+  const reactionIsCurrent = listeningReaction?.holdUntil &&
+    Date.parse(listeningReaction.holdUntil) > Date.now();
+  if (!context.avatarHandRaised && reactionIsCurrent) {
+    elements.stageMood.textContent = `ascolto · ${listeningReaction.mood} · L${listeningReaction.level}`;
+    elements.stageMood.hidden = false;
+  } else if (elements.stageListeningState.textContent !== "STA PARLANDO") {
+    elements.stageMood.hidden = true;
+  }
   renderParticipationRequest(context.participationRequest ?? null);
   renderSidePanel();
 }

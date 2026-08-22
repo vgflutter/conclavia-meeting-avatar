@@ -84,6 +84,14 @@ export interface AvatarSpeechSentence {
   language: SpeechLanguage;
 }
 
+export interface AvatarListeningReaction {
+  mood: AvatarMood;
+  level: AvatarMoodLevel;
+  sourceSegmentId: string;
+  observedSpeakerName: string;
+  createdAt: string;
+}
+
 export interface AvatarSpeechCue {
   id: string;
   kind: "speak";

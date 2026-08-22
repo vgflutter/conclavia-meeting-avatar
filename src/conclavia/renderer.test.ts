@@ -91,6 +91,53 @@ await test("uses a clearly visible intensity for a single non-neutral mood", () 
   );
 });
 
+await test("sends a bounded silent listening reaction to Unreal", async () => {
+  const requests: Array<{ url: string; body: Record<string, unknown> }> = [];
+  const originalFetch = globalThis.fetch;
+  const fetchMock: typeof fetch = (input, init) => {
+    if (typeof init?.body !== "string") throw new Error("Expected JSON body");
+    const url = input instanceof Request ? input.url : input.toString();
+    requests.push({
+      url,
+      body: JSON.parse(init.body) as Record<string, unknown>,
+    });
+    return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+  };
+  globalThis.fetch = fetchMock;
+
+  try {
+    const renderer = new ConclaviaRenderer("http://renderer.test");
+    await renderer.reactToListening({
+      mood: "concerned",
+      level: 3,
+      sourceSegmentId: "segment-2",
+      observedSpeakerName: "Luca",
+      createdAt: "2026-08-22T10:00:00.000Z",
+      holdMs: 7_100,
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.deepEqual(requests, [{
+    url: "http://renderer.test/api/unreal/cue",
+    body: {
+      speakerId: "participant-1",
+      targetId: "meeting-participant",
+      targetName: "Luca",
+      shot: "reaction",
+      intent: "listen-react",
+      bodyGesture: "none",
+      listenerMood: "fear",
+      listenerMoodIntensity: 0.34,
+      expectedDurationMs: 7_100,
+    },
+  }]);
+});
+
 await test("reports the MetaHuman profile currently loaded by Unreal", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = () => Promise.resolve(new Response(JSON.stringify({
