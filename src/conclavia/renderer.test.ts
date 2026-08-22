@@ -190,3 +190,33 @@ await test("reports the MetaHuman profile currently loaded by Unreal", async () 
     globalThis.fetch = originalFetch;
   }
 });
+
+await test("starts the UE 5.8 profile through the companion renderer gateway", async () => {
+  const requests: Array<{ url: string; body: unknown }> = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (input, init) => {
+    requests.push({
+      url: input instanceof Request ? input.url : input.toString(),
+      body: typeof init?.body === "string" ? JSON.parse(init.body) : null,
+    });
+    return Promise.resolve(new Response(JSON.stringify({
+      ok: true,
+      playerUrl: "http://renderer.example/conclavia.html",
+    }), { status: 200, headers: { "content-type": "application/json" } }));
+  };
+  try {
+    assert.deepEqual(
+      await new ConclaviaRenderer("http://127.0.0.1:4310").start("vivian"),
+      {
+        playerUrl: "http://renderer.example/conclavia.html",
+        serverStatus: "ready",
+      },
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  assert.deepEqual(requests, [{
+    url: "http://127.0.0.1:4310/api/unreal/session",
+    body: { profile: "lipsync58", avatarId: "vivian" },
+  }]);
+});

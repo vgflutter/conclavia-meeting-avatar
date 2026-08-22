@@ -3,7 +3,13 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "public/**", "eslint.config.js"],
+    ignores: [
+      "dist/**",
+      "public/**",
+      "eslint.config.js",
+      "scripts/**/*.cjs",
+      "unreal/**/*.cjs",
+    ],
   },
   {
     files: ["src/**/*.ts"],

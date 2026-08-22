@@ -80,7 +80,7 @@ async function main(): Promise<void> {
       || process.env.CONCLAVIA_TEAMS_SPEAKER_NAME?.trim()
       || "Partecipante meeting",
     rendererUrl:
-      process.env.CONCLAVIA_RENDERER_URL?.trim() || "http://127.0.0.1:3000",
+      process.env.CONCLAVIA_RENDERER_URL?.trim() || `http://${host}:${port}`,
   });
 }
 

@@ -255,8 +255,8 @@ export class ConclaviaRenderer {
     try {
       const response = await fetch(`${this.#baseUrl}/api/unreal/status`, {
         headers: { accept: "application/json" },
-        // The Next.js route performs an EC2 state check plus a bounded Unreal
-        // health probe; give both operations time to finish on a cold compile.
+        // The companion route performs an EC2 state check plus a bounded
+        // Unreal health probe; give both operations time to finish.
         signal: this.#signal(20_000),
       });
       const payload = (await response.json().catch(() => ({}))) as {
@@ -293,7 +293,7 @@ export class ConclaviaRenderer {
     const response = await fetch(`${baseUrl}/api/unreal/session`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ profile: "lipsync", avatarId: avatarProfile }),
+      body: JSON.stringify({ profile: "lipsync58", avatarId: avatarProfile }),
       signal: this.#signal(185_000),
     });
     const payload = (await response.json().catch(() => ({}))) as JsonError & {

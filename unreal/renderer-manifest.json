@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "engine": {
+    "version": "5.8.1",
+    "windowsRoot": "C:\\Epic\\UE_5.8",
+    "requiredComponents": [
+      "MetaHuman Creator Core Data",
+      "MetaHuman Character",
+      "MetaHuman SDK",
+      "Pixel Streaming 2",
+      "Python Editor Script Plugin"
+    ]
+  },
+  "project": {
+    "root": "C:\\ConclaviaStudio",
+    "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
+    "editorTarget": "ConclaviaStudioEditor",
+    "runtimeRevision": "ue58-commercial-lipsync-v14-attentive-idle"
+  },
+  "pixelStreamingInfrastructure": {
+    "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",
+    "commit": "48bff3b751f91f735b50c90b2a7fec5ceb2a440f",
+    "windowsRoot": "C:\\PixelStreamingInfrastructure"
+  },
+  "externalDependencies": [
+    {
+      "name": "RuntimeMetaHumanLipSync",
+      "version": "1.0",
+      "destination": "C:\\ConclaviaStudio\\Plugins\\RuntimeMetaHumanLipSync",
+      "redistributable": false,
+      "note": "Install from the licensed Marketplace or vendor package. It is intentionally excluded from Git."
+    },
+    {
+      "name": "Epic MetaHuman preset and generated content",
+      "destination": "C:\\ConclaviaStudio\\Content",
+      "redistributable": false,
+      "note": "Regenerate Aera, Ada, Vivian and Jelena from the installed Epic preset library with the checked-in Python builders."
+    }
+  ],
+  "generatedAssets": [
+    "/Game/Conclavia/Studio/L_PremiumStudio",
+    "/Game/Conclavia/Animation/AS_Conclavia_MetaHumanHandRaise",
+    "/Game/Conclavia/Animation/AS_Conclavia_SeatedIdle",
+    "/Game/Conclavia/Animation/LS_Conclavia_MetaHumanHandRaise_Source"
+  ],
+  "canonicalBuilders": [
+    "unreal/ConclaviaStudio/Scripts/build_premium_studio.py",
+    "unreal/ConclaviaStudio/Scripts/build_metahuman_cast.py",
+    "unreal/ConclaviaStudio/Scripts/build_metahuman_hand_raise.py",
+    "unreal/ConclaviaStudio/Scripts/build_seated_idle.py",
+    "unreal/ConclaviaStudio/Scripts/ensure_commercial_lipsync_assets.py"
+  ]
+}

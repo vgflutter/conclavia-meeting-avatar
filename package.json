@@ -14,6 +14,10 @@
     "simulate": "node --env-file-if-exists=.env --import tsx src/cli.ts simulate",
     "chat:simulate": "node adapters/generic/post-message.mjs",
     "transcript:simulate": "node adapters/generic/post-transcript.mjs",
+    "studio:3d:start": "bash scripts/start-3d-studio.sh",
+    "studio:3d:stop": "bash scripts/stop-3d-studio.sh",
+    "studio:source:audit": "bash scripts/audit-3d-source.sh",
+    "studio:source:deploy": "bash scripts/deploy-3d-source.sh",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -29,6 +33,9 @@
     "typescript-eslint": "^8.0.0"
   },
   "dependencies": {
+    "@aws-sdk/client-ec2": "^3.1116.0",
+    "@aws-sdk/client-polly": "^3.1116.0",
+    "@aws-sdk/credential-providers": "^3.1116.0",
     "openai": "^7.5.0",
     "ws": "^8.21.3"
   }

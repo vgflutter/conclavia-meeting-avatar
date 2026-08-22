@@ -16,6 +16,18 @@ import { DialogueLease } from "./core/dialogue-lease.js";
 import { chatResponseChannel, matchChatCommand } from "./core/chat-commands.js";
 import { dialogueParticipantKey } from "./core/participant-identity.js";
 import { ConclaviaRenderer } from "./conclavia/renderer.js";
+import { synthesizeUnrealSpeech } from "./conclavia/unreal-speech.js";
+import {
+  isUnrealAvatarId,
+  playUnrealSpeech,
+  sendUnrealDirectorCue,
+  sendUnrealPcm,
+  standaloneRendererStatus,
+  startManagedUnrealStudio,
+  stopUnrealStudio,
+  type UnrealDirectorCue,
+  type UnrealPerformanceBeat,
+} from "./conclavia/unreal-studio.js";
 import {
   avatarProfiles,
   AvatarConfigStore,
@@ -113,6 +125,80 @@ function parseSimulationInput(value: unknown): { speakerName: string; text: stri
     return null;
   }
   return { speakerName, text };
+}
+
+function parseUnrealDirectorCue(value: unknown): UnrealDirectorCue | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.speakerId !== "string" || !record.speakerId.trim() ||
+    typeof record.speakerName !== "string" || !record.speakerName.trim() ||
+    typeof record.shot !== "string" || !record.shot.trim() ||
+    typeof record.intent !== "string" || !record.intent.trim() ||
+    typeof record.expectedDurationMs !== "number" ||
+    !Number.isFinite(record.expectedDurationMs) ||
+    record.expectedDurationMs < 0 || record.expectedDurationMs > 120_000
+  ) return null;
+
+  const performanceBeats: UnrealPerformanceBeat[] = [];
+  if (record.performanceBeats !== undefined) {
+    if (!Array.isArray(record.performanceBeats) || record.performanceBeats.length > 24) {
+      return null;
+    }
+    for (const value of record.performanceBeats) {
+      if (typeof value !== "object" || value === null) return null;
+      const beat = value as Record<string, unknown>;
+      if (
+        typeof beat.atMs !== "number" || !Number.isFinite(beat.atMs) ||
+        beat.atMs < 0 || beat.atMs > 120_000 ||
+        typeof beat.mood !== "string" || !beat.mood.trim() ||
+        typeof beat.intensity !== "number" || !Number.isFinite(beat.intensity) ||
+        beat.intensity < 0 || beat.intensity > 1 ||
+        typeof beat.focus !== "string" || !beat.focus.trim() ||
+        typeof beat.gesture !== "string" || !beat.gesture.trim()
+      ) return null;
+      performanceBeats.push({
+        atMs: beat.atMs,
+        mood: beat.mood.slice(0, 40),
+        intensity: beat.intensity,
+        focus: beat.focus.slice(0, 40),
+        gesture: beat.gesture.slice(0, 40),
+      });
+    }
+  }
+
+  const optionalText = (key: string): string | undefined => {
+    const candidate = record[key];
+    return typeof candidate === "string" && candidate.trim()
+      ? candidate.trim().slice(0, 240)
+      : undefined;
+  };
+  const bodyGesture = record.bodyGesture === "raise-hand" ||
+      record.bodyGesture === "lower-hand" || record.bodyGesture === "none"
+    ? record.bodyGesture
+    : undefined;
+  const listenerMoodIntensity = typeof record.listenerMoodIntensity === "number"
+      && Number.isFinite(record.listenerMoodIntensity)
+      && record.listenerMoodIntensity >= 0
+      && record.listenerMoodIntensity <= 1
+    ? record.listenerMoodIntensity
+    : undefined;
+  const targetId = optionalText("targetId");
+  const targetName = optionalText("targetName");
+  const listenerMood = optionalText("listenerMood");
+  return {
+    speakerId: record.speakerId.trim().slice(0, 240),
+    speakerName: record.speakerName.trim().slice(0, 80),
+    shot: record.shot.trim().slice(0, 80),
+    intent: record.intent.trim().slice(0, 80),
+    expectedDurationMs: record.expectedDurationMs,
+    ...(targetId ? { targetId } : {}),
+    ...(targetName ? { targetName } : {}),
+    ...(bodyGesture ? { bodyGesture } : {}),
+    ...(listenerMood ? { listenerMood } : {}),
+    ...(listenerMoodIntensity !== undefined ? { listenerMoodIntensity } : {}),
+    ...(performanceBeats.length ? { performanceBeats } : {}),
+  };
 }
 
 function parseChatMessageInput(value: unknown): ChatMessageInput | null {
@@ -796,6 +882,89 @@ export function startServer(options: ServerOptions): Promise<void> {
           rendererStarting,
           time: new Date().toISOString(),
         });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/unreal/status") {
+        sendJson(response, 200, await standaloneRendererStatus());
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/unreal/session") {
+        const body = await readJsonBody(request) as Record<string, unknown>;
+        if (!isUnrealAvatarId(body.avatarId)) {
+          sendJson(response, 400, { error: "Avatar MetaHuman non supportato." });
+          return;
+        }
+        const session = await startManagedUnrealStudio(body.avatarId);
+        sendJson(response, 200, {
+          ok: true,
+          playerUrl: session.playerUrl,
+          health: session.health,
+          avatarId: body.avatarId,
+          facialAnimation: "runtime-metahuman-lipsync",
+          audioEngine: "polly-generative",
+        });
+        return;
+      }
+
+      if (request.method === "DELETE" && url.pathname === "/api/unreal/session") {
+        await stopUnrealStudio();
+        sendJson(response, 200, { ok: true });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/unreal/cue") {
+        const cue = parseUnrealDirectorCue(await readJsonBody(request));
+        if (!cue) {
+          sendJson(response, 400, { error: "Cue Unreal non valido." });
+          return;
+        }
+        await sendUnrealDirectorCue(cue);
+        sendJson(response, 200, { ok: true });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/unreal/speech") {
+        const speech = await synthesizeUnrealSpeech(
+          await readJsonBody(request) as Record<string, unknown>,
+        );
+        response.writeHead(200, {
+          "content-type": "application/octet-stream",
+          "content-length": speech.audio.byteLength,
+          "cache-control": "no-store",
+          "x-conclavia-voice": speech.voice,
+          "x-conclavia-language": speech.languageCode,
+        });
+        response.end(Buffer.from(speech.audio));
+        return;
+      }
+
+      if (
+        request.method === "POST" &&
+        (url.pathname === "/api/unreal/audio" ||
+          url.pathname === "/api/unreal/audio/speech")
+      ) {
+        if (!request.headers["content-type"]?.startsWith("application/octet-stream")) {
+          sendJson(response, 415, { error: "È richiesto audio PCM binario." });
+          return;
+        }
+        const audio = await readBinaryBody(request);
+        if (!audio.byteLength || audio.byteLength % 2 !== 0) {
+          sendJson(response, 400, { error: "Audio PCM non valido." });
+          return;
+        }
+        if (url.pathname === "/api/unreal/audio/speech") {
+          const playback = await playUnrealSpeech(audio);
+          sendJson(response, 200, { ok: true, ...playback });
+        } else {
+          if (audio.byteLength > 384_000) {
+            sendJson(response, 413, { error: "Chunk audio PCM troppo grande." });
+            return;
+          }
+          await sendUnrealPcm(audio);
+          sendJson(response, 200, { ok: true });
+        }
         return;
       }
 

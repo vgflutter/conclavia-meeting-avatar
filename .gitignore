@@ -6,3 +6,12 @@ dist/
 *.log
 .idea/
 .vscode/
+*.zip
+*.tar.gz
+__pycache__/
+*.pyc
+unreal/ConclaviaStudio/Binaries/
+unreal/ConclaviaStudio/DerivedDataCache/
+unreal/ConclaviaStudio/Intermediate/
+unreal/ConclaviaStudio/Saved/
+unreal/ConclaviaStudio/Plugins/RuntimeMetaHumanLipSync/

@@ -113,7 +113,7 @@ BlackHole 2ch ◄── Conclavia TTS ◄── Unreal / MetaHuman ◄───�
       └──► meeting microphone                └──► OBS Virtual Camera ──► meeting
 ```
 
-The companion and Unreal renderer are separate processes. The renderer can therefore run locally or on a cloud GPU without changing the conferencing integration.
+The companion and Unreal renderer are separate processes. The renderer can therefore run locally or on a cloud GPU without changing the conferencing integration. The companion owns its `/api/unreal/*` gateway, Polly synthesis and AWS lifecycle directly; the separate Conclavia frontend is not required. See the [standalone architecture](docs/architecture.md).
 
 ## Cross-platform chat and commands
 
@@ -151,7 +151,7 @@ The body path uses Epic-authored MetaHuman `AnimSequence` assets and is being mo
   - BlackHole 16ch for capturing meeting audio;
   - BlackHole 2ch for routing the avatar voice into the meeting microphone;
   - Loopback can be used instead for a more convenient routing UI.
-- the Conclavia frontend/Unreal bridge available at `http://127.0.0.1:3000` by default
+- AWS IAM Roles Anywhere credentials for the cloud renderer, or a compatible local Unreal supervisor
 
 Keeping capture and avatar output on separate paths prevents feedback loops.
 
@@ -186,7 +186,7 @@ CONCLAVIA_WAKE_WORD=Mary
 CONCLAVIA_DIALOGUE_TIMEOUT_MS=45000
 CONCLAVIA_DIALOGUE_MAX_FOLLOW_UPS=2
 CONCLAVIA_CONFIG_PATH=.conclavia/avatar-config.json
-CONCLAVIA_RENDERER_URL=http://127.0.0.1:3000
+CONCLAVIA_RENDERER_URL=http://127.0.0.1:4310
 CONCLAVIA_MEETING_AUDIO_DEVICE=BlackHole 16ch
 CONCLAVIA_MEETING_SPEAKER_NAME=Meeting participant
 OPENAI_RESPONSE_MODEL=gpt-5.4-mini
@@ -196,12 +196,22 @@ OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-live-transcribe
 
 The chat enable switch and command aliases are stored in the local avatar configuration and edited from the web application.
 
-Start the Conclavia frontend separately:
+Start or refresh the AWS Unreal studio independently:
 
 ```bash
-cd ../conclavia-frontend
-npm run dev
+npm run studio:3d:start
 ```
+
+This command is idempotent when the instance is already running. It refreshes
+the IP allow-list, supervisor token and automatic shutdown deadline, then saves
+only rotating local values to the ignored `.env`. Stop GPU billing with
+`npm run studio:3d:stop`.
+
+The Unreal source, infrastructure and recovery process are versioned in this
+repository. Deploy source only from a clean commit with
+`npm run studio:source:deploy`, and verify AWS against Git with
+`npm run studio:source:audit`. The complete disaster-recovery procedure is in
+[Rebuilding the AWS Unreal studio](docs/aws-rebuild.md).
 
 ## Teams, Google Meet, and OBS setup
 
