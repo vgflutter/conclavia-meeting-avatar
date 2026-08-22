@@ -22,6 +22,7 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 - Chat message idempotency and avatar self-message filtering to prevent duplicate actions and response loops.
 - Configurable avatar name, which is also the direct voice trigger.
 - Speaker-scoped dialogue leases: invoke the avatar once, then continue naturally for up to two relevant follow-ups without repeating its name.
+- Automatic Realtime transcription reconnection after provider session expiry or a transient socket failure, with bounded exponential backoff.
 - Conservative participation control that keeps the avatar silent for fillers, incomplete remarks, and conversations between human participants.
 - `request-to-speak` autonomy: the avatar may prepare a useful contribution and physically raise its hand, but it cannot speak until a participant grants the floor.
 - Floor approval from the web console or by saying phrases such as `Mary, go ahead` or `Go ahead, Mary`.
@@ -164,7 +165,7 @@ npm run dev
 
 Open [http://127.0.0.1:4310](http://127.0.0.1:4310).
 
-The web application can configure the meeting platform, avatar profile, name/trigger, model, native Italian and English voices, delivery style, API key, purpose, personality, system prompt, web search, and autonomous requests to speak. Saving applies the new configuration without restarting the companion; if the meeting listener was active, it is restarted automatically. Changing the MetaHuman profile is applied the next time the renderer starts.
+The web application can configure the meeting platform, avatar profile, name/trigger, model, native Italian and English voices, delivery style, API key, purpose, personality, system prompt, web search, and autonomous requests to speak. Saving applies the new configuration without restarting the companion; if the meeting listener was active, it is restarted automatically. Changing the MetaHuman profile switches the warm Unreal performer immediately and does not require a second **Start avatar** action.
 
 The default **Test room** is an end-to-end meeting simulator rather than a mocked UI. Text entered as speech uses the normal activation and meeting-memory pipeline; chat messages use the canonical Teams/Meet adapter endpoint; quick actions use the currently configured command aliases; and browser microphone input uses the production transcription path. The transcript, chat, participant list, physical hand state, pending floor request, per-sentence moods, renderer delivery, and latency are visible in one place. **New session** clears the in-memory meeting history and resets pending participation state without changing avatar configuration.
 
