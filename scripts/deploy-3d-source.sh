@@ -114,16 +114,25 @@ COMMAND_ID=$(aws ssm send-command \
   --timeout-seconds 3600 \
   --query Command.CommandId \
   --output text)
-aws ssm wait command-executed \
-  --region "$AWS_REGION" \
-  --command-id "$COMMAND_ID" \
-  --instance-id "$INSTANCE_ID"
-STATUS=$(aws ssm get-command-invocation \
-  --region "$AWS_REGION" \
-  --command-id "$COMMAND_ID" \
-  --instance-id "$INSTANCE_ID" \
-  --query Status \
-  --output text)
+# The stock AWS CLI waiter stops after roughly two minutes, while the first
+# Unreal migration must copy several GB and can legitimately compile for much
+# longer. Poll the same invocation explicitly for up to one hour instead of
+# reporting a false deployment failure while Windows is still building.
+STATUS="Pending"
+for _ in $(seq 1 720); do
+  STATUS=$(aws ssm get-command-invocation \
+    --region "$AWS_REGION" \
+    --command-id "$COMMAND_ID" \
+    --instance-id "$INSTANCE_ID" \
+    --query Status \
+    --output text 2>/dev/null || true)
+  case "$STATUS" in
+    Success|Cancelled|TimedOut|Failed|Cancelling)
+      break
+      ;;
+  esac
+  sleep 5
+done
 if [[ "$STATUS" != "Success" ]]; then
   aws ssm get-command-invocation \
     --region "$AWS_REGION" \
