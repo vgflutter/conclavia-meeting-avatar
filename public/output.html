@@ -12,16 +12,11 @@
       iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #020617; }
       #status { z-index: 2; max-width: 32rem; padding: 1rem 1.25rem; border: 1px solid #285046; border-radius: .8rem; color: #9ceacf; background: rgba(7, 17, 15, .92); font: 600 15px/1.5 system-ui, sans-serif; text-align: center; }
       #status.connected { opacity: 0; pointer-events: none; transition: opacity .4s ease; }
-      #hand-request { position: fixed; z-index: 3; top: 3.5%; right: 2.5%; display: flex; align-items: center; gap: .65rem; padding: .65rem .9rem; border: 1px solid rgba(255, 224, 154, .8); border-radius: 999px; color: #fff1c7; background: rgba(28, 20, 8, .86); box-shadow: 0 12px 34px rgba(0,0,0,.38); font: 750 18px/1.2 system-ui, sans-serif; backdrop-filter: blur(12px); animation: request-in .32s ease-out; }
-      #hand-request[hidden] { display: none; }
-      #hand-request span { font-size: 29px; }
-      @keyframes request-in { from { opacity: 0; transform: translateY(-10px) scale(.96); } }
     </style>
   </head>
   <body>
     <main id="stage">
       <p id="status">Connessione al MetaHuman…</p>
-      <aside id="hand-request" hidden><span aria-hidden="true">✋</span><strong id="hand-request-label">Mary chiede la parola</strong></aside>
     </main>
     <script type="module" src="/output.js"></script>
   </body>

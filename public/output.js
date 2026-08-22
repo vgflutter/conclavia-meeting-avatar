@@ -1,7 +1,5 @@
 const stage = document.querySelector("#stage");
 const status = document.querySelector("#status");
-const handRequest = document.querySelector("#hand-request");
-const handRequestLabel = document.querySelector("#hand-request-label");
 let playerFrame = null;
 let mountedPlayerUrl = null;
 
@@ -51,20 +49,6 @@ async function refresh() {
   }
 }
 
-async function refreshParticipation() {
-  try {
-    const response = await fetch("/api/participation", { cache: "no-store" });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    handRequest.hidden = !payload.request;
-    if (payload.request) {
-      handRequestLabel.textContent = `${payload.request.speakerName} chiede la parola`;
-    }
-  } catch {
-    handRequest.hidden = true;
-  }
-}
-
 window.addEventListener("message", (event) => {
   if (event.data?.type !== "conclavia:media-ready" && event.data?.type !== "conclavia:audio-state") return;
   if (event.data.mediaReady) status.className = "connected";
@@ -74,6 +58,4 @@ document.addEventListener("pointerdown", requestAudioUnlock, { capture: true });
 document.addEventListener("keydown", requestAudioUnlock, { capture: true });
 window.setInterval(requestAudioUnlock, 3_000);
 window.setInterval(refresh, 5_000);
-window.setInterval(refreshParticipation, 750);
 void refresh();
-void refreshParticipation();
