@@ -362,11 +362,15 @@ export class ConclaviaRenderer {
     });
   }
 
-  async reactToListening(reaction: StableListeningReaction): Promise<void> {
+  async reactToListening(
+    reaction: StableListeningReaction,
+    speakerName: string,
+  ): Promise<void> {
     const mood = moodMap[reaction.mood];
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
+      speakerName,
       targetName: reaction.observedSpeakerName,
       shot: "reaction",
       intent: "listen-react",

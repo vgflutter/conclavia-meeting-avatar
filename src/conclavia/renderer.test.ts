@@ -117,7 +117,7 @@ await test("sends a bounded silent listening reaction to Unreal", async () => {
       observedSpeakerName: "Luca",
       createdAt: "2026-08-22T10:00:00.000Z",
       holdMs: 7_100,
-    });
+    }, "Mary");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -127,6 +127,7 @@ await test("sends a bounded silent listening reaction to Unreal", async () => {
     body: {
       speakerId: "participant-1",
       targetId: "meeting-participant",
+      speakerName: "Mary",
       targetName: "Luca",
       shot: "reaction",
       intent: "listen-react",

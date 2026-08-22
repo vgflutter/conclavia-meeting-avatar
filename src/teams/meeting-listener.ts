@@ -19,6 +19,8 @@ const pcmChunkBytes = 4_800; // 100 ms of mono PCM16 at 24 kHz.
 const connectionTimeoutMs = 15_000;
 const clientVadSpeechThreshold = 0.006;
 const clientVadSilenceChunks = 3; // 300 ms at the current chunk size.
+const reconnectInitialDelayMs = 1_000;
+const reconnectMaxDelayMs = 30_000;
 
 export function pcm16Rms(chunk: Buffer): number {
   const sampleCount = Math.floor(chunk.byteLength / 2);
@@ -110,6 +112,9 @@ export class MeetingListener {
   #partialByItem = new Map<string, string>();
   #speculativeByItem = new Map<string, TranscriptSegment>();
   #turnQueue: Promise<void> = Promise.resolve();
+  #desiredRunning = false;
+  #reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  #reconnectDelayMs = reconnectInitialDelayMs;
 
   constructor(options: MeetingListenerOptions) {
     this.#options = options;
@@ -135,7 +140,10 @@ export class MeetingListener {
   }
 
   async start(): Promise<MeetingListenerStatus> {
+    this.#desiredRunning = true;
     if (this.#phase === "running" || this.#phase === "starting") return this.status;
+
+    this.#clearReconnectTimer();
 
     this.#phase = "starting";
     this.#lastError = null;
@@ -157,6 +165,11 @@ export class MeetingListener {
       const realtime = new OpenAIRealtimeWS({ intent: "transcription" }, client);
       this.#realtime = realtime;
       realtime.on("error", (error) => this.#fail(`OpenAI Realtime: ${error.message}`));
+      realtime.socket.on("close", () => {
+        if (this.#phase === "running") {
+          this.#fail("La sessione OpenAI Realtime si è chiusa; riconnessione automatica in corso.");
+        }
+      });
       realtime.on("input_audio_buffer.speech_started", () => {
         this.#speechDetected = true;
       });
@@ -287,6 +300,7 @@ export class MeetingListener {
       this.#phase = "running";
       this.#connectedAt = new Date().toISOString();
       this.#lastError = null;
+      this.#reconnectDelayMs = reconnectInitialDelayMs;
       return this.status;
     } catch (error: unknown) {
       this.#fail(errorMessage(error));
@@ -295,6 +309,8 @@ export class MeetingListener {
   }
 
   async stop(): Promise<MeetingListenerStatus> {
+    this.#desiredRunning = false;
+    this.#clearReconnectTimer();
     if (this.#phase === "stopped") return this.status;
     this.#phase = "stopping";
     this.#cleanup();
@@ -376,9 +392,31 @@ export class MeetingListener {
 
   #fail(message: string): void {
     if (this.#phase === "stopping" || this.#phase === "stopped") return;
+    if (this.#phase === "error" && this.#reconnectTimer) return;
     this.#lastError = message;
     this.#phase = "error";
     this.#cleanup();
+    this.#scheduleReconnect();
+  }
+
+  #scheduleReconnect(): void {
+    if (!this.#desiredRunning || this.#reconnectTimer) return;
+    const delayMs = this.#reconnectDelayMs;
+    this.#reconnectDelayMs = Math.min(this.#reconnectDelayMs * 2, reconnectMaxDelayMs);
+    this.#reconnectTimer = setTimeout(() => {
+      this.#reconnectTimer = null;
+      if (!this.#desiredRunning || this.#phase !== "error") return;
+      void this.start().catch(() => {
+        // start() records the error and schedules the next bounded retry.
+      });
+    }, delayMs);
+    this.#reconnectTimer.unref();
+  }
+
+  #clearReconnectTimer(): void {
+    if (!this.#reconnectTimer) return;
+    clearTimeout(this.#reconnectTimer);
+    this.#reconnectTimer = null;
   }
 
   #cleanup(): void {

@@ -513,7 +513,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           if (stableReaction && rendererArmed) {
             try {
               const rendererStartedAt = performance.now();
-              await renderer.reactToListening(stableReaction);
+              await renderer.reactToListening(stableReaction, runtimeConfig.name);
               rendererMs = Math.round(performance.now() - rendererStartedAt);
             } catch (error: unknown) {
               console.error("Conclavia listening-reaction cue failed:", error);
