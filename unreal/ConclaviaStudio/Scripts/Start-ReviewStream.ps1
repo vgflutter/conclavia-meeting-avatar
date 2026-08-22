@@ -252,8 +252,11 @@ if ($isMeetingAvatar -and $meetingStageNeedsBuild) {
             -SimpleMatch "CONCLAVIA_MEETING_STAGE: READY" `
             -Quiet
     )
-    if ($meetingBuildProcess.ExitCode -ne 0 -or
-        -not (Test-Path $meetingMapFile) -or
+    # Generated MetaHumans can contain optional vendor Blueprint nodes that
+    # make the Python commandlet return -1 after the script has already saved
+    # successfully. Require the concrete map plus our explicit builder marker;
+    # the runtime camera/face readiness gate below remains independent.
+    if (-not (Test-Path $meetingMapFile) -or
         -not $meetingReadyMarker) {
         throw "Meeting avatar stage authoring failed (exit $($meetingBuildProcess.ExitCode)). See $meetingBuildLog"
     }
