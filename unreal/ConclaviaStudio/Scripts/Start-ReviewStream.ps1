@@ -41,8 +41,8 @@ $commercialAssetScript = "C:\ConclaviaMeetingAvatar\Scripts\ensure_commercial_li
 $grade1Map = "/Game/Conclavia/Grade1/L_Grade1HeroPop"
 $grade1MapFile = "C:\ConclaviaLipSyncLab56\RMHLipSyncDemo\Content\Conclavia\Grade1\L_Grade1HeroPop.umap"
 $grade1BuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_grade1_hero_studio.py"
-$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v13"
-$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v13.umap"
+$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v14"
+$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v14.umap"
 $meetingBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_avatar_stage.py"
 $meetingBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-stage-builder.sha256"
 $seatedIdleFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Studio\Animations\AS_Conclavia_SeatedIdle.uasset"
@@ -678,7 +678,7 @@ if ($isCommercialLipSync) {
         $unreal58Ready = $isUnreal58LipSync -and
             $bridgeHealth.commercialLipSyncReady -eq $true -and
             $bridgeHealth.stageReady -eq $true -and
-            $bridgeHealth.cameraCount -ge $(if ($isMeetingAvatar) { 3 } else { 9 }) -and
+            $bridgeHealth.cameraCount -ge $(if ($isMeetingAvatar) { 1 } else { 9 }) -and
             $bridgeHealth.runtimeRevision -like "ue58-commercial-lipsync-v*"
     } until ($legacyReady -or $unreal58Ready -or (Get-Date) -gt $healthDeadline)
     if (-not $legacyReady -and -not $unreal58Ready) {
@@ -708,10 +708,7 @@ if ($isCommercialLipSync) {
             -Uri "http://127.0.0.1:8081/health" `
             -TimeoutSec 5
         $heroCameraReady = if ($isMeetingAvatar) {
-            $portraitHealth.activeCamera -in @(
-                "CAM_Meeting_Portrait",
-                "CAM_Meeting_Gesture"
-            )
+            $portraitHealth.activeCamera -eq "CAM_Meeting_Portrait"
         } else {
             $portraitHealth.activeCamera -in @(
                 "CAM_Seat_1_Close",

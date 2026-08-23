@@ -32,8 +32,7 @@ $pythonArguments = @(
     "--slate", "conclavia_meeting_applause",
     "--performance-name", "MHP_MeetingApplause_Markerless_v1",
     "--required-tracks", "upperarm_l,lowerarm_l,hand_l,upperarm_r,lowerarm_r,hand_r",
-    "--motion-tracks", "upperarm_l,upperarm_r",
-    "--delta-from-stabilized-pose"
+    "--motion-tracks", "upperarm_l,upperarm_r"
 )
 if ($ReusePerformance) {
     $pythonArguments += "--reuse-performance"

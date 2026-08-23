@@ -30,11 +30,10 @@ are the only control endpoints used by the web application. Audible playback
 and facial inference therefore share the Unreal render clock instead of being
 synchronized by browser timers.
 
-The meeting package provides `CAM_Meeting_Portrait` and
-`CAM_Meeting_Gesture`; ordinary listening and speech remain on the portrait.
-The wider camera is eligible only when a validated authored full-body gesture
-is installed. It keeps the hero warm at Cine LOD0 with strand
-hair and full-resolution subsurface skin. Pixel Streaming 2 codec negotiation
+The meeting package provides one immutable `CAM_Meeting_Portrait` view target
+for idle, speech, hand raise, and applause. Gesture state never changes the
+camera transform or projection. It keeps the hero warm at Cine LOD0 with
+strand hair and full-resolution subsurface skin. Pixel Streaming 2 codec negotiation
 is enabled in `Config/DefaultGame.ini`, matching the 5.8 plugin configuration
 class and preventing a WebRTC offer from failing before the first frame.
 

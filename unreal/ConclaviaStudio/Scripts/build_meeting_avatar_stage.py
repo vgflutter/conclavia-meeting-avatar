@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v13"
+STAGE_REVISION = "v14"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
 
@@ -284,16 +284,12 @@ def build() -> None:
         materials["chair"],
     )
 
-    # A meeting participant should not jump between a face close-up and a
-    # theatrical wide shot to raise a hand. All semantic cameras keep the same
-    # 150 mm seated webcam crop. The gesture camera aims five centimetres lower;
-    # applause gets its own slightly lower aim because two moving hands need
-    # more vertical room than the held single-hand pose. This adjusts only
-    # cinematography and never invents arm rotations.
+    # A meeting participant owns one stable webcam for the complete session.
+    # Gesture state must never alter projection or aim: authored body motion is
+    # composed inside this fixed portrait, just as it would be for a real Teams
+    # or Meet participant.
     webcam_position = unreal.Vector(-360.0, 0.0, 185.0)
     webcam_target = unreal.Vector(0.0, 0.0, 165.0)
-    gesture_target = unreal.Vector(0.0, 0.0, 160.0)
-    applause_target = unreal.Vector(0.0, 0.0, 153.0)
     webcam_focal_length = 150.0
     add_camera(
         "CAM_Meeting_Portrait",
@@ -301,19 +297,6 @@ def build() -> None:
         webcam_target,
         webcam_focal_length,
     )
-    add_camera(
-        "CAM_Meeting_Gesture",
-        webcam_position,
-        gesture_target,
-        webcam_focal_length,
-    )
-    add_camera(
-        "CAM_Meeting_Applause",
-        webcam_position,
-        applause_target,
-        webcam_focal_length,
-    )
-
     add_rect_light(
         "MEETING_Key",
         unreal.Vector(-330.0, -360.0, 510.0),

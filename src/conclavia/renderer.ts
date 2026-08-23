@@ -397,7 +397,7 @@ export class ConclaviaRenderer {
       bodyGesture: "applause",
       listenerSemanticMood: "amused",
       listenerMood: "happiness",
-      listenerMoodIntensity: 0.82,
+      listenerMoodIntensity: 0.38,
       expectedDurationMs: 4_500,
       performanceBeats: [],
     });

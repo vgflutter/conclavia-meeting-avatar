@@ -32,7 +32,7 @@ async function cue(bodyGesture, intent) {
       bodyGesture,
       listenerSemanticMood: "amused",
       listenerMood: "happiness",
-      listenerMoodIntensity: 0.82,
+      listenerMoodIntensity: 0.38,
       expectedDurationMs: 4_500,
       performanceBeats: []
     })
@@ -142,8 +142,8 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         && candidate.commercialMood === "happiness"
         && candidate.performanceSemanticMood === "amused"
         && candidate.applauseExpressionActive === true
-        && candidate.applauseExpressionDriver === "ue58-official-metahuman-happy-expression-loop",
-      "authored applause state with the official MetaHuman happy expression"
+        && candidate.applauseExpressionDriver === "commercial-mood-happiness-ue56-calibrated",
+      "authored applause state with the calibrated positive expression"
     );
     for (const targetMs of [120, 380, 700, 1_100, 1_600, 2_200, 3_000, 3_900]) {
       await captureAfter(

@@ -72,22 +72,22 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /BodyGesturePhase == TEXT\("applauding"\)/);
   assert.match(moduleSource, /const bool bApplauseCue/);
   assert.match(moduleSource, /ERealisticMetaHumanLipSyncMood::Happiness/);
-  assert.match(moduleSource, /facialloop_happy_f_s001/);
-  assert.match(moduleSource, /ue58-official-metahuman-happy-expression-loop/);
-  assert.match(moduleSource, /CAM_Meeting_Applause/);
+  assert.match(moduleSource, /commercial-mood-happiness-ue56-calibrated/);
+  assert.doesNotMatch(moduleSource, /facialloop_happy_f_s001/);
+  assert.doesNotMatch(moduleSource, /CAM_Meeting_Applause/);
+  assert.doesNotMatch(moduleSource, /CAM_Meeting_Gesture/);
   assert.match(moduleSource, /Clamp\(Intensity, 0\.0f, 0\.85f\)/);
   assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
-  assert.match(startScript, /L_MeetingAvatar_v13/);
-  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v13$/mu);
-  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v13$/mu);
-  assert.match(stageBuilder, /^STAGE_REVISION = "v13"$/mu);
-  assert.match(stageBuilder, /CAM_Meeting_Applause/);
+  assert.match(startScript, /L_MeetingAvatar_v14/);
+  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v14$/mu);
+  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v14$/mu);
+  assert.match(stageBuilder, /^STAGE_REVISION = "v14"$/mu);
+  assert.doesNotMatch(stageBuilder, /CAM_Meeting_Applause/);
+  assert.doesNotMatch(stageBuilder, /CAM_Meeting_Gesture/);
   assert.match(stageBuilder, /^CONTENT_ROOT = "\/Game\/Conclavia\/Meeting"$/mu);
   assert.match(stageBuilder, /^LEVEL_PATH = f"\{CONTENT_ROOT\}\/L_MeetingAvatar_\{STAGE_REVISION\}"$/mu);
   assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
   assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
-  assert.match(stageBuilder, /gesture_target = unreal\.Vector\(0\.0, 0\.0, 160\.0\)/);
-  assert.match(stageBuilder, /applause_target = unreal\.Vector\(0\.0, 0\.0, 153\.0\)/);
   assert.match(stageBuilder, /webcam_focal_length = 150\.0/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
@@ -162,7 +162,7 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(solveScript, /transformed\.rotation = frame\[bone_name\]\.rotation/);
   assert.match(handBuildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
   assert.match(applauseBuildScript, /MHP_MeetingApplause_Markerless_v1/);
-  assert.match(applauseBuildScript, /--delta-from-stabilized-pose/);
+  assert.doesNotMatch(applauseBuildScript, /--delta-from-stabilized-pose/);
   assert.match(applauseBuildScript, /ReusePerformance/);
   assert.match(
     applauseBuildScript,
