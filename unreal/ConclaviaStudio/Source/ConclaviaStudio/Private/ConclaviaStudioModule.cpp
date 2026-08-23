@@ -99,9 +99,21 @@ namespace ConclaviaStudio
         LPCWSTR,
         INT);
     using FShellExecuteExW = BOOL(WINAPI*)(SHELLEXECUTEINFOW*);
+    using FCreateProcessW = BOOL(WINAPI*)(
+        LPCWSTR,
+        LPWSTR,
+        LPSECURITY_ATTRIBUTES,
+        LPSECURITY_ATTRIBUTES,
+        BOOL,
+        DWORD,
+        LPVOID,
+        LPCWSTR,
+        LPSTARTUPINFOW,
+        LPPROCESS_INFORMATION);
 
     static FShellExecuteW OriginalShellExecuteW = nullptr;
     static FShellExecuteExW OriginalShellExecuteExW = nullptr;
+    static FCreateProcessW OriginalCreateProcessW = nullptr;
     static bool bCaptureEpicAuthorizationUrl = false;
 
     static bool CaptureAuthorizationUrl(const wchar_t* Url)
@@ -171,6 +183,62 @@ namespace ConclaviaStudio
         }
         return OriginalShellExecuteExW
             ? OriginalShellExecuteExW(ExecuteInfo)
+            : static_cast<BOOL>(0);
+    }
+
+    static BOOL WINAPI CaptureCreateProcessW(
+        LPCWSTR ApplicationName,
+        LPWSTR CommandLine,
+        LPSECURITY_ATTRIBUTES ProcessAttributes,
+        LPSECURITY_ATTRIBUTES ThreadAttributes,
+        BOOL InheritHandles,
+        DWORD CreationFlags,
+        LPVOID Environment,
+        LPCWSTR CurrentDirectory,
+        LPSTARTUPINFOW StartupInfo,
+        LPPROCESS_INFORMATION ProcessInformation)
+    {
+        if (bCaptureEpicAuthorizationUrl && CommandLine)
+        {
+            FString Candidate(CommandLine);
+            const int32 UrlStart = Candidate.Find(
+                TEXT("http"),
+                ESearchCase::IgnoreCase,
+                ESearchDir::FromStart);
+            if (UrlStart != INDEX_NONE)
+            {
+                Candidate.RightChopInline(UrlStart);
+                Candidate.TrimStartAndEndInline();
+                Candidate.TrimQuotesInline();
+                int32 UrlEnd = INDEX_NONE;
+                if (Candidate.FindChar(TEXT('"'), UrlEnd))
+                {
+                    Candidate.LeftInline(UrlEnd);
+                }
+                if (CaptureAuthorizationUrl(*Candidate))
+                {
+                    if (ProcessInformation)
+                    {
+                        FMemory::Memzero(ProcessInformation, sizeof(PROCESS_INFORMATION));
+                    }
+                    SetLastError(ERROR_SUCCESS);
+                    return static_cast<BOOL>(1);
+                }
+            }
+        }
+
+        return OriginalCreateProcessW
+            ? OriginalCreateProcessW(
+                ApplicationName,
+                CommandLine,
+                ProcessAttributes,
+                ThreadAttributes,
+                InheritHandles,
+                CreationFlags,
+                Environment,
+                CurrentDirectory,
+                StartupInfo,
+                ProcessInformation)
             : static_cast<BOOL>(0);
     }
 
@@ -272,22 +340,41 @@ namespace ConclaviaStudio
         }
 
         HMODULE CoreModule = GetModuleHandleW(L"UnrealEditor-Core.dll");
-        const bool bShellExecutePatched = PatchImportedFunction(
+        HMODULE EosModule = GetModuleHandleW(L"EOSSDK-Win64-Shipping.dll");
+        const bool bCoreShellExecutePatched = PatchImportedFunction(
             CoreModule,
             "ShellExecuteW",
             reinterpret_cast<void*>(&CaptureShellExecuteW),
             reinterpret_cast<void**>(&OriginalShellExecuteW));
-        const bool bShellExecuteExPatched = PatchImportedFunction(
+        const bool bCoreShellExecuteExPatched = PatchImportedFunction(
             CoreModule,
             "ShellExecuteExW",
             reinterpret_cast<void*>(&CaptureShellExecuteExW),
             reinterpret_cast<void**>(&OriginalShellExecuteExW));
+        const bool bEosShellExecutePatched = PatchImportedFunction(
+            EosModule,
+            "ShellExecuteW",
+            reinterpret_cast<void*>(&CaptureShellExecuteW),
+            reinterpret_cast<void**>(&OriginalShellExecuteW));
+        const bool bEosShellExecuteExPatched = PatchImportedFunction(
+            EosModule,
+            "ShellExecuteExW",
+            reinterpret_cast<void*>(&CaptureShellExecuteExW),
+            reinterpret_cast<void**>(&OriginalShellExecuteExW));
+        const bool bEosCreateProcessPatched = PatchImportedFunction(
+            EosModule,
+            "CreateProcessW",
+            reinterpret_cast<void*>(&CaptureCreateProcessW),
+            reinterpret_cast<void**>(&OriginalCreateProcessW));
         UE_LOG(
             LogConclaviaStudio,
             Display,
-            TEXT("CONCLAVIA_EPIC_AUTH_CAPTURE_READY: ShellExecuteW=%s ShellExecuteExW=%s"),
-            bShellExecutePatched ? TEXT("true") : TEXT("false"),
-            bShellExecuteExPatched ? TEXT("true") : TEXT("false"));
+            TEXT("CONCLAVIA_EPIC_AUTH_CAPTURE_READY: Core.W=%s Core.ExW=%s EOS.W=%s EOS.ExW=%s EOS.CreateProcessW=%s"),
+            bCoreShellExecutePatched ? TEXT("true") : TEXT("false"),
+            bCoreShellExecuteExPatched ? TEXT("true") : TEXT("false"),
+            bEosShellExecutePatched ? TEXT("true") : TEXT("false"),
+            bEosShellExecuteExPatched ? TEXT("true") : TEXT("false"),
+            bEosCreateProcessPatched ? TEXT("true") : TEXT("false"));
     }
 #endif
 
@@ -712,6 +799,29 @@ public:
         bMeetingAvatar = StudioProfile.Equals(
             TEXT("meeting"),
             ESearchCase::IgnoreCase);
+        if (bMeetingAvatar)
+        {
+            GConfig->GetFloat(
+                TEXT("ConclaviaStudio"),
+                TEXT("MeetingHandRaiseStartTimeSeconds"),
+                BodyGestureStartSeconds,
+                GEngineIni);
+            GConfig->GetFloat(
+                TEXT("ConclaviaStudio"),
+                TEXT("MeetingHandRaiseHoldTimeSeconds"),
+                BodyGestureHoldSeconds,
+                GEngineIni);
+            GConfig->GetFloat(
+                TEXT("ConclaviaStudio"),
+                TEXT("MeetingHandRaiseLowerTimeSeconds"),
+                BodyGestureLowerStartSeconds,
+                GEngineIni);
+            GConfig->GetFloat(
+                TEXT("ConclaviaStudio"),
+                TEXT("MeetingHandRaiseEndTimeSeconds"),
+                BodyGestureEndSeconds,
+                GEngineIni);
+        }
         bLipSyncLab = FParse::Param(FCommandLine::Get(), TEXT("ConclaviaLipSyncLab"));
         FParse::Value(FCommandLine::Get(), TEXT("ConclaviaAvatar="), AvatarId);
         AvatarId = AvatarId.ToLower();
@@ -1291,6 +1401,40 @@ private:
             BodyGestureSequence = LoadObject<UAnimSequence>(
                 nullptr,
                 *AnimationPath);
+            if (UAnimSequence* Sequence = BodyGestureSequence.Get())
+            {
+                const float SequenceEnd = Sequence->GetPlayLength();
+                const float MinimumSegment = 1.0f / 60.0f;
+                BodyGestureStartSeconds = FMath::Clamp(
+                    BodyGestureStartSeconds,
+                    0.0f,
+                    FMath::Max(0.0f, SequenceEnd - (3.0f * MinimumSegment)));
+                BodyGestureHoldSeconds = FMath::Clamp(
+                    BodyGestureHoldSeconds,
+                    BodyGestureStartSeconds + MinimumSegment,
+                    FMath::Max(
+                        BodyGestureStartSeconds + MinimumSegment,
+                        SequenceEnd - (2.0f * MinimumSegment)));
+                BodyGestureLowerStartSeconds = FMath::Clamp(
+                    BodyGestureLowerStartSeconds,
+                    BodyGestureHoldSeconds + MinimumSegment,
+                    FMath::Max(
+                        BodyGestureHoldSeconds + MinimumSegment,
+                        SequenceEnd - MinimumSegment));
+                BodyGestureEndSeconds = FMath::Clamp(
+                    BodyGestureEndSeconds,
+                    BodyGestureLowerStartSeconds + MinimumSegment,
+                    SequenceEnd);
+                UE_LOG(
+                    LogConclaviaStudio,
+                    Display,
+                    TEXT("Authored hand-raise timeline: start=%.3f hold=%.3f lower=%.3f end=%.3f sequence=%.3f"),
+                    BodyGestureStartSeconds,
+                    BodyGestureHoldSeconds,
+                    BodyGestureLowerStartSeconds,
+                    BodyGestureEndSeconds,
+                    SequenceEnd);
+            }
         }
         bPhysicalGestureReady = BodyGestureSequence.IsValid();
         return BodyGestureSequence.Get();
@@ -1348,7 +1492,12 @@ private:
             FPlatformTime::Seconds() - BodyGesturePhaseStartedAt);
         if (BodyGesturePhase == TEXT("raising"))
         {
-            return FMath::Clamp(Elapsed / BodyGestureRaiseSeconds, 0.0f, 1.0f);
+            return FMath::Clamp(
+                Elapsed / FMath::Max(
+                    BodyGestureHoldSeconds - BodyGestureStartSeconds,
+                    UE_SMALL_NUMBER),
+                0.0f,
+                1.0f);
         }
         if (BodyGesturePhase == TEXT("held"))
         {
@@ -1357,7 +1506,9 @@ private:
         if (BodyGesturePhase == TEXT("lowering"))
         {
             return 1.0f - FMath::Clamp(
-                Elapsed / BodyGestureLowerSeconds,
+                Elapsed / FMath::Max(
+                    BodyGestureEndSeconds - BodyGestureLowerStartSeconds,
+                    UE_SMALL_NUMBER),
                 0.0f,
                 1.0f);
         }
@@ -1451,7 +1602,7 @@ private:
             StudioWorld->GetTimerManager().ClearTimer(BodyGestureTimer);
             BodyGestureComponent = Body;
             Body->PlayAnimation(Sequence, false);
-            Body->SetPosition(0.0f, false);
+            Body->SetPosition(BodyGestureStartSeconds, false);
             Body->SetPlayRate(1.0f);
             Body->VisibilityBasedAnimTickOption =
                 EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
@@ -1479,7 +1630,7 @@ private:
                 FTimerDelegate::CreateRaw(
                     this,
                     &FConclaviaStudioModule::HoldRaisedHand),
-                BodyGestureHoldSeconds,
+                BodyGestureHoldSeconds - BodyGestureStartSeconds,
                 false);
             return;
         }
@@ -1513,7 +1664,7 @@ private:
             FTimerDelegate::CreateRaw(
                 this,
                 &FConclaviaStudioModule::FinishLowerHand),
-            BodyGestureLowerSeconds,
+            BodyGestureEndSeconds - BodyGestureLowerStartSeconds,
             false);
     }
 
@@ -4149,10 +4300,10 @@ private:
     FString ActivePerformanceGesture = TEXT("none");
     FString ActiveBodyGesture = TEXT("none");
     FString BodyGesturePhase = TEXT("idle");
-    static constexpr float BodyGestureRaiseSeconds = 1.6f;
-    static constexpr float BodyGestureHoldSeconds = 2.4f;
-    static constexpr float BodyGestureLowerStartSeconds = 3.5f;
-    static constexpr float BodyGestureLowerSeconds = 1.2f;
+    float BodyGestureStartSeconds = 0.0f;
+    float BodyGestureHoldSeconds = 2.4f;
+    float BodyGestureLowerStartSeconds = 3.5f;
+    float BodyGestureEndSeconds = 4.7f;
     double BodyGesturePhaseStartedAt = 0.0;
     double CommercialModelDeadline = 0.0;
     double ListeningModelDeadline = 0.0;

@@ -19,6 +19,7 @@
     { "Name": "MetaHumanLiveLink", "Enabled": true },
     { "Name": "RuntimeMetaHumanLipSync", "Enabled": true },
     { "Name": "PixelStreaming2", "Enabled": true },
+    { "Name": "CaptureManagerEditor", "Enabled": true },
     { "Name": "PythonScriptPlugin", "Enabled": true },
     { "Name": "EditorScriptingUtilities", "Enabled": true }
   ]

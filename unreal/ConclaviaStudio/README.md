@@ -332,6 +332,51 @@ Epic's `RTG_MH_IKRig`. Runtime telemetry exposes `physicalGestureReady`,
 `physicalGestureDriver`, `bodyGesturePhase` and `bodyGestureAlpha`, and the
 meeting camera stays on the portrait shot while the asset is unavailable.
 
+### Markerless hand-raise build
+
+The preferred production source is a real, single-person performance processed
+by the UE 5.8 MetaHuman Animator Markerless Motion Capture plugin. Capture the
+performer from head to toe with the hands and feet inside the frame, leave a
+short neutral lead-in and tail, and avoid camera movement. Higher source frame
+rate and resolution improve tracking; upscaling can help framing but cannot add
+motion detail that the camera did not record.
+
+Source footage is private input and must remain outside Git. Copy it to a
+temporary path on the Windows renderer and run:
+
+```powershell
+& C:\ConclaviaMeetingAvatar\Scripts\Build-MarkerlessHandRaise.ps1 `
+  -CapturePath C:\ConclaviaMeetingAvatar\Capture\gesture_hand_raise_take.mp4 `
+  -Force
+```
+
+The pipeline ingests the mono video through Capture Manager, solves body motion
+locally, exports a body-only MetaHuman `AnimSequence` through
+`RTG_MH_IKRig`, enables foot locking and preserves the last valid pose for any
+unsolved frame. A successful build writes
+`/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_Markerless_v1` and the
+sentinel `CONCLAVIA_MARKERLESS_PIPELINE_OK` to
+`Saved/Logs/MarkerlessHandRaise.log`.
+
+Do not configure the generated asset solely because the solve completed. First
+review the portrait and gesture-camera renders for shoulder popping, wrist or
+finger collapse, foot sliding, body drift and hard transitions. After that
+visual gate, set:
+
+```ini
+[ConclaviaStudio]
+MeetingHandRaiseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_Markerless_v1.AS_MeetingHandRaise_Markerless_v1
+MeetingHandRaiseStartTimeSeconds=1.75
+MeetingHandRaiseHoldTimeSeconds=3.25
+MeetingHandRaiseLowerTimeSeconds=5.75
+MeetingHandRaiseEndTimeSeconds=7.50
+```
+
+The runtime plays the captured rise, pauses on a genuine captured hold while
+permission is pending, and resumes the captured lowering motion when the hand is
+cleared. It never reconstructs the shoulder or arm with procedural bone
+rotations.
+
 Listening reactions use the purchased Runtime MetaHuman Lip Sync full-face
 model even when the avatar is silent. A `listen-react` cue carries a semantic
 `listenerMood` and bounded intensity inferred from the other participant's
