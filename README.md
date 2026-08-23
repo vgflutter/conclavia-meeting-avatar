@@ -69,7 +69,32 @@ An explicit voice invocation such as `Mary, what are the main risks?` opens a sh
 
 `Mary, stop`, `Thank you, Mary`, and equivalent dismissal phrases immediately close the lease and send an interrupt cue to the renderer. Human-only discussion never grants Mary the floor. If she has an autonomous contribution, she must use `request-to-speak` and wait for a verbal or dashboard approval.
 
-## Sentence-level performance contract
+## Mood system and sentence-level performance
+
+Mary uses the same twelve semantic moods while listening and while speaking.
+Listening moods are generated for every finalized participant turn, including
+turns for which Mary correctly remains silent. Speaking moods are generated
+sentence by sentence, so a single answer can change expression naturally as its
+meaning changes.
+
+| Mood | Performance intent |
+| --- | --- |
+| `neutral` | Calm rest state without a strong social signal. |
+| `attentive` | Focused listening and clear engagement with the speaker. |
+| `curious` | Interest, exploration, or a genuine question. |
+| `amused` | Warm amusement and restrained playfulness. |
+| `confident` | Assured delivery of a well-supported point. |
+| `skeptical` | Visible doubt or a need to verify a claim. |
+| `concerned` | Caution about a risk, problem, or consequence. |
+| `surprised` | A measured reaction to unexpected information. |
+| `empathetic` | Supportive understanding of another participant. |
+| `assertive` | A firm, important contribution delivered without aggression. |
+| `frustrated` | Bounded disagreement or difficulty, without theatrical exaggeration. |
+| `reflective` | Thoughtful consideration or synthesis of a complex point. |
+
+Every mood carries an intensity level from `1` (barely perceptible) to `5`
+(strong). Levels 2 and 3 are the normal conversational range; levels 4 and 5
+are reserved for content that genuinely warrants a stronger performance.
 
 The LLM returns structured output for each spoken sentence:
 
@@ -99,14 +124,7 @@ The LLM returns structured output for each spoken sentence:
 }
 ```
 
-`listeningMood` is Mary's socially appropriate reaction to the latest participant, rather than a mechanical copy of the participant's emotion. It is evaluated even when the participation decision is `silence`, so Mary remains socially present without interrupting. `listeningLevel` is deliberately conservative and is stabilized for approximately 5–9 seconds so the face does not flicker between sentences. The same `1` (barely perceptible) to `5` (strong) range is used for spoken sentences. Levels 2 and 3 are the normal range; higher values are reserved for content that genuinely warrants a stronger expression. `language` is `it-IT` or `en-US`. The renderer preserves the original semantic mood through the control plane, synthesizes up to two sentences in parallel with the selected native-language voices, concatenates their PCM streams, and maps every spoken mood and level to an accurately timed Unreal performance beat.
-
-Supported moods are:
-
-```text
-neutral, attentive, curious, amused, confident, skeptical,
-concerned, surprised, empathetic, assertive, frustrated, reflective
-```
+`listeningMood` is Mary's socially appropriate reaction to the latest participant, rather than a mechanical copy of the participant's emotion. It is evaluated even when the participation decision is `silence`, so Mary remains socially present without interrupting. `listeningLevel` is deliberately conservative and is stabilized for approximately 5–9 seconds so the face does not flicker between sentences. `language` is `it-IT` or `en-US`. The renderer preserves the original semantic mood through the control plane, synthesizes up to two sentences in parallel with the selected native-language voices, concatenates their PCM streams, and maps every spoken mood and level to an accurately timed Unreal performance beat.
 
 The bridge assigns each semantic mood its own commercial full-face primitive,
 intensity curve, gaze target, and performance direction. No two moods collapse
