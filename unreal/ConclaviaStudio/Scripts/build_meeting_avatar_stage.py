@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v3"
+STAGE_REVISION = "v4"
 LEVEL_PATH = f"/Game/Conclavia/Meeting/L_MeetingAvatar_{STAGE_REVISION}"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 
@@ -230,18 +230,19 @@ def build() -> None:
             f"M_MeetingInk_{STAGE_REVISION}",
             unreal.LinearColor(0.002, 0.004, 0.008, 1.0),
         ),
-        "amber": make_material(
-            f"M_MeetingAmber_{STAGE_REVISION}",
-            unreal.LinearColor(0.075, 0.018, 0.003, 1.0),
+        "teal": make_material(
+            f"M_MeetingTeal_{STAGE_REVISION}",
+            unreal.LinearColor(0.004, 0.055, 0.052, 1.0),
         ),
-        "red": make_material(
-            f"M_MeetingRed_{STAGE_REVISION}",
-            unreal.LinearColor(0.095, 0.003, 0.002, 1.0),
+        "jade": make_material(
+            f"M_MeetingJade_{STAGE_REVISION}",
+            unreal.LinearColor(0.008, 0.095, 0.082, 1.0),
         ),
     }
 
-    # Three quiet, intentionally abstract panels preserve the established
-    # meeting-avatar identity without importing any podcast furniture or UI.
+    # A restrained teal field deliberately belongs to the standalone meeting
+    # product. It gives skin and hair a clean beauty-shot contrast without
+    # reintroducing the red/amber podcast set or any broadcast furniture.
     add_panel(
         "MEETING_Background_Ink",
         unreal.Vector(330.0, -250.0, 210.0),
@@ -249,16 +250,16 @@ def build() -> None:
         materials["ink"],
     )
     add_panel(
-        "MEETING_Background_Amber",
+        "MEETING_Background_Teal",
         unreal.Vector(334.0, 0.0, 210.0),
         unreal.Vector(0.35, 2.40, 4.2),
-        materials["amber"],
+        materials["teal"],
     )
     add_panel(
-        "MEETING_Background_Red",
+        "MEETING_Background_Jade",
         unreal.Vector(330.0, 245.0, 210.0),
         unreal.Vector(0.35, 2.55, 4.2),
-        materials["red"],
+        materials["jade"],
     )
 
     face_target = unreal.Vector(0.0, 0.0, 162.0)
@@ -266,7 +267,7 @@ def build() -> None:
         "CAM_Meeting_Portrait",
         unreal.Vector(-300.0, 0.0, 174.0),
         face_target,
-        105.0,
+        210.0,
     )
     add_camera(
         "CAM_Meeting_Gesture",
@@ -280,7 +281,7 @@ def build() -> None:
         unreal.Vector(-330.0, -360.0, 510.0),
         face_target,
         unreal.LinearColor(1.0, 0.91, 0.84, 1.0),
-        230.0,
+        345.0,
         520.0,
         300.0,
     )
@@ -289,7 +290,7 @@ def build() -> None:
         unreal.Vector(-250.0, 490.0, 390.0),
         face_target,
         unreal.LinearColor(0.26, 0.64, 1.0, 1.0),
-        65.0,
+        105.0,
         440.0,
         260.0,
     )
@@ -298,7 +299,7 @@ def build() -> None:
         unreal.Vector(330.0, -260.0, 440.0),
         face_target,
         unreal.LinearColor(1.0, 0.34, 0.15, 1.0),
-        145.0,
+        120.0,
         400.0,
         220.0,
     )
@@ -308,7 +309,7 @@ def build() -> None:
         "MEETING_Ambient",
     )
     sky_component = skylight.get_component_by_class(unreal.SkyLightComponent)
-    sky_component.set_editor_property("intensity", 0.09)
+    sky_component.set_editor_property("intensity", 0.16)
     sky_component.set_editor_property("real_time_capture", False)
     sky_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     skylight.tags = [unreal.Name("ConclaviaMeetingSet")]

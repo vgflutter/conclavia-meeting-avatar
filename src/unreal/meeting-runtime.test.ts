@@ -25,6 +25,6 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     moduleSource,
     /\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingAttentiveIdle_v1/,
   );
-  assert.match(startScript, /L_MeetingAvatar_v3/);
+  assert.match(startScript, /L_MeetingAvatar_v4/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
 });
