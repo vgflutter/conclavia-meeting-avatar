@@ -926,7 +926,9 @@ public:
             StudioWorld->GetTimerManager().ClearTimer(ListeningModelTimer);
             StudioWorld->GetTimerManager().ClearTimer(BodyGestureTimer);
             StudioWorld->GetTimerManager().ClearTimer(BodyIdleVariationTimer);
+            StudioWorld->GetTimerManager().ClearTimer(ApplauseExpressionTimer);
         }
+        bMetaHumanApplauseExpressionActive = false;
         ResetCommercialLipSync();
         if (GEngine && GEngine->GameViewport && BroadcastOverlay.IsValid())
         {
@@ -1068,6 +1070,7 @@ private:
         InitializeFacialLife();
         GetBodyGestureSequence();
         GetApplauseGestureSequence();
+        GetMetaHumanApplauseExpressionSequence();
         if (bLipSyncLab)
         {
             // A deliberately boring laboratory shot: one hero face, no cut,
@@ -1603,6 +1606,103 @@ private:
         return ApplauseGestureSequence.Get();
     }
 
+    UAnimSequence* GetMetaHumanApplauseExpressionSequence()
+    {
+        if (!MetaHumanApplauseExpressionSequence.IsValid())
+        {
+            // This project asset is rebuilt from Epic's official positive
+            // pose, retaining only six portable RigLogic control curves. The
+            // 875 identity-specific facial bone tracks, brow-down and jaw-open
+            // controls are deliberately absent.
+            static const TCHAR* PositivePosePath =
+                TEXT("/Game/Conclavia/Meeting/Animations/AS_MeetingPositiveExpression_CurveOnly_v1.AS_MeetingPositiveExpression_CurveOnly_v1");
+            MetaHumanApplauseExpressionSequence = LoadObject<UAnimSequence>(
+                nullptr,
+                PositivePosePath);
+            if (UAnimSequence* Sequence = MetaHumanApplauseExpressionSequence.Get())
+            {
+                UE_LOG(
+                    LogConclaviaStudio,
+                    Display,
+                    TEXT("Curve-only MetaHuman applause expression ready: %s length=%.3f"),
+                    *Sequence->GetPathName(),
+                    Sequence->GetPlayLength());
+            }
+        }
+        bMetaHumanApplauseExpressionReady =
+            MetaHumanApplauseExpressionSequence.IsValid();
+        return MetaHumanApplauseExpressionSequence.Get();
+    }
+
+    void FinishMetaHumanApplauseExpression()
+    {
+        if (!bMetaHumanApplauseExpressionActive)
+        {
+            return;
+        }
+        if (StudioWorld.IsValid())
+        {
+            StudioWorld->GetTimerManager().ClearTimer(ApplauseExpressionTimer);
+        }
+        bMetaHumanApplauseExpressionActive = false;
+        bCommercialFaceReady = ConfigureCommercialFace();
+        if (bCommercialFaceReady)
+        {
+            SetCommercialMood(
+                ERealisticMetaHumanLipSyncMood::Neutral,
+                TEXT("neutral"),
+                0.0f);
+            ActiveSemanticMoodName = TEXT("neutral");
+            BindCommercialGenerator();
+        }
+    }
+
+    bool StartMetaHumanApplauseExpression(const float ExpectedDurationSeconds)
+    {
+        if (!StudioWorld.IsValid() || bCommercialSpeechActive)
+        {
+            return false;
+        }
+        UAnimSequence* Sequence = GetMetaHumanApplauseExpressionSequence();
+        USkeletalMeshComponent* Face = CommercialFace.Get();
+        if (!Sequence || !Face)
+        {
+            return false;
+        }
+
+        StudioWorld->GetTimerManager().ClearTimer(ListeningLifeTimer);
+        StudioWorld->GetTimerManager().ClearTimer(CommercialFaceTimer);
+        StudioWorld->GetTimerManager().ClearTimer(ApplauseExpressionTimer);
+        bListeningReactionActive = false;
+        bListeningVisualActive = false;
+        Face->PlayAnimation(Sequence, false);
+        Face->SetPosition(0.0f, false);
+        Face->SetPlayRate(
+            Sequence->GetPlayLength()
+            / FMath::Max(ExpectedDurationSeconds, 0.1f));
+        Face->VisibilityBasedAnimTickOption =
+            EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+        Face->TickAnimation(0.0f, false);
+        Face->RefreshBoneTransforms();
+        Face->MarkRenderDynamicDataDirty();
+        ActiveMoodName = TEXT("happiness");
+        ActiveSemanticMoodName = TEXT("amused");
+        ActiveMoodIntensity = 0.35f;
+        PerformanceCurrentIntensity = 0.35f;
+        PerformanceTargetIntensity = 0.35f;
+        ActivePerformanceFocus = TEXT("target");
+        ActivePerformanceGesture = TEXT("applause");
+        bMetaHumanApplauseExpressionActive = true;
+        StudioWorld->GetTimerManager().SetTimer(
+            ApplauseExpressionTimer,
+            FTimerDelegate::CreateRaw(
+                this,
+                &FConclaviaStudioModule::FinishMetaHumanApplauseExpression),
+            FMath::Clamp(ExpectedDurationSeconds, 1.0f, 15.0f),
+            false);
+        return true;
+    }
+
     static void RefreshAuthoredBodyPose(USkeletalMeshComponent* Body)
     {
         if (!Body)
@@ -1688,6 +1788,7 @@ private:
         {
             return;
         }
+        const bool bWasApplauding = BodyGesturePhase == TEXT("applauding");
         StudioWorld->GetTimerManager().ClearTimer(BodyGestureTimer);
         BodyGestureComponent.Reset();
         BodyGesturePhase = TEXT("idle");
@@ -1704,6 +1805,10 @@ private:
             {
                 SwitchCamera(TEXT("CAM_Meeting_Portrait"), 0.0f, false);
             }
+        }
+        if (bWasApplauding)
+        {
+            FinishMetaHumanApplauseExpression();
         }
     }
 
@@ -2797,6 +2902,7 @@ private:
         {
             return;
         }
+        FinishMetaHumanApplauseExpression();
         WarmListeningGenerator();
         if (URealisticMetaHumanLipSyncGenerator* Generator = ListeningGenerator.Get())
         {
@@ -3123,6 +3229,7 @@ private:
 
     bool PrepareCommercialSpeech(TArray<uint8> PcmBytes)
     {
+        FinishMetaHumanApplauseExpression();
         StopCommercialPlayback();
         if (!bCommercialFaceReady)
         {
@@ -4019,7 +4126,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v23-stable-camera-applause")
+            ? TEXT("ue58-commercial-lipsync-v24-curve-smile-fixed-camera")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -4121,19 +4228,17 @@ private:
             ListeningSolverChunksSubmitted,
             bCommercialEyesAimBound ? TEXT("true") : TEXT("false"));
         Body.RemoveFromEnd(TEXT("}"));
-        const bool bApplauseExpressionActive =
-            BodyGesturePhase == TEXT("applauding")
-            && bListeningReactionActive
-            && ActiveMoodName.Equals(TEXT("happiness"), ESearchCase::IgnoreCase);
         Body += FString::Printf(
             TEXT(",\"applauseGestureReady\":%s,\"applauseGestureDriver\":\"%s\",\"applauseExpressionReady\":%s,\"applauseExpressionActive\":%s,\"applauseExpressionDriver\":\"%s\"}"),
             bApplauseGestureReady ? TEXT("true") : TEXT("false"),
             bApplauseGestureReady
                 ? TEXT("ue58-markerless-authored-upper-body-retarget")
                 : TEXT("awaiting-markerless-applause-animation"),
-            bListeningModelReady ? TEXT("true") : TEXT("false"),
-            bApplauseExpressionActive ? TEXT("true") : TEXT("false"),
-            TEXT("commercial-mood-happiness-ue56-calibrated"));
+            bMetaHumanApplauseExpressionReady ? TEXT("true") : TEXT("false"),
+            bMetaHumanApplauseExpressionActive ? TEXT("true") : TEXT("false"),
+            bMetaHumanApplauseExpressionReady
+                ? TEXT("ue58-metahuman-curve-only-positive-expression")
+                : TEXT("awaiting-curve-only-positive-expression"));
         OnComplete(ConclaviaStudio::JsonResponse(Body));
         return true;
     }
@@ -4256,16 +4361,16 @@ private:
                     const float ApplauseExpressionSeconds = FMath::Max(
                         ExpectedDurationSeconds,
                         ApplauseGestureEndSeconds - ApplauseGestureStartSeconds);
-                    // Match the conservative UE 5.6 mood calibration. Direct
-                    // playback of UE 5.8's HappyA template bypassed the live
-                    // face stack and produced a tense, identity-dependent
-                    // grimace on Showcase.
-                    StartListeningReaction(
-                        ERealisticMetaHumanLipSyncMood::Happiness,
-                        TEXT("happiness"),
-                        TEXT("amused"),
-                        0.38f,
-                        ApplauseExpressionSeconds);
+                    if (!StartMetaHumanApplauseExpression(ApplauseExpressionSeconds))
+                    {
+                        // Never fall back to the commercial silent happiness
+                        // preset: on Showcase it opens the mouth and combines
+                        // incompatible upper-face controls into a tense grin.
+                        UE_LOG(
+                            LogConclaviaStudio,
+                            Warning,
+                            TEXT("Applause started without its validated curve-only positive expression"));
+                    }
                 }
             }
             else if (CueBodyGesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase)
@@ -4369,6 +4474,7 @@ private:
         // while swapping the visible actor; destroying them here turned an
         // otherwise instant face rebind into a multi-minute cold start and a
         // quick second selection could strand both generators in loading.
+        FinishMetaHumanApplauseExpression();
         StopCommercialPlayback();
         if (StudioWorld.IsValid())
         {
@@ -4535,6 +4641,7 @@ private:
     FTimerHandle ListeningModelTimer;
     FTimerHandle BodyGestureTimer;
     FTimerHandle BodyIdleVariationTimer;
+    FTimerHandle ApplauseExpressionTimer;
     TArray<FParticipantFaceState> ParticipantFaces;
     ILiveLinkClient* LiveLinkClient = nullptr;
     TSharedPtr<FConclaviaPcmLiveLinkSource> PcmSource;
@@ -4550,6 +4657,7 @@ private:
     FVector BodyGestureStartHandLocation = FVector::ZeroVector;
     TWeakObjectPtr<UAnimSequence> BodyGestureSequence;
     TWeakObjectPtr<UAnimSequence> ApplauseGestureSequence;
+    TWeakObjectPtr<UAnimSequence> MetaHumanApplauseExpressionSequence;
     TMap<FString, TWeakObjectPtr<AActor>> CommercialAvatarActors;
     TStrongObjectPtr<URealisticMetaHumanLipSyncGenerator> CommercialGenerator;
     TStrongObjectPtr<URealisticMetaHumanLipSyncGenerator> ListeningGenerator;
@@ -4598,8 +4706,8 @@ private:
     float BodyGestureHoldSeconds = 2.4f;
     float BodyGestureLowerStartSeconds = 3.5f;
     float BodyGestureEndSeconds = 4.7f;
-    float ApplauseGestureStartSeconds = 1.5f;
-    float ApplauseGestureEndSeconds = 6.0f;
+    float ApplauseGestureStartSeconds = 19.0f;
+    float ApplauseGestureEndSeconds = 22.0f;
     double BodyGesturePhaseStartedAt = 0.0;
     float ActiveBodyIdlePlayRate = 0.58f;
     int32 ActiveBodyIdleIndex = -1;
@@ -4620,6 +4728,8 @@ private:
     bool bCommercialEyesAimBound = false;
     bool bPhysicalGestureReady = false;
     bool bApplauseGestureReady = false;
+    bool bMetaHumanApplauseExpressionReady = false;
+    bool bMetaHumanApplauseExpressionActive = false;
     bool bBodyGestureLowerQueued = false;
     int32 ListeningSolverChunksSubmitted = 0;
     int32 ActiveFaceIndex = -1;

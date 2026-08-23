@@ -38,6 +38,16 @@ SEATED_BASE_TRACKS = {
     "foot_r",
     "ball_r",
 }
+STABLE_MEETING_TORSO_TRACKS = {
+    "spine_01",
+    "spine_02",
+    "spine_03",
+    "spine_04",
+    "spine_05",
+    "neck_01",
+    "neck_02",
+    "head",
+}
 
 
 def copy_transform(value: unreal.Transform) -> unreal.Transform:
@@ -183,6 +193,11 @@ def bake_body_animation(
     motion_tracks: set[str],
     minimum_motion_delta: float,
     delta_from_stabilized_pose: bool,
+    preserve_motion_translations: bool,
+    stabilize_meeting_torso: bool,
+    ease_segment_start_seconds: float,
+    ease_segment_end_seconds: float,
+    transition_seconds: float,
     force: bool,
 ) -> unreal.AnimSequence:
     target_asset_path = f"{output_path}/{asset_name}"
@@ -279,12 +294,15 @@ def bake_body_animation(
         len(body_frames) - 1,
         int(round(MEETING_STABILIZATION_TIME_SECONDS * OUTPUT_FRAME_RATE)),
     )
+    seated_base_track_names = set(SEATED_BASE_TRACKS)
+    if stabilize_meeting_torso:
+        seated_base_track_names.update(STABLE_MEETING_TORSO_TRACKS)
     seated_base_transforms = {
         bone_name: seated_pose.get_bone_pose(
             bone_name,
             unreal.AnimPoseSpaces.LOCAL,
         )
-        for bone_name in SEATED_BASE_TRACKS
+        for bone_name in seated_base_track_names
         if bone_name in track_names
     }
     reference_transforms = {
@@ -304,6 +322,40 @@ def bake_body_animation(
         if bone_name not in seated_base_transforms
     }
     stabilized_source_transforms = body_frames[stabilization_frame]
+    preserve_translation_tracks = (
+        required_tracks if preserve_motion_translations else set()
+    )
+
+    def gesture_weight(frame_index: int) -> float:
+        """Smoothly enter and leave a bounded gesture segment.
+
+        This is the offline equivalent of an AnimBP crossfade. It blends from
+        the authored seated pose into the captured solve and back without
+        changing camera, focal length, or view target.
+        """
+
+        if ease_segment_end_seconds <= ease_segment_start_seconds:
+            return 1.0
+        frame_time = frame_index / OUTPUT_FRAME_RATE
+        if frame_time <= ease_segment_start_seconds:
+            return 0.0
+        if frame_time >= ease_segment_end_seconds:
+            return 0.0
+        enter_end = ease_segment_start_seconds + transition_seconds
+        exit_start = ease_segment_end_seconds - transition_seconds
+        if frame_time < enter_end:
+            linear = max(
+                0.0,
+                min(1.0, (frame_time - ease_segment_start_seconds) / transition_seconds),
+            )
+            return linear * linear * (3.0 - 2.0 * linear)
+        if frame_time > exit_start:
+            linear = max(
+                0.0,
+                min(1.0, (ease_segment_end_seconds - frame_time) / transition_seconds),
+            )
+            return linear * linear * (3.0 - 2.0 * linear)
+        return 1.0
     captured_thigh = body_frames[stabilization_frame]["thigh_r"].rotation
     seated_thigh = seated_base_transforms["thigh_r"].rotation
     seated_leg_delta = (
@@ -348,7 +400,7 @@ def bake_body_animation(
                     bone_name
                 ].rotation
                 transforms = []
-                for frame in body_frames:
+                for frame_index, frame in enumerate(body_frames):
                     transformed = copy_transform(base_transform)
                     if delta_from_stabilized_pose:
                         # The body tracker solves against the performer's
@@ -367,6 +419,21 @@ def bake_body_animation(
                         ).normalized()
                     else:
                         transformed.rotation = frame[bone_name].rotation
+                    if bone_name in preserve_translation_tracks:
+                        transformed.translation = stabilized_source_transforms[
+                            bone_name
+                        ].translation
+                    weight = gesture_weight(frame_index)
+                    if weight < 1.0:
+                        seated_transform = seated_upper_body_transforms[bone_name]
+                        transformed.translation = (
+                            seated_transform.translation * (1.0 - weight)
+                            + transformed.translation * weight
+                        )
+                        transformed.rotation = seated_transform.rotation.slerp_quat(
+                            transformed.rotation,
+                            weight,
+                        )
                     transforms.append(transformed)
             controller.add_bone_track(bone_name, False)
             controller.set_bone_track_keys(
@@ -401,6 +468,10 @@ def bake_body_animation(
         f"seated_base_tracks={len(seated_base_transforms)} "
         f"rotation_only_tracks={len(reference_transforms)} "
         f"delta_from_stabilized_pose={delta_from_stabilized_pose} "
+        f"preserved_motion_translations={len(preserve_translation_tracks)} "
+        f"stabilized_meeting_torso={stabilize_meeting_torso} "
+        f"ease_segment={ease_segment_start_seconds:.3f}-"
+        f"{ease_segment_end_seconds:.3f} transition={transition_seconds:.3f} "
         f"seated_leg_delta={seated_leg_delta:.4f}"
     )
     return animation
@@ -424,6 +495,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--motion-tracks", default="upperarm_r")
     parser.add_argument("--minimum-motion-delta", type=float, default=0.15)
     parser.add_argument("--delta-from-stabilized-pose", action="store_true")
+    parser.add_argument("--preserve-motion-translations", action="store_true")
+    parser.add_argument("--stabilize-meeting-torso", action="store_true")
+    parser.add_argument("--ease-segment-start-seconds", type=float, default=-1.0)
+    parser.add_argument("--ease-segment-end-seconds", type=float, default=-1.0)
+    parser.add_argument("--transition-seconds", type=float, default=0.45)
     parser.add_argument("--reuse-performance", action="store_true")
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
@@ -462,6 +538,11 @@ def run() -> None:
             motion_tracks,
             args.minimum_motion_delta,
             args.delta_from_stabilized_pose,
+            args.preserve_motion_translations,
+            args.stabilize_meeting_torso,
+            args.ease_segment_start_seconds,
+            args.ease_segment_end_seconds,
+            args.transition_seconds,
             args.force,
         )
         unreal.log("CONCLAVIA_MARKERLESS_PIPELINE_OK")

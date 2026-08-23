@@ -31,8 +31,8 @@ async function cue(bodyGesture, intent) {
       intent,
       bodyGesture,
       listenerSemanticMood: "amused",
-      listenerMood: "happiness",
-      listenerMoodIntensity: 0.38,
+      listenerMood: "neutral",
+      listenerMoodIntensity: 0,
       expectedDurationMs: 4_500,
       performanceBeats: []
     })
@@ -133,6 +133,13 @@ async function captureAfter(video, startedAt, targetMs, filename) {
       type: "jpeg",
       quality: 96
     });
+    const fixedCamera = {
+      count: idleHealth.cameraCount,
+      name: idleHealth.activeCamera
+    };
+    if (fixedCamera.count !== 1 || fixedCamera.name !== "CAM_Meeting_Portrait") {
+      throw new Error(`Meeting camera is not immutable: ${JSON.stringify(fixedCamera)}`);
+    }
 
     await cue("applause", "applause");
     const applauseStartedAt = Date.now();
@@ -142,10 +149,17 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         && candidate.commercialMood === "happiness"
         && candidate.performanceSemanticMood === "amused"
         && candidate.applauseExpressionActive === true
-        && candidate.applauseExpressionDriver === "commercial-mood-happiness-ue56-calibrated",
-      "authored applause state with the calibrated positive expression"
+        && candidate.applauseExpressionDriver === "ue58-metahuman-curve-only-positive-expression"
+        && candidate.cameraCount === fixedCamera.count
+        && candidate.activeCamera === fixedCamera.name,
+      "authored applause state with the curve-only positive expression and fixed camera"
     );
-    for (const targetMs of [120, 380, 700, 1_100, 1_600, 2_200, 3_000, 3_900]) {
+    const captureTimes = [
+      150, 450, 750, 1_050, 1_350,
+      1_650, 1_950, 2_250, 2_550, 2_850,
+      3_150, 3_450, 3_750, 4_050, 4_350
+    ];
+    for (const targetMs of captureTimes) {
       await captureAfter(
         video,
         applauseStartedAt,
@@ -155,7 +169,9 @@ async function captureAfter(video, startedAt, targetMs, filename) {
     }
     const settledHealth = await waitForHealth(
       (candidate) => candidate.bodyGesturePhase === "idle"
-        && candidate.bodyGesture === "none",
+        && candidate.bodyGesture === "none"
+        && candidate.cameraCount === fixedCamera.count
+        && candidate.activeCamera === fixedCamera.name,
       "settled idle body state"
     );
 
@@ -163,7 +179,8 @@ async function captureAfter(video, startedAt, targetMs, filename) {
       path.join(outputDirectory, "sequence.json"),
       JSON.stringify({
         ok: true,
-        applauseFrames: 8,
+        applauseFrames: captureTimes.length,
+        fixedCamera,
         applauseGestureDriver: initialHealth.applauseGestureDriver,
         phases: {
           idle: idleHealth.bodyGesturePhase,

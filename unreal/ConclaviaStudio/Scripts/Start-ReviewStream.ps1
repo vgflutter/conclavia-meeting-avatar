@@ -743,10 +743,11 @@ if ($isCommercialLipSync) {
         -PassThru
     if ($readinessProcess.ExitCode -ne 0) {
         $readinessErrorText = if (Test-Path $readinessStderr) {
-            (Get-Content $readinessStderr -Raw).Trim()
+            [string](Get-Content $readinessStderr -Raw -ErrorAction SilentlyContinue)
         } else {
             ""
         }
+        $readinessErrorText = $readinessErrorText.Trim()
         $readinessFailure = if ($readinessErrorText) {
             $readinessErrorText
         } elseif (Test-Path $readinessStdout) {

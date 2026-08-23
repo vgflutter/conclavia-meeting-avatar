@@ -376,8 +376,8 @@ MeetingHandRaiseHoldTimeSeconds=3.25
 MeetingHandRaiseLowerTimeSeconds=5.75
 MeetingHandRaiseEndTimeSeconds=7.50
 MeetingApplauseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1.AS_MeetingApplause_SeatedMarkerless_v1
-MeetingApplauseStartTimeSeconds=1.50
-MeetingApplauseEndTimeSeconds=6.00
+MeetingApplauseStartTimeSeconds=19.00
+MeetingApplauseEndTimeSeconds=22.00
 ```
 
 The runtime plays the captured rise, pauses on a genuine captured hold while
@@ -392,6 +392,23 @@ social decision: it requires an exceptional complex conclusion, maximum
 importance, high confidence, no pending request to speak, and a three-minute
 cooldown. Ordinary agreement or merely interesting information never passes
 that gate.
+
+The applause bake retains the markerless solver's constant arm-chain
+translations in addition to its rotations. This preserves the performer's
+hand contact after retargeting to a MetaHuman with different proportions
+without synthesizing a hand pose. A 350 ms smoothstep blends the captured upper
+body from and back to the authored seated pose at the configured segment
+boundaries. The seated layer also owns spine, neck, and head while the capture
+owns clavicles, arms, hands, and fingers, so the continuous applause cannot
+look like a camera move. The meeting camera remains unchanged throughout.
+
+The accompanying positive face is not the commercial silent-happiness preset
+and does not copy Epic template bone tracks between identities. Deployment
+builds `AS_MeetingPositiveExpression_CurveOnly_v1` from six restrained
+MetaHuman control curves sampled from the official happy pose. Jaw-open,
+brow-down, eye-look, and 875 identity-specific facial-bone tracks are excluded;
+the retained controls ease in and out over the bounded applause. Health exposes
+its independent readiness, activity, and driver fields.
 
 Listening reactions use the purchased Runtime MetaHuman Lip Sync full-face
 model even when the avatar is silent. A `listen-react` cue carries a semantic

@@ -396,8 +396,10 @@ export class ConclaviaRenderer {
       intent: "applause",
       bodyGesture: "applause",
       listenerSemanticMood: "amused",
-      listenerMood: "happiness",
-      listenerMoodIntensity: 0.38,
+      // The runtime owns a dedicated curve-only closed-mouth smile for
+      // applause. Do not feed silence into the commercial happiness preset.
+      listenerMood: "neutral",
+      listenerMoodIntensity: 0,
       expectedDurationMs: 4_500,
       performanceBeats: [],
     });

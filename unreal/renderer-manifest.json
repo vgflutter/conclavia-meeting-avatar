@@ -15,7 +15,7 @@
     "root": "C:\\ConclaviaMeetingAvatar",
     "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
     "editorTarget": "ConclaviaStudioEditor",
-    "runtimeRevision": "ue58-commercial-lipsync-v23-stable-camera-applause"
+    "runtimeRevision": "ue58-commercial-lipsync-v24-curve-smile-fixed-camera"
   },
   "pixelStreamingInfrastructure": {
     "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",
@@ -43,6 +43,7 @@
     "/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingEngagedIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingReflectiveIdle_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingPositiveExpression_CurveOnly_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1",
     "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase",

@@ -50,8 +50,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     engineConfig,
     /^MeetingApplauseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingApplause_SeatedMarkerless_v1\.AS_MeetingApplause_SeatedMarkerless_v1$/mu,
   );
-  assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=1\.50$/mu);
-  assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=6\.00$/mu);
+  assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=19\.00$/mu);
+  assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=22\.00$/mu);
   assert.match(moduleSource, /Rejected non-meeting gesture asset/);
   assert.match(moduleSource, /Rejected non-meeting applause asset/);
   assert.doesNotMatch(moduleSource, /BodyGestureRaiseSeconds/);
@@ -71,8 +71,9 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /applauseGestureReady/);
   assert.match(moduleSource, /BodyGesturePhase == TEXT\("applauding"\)/);
   assert.match(moduleSource, /const bool bApplauseCue/);
-  assert.match(moduleSource, /ERealisticMetaHumanLipSyncMood::Happiness/);
-  assert.match(moduleSource, /commercial-mood-happiness-ue56-calibrated/);
+  assert.match(moduleSource, /AS_MeetingPositiveExpression_CurveOnly_v1/);
+  assert.match(moduleSource, /ue58-metahuman-curve-only-positive-expression/);
+  assert.doesNotMatch(moduleSource, /commercial-mood-happiness-ue56-calibrated/);
   assert.doesNotMatch(moduleSource, /facialloop_happy_f_s001/);
   assert.doesNotMatch(moduleSource, /CAM_Meeting_Applause/);
   assert.doesNotMatch(moduleSource, /CAM_Meeting_Gesture/);
@@ -110,6 +111,8 @@ await test("builds meeting gestures from private markerless captures with visual
     handBuildScript,
     applauseBuildScript,
     applauseCaptureScript,
+    positiveExpressionBuilder,
+    deployScript,
     supervisor,
     ignoreRules,
   ] =
@@ -132,6 +135,11 @@ await test("builds meeting gestures from private markerless captures with visual
       repositoryFile("unreal/ConclaviaStudio/Scripts/Capture-ApplauseSequence.cjs"),
       "utf8",
     ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/build_metahuman_positive_expression.py"),
+      "utf8",
+    ),
+    readFile(repositoryFile("scripts/deploy-3d-source.sh"), "utf8"),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/Start-StudioSupervisor.ps1"),
       "utf8",
@@ -163,6 +171,13 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(handBuildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
   assert.match(applauseBuildScript, /MHP_MeetingApplause_Markerless_v1/);
   assert.doesNotMatch(applauseBuildScript, /--delta-from-stabilized-pose/);
+  assert.match(applauseBuildScript, /--preserve-motion-translations/);
+  assert.match(applauseBuildScript, /--stabilize-meeting-torso/);
+  assert.match(applauseBuildScript, /--ease-segment-start-seconds", "19\.00/);
+  assert.match(applauseBuildScript, /--ease-segment-end-seconds", "22\.00/);
+  assert.match(solveScript, /STABLE_MEETING_TORSO_TRACKS/);
+  assert.match(solveScript, /seated_transform\.rotation\.slerp_quat/);
+  assert.match(solveScript, /linear \* linear \* \(3\.0 - 2\.0 \* linear\)/);
   assert.match(applauseBuildScript, /ReusePerformance/);
   assert.match(
     applauseBuildScript,
@@ -174,7 +189,18 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseCaptureScript, /commercialMood === "happiness"/);
   assert.match(applauseCaptureScript, /performanceSemanticMood === "amused"/);
   assert.match(applauseCaptureScript, /applauseExpressionActive === true/);
+  assert.match(applauseCaptureScript, /cameraCount === fixedCamera\.count/);
+  assert.match(applauseCaptureScript, /activeCamera === fixedCamera\.name/);
+  assert.match(applauseCaptureScript, /ue58-metahuman-curve-only-positive-expression/);
+  assert.match(positiveExpressionBuilder, /AS_MeetingPositiveExpression_CurveOnly_v1/);
+  assert.match(positiveExpressionBuilder, /RawCurveTrackTypes\.RCT_FLOAT/);
+  assert.match(positiveExpressionBuilder, /ctrl_expressions_mouthcornerpull/);
+  assert.match(positiveExpressionBuilder, /ctrl_expressions_eyecheekraise/);
+  assert.match(positiveExpressionBuilder, /if bone_tracks or len\(curve_names\)/);
+  assert.doesNotMatch(positiveExpressionBuilder, /browdown|jawopen|eyelook/iu);
+  assert.match(deployScript, /Build-MeetingPositiveExpression\.ps1/);
   assert.match(supervisor, /applauseGestureDriver/);
+  assert.match(supervisor, /applauseExpressionDriver/);
   assert.match(
     rendererManifest,
     /AS_MeetingApplause_SeatedMarkerless_v1/,
