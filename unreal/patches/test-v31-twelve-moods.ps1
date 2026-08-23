@@ -47,12 +47,29 @@ foreach ($mood in $moods) {
         -ContentType "application/json" `
         -Body $cue `
         -TimeoutSec 10
-    $speechResponse = Invoke-RestMethod `
-        -Method Post `
-        -Uri "$controlUrl/audio/speech" `
-        -ContentType "application/octet-stream" `
-        -Body $pcm `
-        -TimeoutSec 10
+    # The production companion absorbs the short commercial-model warm-up
+    # window before it hands audio to Unreal. Keep this direct runtime audit
+    # equivalent: a transient 503 is not a failed mood, while any other error
+    # (or an extended warm-up) must still fail the gate.
+    $speechResponse = $null
+    for ($attempt = 0; $attempt -lt 8; $attempt += 1) {
+        try {
+            $speechResponse = Invoke-RestMethod `
+                -Method Post `
+                -Uri "$controlUrl/audio/speech" `
+                -ContentType "application/octet-stream" `
+                -Body $pcm `
+                -TimeoutSec 10
+            break
+        }
+        catch {
+            $isWarming = $_.ErrorDetails.Message -like '*commercial_model_warming*'
+            if (-not $isWarming -or $attempt -ge 7) {
+                throw
+            }
+            Start-Sleep -Milliseconds 350
+        }
+    }
 
     $deadline = (Get-Date).AddSeconds(15)
     $sample = $null

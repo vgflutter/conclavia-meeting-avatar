@@ -50,6 +50,7 @@ import type {
 } from "./domain/protocol.js";
 import { chatPlatforms } from "./domain/protocol.js";
 import {
+  hasSufficientAutonomousApplauseContext,
   MeetingIntelligence,
   qualifiesAutonomousApplause,
   qualifiesAutonomousIntervention,
@@ -623,7 +624,14 @@ export function startServer(options: ServerOptions): Promise<void> {
           const qualifiedAutonomousRequest = allowAutonomousRequest &&
             qualifiesAutonomousIntervention(turn);
           const qualifiedAutonomousApplause = allowAutonomousApplause &&
-            qualifiesAutonomousApplause(turn);
+            qualifiesAutonomousApplause(turn) &&
+            hasSufficientAutonomousApplauseContext(
+              segment.text,
+              transcriptHistory
+                .filter((candidate) => candidate.source === "speech")
+                .slice(-6)
+                .map((candidate) => candidate.text),
+            );
 
           const shouldPerformListeningReaction = turn.action === "silence" ||
             (turn.action === "request-to-speak" && !qualifiedAutonomousRequest) ||

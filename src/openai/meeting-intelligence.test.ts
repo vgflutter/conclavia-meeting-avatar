@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  hasSufficientAutonomousApplauseContext,
   maxOutputTokensForLane,
   parseMaryReply,
   parseMaryTurn,
@@ -131,4 +132,29 @@ await test("reserves autonomous applause for a highly significant conclusion", (
   assert.equal(qualifiesAutonomousApplause(meaningfulConclusion), true);
   assert.equal(qualifiesAutonomousApplause(ordinaryGoodPoint), false);
   assert.equal(qualifiesAutonomousIntervention(meaningfulConclusion), false);
+});
+
+await test("requires substantive meeting context before autonomous applause", () => {
+  assert.equal(
+    hasSufficientAutonomousApplauseContext(
+      "Abbiamo chiuso il budget e possiamo partire lunedì.",
+      ["Abbiamo chiuso il budget e possiamo partire lunedì."],
+    ),
+    false,
+  );
+  assert.equal(
+    hasSufficientAutonomousApplauseContext(
+      "Abbiamo isolato la causa, confrontato tre alternative e dimostrato che il nuovo flusso elimina il collo di bottiglia senza aumentare costi o rischi operativi.",
+      [],
+    ),
+    true,
+  );
+  assert.equal(
+    hasSufficientAutonomousApplauseContext("Quindi adottiamo questa soluzione.", [
+      "Il primo test ha mostrato che la coda seriale aggiunge quasi quattro secondi a ogni risposta durante una normale conversazione.",
+      "Parallelizzando sintesi e preparazione del gesto eliminiamo la maggior parte dell'attesa percepita senza aumentare il carico del renderer.",
+      "Quindi adottiamo questa soluzione e manteniamo il fallback precedente per ridurre il rischio operativo del rilascio di domani.",
+    ]),
+    true,
+  );
 });

@@ -110,6 +110,25 @@ export function qualifiesAutonomousApplause(
     decision.confidence >= 4;
 }
 
+function spokenWordCount(text: string): number {
+  return text.trim().split(/\s+/u).filter(Boolean).length;
+}
+
+export function hasSufficientAutonomousApplauseContext(
+  currentText: string,
+  recentSpeechTexts: readonly string[],
+): boolean {
+  const currentTurnWords = spokenWordCount(currentText);
+  if (currentTurnWords >= 24) return true;
+
+  const substantiveTurns = recentSpeechTexts
+    .slice(-6)
+    .map(spokenWordCount)
+    .filter((wordCount) => wordCount >= 8);
+  return substantiveTurns.length >= 3 &&
+    substantiveTurns.reduce((total, wordCount) => total + wordCount, 0) >= 45;
+}
+
 function sentenceLanguage(value: unknown, text: string): SpeechLanguage {
   if (
     typeof value === "string" &&
