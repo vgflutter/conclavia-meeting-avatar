@@ -23,9 +23,10 @@ if (-not $ReusePerformance -and -not (Test-Path -LiteralPath $CapturePath)) {
     throw "Required markerless applause capture is unavailable: $CapturePath"
 }
 
+$videoPath = if ($ReusePerformance) { "reuse" } else { $CapturePath.Replace("\", "/") }
 $pythonArguments = @(
     $script.Replace("\", "/"),
-    "--video-path", $CapturePath.Replace("\", "/"),
+    "--video-path", $videoPath,
     "--output-path", $OutputPath,
     "--asset-name", $AssetName,
     "--slate", "conclavia_meeting_applause",
