@@ -24,8 +24,34 @@ listening_pid() {
   lsof -nP -tiTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | head -n 1 || true
 }
 
+is_service_loaded() {
+  launchctl print "$LAUNCH_DOMAIN/$LAUNCH_LABEL" >/dev/null 2>&1
+}
+
+wait_for_service_unload() {
+  for _ in $(seq 1 50); do
+    if ! is_service_loaded; then
+      return 0
+    fi
+    sleep 0.1
+  done
+
+  return 1
+}
+
 stop_companion() {
   launchctl bootout "$LAUNCH_DOMAIN/$LAUNCH_LABEL" >/dev/null 2>&1 || true
+
+  # launchctl may release the listening socket before it has removed the job
+  # from the GUI domain. Starting a new plist in that short window fails with
+  # the unhelpful `Bootstrap failed: 5: Input/output error` message.
+  if ! wait_for_service_unload; then
+    launchctl bootout "$LAUNCH_DOMAIN" "$PLIST_FILE" >/dev/null 2>&1 || true
+    if ! wait_for_service_unload; then
+      echo "Il servizio launchd del companion non ha completato l'arresto." >&2
+      return 1
+    fi
+  fi
 
   local pid=""
   for _ in $(seq 1 30); do
@@ -116,7 +142,20 @@ NODE
   : > "$STDOUT_LOG"
   : > "$STDERR_LOG"
   chmod 600 "$PLIST_FILE" "$STDOUT_LOG" "$STDERR_LOG"
-  launchctl bootstrap "$LAUNCH_DOMAIN" "$PLIST_FILE"
+  local bootstrap_error=""
+  if ! bootstrap_error=$(launchctl bootstrap "$LAUNCH_DOMAIN" "$PLIST_FILE" 2>&1); then
+    # Some macOS releases can return EIO after accepting the job. If the job
+    # is present, kick it once; otherwise perform one clean bootstrap retry.
+    if is_service_loaded; then
+      launchctl kickstart -k "$LAUNCH_DOMAIN/$LAUNCH_LABEL"
+    else
+      sleep 0.5
+      if ! bootstrap_error=$(launchctl bootstrap "$LAUNCH_DOMAIN" "$PLIST_FILE" 2>&1); then
+        echo "$bootstrap_error" >&2
+        return 1
+      fi
+    fi
+  fi
 
   for _ in $(seq 1 100); do
     if is_companion_api; then
