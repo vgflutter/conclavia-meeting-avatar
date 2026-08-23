@@ -4024,7 +4024,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v20-authored-applause")
+            ? TEXT("ue58-commercial-lipsync-v21-retargeted-applause")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -4239,7 +4239,7 @@ private:
                     ERealisticMetaHumanLipSyncMood::Happiness,
                     TEXT("happiness"),
                     TEXT("amused"),
-                    0.56f,
+                    0.68f,
                     ApplauseSmileSeconds);
             }
             else if (CueIntent.Equals(TEXT("listen-react"), ESearchCase::IgnoreCase))

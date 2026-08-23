@@ -317,7 +317,7 @@ await test("routes applause as an authored physical gesture", async () => {
     bodyGesture: "applause",
     listenerSemanticMood: "amused",
     listenerMood: "happiness",
-    listenerMoodIntensity: 0.56,
+    listenerMoodIntensity: 0.68,
     expectedDurationMs: 4_500,
     performanceBeats: [],
   }]);

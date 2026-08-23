@@ -15,7 +15,7 @@
     "root": "C:\\ConclaviaMeetingAvatar",
     "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
     "editorTarget": "ConclaviaStudioEditor",
-    "runtimeRevision": "ue58-commercial-lipsync-v20-authored-applause"
+    "runtimeRevision": "ue58-commercial-lipsync-v21-retargeted-applause"
   },
   "pixelStreamingInfrastructure": {
     "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",

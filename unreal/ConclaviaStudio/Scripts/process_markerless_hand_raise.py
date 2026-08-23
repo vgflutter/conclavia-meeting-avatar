@@ -160,6 +160,7 @@ def bake_body_animation(
     required_tracks: set[str],
     motion_tracks: set[str],
     minimum_motion_delta: float,
+    delta_from_stabilized_pose: bool,
     force: bool,
 ) -> unreal.AnimSequence:
     target_asset_path = f"{output_path}/{asset_name}"
@@ -272,6 +273,15 @@ def bake_body_animation(
         for bone_name in track_names
         if bone_name not in seated_base_transforms
     }
+    seated_upper_body_transforms = {
+        bone_name: seated_pose.get_bone_pose(
+            bone_name,
+            unreal.AnimPoseSpaces.LOCAL,
+        )
+        for bone_name in track_names
+        if bone_name not in seated_base_transforms
+    }
+    stabilized_source_transforms = body_frames[stabilization_frame]
     captured_thigh = body_frames[stabilization_frame]["thigh_r"].rotation
     seated_thigh = seated_base_transforms["thigh_r"].rotation
     seated_leg_delta = (
@@ -307,11 +317,34 @@ def bake_body_animation(
                 # webcam frame. Keep the target MetaHuman's authored bone
                 # lengths and scale while preserving every captured rotation,
                 # including spine, shoulder, elbow, wrist and finger motion.
-                base_transform = reference_transforms[bone_name]
+                base_transform = (
+                    seated_upper_body_transforms[bone_name]
+                    if delta_from_stabilized_pose
+                    else reference_transforms[bone_name]
+                )
+                captured_base_rotation = stabilized_source_transforms[
+                    bone_name
+                ].rotation
                 transforms = []
                 for frame in body_frames:
                     transformed = copy_transform(base_transform)
-                    transformed.rotation = frame[bone_name].rotation
+                    if delta_from_stabilized_pose:
+                        # The body tracker solves against the performer's
+                        # calibration pose. Applying those absolute local
+                        # rotations to a differently proportioned MetaHuman
+                        # lowers both wrists during two-handed gestures. Keep
+                        # the solver's exact per-frame delta but compose it on
+                        # the seated MetaHuman base pose. This is an offline
+                        # retarget operation, not a procedural hand/arm pose.
+                        captured_delta = (
+                            captured_base_rotation.inversed()
+                            * frame[bone_name].rotation
+                        )
+                        transformed.rotation = (
+                            base_transform.rotation * captured_delta
+                        ).normalized()
+                    else:
+                        transformed.rotation = frame[bone_name].rotation
                     transforms.append(transformed)
             controller.add_bone_track(bone_name, False)
             controller.set_bone_track_keys(
@@ -345,6 +378,7 @@ def bake_body_animation(
         f"motion_tracks={sorted(motion_rotation_deltas)} "
         f"seated_base_tracks={len(seated_base_transforms)} "
         f"rotation_only_tracks={len(reference_transforms)} "
+        f"delta_from_stabilized_pose={delta_from_stabilized_pose} "
         f"seated_leg_delta={seated_leg_delta:.4f}"
     )
     return animation
@@ -367,6 +401,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--motion-tracks", default="upperarm_r")
     parser.add_argument("--minimum-motion-delta", type=float, default=0.15)
+    parser.add_argument("--delta-from-stabilized-pose", action="store_true")
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
@@ -397,6 +432,7 @@ def run() -> None:
             required_tracks,
             motion_tracks,
             args.minimum_motion_delta,
+            args.delta_from_stabilized_pose,
             args.force,
         )
         unreal.log("CONCLAVIA_MARKERLESS_PIPELINE_OK")

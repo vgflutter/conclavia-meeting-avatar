@@ -72,7 +72,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /BodyGesturePhase == TEXT\("applauding"\)/);
   assert.match(moduleSource, /const bool bApplauseCue/);
   assert.match(moduleSource, /ERealisticMetaHumanLipSyncMood::Happiness/);
-  assert.match(moduleSource, /TEXT\("amused"\),\s*0\.56f/su);
+  assert.match(moduleSource, /TEXT\("amused"\),\s*0\.68f/su);
   assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
   assert.match(startScript, /L_MeetingAvatar_v11/);
   assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v11$/mu);
@@ -148,9 +148,13 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(solveScript, /AS_Conclavia_SeatedIdle/);
   assert.match(solveScript, /seated_leg_delta/);
   assert.match(solveScript, /rotation_only_tracks/);
+  assert.match(solveScript, /delta_from_stabilized_pose/);
+  assert.match(solveScript, /captured_base_rotation\.inversed\(\)/);
+  assert.match(solveScript, /base_transform\.rotation \* captured_delta/);
   assert.match(solveScript, /transformed\.rotation = frame\[bone_name\]\.rotation/);
   assert.match(handBuildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
   assert.match(applauseBuildScript, /MHP_MeetingApplause_Markerless_v1/);
+  assert.match(applauseBuildScript, /--delta-from-stabilized-pose/);
   assert.match(
     applauseBuildScript,
     /upperarm_l,lowerarm_l,hand_l,upperarm_r,lowerarm_r,hand_r/,
