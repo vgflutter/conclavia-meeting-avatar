@@ -92,6 +92,8 @@ const commands = [
   '$build = "C:\\Epic\\UE_5.8\\Engine\\Build\\BatchFiles\\Build.bat"',
   '& $build ConclaviaStudioEditor Win64 Development "-Project=C:\\ConclaviaMeetingAvatar\\ConclaviaStudio.uproject" -WaitMutex -NoHotReloadFromIDE',
   'if ($LASTEXITCODE -ne 0) { throw "Unreal build failed with exit code $LASTEXITCODE." }',
+  '& (Join-Path $root "Scripts\\Build-ShowcaseAvatar.ps1")',
+  'if ($LASTEXITCODE -ne 0) { throw "Showcase Cine MetaHuman build failed." }',
   'Copy-Item (Join-Path $incoming "Saved\\source-revision.json") (Join-Path $root "Saved\\source-revision.json") -Force',
   '$taskAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\\ConclaviaMeetingAvatar\\Scripts\\Start-StudioSupervisor.ps1"',
   '$taskPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest',

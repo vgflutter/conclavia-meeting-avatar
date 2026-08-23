@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 import type { ChatCommandAliases } from "../domain/protocol.js";
 
 export const avatarProfiles = [
+  { id: "showcase", label: "Showcase · Cine MetaHuman" },
   { id: "aera", label: "Aera · MetaHuman" },
   { id: "ada", label: "Ada · MetaHuman" },
   { id: "vivian", label: "Vivian · MetaHuman" },

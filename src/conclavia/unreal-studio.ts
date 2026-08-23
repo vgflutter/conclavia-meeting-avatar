@@ -7,7 +7,7 @@ import { fromIni } from "@aws-sdk/credential-providers";
 import { startLocalStudioInfrastructure } from "./studio-lifecycle.js";
 
 export type UnrealStudioProfile = "meeting" | "pop" | "serious" | "lipsync" | "lipsync58";
-export const unrealAvatarIds = ["aera", "ada", "vivian", "jelena"] as const;
+export const unrealAvatarIds = ["showcase", "aera", "ada", "vivian", "jelena"] as const;
 export type UnrealAvatarId = (typeof unrealAvatarIds)[number];
 
 export interface UnrealPerformanceBeat {

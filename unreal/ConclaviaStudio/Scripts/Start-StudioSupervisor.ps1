@@ -65,7 +65,7 @@ function Get-RunningProfile {
 function Get-RunningAvatar {
     $process = Get-UnrealProcess
     if (-not $process) { return $null }
-    if ($process.CommandLine -match "-ConclaviaAvatar=(aera|ada|vivian|jelena)") {
+    if ($process.CommandLine -match "-ConclaviaAvatar=(showcase|aera|ada|vivian|jelena)") {
         return $Matches[1]
     }
     return "aera"
@@ -272,7 +272,7 @@ try {
                 } else {
                     "pop"
                 }
-                $avatarId = if ($body.avatarId -in @("aera", "ada", "vivian", "jelena")) {
+                $avatarId = if ($body.avatarId -in @("showcase", "aera", "ada", "vivian", "jelena")) {
                     $body.avatarId
                 } else {
                     "aera"

@@ -31,7 +31,7 @@ _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel S
 - Structured LLM output with one mood and one intensity level for every sentence.
 - Separate semantic listening reactions: the LLM selects how the avatar socially reacts to what it hears, even when its action is `silence`.
 - Sentence-level language selection with separate native Italian and US English voices.
-- Selectable Aera, Ada, Vivian, or Jelena MetaHuman identity, Italian voice, English voice, and delivery style.
+- Selectable Showcase, Aera, Ada, Vivian, or Jelena MetaHuman identity, Italian voice, English voice, and delivery style.
 - In-meeting MetaHuman switcher that shows the profile actually loaded by Unreal and can replace it without manually stopping the renderer.
 - Conclavia speech synthesis, lip-sync, and sentence-level Unreal performance cues.
 - Embedded Pixel Streaming preview and a clean, overlay-free OBS output page. Participation state remains visible only in the management console.
@@ -115,6 +115,12 @@ BlackHole 2ch ◄── Conclavia TTS ◄── Unreal / MetaHuman ◄───�
 ```
 
 The companion and Unreal renderer are separate processes. The renderer can therefore run locally or on a cloud GPU without changing the conferencing integration. The companion owns its `/api/unreal/*` gateway, Polly synthesis and AWS lifecycle directly; the separate Conclavia frontend is not required. See the [standalone architecture](docs/architecture.md).
+
+### Showcase identity and visual fidelity
+
+The **Showcase** profile is a separate, reproducible UE 5.8 Cine assembly inspired by the visual family used on Epic's MetaHuman homepage. Epic does not publish that homepage character as a named Core Data preset, so the project does not present it as an exact downloadable identity. It starts from the closest installed Jelena family, keeps its own `MHC_Showcase` asset, requests 8K face and 4K body source textures, and uses the Cinematic assembly pipeline. The original 2K/Optimized Jelena profile remains available for comparison and is never overwritten.
+
+The profile is generated once by `Build-ShowcaseAvatar.ps1` during a clean AWS source deployment and persisted with the Unreal project. Runtime selection is then a warm actor swap. The dedicated meeting portrait camera, LOD 0 rendering, strand hair, full texture mips, restrained beauty lighting and high-bitrate 1080p Pixel Streaming path remain independent from the legacy Conclavia podcast project.
 
 ## Cross-platform chat and commands
 

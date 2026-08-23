@@ -719,7 +719,8 @@ public:
         {
             AvatarId = TEXT("aera");
         }
-        if (!AvatarId.Equals(TEXT("aera"), ESearchCase::IgnoreCase)
+        if (!AvatarId.Equals(TEXT("showcase"), ESearchCase::IgnoreCase)
+            && !AvatarId.Equals(TEXT("aera"), ESearchCase::IgnoreCase)
             && !AvatarId.Equals(TEXT("ada"), ESearchCase::IgnoreCase)
             && !AvatarId.Equals(TEXT("vivian"), ESearchCase::IgnoreCase)
             && !AvatarId.Equals(TEXT("jelena"), ESearchCase::IgnoreCase))
@@ -1930,7 +1931,9 @@ private:
         {
             FParticipantFaceState& HeroState = ParticipantFaces[0];
             AActor* ExistingHero = HeroState.Actor.Get();
-            const FString AvatarClassPath = AvatarId.Equals(TEXT("ada"))
+            const FString AvatarClassPath = AvatarId.Equals(TEXT("showcase"))
+                ? TEXT("/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/BP_MHC_Showcase.BP_MHC_Showcase_C")
+                : AvatarId.Equals(TEXT("ada"))
                 ? TEXT("/Game/Conclavia/Production/MetaHumans/MHC_ElenaRiva/MHC_ElenaRiva/BP_MHC_ElenaRiva.BP_MHC_ElenaRiva_C")
                 : AvatarId.Equals(TEXT("vivian"))
                     ? TEXT("/Game/Conclavia/Production/MetaHumans/MHC_SofiaGreco/MHC_SofiaGreco/BP_MHC_SofiaGreco.BP_MHC_SofiaGreco_C")
@@ -3623,7 +3626,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v16-meeting-presence")
+            ? TEXT("ue58-commercial-lipsync-v17-showcase-cine")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -3959,7 +3962,12 @@ private:
             ActiveBodyGesture = TEXT("none");
             ActivePerformanceGesture = TEXT("none");
             InitializeBodyIdle();
-            SwitchCamera(TEXT("CAM_Seat_1_Close"), 0.0f, true);
+            SwitchCamera(
+                bMeetingAvatar
+                    ? TEXT("CAM_Meeting_Portrait")
+                    : TEXT("CAM_Seat_1_Close"),
+                0.0f,
+                true);
         }
         if (bCommercialFaceReady)
         {
@@ -3998,7 +4006,8 @@ private:
             }
         }
         RequestedAvatarId = RequestedAvatarId.TrimStartAndEnd().ToLower();
-        if (!RequestedAvatarId.Equals(TEXT("aera"))
+        if (!RequestedAvatarId.Equals(TEXT("showcase"))
+            && !RequestedAvatarId.Equals(TEXT("aera"))
             && !RequestedAvatarId.Equals(TEXT("ada"))
             && !RequestedAvatarId.Equals(TEXT("vivian"))
             && !RequestedAvatarId.Equals(TEXT("jelena")))

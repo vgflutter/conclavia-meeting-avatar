@@ -1,7 +1,7 @@
 param(
     [ValidateSet("meeting", "pop", "serious", "lipsync", "lipsync58")]
     [string]$Profile = "meeting",
-    [ValidateSet("aera", "ada", "vivian", "jelena")]
+    [ValidateSet("showcase", "aera", "ada", "vivian", "jelena")]
     [string]$AvatarId = "aera",
     [int]$PlayerPort = 8080,
     [int]$StreamerPort = 8888,
@@ -48,6 +48,8 @@ $meetingBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-stage-build
 $meetingIdleFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\Animations\AS_MeetingAttentiveIdle_v1.uasset"
 $meetingIdleBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_attentive_idle.py"
 $meetingIdleBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-idle-builder.sha256"
+$showcaseBlueprint = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\MetaHumans\MHC_Showcase\MHC_Showcase\BP_MHC_Showcase.uasset"
+$showcaseBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\Build-ShowcaseAvatar.ps1"
 
 New-Item -ItemType Directory -Force -Path $artifacts | Out-Null
 Remove-Item $readyFile -Force -ErrorAction SilentlyContinue
@@ -135,6 +137,20 @@ if ($isUnreal58LipSync -and $AvatarId -eq "jelena") {
         }
         New-Item -ItemType Directory -Path $optionalTarget -Force | Out-Null
         Copy-Item -Path (Join-Path $optionalSource "*") -Destination $optionalTarget -Recurse -Force
+    }
+}
+
+# The homepage-inspired identity is a product-owned UE Cine assembly, not an
+# alias for the old 2K/Optimized Jelena asset. Build it once from Epic's Jelena
+# preset with source textures and keep the generated assets on the persistent
+# project volume. Subsequent launches and avatar switches remain instant.
+if ($isUnreal58LipSync -and $AvatarId -eq "showcase" -and -not (Test-Path $showcaseBlueprint)) {
+    if (-not (Test-Path $showcaseBuildScript)) {
+        throw "Showcase MetaHuman builder is missing: $showcaseBuildScript"
+    }
+    & $showcaseBuildScript
+    if (-not (Test-Path $showcaseBlueprint)) {
+        throw "Showcase MetaHuman build completed without its runtime Blueprint."
     }
 }
 

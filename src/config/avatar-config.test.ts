@@ -70,6 +70,13 @@ await test("accepts Jelena as a selectable MetaHuman profile", () => {
   assert.equal(store.publicConfig.avatarProfile, "jelena");
 });
 
+await test("accepts the Jelena-derived Cine showcase profile", () => {
+  const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
+  const store = new AvatarConfigStore(path, defaults);
+  assert.equal(store.update({ avatarProfile: "showcase" }).avatarProfile, "showcase");
+  assert.equal(store.publicConfig.avatarProfile, "showcase");
+});
+
 await test("persists configurable chat commands and returns defensive copies", () => {
   const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
   const store = new AvatarConfigStore(path, defaults);

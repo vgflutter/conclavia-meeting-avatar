@@ -224,7 +224,7 @@ h3 { margin-bottom: 0; font-size: 16px; }
 .settings-card-heading > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; color: var(--accent); background: #15352c; font-size: 10px; font-weight: 900; }
 .settings-card-heading h3 { font-size: 15px; }
 .settings-card-heading p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
-.avatar-choice-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.avatar-choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; }
 .avatar-choice { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; padding: 11px; border: 1px solid #29483f; border-radius: 13px; color: #aebfba; background: #081411; text-align: left; cursor: pointer; }
 .avatar-choice:hover { border-color: #4d806f; background: #10231e; }
 .avatar-choice.selected { border-color: var(--accent); color: #eef8f5; box-shadow: inset 0 0 0 1px rgba(105, 227, 188, .22); }
@@ -232,6 +232,7 @@ h3 { margin-bottom: 0; font-size: 16px; }
 .avatar-choice[data-profile="ada"] .avatar-choice-portrait { background: linear-gradient(150deg, #835e55, #2d1917); }
 .avatar-choice[data-profile="vivian"] .avatar-choice-portrait { background: linear-gradient(150deg, #75558a, #25182d); }
 .avatar-choice[data-profile="jelena"] .avatar-choice-portrait { background: linear-gradient(150deg, #9a6573, #351921); }
+.avatar-choice[data-profile="showcase"] .avatar-choice-portrait { color: #eafff8; background: radial-gradient(circle at 65% 25%, #8bd7c7, #176257 48%, #071c19 100%); box-shadow: inset 0 0 0 1px rgba(184, 255, 235, .32), 0 0 18px rgba(105, 227, 188, .14); }
 .avatar-choice strong, .avatar-choice small { display: block; }
 .avatar-choice strong { color: inherit; font-size: 11px; }
 .avatar-choice small { margin-top: 3px; color: var(--muted-soft); font-size: 8px; }

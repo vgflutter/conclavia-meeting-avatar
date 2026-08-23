@@ -8,7 +8,7 @@ import {
 } from "./unreal-studio.js";
 
 await test("accepts only the MetaHuman identities installed by the studio builders", () => {
-  assert.deepEqual(unrealAvatarIds, ["aera", "ada", "vivian", "jelena"]);
+  assert.deepEqual(unrealAvatarIds, ["showcase", "aera", "ada", "vivian", "jelena"]);
   for (const avatarId of unrealAvatarIds) assert.equal(isUnrealAvatarId(avatarId), true);
   assert.equal(isUnrealAvatarId(""), false);
   assert.equal(isUnrealAvatarId("mary"), false);
