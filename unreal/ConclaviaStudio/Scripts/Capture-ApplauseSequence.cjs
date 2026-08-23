@@ -117,6 +117,11 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         `Applause gesture is gated: ${initialHealth.applauseGestureDriver || "no validated authored animation"}`
       );
     }
+    if (!initialHealth.applauseExpressionReady) {
+      throw new Error(
+        `Positive applause expression is gated: ${initialHealth.applauseExpressionDriver || "no official MetaHuman expression"}`
+      );
+    }
     await cue("lower-hand", "settle");
     const idleHealth = await waitForHealth(
       (candidate) => candidate.bodyGesturePhase === "idle"
@@ -136,8 +141,9 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         && candidate.bodyGesturePhase === "applauding"
         && candidate.commercialMood === "happiness"
         && candidate.performanceSemanticMood === "amused"
-        && Number(candidate.commercialMoodIntensity || 0) >= 0.81,
-      "authored applause state with a sustained positive smile"
+        && candidate.applauseExpressionActive === true
+        && candidate.applauseExpressionDriver === "ue58-official-metahuman-happy-expression-loop",
+      "authored applause state with the official MetaHuman happy expression"
     );
     for (const targetMs of [120, 380, 700, 1_100, 1_600, 2_200, 3_000, 3_900]) {
       await captureAfter(
@@ -166,7 +172,8 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         },
         applauseMood: applauseHealth.commercialMood,
         applauseSemanticMood: applauseHealth.performanceSemanticMood,
-        applauseMoodIntensity: applauseHealth.commercialMoodIntensity
+        applauseMoodIntensity: applauseHealth.commercialMoodIntensity,
+        applauseExpressionDriver: applauseHealth.applauseExpressionDriver
       }, null, 2)
     );
     process.stdout.write(JSON.stringify({ ok: true, outputDirectory }));

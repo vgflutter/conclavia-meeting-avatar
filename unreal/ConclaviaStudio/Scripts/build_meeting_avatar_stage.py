@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v12"
+STAGE_REVISION = "v13"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
 
@@ -206,7 +206,7 @@ def build() -> None:
     # STAGE_REVISION and therefore produce a new asset path.
     if unreal.EditorAssetLibrary.does_asset_exist(LEVEL_PATH):
         log(
-            f"READY map={LEVEL_PATH} reused=true cameras=2 "
+            f"READY map={LEVEL_PATH} reused=true cameras=3 "
             "podcast_assets=0 overlay=0"
         )
         return
@@ -285,13 +285,15 @@ def build() -> None:
     )
 
     # A meeting participant should not jump between a face close-up and a
-    # theatrical wide shot to raise a hand. Both semantic cameras keep the same
-    # 150 mm seated webcam crop. The gesture camera aims five centimetres lower,
-    # which places captured hands slightly higher in the conferencing tile
-    # without inventing arm rotations or changing the portrait composition.
+    # theatrical wide shot to raise a hand. All semantic cameras keep the same
+    # 150 mm seated webcam crop. The gesture camera aims five centimetres lower;
+    # applause gets its own slightly lower aim because two moving hands need
+    # more vertical room than the held single-hand pose. This adjusts only
+    # cinematography and never invents arm rotations.
     webcam_position = unreal.Vector(-360.0, 0.0, 185.0)
     webcam_target = unreal.Vector(0.0, 0.0, 165.0)
     gesture_target = unreal.Vector(0.0, 0.0, 160.0)
+    applause_target = unreal.Vector(0.0, 0.0, 153.0)
     webcam_focal_length = 150.0
     add_camera(
         "CAM_Meeting_Portrait",
@@ -303,6 +305,12 @@ def build() -> None:
         "CAM_Meeting_Gesture",
         webcam_position,
         gesture_target,
+        webcam_focal_length,
+    )
+    add_camera(
+        "CAM_Meeting_Applause",
+        webcam_position,
+        applause_target,
         webcam_focal_length,
     )
 
@@ -354,7 +362,7 @@ def build() -> None:
     # markerless assets, adding roughly a minute to a clean bootstrap.
     log(
         f"READY map={LEVEL_PATH} avatar={anchor.get_actor_label()} "
-        "cameras=2 podcast_assets=0 overlay=0"
+        "cameras=3 podcast_assets=0 overlay=0"
     )
 
 

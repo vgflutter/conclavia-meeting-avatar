@@ -50,6 +50,9 @@ export interface UnrealStudioHealth {
   commercialModelRouteReady?: boolean;
   physicalGestureReady?: boolean;
   applauseGestureReady?: boolean;
+  applauseExpressionReady?: boolean;
+  applauseExpressionActive?: boolean;
+  applauseExpressionDriver?: string;
   [key: string]: unknown;
 }
 
@@ -256,7 +259,7 @@ export function isUnreal58HeroStudio(health: UnrealStudioHealth): boolean {
       && (meetingProfile || health.profile === "lipsync58")
       && health.stageReady === true
       && health.castCount === 1
-      && (health.cameraCount ?? 0) >= (meetingProfile ? 2 : 9)
+      && (health.cameraCount ?? 0) >= (meetingProfile ? 3 : 9)
       && health.commercialModelRouteReady === true
       && health.commercialLipSyncReady === true,
   );

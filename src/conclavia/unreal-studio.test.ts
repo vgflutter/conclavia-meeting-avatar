@@ -22,12 +22,12 @@ await test("accepts only a ready isolated meeting stage as the production UE 5.8
     runtimeRevision: "ue58-commercial-lipsync-v16-meeting-presence",
     stageReady: true,
     castCount: 1,
-    cameraCount: 2,
+    cameraCount: 3,
     commercialModelRouteReady: true,
     commercialLipSyncReady: true,
   };
   assert.equal(isUnreal58HeroStudio(health), true);
-  assert.equal(isUnreal58HeroStudio({ ...health, cameraCount: 1 }), false);
+  assert.equal(isUnreal58HeroStudio({ ...health, cameraCount: 2 }), false);
   assert.equal(isUnreal58HeroStudio({ ...health, profile: "pop" }), false);
   assert.equal(isUnreal58HeroStudio({ ...health, stageReady: false }), false);
 });
