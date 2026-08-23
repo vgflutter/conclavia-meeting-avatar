@@ -479,6 +479,6 @@ export async function standaloneRendererStatus(): Promise<Record<string, unknown
     ...(health.ok && config.playerUrl ? { playerUrl: config.playerUrl } : {}),
     health,
     facialAnimation: "runtime-metahuman-lipsync",
-    audioEngine: "polly-generative",
+    audioEngine: "polly-neural-with-generative-fallback",
   };
 }

@@ -70,6 +70,11 @@ export interface ConclaviaDelivery {
   delivered: true;
   durationMs: number;
   sentenceCount: number;
+  synthesisMs: number;
+  cueMs: number;
+  playbackMs: number;
+  timeToFirstAudioMs: number;
+  voiceEngines: string[];
 }
 
 const voiceDirections: Readonly<Record<VoiceStyle, string>> = {
@@ -474,7 +479,9 @@ export class ConclaviaRenderer {
     const text = speechTextForCue(cue);
     if (!text) throw new Error("La risposta di Mary è vuota");
 
+    const deliveryStartedAt = performance.now();
     const sentencePcm = await Promise.all(cue.sentences.map(async (sentence) => {
+      const requestStartedAt = performance.now();
       const speechResponse = await fetch(`${baseUrl}/api/unreal/speech`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -492,23 +499,32 @@ export class ConclaviaRenderer {
         const payload = (await speechResponse.json().catch(() => ({}))) as JsonError;
         throw new Error(payload.error || `Sintesi voce HTTP ${speechResponse.status}`);
       }
-      return new Uint8Array(await speechResponse.arrayBuffer());
+      const pcm = new Uint8Array(await speechResponse.arrayBuffer());
+      const reportedMs = Number(speechResponse.headers.get("x-conclavia-tts-ms"));
+      return {
+        pcm,
+        engine: speechResponse.headers.get("x-conclavia-engine") ?? "unknown",
+        ttsMs: Number.isFinite(reportedMs) && reportedMs >= 0
+          ? reportedMs
+          : Math.round(performance.now() - requestStartedAt),
+      };
     }));
+    const synthesisMs = Math.round(performance.now() - deliveryStartedAt);
     const pauseBytes = 80 * 16_000 * 2 / 1_000;
     const totalBytes = sentencePcm.reduce(
-      (total, sentence) => total + sentence.byteLength,
+      (total, sentence) => total + sentence.pcm.byteLength,
       Math.max(0, sentencePcm.length - 1) * pauseBytes,
     );
     const pcmBytes = new Uint8Array(totalBytes);
     const sentenceDurationsMs: number[] = [];
     let cursor = 0;
     for (const [index, sentence] of sentencePcm.entries()) {
-      pcmBytes.set(sentence, cursor);
-      cursor += sentence.byteLength;
+      pcmBytes.set(sentence.pcm, cursor);
+      cursor += sentence.pcm.byteLength;
       const hasPause = index < sentencePcm.length - 1;
       if (hasPause) cursor += pauseBytes;
       sentenceDurationsMs.push(
-        Math.round((sentence.byteLength / 2 / 16_000) * 1_000)
+        Math.round((sentence.pcm.byteLength / 2 / 16_000) * 1_000)
           + (hasPause ? 80 : 0),
       );
     }
@@ -518,6 +534,7 @@ export class ConclaviaRenderer {
       Math.round((pcm.byteLength / 2 / 16_000) * 1_000),
     );
 
+    const cueStartedAt = performance.now();
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -533,7 +550,9 @@ export class ConclaviaRenderer {
         sentenceDurationsMs,
       ),
     });
+    const cueMs = Math.round(performance.now() - cueStartedAt);
 
+    const playbackStartedAt = performance.now();
     const playbackResponse = await fetch(`${baseUrl}/api/unreal/audio/speech`, {
       method: "POST",
       headers: { "content-type": "application/octet-stream" },
@@ -547,11 +566,17 @@ export class ConclaviaRenderer {
         playback.error || `Riproduzione MetaHuman HTTP ${playbackResponse.status}`,
       );
     }
+    const playbackMs = Math.round(performance.now() - playbackStartedAt);
 
     return {
       delivered: true,
       durationMs: playback.durationMs,
       sentenceCount: cue.sentences.length,
+      synthesisMs,
+      cueMs,
+      playbackMs,
+      timeToFirstAudioMs: Math.round(performance.now() - deliveryStartedAt),
+      voiceEngines: [...new Set(sentencePcm.map((sentence) => sentence.engine))],
     };
   }
 

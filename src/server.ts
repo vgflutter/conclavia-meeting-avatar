@@ -598,6 +598,7 @@ export function startServer(options: ServerOptions): Promise<void> {
             segment,
             direct ? "direct" : "observer",
             responseChannel,
+            allowAutonomousRequest,
           );
           llmMs = Math.round(performance.now() - llmStartedAt);
           usedWebSearch = turn.usedWebSearch;
@@ -920,7 +921,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           health: session.health,
           avatarId: body.avatarId,
           facialAnimation: "runtime-metahuman-lipsync",
-          audioEngine: "polly-generative",
+          audioEngine: "polly-neural-with-generative-fallback",
         });
         return;
       }
@@ -943,15 +944,20 @@ export function startServer(options: ServerOptions): Promise<void> {
       }
 
       if (request.method === "POST" && url.pathname === "/api/unreal/speech") {
+        const synthesisStartedAt = performance.now();
         const speech = await synthesizeUnrealSpeech(
           await readJsonBody(request) as Record<string, unknown>,
         );
+        const synthesisMs = Math.round(performance.now() - synthesisStartedAt);
         response.writeHead(200, {
           "content-type": "application/octet-stream",
           "content-length": speech.audio.byteLength,
           "cache-control": "no-store",
           "x-conclavia-voice": speech.voice,
           "x-conclavia-language": speech.languageCode,
+          "x-conclavia-engine": speech.engine,
+          "x-conclavia-tts-ms": String(synthesisMs),
+          "server-timing": `tts;dur=${synthesisMs}`,
         });
         response.end(Buffer.from(speech.audio));
         return;

@@ -433,9 +433,19 @@ function renderTurn(result) {
   const llm = result.latency?.llmMs == null ? "—" : `${result.latency.llmMs} ms`;
   const renderer = result.latency?.rendererMs == null ? "—" : `${result.latency.rendererMs} ms`;
   const total = result.latency?.totalMs == null ? "—" : `${result.latency.totalMs} ms`;
-  elements.latencySummary.textContent = `LLM ${llm} · Avatar ${renderer} · Totale ${total}`;
+  const synthesis = result.renderer?.delivery?.synthesisMs;
+  const handoff = result.renderer?.delivery
+    ? result.renderer.delivery.cueMs + result.renderer.delivery.playbackMs
+    : null;
+  elements.latencySummary.textContent = [
+    `LLM ${llm}`,
+    synthesis == null ? null : `TTS ${synthesis} ms`,
+    handoff == null ? `Avatar ${renderer}` : `Handoff ${handoff} ms`,
+    `Totale ${total}`,
+  ].filter(Boolean).join(" · ");
   if (result.renderer?.delivery) {
-    elements.rendererStatus.textContent = `${avatarName} in onda · ${Math.round(result.renderer.delivery.durationMs / 100) / 10}s · ${result.renderer.delivery.sentenceCount} frasi.`;
+    const engines = result.renderer.delivery.voiceEngines?.join("+") || "TTS";
+    elements.rendererStatus.textContent = `${avatarName} in onda · ${Math.round(result.renderer.delivery.durationMs / 100) / 10}s · ${result.renderer.delivery.sentenceCount} frasi · ${engines}.`;
   }
   const speakingDuration = result.renderer?.delivery?.durationMs ?? 4_000;
   if (result.decision?.activated) settleStageAfter(speakingDuration + 800);

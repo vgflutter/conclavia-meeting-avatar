@@ -13,6 +13,17 @@ import {
 import { getUnrealStudioConfig } from "./unreal-studio.js";
 
 type SupportedVoice = ItalianVoiceId | EnglishVoiceId;
+export type PollySpeechEngine = "neural" | "generative";
+
+const neuralVoices = new Set<SupportedVoice>([
+  "Bianca",
+  "Danielle",
+  "Joanna",
+  "Ruth",
+  "Salli",
+  "Matthew",
+  "Stephen",
+]);
 
 const pollyClients = new Map<string, PollyClient>();
 
@@ -45,6 +56,10 @@ function voiceLanguage(voice: SupportedVoice): "it-IT" | "en-US" {
     : "en-US";
 }
 
+export function preferredPollyEngine(voice: SupportedVoice): PollySpeechEngine {
+  return neuralVoices.has(voice) ? "neural" : "generative";
+}
+
 function cleanText(value: unknown): string {
   return typeof value === "string"
     ? value.replace(/[*_#]/gu, "").replace(/\s+/gu, " ").trim()
@@ -65,7 +80,12 @@ export async function synthesizeUnrealSpeech(input: {
   voice?: unknown;
   languageCode?: unknown;
   direction?: unknown;
-}): Promise<{ audio: Uint8Array; voice: SupportedVoice; languageCode: string }> {
+}): Promise<{
+  audio: Uint8Array;
+  voice: SupportedVoice;
+  languageCode: string;
+  engine: PollySpeechEngine;
+}> {
   const text = cleanText(input.text);
   const voice = isSupportedVoice(input.voice) ? input.voice : "Bianca";
   const languageCode = voiceLanguage(voice);
@@ -87,8 +107,9 @@ export async function synthesizeUnrealSpeech(input: {
     : direction.includes("autorevole")
       ? "110%"
       : "112%";
+  const engine = preferredPollyEngine(voice);
   const output = await pollyClient().send(new SynthesizeSpeechCommand({
-    Engine: "generative",
+    Engine: engine,
     VoiceId: voice,
     LanguageCode: languageCode,
     OutputFormat: "pcm",
@@ -101,5 +122,6 @@ export async function synthesizeUnrealSpeech(input: {
     audio: Uint8Array.from(await output.AudioStream.transformToByteArray()),
     voice,
     languageCode,
+    engine,
   };
 }

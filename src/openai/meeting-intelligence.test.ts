@@ -2,10 +2,24 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  maxOutputTokensForLane,
   parseMaryReply,
   parseMaryTurn,
+  participationLane,
   qualifiesAutonomousIntervention,
 } from "./meeting-intelligence.js";
+
+await test("uses a compact LLM lane when Mary only needs to react while listening", () => {
+  assert.equal(participationLane("direct", false), "direct");
+  assert.equal(participationLane("observer", false), "observer-listening");
+  assert.equal(participationLane("observer", true), "observer-autonomy");
+  assert.ok(
+    maxOutputTokensForLane("observer-listening") < maxOutputTokensForLane("direct"),
+  );
+  assert.ok(
+    maxOutputTokensForLane("direct") < maxOutputTokensForLane("observer-autonomy"),
+  );
+});
 
 await test("parses sentence-level moods from Mary JSON", () => {
   assert.deepEqual(

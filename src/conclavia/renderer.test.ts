@@ -34,6 +34,62 @@ await test("combines all Mary sentences for one synchronized speech", () => {
   );
 });
 
+await test("reports synthesis and renderer handoff latency for a delivered answer", async () => {
+  const requests: string[] = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (input) => {
+    const url = input instanceof Request ? input.url : input.toString();
+    requests.push(url);
+    if (url.endsWith("/api/unreal/speech")) {
+      return Promise.resolve(new Response(new Uint8Array(32_000), {
+        status: 200,
+        headers: {
+          "content-type": "application/octet-stream",
+          "x-conclavia-engine": "neural",
+          "x-conclavia-tts-ms": "8",
+        },
+      }));
+    }
+    if (url.endsWith("/api/unreal/audio/speech")) {
+      return Promise.resolve(new Response(JSON.stringify({
+        ok: true,
+        durationMs: 1_000,
+      }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }));
+    }
+    return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+  };
+
+  let delivery;
+  try {
+    delivery = await new ConclaviaRenderer("http://renderer.test").deliver({
+      ...cue,
+      sentences: [cue.sentences[0]!],
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(delivery.delivered, true);
+  assert.equal(delivery.durationMs, 1_000);
+  assert.equal(delivery.sentenceCount, 1);
+  assert.ok(delivery.synthesisMs >= 0);
+  assert.ok(delivery.cueMs >= 0);
+  assert.ok(delivery.playbackMs >= 0);
+  assert.ok(delivery.timeToFirstAudioMs >= delivery.synthesisMs);
+  assert.deepEqual(delivery.voiceEngines, ["neural"]);
+  assert.deepEqual(requests, [
+    "http://renderer.test/api/unreal/speech",
+    "http://renderer.test/api/unreal/cue",
+    "http://renderer.test/api/unreal/audio/speech",
+  ]);
+});
+
 await test("maps sentence moods to timed Unreal performance beats", () => {
   assert.deepEqual(performanceBeatsForCue(cue, 6_000), [
     {

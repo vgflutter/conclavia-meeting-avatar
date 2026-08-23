@@ -26,6 +26,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Continuous meeting audio capture from BlackHole 16ch using ffmpeg and OpenAI Realtime transcription.
 - Canonical speaker-attributed caption ingestion for safe natural dialogue in multi-participant Teams, Meet, and generic meetings.
 - Persistent meeting memory: every final utterance is retained and evaluated by the LLM, including turns that do not address the avatar.
+- Low-latency participation lanes: direct questions use a compact response contract, ordinary listening turns use a minimal mood-only contract, and only genuine autonomous-intervention candidates pay for the full decision schema.
 - Platform-neutral chat ingestion for Teams, Google Meet browser bridges, and generic adapters, merged chronologically with voice memory.
 - Configurable chat commands for semantic gesture requests, voice interventions, chat replies, and meeting summaries.
 - Chat message idempotency and avatar self-message filtering to prevent duplicate actions and response loops.
@@ -40,6 +41,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Structured LLM output with one mood and one intensity level for every sentence.
 - Separate semantic listening reactions: the LLM selects how the avatar socially reacts to what it hears, even when its action is `silence`.
 - Sentence-level language selection with separate native Italian and US English voices.
+- Low-latency neural Polly synthesis for supported voices, with automatic generative fallback for identities that do not expose a neural engine.
 - Selectable Showcase, Aera, Ada, Vivian, or Jelena MetaHuman identity, Italian voice, English voice, and delivery style.
 - In-meeting MetaHuman switcher that shows the profile actually loaded by Unreal and can replace it without manually stopping the renderer.
 - Conclavia speech synthesis, lip-sync, and sentence-level Unreal performance cues.
@@ -47,6 +49,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Automatic Pixel Streaming remount after an Unreal process restart, preventing a browser tab from remaining attached to an obsolete podcast session that used the same public URL.
 - macOS preflight checks for ffmpeg, OBS Studio, and virtual audio devices.
 - Full browser meeting room for testing spoken turns, microphone transcription, continuous meeting audio, chat, command aliases, participants, hand raising, floor approval, latency, and MetaHuman output without opening Teams or Meet.
+- Live latency breakdown for the LLM, parallel TTS synthesis, Unreal cue/audio handoff, and total response time.
 
 ## Participation model
 
@@ -132,7 +135,7 @@ BlackHole 2ch ◄── Conclavia TTS ◄── Unreal / MetaHuman ◄───�
       └──► meeting microphone                └──► OBS Virtual Camera ──► meeting
 ```
 
-The companion and Unreal renderer are separate processes. The renderer can therefore run locally or on a cloud GPU without changing the conferencing integration. The companion owns its `/api/unreal/*` gateway, Polly synthesis and AWS lifecycle directly; the separate Conclavia frontend is not required. See the [standalone architecture](docs/architecture.md).
+The companion and Unreal renderer are separate processes. The renderer can therefore run locally or on a cloud GPU without changing the conferencing integration. The companion owns its `/api/unreal/*` gateway, Polly synthesis and AWS lifecycle directly; the separate Conclavia frontend is not required. Direct answers, silent listening reactions, and autonomous participation decisions intentionally use separate structured-output contracts. Every finalized human turn still reaches the LLM and remains in chronological meeting memory. See the [standalone architecture](docs/architecture.md).
 
 ### Showcase identity and visual fidelity
 
@@ -317,7 +320,7 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 - Calibrate and package the Teams caption bridge against the production client accessibility tree.
 - Finish and calibrate the isolated Google Meet browser bridge against the current Meet accessibility tree.
 - Deploy the Teams RSC agent and authenticated relay from the included manifest template.
-- Separate and expose transcription, participation, LLM, web search, TTS, and renderer latency metrics.
+- Add persistent latency histograms and percentile dashboards for transcription, web search, TTS, and renderer handoff.
 - Add optional diarization for conferencing clients that cannot expose attributed captions.
 
 ## License
