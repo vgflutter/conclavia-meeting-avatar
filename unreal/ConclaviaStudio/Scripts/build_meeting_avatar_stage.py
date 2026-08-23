@@ -16,7 +16,8 @@ import unreal
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
 STAGE_REVISION = "v10"
-LEVEL_PATH = f"/Game/Conclavia/Meeting/L_MeetingAvatar_{STAGE_REVISION}"
+CONTENT_ROOT = "/Game/Conclavia/Meeting"
+LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
 
 CUBE = "/Engine/BasicShapes/Cube.Cube"
 

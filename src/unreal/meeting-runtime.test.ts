@@ -74,6 +74,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v10$/mu);
   assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v10$/mu);
   assert.match(stageBuilder, /^STAGE_REVISION = "v10"$/mu);
+  assert.match(stageBuilder, /^CONTENT_ROOT = "\/Game\/Conclavia\/Meeting"$/mu);
+  assert.match(stageBuilder, /^LEVEL_PATH = f"\{CONTENT_ROOT\}\/L_MeetingAvatar_\{STAGE_REVISION\}"$/mu);
   assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
   assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
   assert.match(stageBuilder, /webcam_focal_length = 140\.0/);
