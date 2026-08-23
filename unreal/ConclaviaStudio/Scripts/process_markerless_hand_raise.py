@@ -152,6 +152,28 @@ def create_and_process_performance(
     return performance
 
 
+def load_processed_performance(
+    output_path: str,
+    performance_name: str,
+) -> unreal.MetaHumanPerformance:
+    performance_path = f"{output_path}/{performance_name}"
+    performance = unreal.load_asset(performance_path)
+    if not (
+        isinstance(performance, unreal.MetaHumanPerformance)
+        and performance.contains_animation_data_type(
+            unreal.FrameAnimationDataType.BODY
+        )
+    ):
+        raise RuntimeError(
+            "Reusable markerless performance is unavailable: "
+            f"{performance_path}"
+        )
+    unreal.log(
+        "CONCLAVIA_MARKERLESS_SOLVE_REUSED: " + performance.get_path_name()
+    )
+    return performance
+
+
 def bake_body_animation(
     performance: unreal.MetaHumanPerformance,
     output_path: str,
@@ -402,6 +424,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--motion-tracks", default="upperarm_r")
     parser.add_argument("--minimum-motion-delta", type=float, default=0.15)
     parser.add_argument("--delta-from-stabilized-pose", action="store_true")
+    parser.add_argument("--reuse-performance", action="store_true")
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
@@ -417,13 +440,19 @@ def run() -> None:
         }
         if not required_tracks or not motion_tracks:
             raise RuntimeError("Required and motion track lists cannot be empty")
-        capture_data = ingest_video(os.path.abspath(args.video_path), args.slate)
-        performance = create_and_process_performance(
-            capture_data,
-            args.output_path,
-            args.performance_name,
-            args.force,
-        )
+        if args.reuse_performance:
+            performance = load_processed_performance(
+                args.output_path,
+                args.performance_name,
+            )
+        else:
+            capture_data = ingest_video(os.path.abspath(args.video_path), args.slate)
+            performance = create_and_process_performance(
+                capture_data,
+                args.output_path,
+                args.performance_name,
+                args.force,
+            )
         bake_body_animation(
             performance,
             args.output_path,

@@ -1,10 +1,10 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$CapturePath,
+    [string]$CapturePath = "",
     [string]$ProjectPath = "C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject",
     [string]$EngineRoot = "C:\Epic\UE_5.8",
     [string]$OutputPath = "/Game/Conclavia/Meeting/Animations",
     [string]$AssetName = "AS_MeetingApplause_SeatedMarkerless_v1",
+    [switch]$ReusePerformance,
     [switch]$Force
 )
 
@@ -14,10 +14,13 @@ $editor = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor.exe"
 $script = Join-Path (Split-Path $ProjectPath -Parent) "Scripts\process_markerless_hand_raise.py"
 $log = Join-Path (Split-Path $ProjectPath -Parent) "Saved\Logs\MarkerlessApplause.log"
 
-foreach ($requiredPath in @($CapturePath, $ProjectPath, $editor, $script)) {
+foreach ($requiredPath in @($ProjectPath, $editor, $script)) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
         throw "Required markerless applause input is unavailable: $requiredPath"
     }
+}
+if (-not $ReusePerformance -and -not (Test-Path -LiteralPath $CapturePath)) {
+    throw "Required markerless applause capture is unavailable: $CapturePath"
 }
 
 $pythonArguments = @(
@@ -31,6 +34,9 @@ $pythonArguments = @(
     "--motion-tracks", "upperarm_l,upperarm_r",
     "--delta-from-stabilized-pose"
 )
+if ($ReusePerformance) {
+    $pythonArguments += "--reuse-performance"
+}
 if ($Force) {
     $pythonArguments += "--force"
 }
