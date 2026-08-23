@@ -70,6 +70,10 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /performanceSemanticMood/);
   assert.match(moduleSource, /applauseGestureReady/);
   assert.match(moduleSource, /BodyGesturePhase == TEXT\("applauding"\)/);
+  assert.match(moduleSource, /const bool bApplauseCue/);
+  assert.match(moduleSource, /ERealisticMetaHumanLipSyncMood::Happiness/);
+  assert.match(moduleSource, /TEXT\("amused"\),\s*0\.56f/su);
+  assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
   assert.match(startScript, /L_MeetingAvatar_v10/);
   assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v10$/mu);
   assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v10$/mu);
@@ -154,6 +158,8 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseBuildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
   assert.match(applauseCaptureScript, /applauseGestureReady/);
   assert.match(applauseCaptureScript, /bodyGesturePhase === "applauding"/);
+  assert.match(applauseCaptureScript, /commercialMood === "happiness"/);
+  assert.match(applauseCaptureScript, /performanceSemanticMood === "amused"/);
   assert.match(supervisor, /applauseGestureDriver/);
   assert.match(
     rendererManifest,

@@ -31,8 +31,8 @@ async function cue(bodyGesture, intent) {
       intent,
       bodyGesture,
       listenerSemanticMood: "amused",
-      listenerMood: "playfulness",
-      listenerMoodIntensity: 0.46,
+      listenerMood: "happiness",
+      listenerMoodIntensity: 0.56,
       expectedDurationMs: 4_500,
       performanceBeats: []
     })
@@ -133,8 +133,11 @@ async function captureAfter(video, startedAt, targetMs, filename) {
     const applauseStartedAt = Date.now();
     const applauseHealth = await waitForHealth(
       (candidate) => candidate.bodyGesture === "applause"
-        && candidate.bodyGesturePhase === "applauding",
-      "authored applause state"
+        && candidate.bodyGesturePhase === "applauding"
+        && candidate.commercialMood === "happiness"
+        && candidate.performanceSemanticMood === "amused"
+        && Number(candidate.commercialMoodIntensity || 0) >= 0.55,
+      "authored applause state with a sustained positive smile"
     );
     for (const targetMs of [120, 380, 700, 1_100, 1_600, 2_200, 3_000, 3_900]) {
       await captureAfter(
@@ -160,7 +163,10 @@ async function captureAfter(video, startedAt, targetMs, filename) {
           idle: idleHealth.bodyGesturePhase,
           applause: applauseHealth.bodyGesturePhase,
           settled: settledHealth.bodyGesturePhase
-        }
+        },
+        applauseMood: applauseHealth.commercialMood,
+        applauseSemanticMood: applauseHealth.performanceSemanticMood,
+        applauseMoodIntensity: applauseHealth.commercialMoodIntensity
       }, null, 2)
     );
     process.stdout.write(JSON.stringify({ ok: true, outputDirectory }));

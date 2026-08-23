@@ -35,6 +35,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Automatic Realtime transcription reconnection after provider session expiry or a transient socket failure, with bounded exponential backoff.
 - Conservative participation control that keeps the avatar silent for fillers, incomplete remarks, and conversations between human participants.
 - `request-to-speak` autonomy: the avatar may prepare a useful contribution and visibly request the floor, but it cannot speak until a participant grants permission.
+- Positive applause performance: every manual, chat-triggered, or autonomous applause is hard-bound in Unreal to an `amused` semantic mood and a sustained `happiness` smile for the complete authored gesture.
 - Floor approval from the web console or by saying phrases such as `Mary, go ahead` or `Go ahead, Mary`.
 - Optional live web search for direct questions that require current or external information.
 - Configurable OpenAI response model, API key, purpose, personality, and system prompt.

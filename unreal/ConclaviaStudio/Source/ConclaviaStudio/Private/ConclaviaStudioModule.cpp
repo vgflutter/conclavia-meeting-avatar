@@ -4224,8 +4224,25 @@ private:
                 return;
             }
             PendingPerformanceBeats = CuePerformanceBeats;
-            if (CueIntent.Equals(TEXT("listen-react"), ESearchCase::IgnoreCase)
-                || CueIntent.Equals(TEXT("applause"), ESearchCase::IgnoreCase))
+            const bool bApplauseCue =
+                CueBodyGesture.Equals(TEXT("applause"), ESearchCase::IgnoreCase)
+                || CueIntent.Equals(TEXT("applause"), ESearchCase::IgnoreCase);
+            if (bApplauseCue)
+            {
+                // Applause is intrinsically positive. Enforce the smile in
+                // Unreal rather than trusting every caller to supply a mood,
+                // and hold it for at least the complete authored body clip.
+                const float ApplauseSmileSeconds = FMath::Max(
+                    ExpectedDurationSeconds,
+                    ApplauseGestureEndSeconds - ApplauseGestureStartSeconds);
+                StartListeningReaction(
+                    ERealisticMetaHumanLipSyncMood::Happiness,
+                    TEXT("happiness"),
+                    TEXT("amused"),
+                    0.56f,
+                    ApplauseSmileSeconds);
+            }
+            else if (CueIntent.Equals(TEXT("listen-react"), ESearchCase::IgnoreCase))
             {
                 ERealisticMetaHumanLipSyncMood ListeningMood;
                 if (PerformanceMoodFromName(CueListenerMoodName, ListeningMood))
@@ -4243,8 +4260,7 @@ private:
             {
                 StartBodyGesture(TEXT("raise-hand"));
             }
-            else if (CueBodyGesture.Equals(TEXT("applause"), ESearchCase::IgnoreCase)
-                || CueIntent.Equals(TEXT("applause"), ESearchCase::IgnoreCase))
+            else if (bApplauseCue)
             {
                 StartBodyGesture(TEXT("applause"));
             }
