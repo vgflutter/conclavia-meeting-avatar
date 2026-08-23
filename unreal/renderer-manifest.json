@@ -39,7 +39,10 @@
   ],
   "generatedAssets": [
     "/Game/Conclavia/Meeting/L_MeetingAvatar_v9",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingCalmIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingEngagedIdle_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingReflectiveIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1",
     "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase",
     "/Game/Conclavia/Studio/L_PremiumStudio",

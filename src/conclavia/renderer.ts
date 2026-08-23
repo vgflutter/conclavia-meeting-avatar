@@ -27,6 +27,7 @@ type UnrealMood =
 
 interface UnrealPerformanceBeat {
   atMs: number;
+  semanticMood: AvatarMood;
   mood: UnrealMood;
   intensity: number;
   focus: "camera" | "target" | "thought";
@@ -81,29 +82,78 @@ interface JsonError {
   error?: string;
 }
 
-const moodMap: Readonly<Record<AvatarMood, UnrealMood>> = {
-  neutral: "neutral",
-  attentive: "confidence",
-  curious: "confusion",
-  amused: "playfulness",
-  confident: "confidence",
-  skeptical: "disgust",
-  concerned: "fear",
-  surprised: "surprise",
-  empathetic: "sadness",
-  assertive: "anger",
-  frustrated: "anger",
-  reflective: "neutral",
+interface MoodPerformanceProfile {
+  facialMood: UnrealMood;
+  speakingScale: number;
+  listeningScale: number;
+  focus: UnrealPerformanceBeat["focus"];
+  gesture: UnrealPerformanceBeat["gesture"];
+}
+
+// The meeting model reasons with twelve semantic moods while the commercial
+// facial solver exposes a different set of performance primitives. Keep the
+// semantic identity all the way to Unreal and give every mood a deliberately
+// different signature (facial primitive, strength, gaze and micro-direction)
+// instead of collapsing it to a generic emotion before transport.
+const moodProfiles: Readonly<Record<AvatarMood, MoodPerformanceProfile>> = {
+  neutral: {
+    facialMood: "neutral", speakingScale: 0, listeningScale: 0,
+    focus: "target", gesture: "settle",
+  },
+  attentive: {
+    facialMood: "excitement", speakingScale: 0.52, listeningScale: 0.48,
+    focus: "target", gesture: "nod",
+  },
+  curious: {
+    facialMood: "confusion", speakingScale: 0.90, listeningScale: 0.82,
+    focus: "thought", gesture: "tilt",
+  },
+  amused: {
+    facialMood: "playfulness", speakingScale: 0.72, listeningScale: 0.62,
+    focus: "camera", gesture: "emphasis",
+  },
+  confident: {
+    facialMood: "happiness", speakingScale: 0.70, listeningScale: 0.56,
+    focus: "camera", gesture: "nod",
+  },
+  skeptical: {
+    facialMood: "disgust", speakingScale: 0.62, listeningScale: 0.54,
+    focus: "thought", gesture: "tilt",
+  },
+  concerned: {
+    facialMood: "fear", speakingScale: 0.72, listeningScale: 0.68,
+    focus: "target", gesture: "settle",
+  },
+  surprised: {
+    facialMood: "surprise", speakingScale: 1, listeningScale: 0.92,
+    focus: "camera", gesture: "emphasis",
+  },
+  empathetic: {
+    facialMood: "sadness", speakingScale: 0.55, listeningScale: 0.52,
+    focus: "target", gesture: "nod",
+  },
+  assertive: {
+    facialMood: "confidence", speakingScale: 0.90, listeningScale: 0.68,
+    focus: "camera", gesture: "emphasis",
+  },
+  frustrated: {
+    facialMood: "anger", speakingScale: 0.86, listeningScale: 0.66,
+    focus: "target", gesture: "settle",
+  },
+  reflective: {
+    facialMood: "boredom", speakingScale: 0.42, listeningScale: 0.34,
+    focus: "thought", gesture: "tilt",
+  },
 };
 
 function listeningMoodIntensity(
-  mood: UnrealMood,
+  semanticMood: AvatarMood,
   level: AvatarListeningReaction["level"],
 ): number {
-  if (mood === "neutral") return 0;
+  const profile = moodProfiles[semanticMood];
+  if (semanticMood === "neutral") return 0;
   const base = [0, 0.12, 0.22, 0.34, 0.48, 0.62][level] ?? 0.22;
-  const scale = mood === "anger" || mood === "disgust" ? 0.72 : 1;
-  return Math.round(base * scale * 100) / 100;
+  return Math.round(base * profile.listeningScale * 100) / 100;
 }
 
 function configuredBaseUrl(value: string | undefined): string | null {
@@ -122,38 +172,23 @@ function sentenceWeight(sentence: AvatarSpeechSentence): number {
 }
 
 function moodIntensity(
-  mood: UnrealMood,
+  semanticMood: AvatarMood,
   level: AvatarSpeechSentence["level"],
   sentenceIndex: number,
 ): number {
-  if (mood === "neutral") return 0;
+  if (semanticMood === "neutral") return 0;
   const base = [0, 0.28, 0.46, 0.66, 0.84, 1][level] ?? 0.66;
-  const moodScale = mood === "boredom" || mood === "sadness"
-    ? 0.88
-    : mood === "fear" || mood === "confusion"
-      ? 0.92
-      : sentenceIndex % 2 === 0 ? 1 : 0.96;
-  return Math.round(base * moodScale * 100) / 100;
+  const cadenceScale = sentenceIndex % 2 === 0 ? 1 : 0.96;
+  return Math.round(
+    base * moodProfiles[semanticMood].speakingScale * cadenceScale * 100,
+  ) / 100;
 }
 
-function moodDirection(mood: UnrealMood): Pick<UnrealPerformanceBeat, "focus" | "gesture"> {
-  switch (mood) {
-    case "anger":
-    case "disgust":
-      return { focus: "target", gesture: "emphasis" };
-    case "confusion":
-    case "fear":
-      return { focus: "thought", gesture: "tilt" };
-    case "happiness":
-    case "confidence":
-      return { focus: "camera", gesture: "nod" };
-    case "surprise":
-    case "excitement":
-    case "playfulness":
-      return { focus: "camera", gesture: "emphasis" };
-    default:
-      return { focus: "target", gesture: "settle" };
-  }
+function moodDirection(
+  mood: AvatarMood,
+): Pick<UnrealPerformanceBeat, "focus" | "gesture"> {
+  const { focus, gesture } = moodProfiles[mood];
+  return { focus, gesture };
 }
 
 export function performanceBeatsForCue(
@@ -167,15 +202,18 @@ export function performanceBeatsForCue(
     ? [...sentenceDurationsMs]
     : cue.sentences.map(sentenceWeight);
   const totalWeight = weights.reduce((total, weight) => total + weight, 0);
-  const moods = cue.sentences.map((sentence) => moodMap[sentence.mood]);
+  const semanticMoods = cue.sentences.map((sentence) => sentence.mood);
+  const moods = semanticMoods.map((mood) => moodProfiles[mood].facialMood);
   const levels = cue.sentences.map((sentence) => sentence.level);
   const firstMood = moods[0] ?? "neutral";
+  const firstSemanticMood = semanticMoods[0] ?? "neutral";
   const beats: UnrealPerformanceBeat[] = [
     {
       atMs: 0,
+      semanticMood: firstSemanticMood,
       mood: firstMood,
-      intensity: moodIntensity(firstMood, levels[0] ?? 3, 0),
-      ...moodDirection(firstMood),
+      intensity: moodIntensity(firstSemanticMood, levels[0] ?? 3, 0),
+      ...moodDirection(firstSemanticMood),
     },
   ];
   let elapsedWeight = 0;
@@ -184,7 +222,8 @@ export function performanceBeatsForCue(
     elapsedWeight += weights[index] ?? 0;
     const rawBoundary = Math.round((elapsedWeight / totalWeight) * safeDurationMs);
     const nextMood = moods[index + 1];
-    if (!nextMood) continue;
+    const nextSemanticMood = semanticMoods[index + 1];
+    if (!nextMood || !nextSemanticMood) continue;
 
     const previous = beats.at(-1)!;
     const remainingWeight = weights
@@ -204,6 +243,7 @@ export function performanceBeatsForCue(
     beats.push(
       {
         atMs: fadeAtMs,
+        semanticMood: previous.semanticMood,
         mood: previous.mood,
         intensity: 0.18,
         focus: previous.focus,
@@ -211,16 +251,22 @@ export function performanceBeatsForCue(
       },
       {
         atMs: switchAtMs,
+        semanticMood: nextSemanticMood,
         mood: nextMood,
         intensity: 0.18,
-        focus: moodDirection(nextMood).focus,
+        focus: moodDirection(nextSemanticMood).focus,
         gesture: "none",
       },
       {
         atMs: riseAtMs,
+        semanticMood: nextSemanticMood,
         mood: nextMood,
-        intensity: moodIntensity(nextMood, levels[index + 1] ?? 3, index + 1),
-        ...moodDirection(nextMood),
+        intensity: moodIntensity(
+          nextSemanticMood,
+          levels[index + 1] ?? 3,
+          index + 1,
+        ),
+        ...moodDirection(nextSemanticMood),
       },
     );
   }
@@ -346,8 +392,9 @@ export class ConclaviaRenderer {
       performanceBeats: [
         {
           atMs: 0,
+          semanticMood: "assertive",
           mood: "confidence",
-          intensity: 0.82,
+          intensity: 0.72,
           focus: "camera",
           gesture: "raise-hand",
         },
@@ -379,7 +426,7 @@ export class ConclaviaRenderer {
     reaction: StableListeningReaction,
     speakerName: string,
   ): Promise<void> {
-    const mood = moodMap[reaction.mood];
+    const profile = moodProfiles[reaction.mood];
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -388,8 +435,9 @@ export class ConclaviaRenderer {
       shot: "reaction",
       intent: "listen-react",
       bodyGesture: "none",
-      listenerMood: mood,
-      listenerMoodIntensity: listeningMoodIntensity(mood, reaction.level),
+      listenerSemanticMood: reaction.mood,
+      listenerMood: profile.facialMood,
+      listenerMoodIntensity: listeningMoodIntensity(reaction.mood, reaction.level),
       expectedDurationMs: reaction.holdMs,
     });
   }
@@ -405,6 +453,7 @@ export class ConclaviaRenderer {
       expectedDurationMs: 2_000,
       performanceBeats: [{
         atMs: 0,
+        semanticMood: "neutral",
         mood: "neutral",
         intensity: 0,
         focus: "target",

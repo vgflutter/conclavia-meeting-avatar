@@ -12,6 +12,7 @@ export type UnrealAvatarId = (typeof unrealAvatarIds)[number];
 
 export interface UnrealPerformanceBeat {
   atMs: number;
+  semanticMood: string;
   mood: string;
   intensity: number;
   focus: string;
@@ -26,6 +27,7 @@ export interface UnrealDirectorCue {
   shot: string;
   intent: string;
   bodyGesture?: "none" | "raise-hand" | "lower-hand";
+  listenerSemanticMood?: string;
   listenerMood?: string;
   listenerMoodIntensity?: number;
   expectedDurationMs: number;

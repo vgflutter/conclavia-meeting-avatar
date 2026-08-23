@@ -163,6 +163,9 @@ function parseUnrealDirectorCue(value: unknown): UnrealDirectorCue | null {
       ) return null;
       performanceBeats.push({
         atMs: beat.atMs,
+        semanticMood: typeof beat.semanticMood === "string" && beat.semanticMood.trim()
+          ? beat.semanticMood.trim().slice(0, 40)
+          : beat.mood.slice(0, 40),
         mood: beat.mood.slice(0, 40),
         intensity: beat.intensity,
         focus: beat.focus.slice(0, 40),
@@ -189,6 +192,7 @@ function parseUnrealDirectorCue(value: unknown): UnrealDirectorCue | null {
     : undefined;
   const targetId = optionalText("targetId");
   const targetName = optionalText("targetName");
+  const listenerSemanticMood = optionalText("listenerSemanticMood");
   const listenerMood = optionalText("listenerMood");
   return {
     speakerId: record.speakerId.trim().slice(0, 240),
@@ -199,6 +203,7 @@ function parseUnrealDirectorCue(value: unknown): UnrealDirectorCue | null {
     ...(targetId ? { targetId } : {}),
     ...(targetName ? { targetName } : {}),
     ...(bodyGesture ? { bodyGesture } : {}),
+    ...(listenerSemanticMood ? { listenerSemanticMood } : {}),
     ...(listenerMood ? { listenerMood } : {}),
     ...(listenerMoodIntensity !== undefined ? { listenerMoodIntensity } : {}),
     ...(performanceBeats.length ? { performanceBeats } : {}),

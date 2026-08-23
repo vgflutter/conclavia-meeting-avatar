@@ -6,7 +6,7 @@ import {
   performanceBeatsForCue,
   speechTextForCue,
 } from "./renderer.js";
-import type { AvatarSpeechCue } from "../domain/protocol.js";
+import { avatarMoods, type AvatarSpeechCue } from "../domain/protocol.js";
 
 const cue: AvatarSpeechCue = {
   id: "cue-1",
@@ -38,31 +38,35 @@ await test("maps sentence moods to timed Unreal performance beats", () => {
   assert.deepEqual(performanceBeatsForCue(cue, 6_000), [
     {
       atMs: 0,
-      mood: "confidence",
-      intensity: 0.84,
+      semanticMood: "confident",
+      mood: "happiness",
+      intensity: 0.59,
       focus: "camera",
       gesture: "nod",
     },
     {
       atMs: 1_080,
-      mood: "confidence",
+      semanticMood: "confident",
+      mood: "happiness",
       intensity: 0.18,
       focus: "camera",
       gesture: "none",
     },
     {
       atMs: 1_430,
+      semanticMood: "concerned",
       mood: "fear",
       intensity: 0.18,
-      focus: "thought",
+      focus: "target",
       gesture: "none",
     },
     {
       atMs: 1_760,
+      semanticMood: "concerned",
       mood: "fear",
-      intensity: 0.61,
-      focus: "thought",
-      gesture: "tilt",
+      intensity: 0.46,
+      focus: "target",
+      gesture: "settle",
     },
   ]);
 });
@@ -83,12 +87,34 @@ await test("uses a clearly visible intensity for a single non-neutral mood", () 
     ),
     [{
       atMs: 0,
+      semanticMood: "surprised",
       mood: "surprise",
       intensity: 1,
       focus: "camera",
       gesture: "emphasis",
     }],
   );
+});
+
+await test("preserves all twelve semantic moods as distinct performance signatures", () => {
+  const signatures = new Set<string>();
+  const facialMoods = new Set<string>();
+  for (const mood of avatarMoods) {
+    const [beat] = performanceBeatsForCue({
+      ...cue,
+      sentences: [{ text: `Test ${mood}.`, mood, level: 5, language: "it-IT" }],
+    }, 2_500);
+    assert.equal(beat?.semanticMood, mood);
+    facialMoods.add(beat?.mood ?? "missing");
+    signatures.add(JSON.stringify({
+      facialMood: beat?.mood,
+      intensity: beat?.intensity,
+      focus: beat?.focus,
+      gesture: beat?.gesture,
+    }));
+  }
+  assert.equal(signatures.size, avatarMoods.length);
+  assert.equal(facialMoods.size, avatarMoods.length);
 });
 
 await test("sends a bounded silent listening reaction to Unreal", async () => {
@@ -132,11 +158,51 @@ await test("sends a bounded silent listening reaction to Unreal", async () => {
       shot: "reaction",
       intent: "listen-react",
       bodyGesture: "none",
+      listenerSemanticMood: "concerned",
       listenerMood: "fear",
-      listenerMoodIntensity: 0.34,
+      listenerMoodIntensity: 0.23,
       expectedDurationMs: 7_100,
     },
   }]);
+});
+
+await test("routes all twelve moods to Unreal while Mary listens silently", async () => {
+  const cues: Array<Record<string, unknown>> = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (_input, init) => {
+    if (typeof init?.body !== "string") throw new Error("Expected JSON body");
+    cues.push(JSON.parse(init.body) as Record<string, unknown>);
+    return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+  };
+  try {
+    const renderer = new ConclaviaRenderer("http://renderer.test");
+    for (const mood of avatarMoods) {
+      await renderer.reactToListening({
+        mood,
+        level: 5,
+        sourceSegmentId: `segment-${mood}`,
+        observedSpeakerName: "Luca",
+        createdAt: "2026-08-23T10:00:00.000Z",
+        holdMs: 6_000,
+      }, "Mary");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.deepEqual(
+    cues.map((value) => value.listenerSemanticMood),
+    [...avatarMoods],
+  );
+  assert.ok(cues.every((value) => value.intent === "listen-react"));
+  assert.equal(new Set(cues.map((value) => value.listenerMood)).size, avatarMoods.length);
+  assert.equal(new Set(cues.map((value) => JSON.stringify({
+    facialMood: value.listenerMood,
+    intensity: value.listenerMoodIntensity,
+  }))).size, avatarMoods.length);
 });
 
 await test("sends a high-priority interrupt cue to stop accepted speech", async () => {

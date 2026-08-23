@@ -87,7 +87,7 @@ The LLM returns structured output for each spoken sentence:
 }
 ```
 
-`listeningMood` is Mary's socially appropriate reaction to the latest participant, rather than a mechanical copy of the participant's emotion. `listeningLevel` is deliberately conservative and is stabilized for approximately 5–9 seconds so the face does not flicker between sentences. The same `1` (barely perceptible) to `5` (strong) range is used for spoken sentences. Levels 2 and 3 are the normal range; higher values are reserved for content that genuinely warrants a stronger expression. `language` is `it-IT` or `en-US`. The renderer synthesizes up to two sentences in parallel with the selected native-language voices, concatenates their PCM streams, and maps every spoken mood and level to an accurately timed Unreal performance beat.
+`listeningMood` is Mary's socially appropriate reaction to the latest participant, rather than a mechanical copy of the participant's emotion. It is evaluated even when the participation decision is `silence`, so Mary remains socially present without interrupting. `listeningLevel` is deliberately conservative and is stabilized for approximately 5–9 seconds so the face does not flicker between sentences. The same `1` (barely perceptible) to `5` (strong) range is used for spoken sentences. Levels 2 and 3 are the normal range; higher values are reserved for content that genuinely warrants a stronger expression. `language` is `it-IT` or `en-US`. The renderer preserves the original semantic mood through the control plane, synthesizes up to two sentences in parallel with the selected native-language voices, concatenates their PCM streams, and maps every spoken mood and level to an accurately timed Unreal performance beat.
 
 Supported moods are:
 
@@ -95,6 +95,10 @@ Supported moods are:
 neutral, attentive, curious, amused, confident, skeptical,
 concerned, surprised, empathetic, assertive, frustrated, reflective
 ```
+
+The bridge assigns each semantic mood its own commercial full-face primitive,
+intensity curve, gaze target, and performance direction. No two moods collapse
+to the same facial preset in either listening or speaking mode.
 
 ## Architecture
 
@@ -149,9 +153,9 @@ Teams uses an installed agent with `groupchat` scope and resource-specific `Chat
 
 The current realtime speaking-face path uses the commercial Realistic MetaHuman LipSync plugin. It accepts the same streamed PCM used for playback and exposes realtime mood and intensity on the lip-sync clock. This remains the production default because it is already synchronized and validated in the live path.
 
-Listening is a different state: no fake speech audio is sent to a lip-sync solver. The LLM emits a silent semantic reaction, the face layer renders a low-intensity expression, and authored MetaHuman animation owns the body. Mood changes have a minimum hold and automatically settle to neutral.
+Listening is a different state: no fake speech audio is sent to a lip-sync solver. The LLM emits one of the same twelve semantic reactions even when Mary remains silent, the face layer renders its calibrated low-intensity signature, and authored MetaHuman animation owns the body. Mood changes have a minimum hold and automatically settle to neutral. Speaking carries the semantic mood on every sentence, so the Unreal health contract can audit the intended mood separately from the commercial solver's facial primitive.
 
-The body path uses Epic-authored or markerless-captured MetaHuman `AnimSequence` assets and is being moved to an Animation Blueprint state machine with linked upper-body layers. The runtime bridge publishes semantic states such as listening, speaking, and request-to-speak; it must not synthesize random per-frame head, breathing, or arm rotations. The current hand raise layers all captured upper-body rotations over a stable seated MetaHuman base, preserving native shoulder, elbow, wrist and finger motion without importing performer calibration translations. It passed arm-track, motion, raise/hold/lower state and rendered-frame gates. If that validated asset is absent, health reports `physicalGestureReady=false`. Epic's native [Audio Driven Animation](https://dev.epicgames.com/documentation/en-us/metahuman/audio-driven-animation) remains an evaluated backend, but its realtime audio algorithm does not produce head motion. Native [Animation Blueprints](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprints-in-unreal-engine), [State Machines](https://dev.epicgames.com/documentation/en-us/unreal-engine/state-machines-in-unreal-engine), and [Linked Anim Layers](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprint-linking-in-unreal-engine) are therefore the correct body/listening architecture regardless of which facial speech solver is selected.
+The body path uses Epic-authored or markerless-captured MetaHuman `AnimSequence` assets and is being moved to an Animation Blueprint state machine with linked upper-body layers. The runtime bridge publishes semantic states such as listening, speaking, and request-to-speak; it must not synthesize random per-frame head, breathing, or arm rotations. Meeting rest uses four baked seated clips extracted from different passages of Epic's authored source. Each returns to the same seated anchor; the runtime plays them once, chooses the next clip without immediate repetition, varies only playback timing, and inserts a short irregular rest. The current hand raise layers all captured upper-body rotations over the same seated MetaHuman base, preserving native shoulder, elbow, wrist and finger motion without importing performer calibration translations. It passed arm-track, motion, raise/hold/lower state and rendered-frame gates. If that validated asset is absent, health reports `physicalGestureReady=false`. Epic's native [Audio Driven Animation](https://dev.epicgames.com/documentation/en-us/metahuman/audio-driven-animation) remains an evaluated backend, but its realtime audio algorithm does not produce head motion. Native [Animation Blueprints](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprints-in-unreal-engine), [State Machines](https://dev.epicgames.com/documentation/en-us/unreal-engine/state-machines-in-unreal-engine), and [Linked Anim Layers](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprint-linking-in-unreal-engine) are therefore the correct body/listening architecture regardless of which facial speech solver is selected.
 
 ## Requirements
 
@@ -300,7 +304,7 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 ## Roadmap
 
 - Stream TTS generation and playback to reduce time to first audio further.
-- Finish the asset-driven request-to-speak Montage and listening state set; no runtime-authored arm or head pose should remain.
+- Move the validated request-to-speak and seated-idle repertoire into a blended Animation Blueprint state machine; keep every body pose asset-driven.
 - Calibrate and package the Teams caption bridge against the production client accessibility tree.
 - Finish and calibrate the isolated Google Meet browser bridge against the current Meet accessibility tree.
 - Deploy the Teams RSC agent and authenticated relay from the included manifest template.

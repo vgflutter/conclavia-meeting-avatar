@@ -48,7 +48,12 @@ $meetingBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-stage-build
 $seatedIdleFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Studio\Animations\AS_Conclavia_SeatedIdle.uasset"
 $seatedIdleBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_seated_idle.py"
 $seatedIdleBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\seated-idle-builder.sha256"
-$meetingIdleFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\Animations\AS_MeetingAttentiveIdle_v1.uasset"
+$meetingIdleFiles = @(
+    "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\Animations\AS_MeetingCalmIdle_v1.uasset",
+    "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\Animations\AS_MeetingAttentiveIdle_v1.uasset",
+    "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\Animations\AS_MeetingEngagedIdle_v1.uasset",
+    "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\Animations\AS_MeetingReflectiveIdle_v1.uasset"
+)
 $meetingIdleBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_attentive_idle.py"
 $meetingIdleBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-idle-builder.sha256"
 $showcaseBlueprint = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\MetaHumans\MHC_Showcase\MHC_Showcase\BP_MHC_Showcase.uasset"
@@ -353,7 +358,7 @@ if ($isMeetingAvatar) {
     } else {
         ""
     }
-    $meetingIdleNeedsBuild = -not (Test-Path $meetingIdleFile) -or
+    $meetingIdleNeedsBuild = @($meetingIdleFiles | Where-Object { -not (Test-Path $_) }).Count -gt 0 -or
         $installedMeetingIdleBuilderHash -ne $meetingIdleBuilderHash
 }
 if ($isMeetingAvatar -and $meetingIdleNeedsBuild) {
@@ -381,9 +386,9 @@ if ($isMeetingAvatar -and $meetingIdleNeedsBuild) {
             -SimpleMatch "CONCLAVIA_MEETING_IDLE: READY" `
             -Quiet
     )
-    if (-not (Test-Path $meetingIdleFile) -or
+    if (@($meetingIdleFiles | Where-Object { -not (Test-Path $_) }).Count -gt 0 -or
         -not $meetingIdleReadyMarker) {
-        throw "Meeting attentive-idle authoring failed (exit $($meetingIdleBuildProcess.ExitCode)). See $meetingIdleBuildLog"
+        throw "Meeting idle-repertoire authoring failed (exit $($meetingIdleBuildProcess.ExitCode)). See $meetingIdleBuildLog"
     }
     Set-Content `
         -Path $meetingIdleBuildRevisionFile `

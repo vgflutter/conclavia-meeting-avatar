@@ -39,6 +39,13 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     moduleSource,
     /\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingAttentiveIdle_v1/,
   );
+  assert.match(moduleSource, /AS_MeetingCalmIdle_v1/);
+  assert.match(moduleSource, /AS_MeetingEngagedIdle_v1/);
+  assert.match(moduleSource, /AS_MeetingReflectiveIdle_v1/);
+  assert.match(moduleSource, /FMath::RandRange\(1, Paths\.Num\(\) - 1\)/);
+  assert.match(moduleSource, /PlayAnimation\(BodyIdle, false\)/);
+  assert.match(moduleSource, /BodyIdleVariationTimer/);
+  assert.match(moduleSource, /performanceSemanticMood/);
   assert.match(startScript, /L_MeetingAvatar_v9/);
   assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v9$/mu);
   assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v9$/mu);
@@ -47,6 +54,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
   assert.match(stageBuilder, /webcam_focal_length = 125\.0/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
+  assert.match(startScript, /\$meetingIdleFiles = @\(/);
   assert.match(startScript, /build_seated_idle\.py/);
   assert.match(stageBuilder, /MEETING_Chair_Seat/);
   assert.match(stageBuilder, /MEETING_Chair_Back/);

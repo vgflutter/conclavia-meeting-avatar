@@ -313,24 +313,22 @@ itself is not accepted. The generated audit frames are written to
 ## Listening presence and request-to-speak
 
 The single-hero runtime never synthesizes body motion by rotating MetaHuman
-bones at runtime. The `meeting` profile waits in
-`AS_MeetingAttentiveIdle_v1`, a product-owned standing loop baked from Epic's
-UE 5.8 technical idle. Every animated bone is stabilized around the authored
-relaxed first frame, broad spine/shoulder shifts retain at most 12% of their
-source range, and playback runs at `0.24x`. This preserves a slow trace of
-breathing without the fast rocking that the original seated podcast loop
-produced in a fixed webcam crop. Legacy studio profiles keep their separate
-idle and cannot alter this asset.
+bones at runtime. The `meeting` profile uses four product-owned seated clips:
+calm, attentive, engaged, and reflective. They are baked from separate passages
+of Epic's UE 5.8 technical idle at 6 Hz, restrained around the same authored
+seated anchor, and eased back to that anchor at both ends. Runtime plays each
+clip once, varies its playback rate between `0.46x` and `0.58x`, inserts a short
+irregular rest, and selects another clip without immediate repetition. This
+removes the recognizable cadence and fast rocking of the old perpetual loop.
+Legacy studio profiles keep their separate idle and cannot alter these assets.
 
 The production `meeting` profile deliberately does not use the legacy
 `AS_Conclavia_MetaHumanHandRaise` prototype. Its single synthesized IK target
 did not contain the coherent clavicle, torso, elbow, wrist and finger
 performance required for a believable camera-close gesture. Request-to-speak
-therefore remains a control-plane state until `MeetingHandRaiseAnimation`
-references a captured or authored full-body `AnimSequence` on the shared
-MetaHuman body skeleton. Runtime telemetry exposes `physicalGestureReady`,
-`physicalGestureDriver`, `bodyGesturePhase` and `bodyGestureAlpha`, and the
-meeting camera stays on the portrait shot while the asset is unavailable.
+uses the validated seated markerless capture configured by
+`MeetingHandRaiseAnimation`; runtime telemetry exposes `physicalGestureReady`,
+`physicalGestureDriver`, `bodyGesturePhase` and `bodyGestureAlpha`.
 
 ### Markerless hand-raise build
 

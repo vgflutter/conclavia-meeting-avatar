@@ -1,13 +1,16 @@
-"""Build a restrained seated idle for the video-meeting renderer.
+"""Build a small authored seated-idle repertoire for meeting avatars.
 
-The reusable seated base combines Epic's authored upper-body timing with a
-compact seated lower-body solve. Its broad spine and shoulder shifts still
-read as fast rocking in a fixed webcam crop, so this builder retains only a
-small share of motion around that seated pose. It never rotates bones at
-runtime and does not bring the podcast set into the meeting product.
+Epic currently ships one compatible 45-second MetaHuman technical body idle in
+this installation. A single slowed loop is still visibly periodic in a fixed
+webcam crop, so this builder extracts four different passages and bakes them as
+product-owned seated clips. Every clip eases from and back to the same authored
+seated anchor, which lets the runtime change clip without synthesising bone
+motion or introducing a pose pop.
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
 
 import unreal
 
@@ -19,14 +22,28 @@ SOURCE_IDLE_PATH = (
     "/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle"
 )
 OUTPUT_ROOT = "/Game/Conclavia/Meeting/Animations"
-ASSET_NAME = "AS_MeetingAttentiveIdle_v1"
-ASSET_PATH = f"{OUTPUT_ROOT}/{ASSET_NAME}"
 OUTPUT_FPS = 30
-SAMPLE_RATE_HZ = 2.0
+SAMPLE_RATE_HZ = 6.0
+
+
+@dataclass(frozen=True)
+class IdleVariant:
+    asset_name: str
+    source_start: float
+    duration: float
+    motion_scale: float
+
+
+IDLE_VARIANTS = (
+    IdleVariant("AS_MeetingCalmIdle_v1", 0.0, 11.6, 0.48),
+    IdleVariant("AS_MeetingAttentiveIdle_v1", 10.8, 10.4, 0.68),
+    IdleVariant("AS_MeetingEngagedIdle_v1", 21.4, 11.2, 0.78),
+    IdleVariant("AS_MeetingReflectiveIdle_v1", 33.1, 11.7, 0.56),
+)
 
 # Motion is measured relative to the authored first frame, not the skeleton
-# reference pose.  The relaxed arm-down silhouette is therefore preserved
-# while the large animation-review sways are attenuated for a webcam shot.
+# reference pose. The relaxed arm-down silhouette is therefore preserved while
+# broad technical-review sways are attenuated for a webcam shot.
 MOTION_WEIGHTS = {
     "spine_01": 0.06,
     "spine_02": 0.08,
@@ -66,13 +83,21 @@ def copy_transform(value: unreal.Transform) -> unreal.Transform:
     return result
 
 
-def sample_source(
+def smooth_edge_envelope(phase: float) -> float:
+    """Return a smooth 0..1..0 envelope with a long authored middle."""
+    edge = min(1.0, phase / 0.18, (1.0 - phase) / 0.18)
+    edge = max(0.0, edge)
+    return edge * edge * (3.0 - (2.0 * edge))
+
+
+def sample_variant(
     source: unreal.AnimSequence,
-) -> tuple[dict[str, list[unreal.Transform]], float]:
+    variant: IdleVariant,
+) -> dict[str, list[unreal.Transform]]:
     options = unreal.AnimPoseEvaluationOptions()
     options.set_editor_property("should_retarget", True)
-    duration = max(0.001, float(source.get_play_length()))
-    key_count = max(2, int(round(duration * SAMPLE_RATE_HZ)) + 1)
+    source_duration = max(0.001, float(source.get_play_length()))
+    key_count = max(2, int(round(variant.duration * SAMPLE_RATE_HZ)) + 1)
     base_pose = source.get_anim_pose_at_time(0.0, options)
     bases = {
         bone: copy_transform(
@@ -83,50 +108,57 @@ def sample_source(
     samples = {bone: [] for bone in TRACKED_BONES}
 
     for index in range(key_count):
-        source_time = duration * index / (key_count - 1)
+        phase = index / (key_count - 1)
+        source_time = min(
+            source_duration,
+            variant.source_start + (variant.duration * phase),
+        )
         pose = source.get_anim_pose_at_time(source_time, options)
-        for bone, weight in MOTION_WEIGHTS.items():
+        envelope = smooth_edge_envelope(phase)
+        for bone, base_weight in MOTION_WEIGHTS.items():
             base = bases[bone]
             authored = pose.get_bone_pose(bone, unreal.AnimPoseSpaces.LOCAL)
             restrained = copy_transform(base)
             restrained.rotation = base.rotation.slerp_quat(
                 authored.rotation,
-                weight,
+                base_weight * variant.motion_scale * envelope,
             )
             samples[bone].append(restrained)
 
     log(
-        f"SAMPLED source={SOURCE_IDLE_PATH} duration={duration:.3f} "
-        f"keys={key_count} max_motion_weight={max(MOTION_WEIGHTS.values()):.2f}"
+        f"SAMPLED asset={variant.asset_name} start={variant.source_start:.2f} "
+        f"duration={variant.duration:.2f} keys={key_count} "
+        f"motion_scale={variant.motion_scale:.2f}"
     )
-    return samples, duration
+    return samples
 
 
 def build_animation(
     skeleton: unreal.Skeleton,
+    variant: IdleVariant,
     samples: dict[str, list[unreal.Transform]],
-    duration: float,
 ) -> unreal.AnimSequence:
+    asset_path = f"{OUTPUT_ROOT}/{variant.asset_name}"
     unreal.EditorAssetLibrary.make_directory(OUTPUT_ROOT)
-    if unreal.EditorAssetLibrary.does_asset_exist(ASSET_PATH):
-        if not unreal.EditorAssetLibrary.delete_asset(ASSET_PATH):
-            raise RuntimeError(f"Could not replace {ASSET_PATH}")
+    if unreal.EditorAssetLibrary.does_asset_exist(asset_path):
+        if not unreal.EditorAssetLibrary.delete_asset(asset_path):
+            raise RuntimeError(f"Could not replace {asset_path}")
 
     factory = unreal.AnimSequenceFactory()
     factory.target_skeleton = skeleton
     animation = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-        ASSET_NAME,
+        variant.asset_name,
         OUTPUT_ROOT,
         unreal.AnimSequence,
         factory,
     )
     if not isinstance(animation, unreal.AnimSequence):
-        raise RuntimeError(f"Could not create {ASSET_PATH}")
+        raise RuntimeError(f"Could not create {asset_path}")
 
     controller = animation.controller
-    controller.open_bracket("Build meeting attentive idle")
+    controller.open_bracket(f"Build meeting idle {variant.asset_name}")
     try:
-        frame_count = max(1, int(round(duration * OUTPUT_FPS)))
+        frame_count = max(1, int(round(variant.duration * OUTPUT_FPS)))
         controller.set_frame_rate(unreal.FrameRate(OUTPUT_FPS, 1), False)
         controller.set_number_of_frames(unreal.FrameNumber(frame_count), False)
         for bone, keys in samples.items():
@@ -152,11 +184,20 @@ def main() -> None:
     source = unreal.load_asset(SOURCE_IDLE_PATH)
     if not isinstance(source, unreal.AnimSequence):
         raise RuntimeError(f"Missing authored MetaHuman idle: {SOURCE_IDLE_PATH}")
-    samples, duration = sample_source(source)
-    animation = build_animation(skeleton, samples, duration)
+
+    built: list[str] = []
+    for variant in IDLE_VARIANTS:
+        animation = build_animation(
+            skeleton,
+            variant,
+            sample_variant(source, variant),
+        )
+        built.append(animation.get_path_name())
+
     log(
-        f"READY asset={animation.get_path_name()} duration={duration:.3f} "
-        "seated=True authored_source=True runtime_procedural_motion=False"
+        f"READY variants={len(built)} assets={','.join(built)} "
+        "seated=True authored_source=True runtime_procedural_motion=False "
+        "shared_anchor=True immediate_repeat=False"
     )
 
 

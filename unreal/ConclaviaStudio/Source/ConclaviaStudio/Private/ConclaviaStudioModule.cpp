@@ -915,6 +915,7 @@ public:
             StudioWorld->GetTimerManager().ClearTimer(ListeningLifeTimer);
             StudioWorld->GetTimerManager().ClearTimer(ListeningModelTimer);
             StudioWorld->GetTimerManager().ClearTimer(BodyGestureTimer);
+            StudioWorld->GetTimerManager().ClearTimer(BodyIdleVariationTimer);
         }
         ResetCommercialLipSync();
         if (GEngine && GEngine->GameViewport && BroadcastOverlay.IsValid())
@@ -1106,6 +1107,7 @@ private:
         int32 AtMs = 0;
         ERealisticMetaHumanLipSyncMood Mood =
             ERealisticMetaHumanLipSyncMood::Neutral;
+        FString SemanticMoodName = TEXT("neutral");
         FString MoodName = TEXT("neutral");
         float Intensity = 0.0f;
         FString Focus = TEXT("camera");
@@ -1201,12 +1203,17 @@ private:
             double Intensity = 0.48;
             BeatObject->TryGetNumberField(TEXT("atMs"), AtMs);
             BeatObject->TryGetNumberField(TEXT("intensity"), Intensity);
+            BeatObject->TryGetStringField(TEXT("semanticMood"), Beat.SemanticMoodName);
             BeatObject->TryGetStringField(TEXT("mood"), Beat.MoodName);
             BeatObject->TryGetStringField(TEXT("focus"), Beat.Focus);
             BeatObject->TryGetStringField(TEXT("gesture"), Beat.Gesture);
             if (!PerformanceMoodFromName(Beat.MoodName, Beat.Mood))
             {
                 continue;
+            }
+            if (Beat.SemanticMoodName.IsEmpty())
+            {
+                Beat.SemanticMoodName = Beat.MoodName;
             }
             Beat.AtMs = FMath::Clamp(FMath::RoundToInt(AtMs), 0, 60000);
             Beat.Intensity = FMath::Clamp(static_cast<float>(Intensity), 0.0f, 1.0f);
@@ -1268,17 +1275,114 @@ private:
         State.Face = Face;
     }
 
+    static const TArray<FString>& MeetingIdlePaths()
+    {
+        static const TArray<FString> Paths = {
+            TEXT("/Game/Conclavia/Meeting/Animations/AS_MeetingCalmIdle_v1.AS_MeetingCalmIdle_v1"),
+            TEXT("/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1.AS_MeetingAttentiveIdle_v1"),
+            TEXT("/Game/Conclavia/Meeting/Animations/AS_MeetingEngagedIdle_v1.AS_MeetingEngagedIdle_v1"),
+            TEXT("/Game/Conclavia/Meeting/Animations/AS_MeetingReflectiveIdle_v1.AS_MeetingReflectiveIdle_v1")
+        };
+        return Paths;
+    }
+
+    void AdvanceMeetingBodyIdle()
+    {
+        if (!StudioWorld.IsValid() || !bMeetingAvatar
+            || BodyGesturePhase != TEXT("idle"))
+        {
+            return;
+        }
+
+        const TArray<FString>& Paths = MeetingIdlePaths();
+        if (Paths.IsEmpty())
+        {
+            return;
+        }
+        const int32 Offset = Paths.Num() > 1
+            ? FMath::RandRange(1, Paths.Num() - 1)
+            : 0;
+        const int32 CandidateIndex = ActiveBodyIdleIndex < 0
+            ? FMath::RandRange(0, Paths.Num() - 1)
+            : (ActiveBodyIdleIndex + Offset) % Paths.Num();
+
+        UAnimSequence* BodyIdle = nullptr;
+        int32 SelectedIndex = CandidateIndex;
+        for (int32 Attempt = 0; Attempt < Paths.Num(); ++Attempt)
+        {
+            SelectedIndex = (CandidateIndex + Attempt) % Paths.Num();
+            BodyIdle = LoadObject<UAnimSequence>(nullptr, *Paths[SelectedIndex]);
+            if (BodyIdle)
+            {
+                break;
+            }
+        }
+        if (!BodyIdle)
+        {
+            UE_LOG(
+                LogConclaviaStudio,
+                Error,
+                TEXT("Meeting idle repertoire is unavailable"));
+            return;
+        }
+
+        USkeletalMeshComponent* Body = GetActiveBodyComponent();
+        if (!Body)
+        {
+            return;
+        }
+        ActiveBodyIdleIndex = SelectedIndex;
+        ActiveBodyIdlePath = Paths[SelectedIndex];
+        ActiveBodyIdlePlayRate = FMath::FRandRange(0.46f, 0.58f);
+        ++BodyIdleSwitchCount;
+
+        // Each baked clip starts and ends on the same authored seated anchor.
+        // Playing once and inserting a short irregular rest removes the visible
+        // cadence of a perpetual loop without generating transforms at runtime.
+        Body->PlayAnimation(BodyIdle, false);
+        Body->SetPlayRate(ActiveBodyIdlePlayRate);
+        Body->SetPosition(0.0f, false);
+        Body->VisibilityBasedAnimTickOption =
+            EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+        const float Duration = FMath::Max(
+            BodyIdle->GetPlayLength() / ActiveBodyIdlePlayRate,
+            1.0f);
+        const float RestSeconds = FMath::FRandRange(0.45f, 1.85f);
+        StudioWorld->GetTimerManager().SetTimer(
+            BodyIdleVariationTimer,
+            FTimerDelegate::CreateRaw(
+                this,
+                &FConclaviaStudioModule::AdvanceMeetingBodyIdle),
+            Duration + RestSeconds,
+            false);
+        UE_LOG(
+            LogConclaviaStudio,
+            Display,
+            TEXT("Meeting idle variant: index=%d path=%s rate=%.3f duration=%.2f rest=%.2f switch=%d"),
+            ActiveBodyIdleIndex,
+            *ActiveBodyIdlePath,
+            ActiveBodyIdlePlayRate,
+            Duration,
+            RestSeconds,
+            BodyIdleSwitchCount);
+    }
+
     void InitializeBodyIdle()
     {
         if (!StudioWorld.IsValid())
         {
             return;
         }
+        StudioWorld->GetTimerManager().ClearTimer(BodyIdleVariationTimer);
+        if (bMeetingAvatar)
+        {
+            AdvanceMeetingBodyIdle();
+            return;
+        }
 
-        const TCHAR* IdlePath = bMeetingAvatar
-            ? TEXT("/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1.AS_MeetingAttentiveIdle_v1")
-            : TEXT("/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle.AS_Conclavia_SeatedIdle");
-        const float IdlePlayRate = bMeetingAvatar ? 0.24f : 0.58f;
+        const TCHAR* IdlePath =
+            TEXT("/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle.AS_Conclavia_SeatedIdle");
+        constexpr float IdlePlayRate = 0.58f;
         UAnimSequence* BodyIdle = LoadObject<UAnimSequence>(nullptr, IdlePath);
         if (!BodyIdle)
         {
@@ -1299,25 +1403,14 @@ private:
             {
                 continue;
             }
-
             TArray<USkeletalMeshComponent*> Components;
             It->GetComponents<USkeletalMeshComponent>(Components);
             for (USkeletalMeshComponent* Component : Components)
             {
-                // Only the authoritative body mesh owns locomotion. Clothing
-                // follows it through LeaderPoseComponent; playing the same
-                // sequence on both components made the active guest visibly
-                // vibrate as two evaluations fought over the pose.
                 if (!Component || Component->GetName() != TEXT("Body"))
                 {
                     continue;
                 }
-
-                // The meeting profile owns a restrained seated sequence whose
-                // upper body is baked from Epic's authored source. It removes
-                // the broad technical-review sway that reads as rocking in a
-                // fixed webcam shot while preserving the seated base. Other
-                // studio profiles retain their separately authored body layer.
                 Component->PlayAnimation(BodyIdle, true);
                 Component->SetPlayRate(IdlePlayRate);
                 Component->SetPosition(
@@ -1329,7 +1422,8 @@ private:
             }
             ++ParticipantIndex;
         }
-
+        ActiveBodyIdlePath = IdlePath;
+        ActiveBodyIdlePlayRate = IdlePlayRate;
         UE_LOG(
             LogConclaviaStudio,
             Display,
@@ -1606,6 +1700,7 @@ private:
             {
                 return;
             }
+            StudioWorld->GetTimerManager().ClearTimer(BodyIdleVariationTimer);
             StudioWorld->GetTimerManager().ClearTimer(BodyGestureTimer);
             BodyGestureComponent = Body;
             Body->PlayAnimation(Sequence, false);
@@ -2538,6 +2633,7 @@ private:
             Generator->SetMood(ERealisticMetaHumanLipSyncMood::Neutral);
             Generator->SetMoodIntensity(0.0f);
             ActiveMoodName = TEXT("neutral");
+            ActiveSemanticMoodName = TEXT("neutral");
             ActiveMoodIntensity = 0.0f;
             PerformanceCurrentIntensity = 0.0f;
             PerformanceTargetIntensity = 0.0f;
@@ -2563,6 +2659,7 @@ private:
     void StartListeningReaction(
         const ERealisticMetaHumanLipSyncMood Mood,
         const FString& Name,
+        const FString& SemanticName,
         const float Intensity,
         const float ExpectedDurationSeconds)
     {
@@ -2577,6 +2674,7 @@ private:
             Generator->SetMoodIntensity(FMath::Clamp(Intensity, 0.0f, 0.68f));
         }
         ActiveMoodName = Name;
+        ActiveSemanticMoodName = SemanticName.IsEmpty() ? Name : SemanticName;
         ActiveMoodIntensity = FMath::Clamp(Intensity, 0.0f, 0.68f);
         PerformanceCurrentIntensity = ActiveMoodIntensity;
         PerformanceTargetIntensity = ActiveMoodIntensity;
@@ -2619,6 +2717,7 @@ private:
             const FPerformanceBeat& Beat =
                 ActivePerformanceBeats[NextPerformanceBeatIndex];
             SetCommercialMood(Beat.Mood, Beat.MoodName, Beat.Intensity);
+            ActiveSemanticMoodName = Beat.SemanticMoodName;
             ActivePerformanceFocus = Beat.Focus;
             ActivePerformanceGesture = Beat.Gesture;
             ActiveBodyGesture = Beat.Gesture.Equals(
@@ -2918,6 +3017,7 @@ private:
                 ERealisticMetaHumanLipSyncMood::Neutral,
                 TEXT("neutral"),
                 0.0f);
+            ActiveSemanticMoodName = TEXT("neutral");
             ActivePerformanceFocus = TEXT("camera");
             ActivePerformanceGesture = TEXT("none");
         }
@@ -2925,6 +3025,7 @@ private:
         {
             const FPerformanceBeat& FirstBeat = ActivePerformanceBeats[0];
             SetCommercialMood(FirstBeat.Mood, FirstBeat.MoodName, FirstBeat.Intensity);
+            ActiveSemanticMoodName = FirstBeat.SemanticMoodName;
             ActivePerformanceFocus = FirstBeat.Focus;
             ActivePerformanceGesture = FirstBeat.Gesture;
             if (FirstBeat.Gesture.Equals(TEXT("raise-hand"), ESearchCase::IgnoreCase)
@@ -3788,7 +3889,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v18-neutral-rest")
+            ? TEXT("ue58-commercial-lipsync-v19-twelve-moods-live-idle")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -3800,9 +3901,9 @@ private:
             : TEXT("production-studio-58");
         const int32 CastCount = bLipSyncLab ? 1 : ParticipantFaces.Num();
         const FString BodyIdleDriver = bMeetingAvatar
-            ? TEXT("ue58-metahuman-authored-restrained-seated-v2")
+            ? TEXT("ue58-authored-seated-idle-repertoire-v3")
             : TEXT("ue58-metahuman-authored-attentive-loop");
-        const float BodyIdlePlayRate = bMeetingAvatar ? 0.24f : 0.58f;
+        const float BodyIdlePlayRate = ActiveBodyIdlePlayRate;
         FString Body = FString::Printf(
             TEXT("{\"ok\":true,\"service\":\"conclavia-meeting-avatar-renderer\",\"runtimeRevision\":\"%s\",\"engineVersion\":\"%s\",\"profile\":\"%s\",\"avatarId\":\"%s\",\"stageReady\":%s,\"cameraCount\":%d,\"cameraPackage\":\"%s\",\"castCount\":%d,\"activeCamera\":\"%s\",\"lastCueAt\":\"%s\",\"audioSubjectReady\":%s,\"audioSubjectValid\":%s,\"faceDrivenByLiveLink\":%s,\"commercialLipSyncReady\":%s,\"commercialModelReady\":%s,\"commercialModelRouteReady\":%s,\"commercialGeneratorBound\":%s,\"commercialControlsBound\":%s,\"commercialSpeechActive\":%s,\"commercialControlCount\":%d,\"commercialMaxControl\":%.6f,\"commercialMaxMouthControl\":%.6f,\"commercialMaxMouthControlName\":\"%s\",\"commercialJawInput\":%.6f,\"commercialJawCurve\":%.6f,\"commercialBoundNodeCount\":%d,\"commercialSolverChunksSubmitted\":%d,\"commercialSolverCursor\":%d,\"bodyAnimationMode\":%d,\"bodyAnimClass\":\"%s\",\"bodyAnimInstance\":\"%s\",\"pcmBytesReceived\":%lld,\"activeFaceIndex\":%d}"),
             *RuntimeRevision.ReplaceCharWithEscapedChar(),
@@ -3840,7 +3941,7 @@ private:
             ActiveFaceIndex);
         Body.RemoveFromEnd(TEXT("}"));
         Body += FString::Printf(
-            TEXT(",\"commercialModel\":\"mood-full-face\",\"commercialMood\":\"%s\",\"commercialMoodIntensity\":%.3f,\"commercialLookaheadMs\":40,\"commercialMaxUpperFaceControl\":%.6f,\"commercialMaxUpperFaceControlName\":\"%s\",\"commercialSpeechPeakMouthControl\":%.6f,\"commercialSpeechPeakMouthControlName\":\"%s\",\"commercialSpeechPeakUpperFaceControl\":%.6f,\"commercialSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechPeakMouthControl\":%.6f,\"commercialLastSpeechPeakMouthControlName\":\"%s\",\"commercialLastSpeechPeakUpperFaceControl\":%.6f,\"commercialLastSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechSolverChunks\":%d,\"commercialLastSpeechSolverCursor\":%d,\"commercialCompletedSpeechCount\":%d,\"performancePlanReady\":%s,\"performanceBeatCount\":%d,\"performanceSolverBeatIndex\":%d,\"performanceMood\":\"%s\",\"performanceTargetIntensity\":%.3f,\"performanceFocus\":\"%s\",\"performanceGesture\":\"%s\",\"performanceAppliedBeatCount\":%d,\"bodyGesture\":\"%s\",\"bodyGestureAlpha\":%.3f,\"bodyGesturePhase\":\"%s\",\"physicalGestureReady\":%s,\"physicalGestureDriver\":\"%s\",\"bodyIdleDriver\":\"%s\",\"bodyIdlePlayRate\":%.2f,\"listeningReactionActive\":%s,\"listeningModelReady\":%s,\"listeningSolverChunks\":%d,\"naturalGazeEnabled\":%s,\"naturalGazeDriver\":\"runtime-metahuman-eyes-aim\"}"),
+            TEXT(",\"commercialModel\":\"mood-full-face\",\"commercialMood\":\"%s\",\"commercialMoodIntensity\":%.3f,\"commercialLookaheadMs\":40,\"commercialMaxUpperFaceControl\":%.6f,\"commercialMaxUpperFaceControlName\":\"%s\",\"commercialSpeechPeakMouthControl\":%.6f,\"commercialSpeechPeakMouthControlName\":\"%s\",\"commercialSpeechPeakUpperFaceControl\":%.6f,\"commercialSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechPeakMouthControl\":%.6f,\"commercialLastSpeechPeakMouthControlName\":\"%s\",\"commercialLastSpeechPeakUpperFaceControl\":%.6f,\"commercialLastSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechSolverChunks\":%d,\"commercialLastSpeechSolverCursor\":%d,\"commercialCompletedSpeechCount\":%d,\"performancePlanReady\":%s,\"performanceBeatCount\":%d,\"performanceSolverBeatIndex\":%d,\"performanceMood\":\"%s\",\"performanceSemanticMood\":\"%s\",\"performanceTargetIntensity\":%.3f,\"performanceFocus\":\"%s\",\"performanceGesture\":\"%s\",\"performanceAppliedBeatCount\":%d,\"bodyGesture\":\"%s\",\"bodyGestureAlpha\":%.3f,\"bodyGesturePhase\":\"%s\",\"physicalGestureReady\":%s,\"physicalGestureDriver\":\"%s\",\"bodyIdleDriver\":\"%s\",\"bodyIdleVariant\":\"%s\",\"bodyIdleVariantCount\":%d,\"bodyIdleSwitchCount\":%d,\"bodyIdlePlayRate\":%.2f,\"listeningReactionActive\":%s,\"listeningModelReady\":%s,\"listeningSolverChunks\":%d,\"naturalGazeEnabled\":%s,\"naturalGazeDriver\":\"runtime-metahuman-eyes-aim\"}"),
             *ActiveMoodName.ReplaceCharWithEscapedChar(),
             ActiveMoodIntensity,
             LastCommercialMaxUpperFaceControl,
@@ -3864,6 +3965,7 @@ private:
                 : ActivePerformanceBeats.Num(),
             NextPerformanceBeatIndex,
             *ActiveMoodName.ReplaceCharWithEscapedChar(),
+            *ActiveSemanticMoodName.ReplaceCharWithEscapedChar(),
             PerformanceTargetIntensity,
             *ActivePerformanceFocus.ReplaceCharWithEscapedChar(),
             *ActivePerformanceGesture.ReplaceCharWithEscapedChar(),
@@ -3880,6 +3982,9 @@ private:
                     ? TEXT("awaiting-authored-full-body-animation")
                     : TEXT("unavailable"),
             *BodyIdleDriver.ReplaceCharWithEscapedChar(),
+            *ActiveBodyIdlePath.ReplaceCharWithEscapedChar(),
+            bMeetingAvatar ? MeetingIdlePaths().Num() : 1,
+            BodyIdleSwitchCount,
             BodyIdlePlayRate,
             bListeningReactionActive ? TEXT("true") : TEXT("false"),
             bListeningModelReady ? TEXT("true") : TEXT("false"),
@@ -3912,9 +4017,11 @@ private:
         Json->TryGetStringField(TEXT("speakerName"), LastSpeakerName);
         Json->TryGetStringField(TEXT("targetName"), LastTargetName);
         FString BodyGesture;
+        FString ListenerSemanticMoodName;
         FString ListenerMoodName;
         double ListenerMoodIntensity = 0.0;
         Json->TryGetStringField(TEXT("bodyGesture"), BodyGesture);
+        Json->TryGetStringField(TEXT("listenerSemanticMood"), ListenerSemanticMoodName);
         Json->TryGetStringField(TEXT("listenerMood"), ListenerMoodName);
         Json->TryGetNumberField(TEXT("listenerMoodIntensity"), ListenerMoodIntensity);
         TArray<FPerformanceBeat> ParsedPerformanceBeats;
@@ -3932,6 +4039,7 @@ private:
         const FString CueSpeakerName = LastSpeakerName;
         const FString CueTargetName = LastTargetName;
         const FString CueBodyGesture = BodyGesture;
+        const FString CueListenerSemanticMoodName = ListenerSemanticMoodName;
         const FString CueListenerMoodName = ListenerMoodName;
         const float CueListenerMoodIntensity = FMath::Clamp(
             static_cast<float>(ListenerMoodIntensity), 0.0f, 0.68f);
@@ -3946,6 +4054,7 @@ private:
             CueSpeakerName,
             CueTargetName,
             CueBodyGesture,
+            CueListenerSemanticMoodName,
             CueListenerMoodName,
             CueListenerMoodIntensity,
             CuePerformanceBeats,
@@ -3969,6 +4078,7 @@ private:
                     ERealisticMetaHumanLipSyncMood::Neutral,
                     TEXT("neutral"),
                     0.0f);
+                ActiveSemanticMoodName = TEXT("neutral");
                 return;
             }
             PendingPerformanceBeats = CuePerformanceBeats;
@@ -3980,6 +4090,7 @@ private:
                     StartListeningReaction(
                         ListeningMood,
                         CueListenerMoodName,
+                        CueListenerSemanticMoodName,
                         CueListenerMoodIntensity,
                         ExpectedDurationSeconds);
                 }
@@ -4255,6 +4366,7 @@ private:
     FTimerHandle ListeningLifeTimer;
     FTimerHandle ListeningModelTimer;
     FTimerHandle BodyGestureTimer;
+    FTimerHandle BodyIdleVariationTimer;
     TArray<FParticipantFaceState> ParticipantFaces;
     ILiveLinkClient* LiveLinkClient = nullptr;
     TSharedPtr<FConclaviaPcmLiveLinkSource> PcmSource;
@@ -4304,18 +4416,23 @@ private:
     int32 NextPerformanceBeatIndex = 0;
     int32 AppliedPerformanceBeatCount = 0;
     FString ActiveMoodName = TEXT("neutral");
+    FString ActiveSemanticMoodName = TEXT("neutral");
     float ActiveMoodIntensity = 0.0f;
     float PerformanceCurrentIntensity = 0.0f;
     float PerformanceTargetIntensity = 0.0f;
     FString ActivePerformanceFocus = TEXT("camera");
     FString ActivePerformanceGesture = TEXT("none");
     FString ActiveBodyGesture = TEXT("none");
+    FString ActiveBodyIdlePath;
     FString BodyGesturePhase = TEXT("idle");
     float BodyGestureStartSeconds = 0.0f;
     float BodyGestureHoldSeconds = 2.4f;
     float BodyGestureLowerStartSeconds = 3.5f;
     float BodyGestureEndSeconds = 4.7f;
     double BodyGesturePhaseStartedAt = 0.0;
+    float ActiveBodyIdlePlayRate = 0.58f;
+    int32 ActiveBodyIdleIndex = -1;
+    int32 BodyIdleSwitchCount = 0;
     double CommercialModelDeadline = 0.0;
     double ListeningModelDeadline = 0.0;
     double ListeningReactionExpiresAt = 0.0;
