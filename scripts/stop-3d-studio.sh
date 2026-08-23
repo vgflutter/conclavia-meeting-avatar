@@ -2,11 +2,16 @@
 
 set -euo pipefail
 
+REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$REPO_ROOT"
+
 AWS_REGION="${CONCLAVIA_AWS_REGION:-${AWS_REGION:-eu-central-1}}"
 AWS_PROFILE="${CONCLAVIA_AWS_PROFILE:-${AWS_PROFILE:-conclavia-studio}}"
 INSTANCE_ID="${UNREAL_STUDIO_INSTANCE_ID:-i-033248199865f3e6e}"
 SECURITY_GROUP_ID="${CONCLAVIA_STUDIO_SECURITY_GROUP_ID:-sg-0b2e4054a32145ed7}"
 export AWS_PROFILE
+
+bash scripts/local-companion.sh stop
 
 if ! aws sts get-caller-identity --region "$AWS_REGION" >/dev/null 2>&1; then
   echo "Profilo AWS $AWS_PROFILE non disponibile. Esegui una volta il bootstrap IAM Roles Anywhere."
@@ -87,4 +92,4 @@ for RULE_ID in $(aws ec2 describe-security-group-rules \
     --output text >/dev/null
 done
 
-echo "Studio 3D spento; il costo compute della g6 è arrestato."
+echo "Studio 3D e companion locale spenti; il costo compute della g6 è arrestato."

@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$REPO_ROOT"
+
 AWS_REGION="${CONCLAVIA_AWS_REGION:-${AWS_REGION:-eu-central-1}}"
 AWS_PROFILE="${CONCLAVIA_AWS_PROFILE:-${AWS_PROFILE:-conclavia-studio}}"
 INSTANCE_ID="${UNREAL_STUDIO_INSTANCE_ID:-i-033248199865f3e6e}"
@@ -271,7 +274,51 @@ if [[ "$SUPERVISOR_READY" != "true" ]]; then
   exit 1
 fi
 
-echo "Studio 3D pronto. Avvia il companion con: npm run dev"
-echo "Apri http://127.0.0.1:4310 per la regia e la simulazione meeting."
+echo "Avvio il companion locale aggiornato…"
+COMPANION_URL=$(bash scripts/local-companion.sh start | tail -n 1)
+
+echo "Avvio il MetaHuman selezionato e attendo il video…"
+curl --fail --silent \
+  --request POST \
+  "$COMPANION_URL/api/renderer/start" >/dev/null
+
+AVATAR_READY=false
+for _ in $(seq 1 180); do
+  RENDERER_STATUS=$(curl --fail --silent --max-time 5 \
+    "$COMPANION_URL/api/renderer/status" 2>/dev/null || true)
+  if RENDERER_STATUS="$RENDERER_STATUS" node <<'NODE'
+const status = JSON.parse(process.env.RENDERER_STATUS || "{}");
+process.exit(status.armed === true && status.available === true ? 0 : 1);
+NODE
+  then
+    AVATAR_READY=true
+    break
+  fi
+  sleep 2
+done
+
+if [[ "$AVATAR_READY" != "true" ]]; then
+  echo "Il companion è attivo, ma il MetaHuman non è diventato LIVE entro 6 minuti." >&2
+  exit 1
+fi
+
+HEALTH=$(curl --fail --silent --max-time 5 "$COMPANION_URL/api/health")
+OPENAI_READY=$(HEALTH="$HEALTH" node <<'NODE'
+const health = JSON.parse(process.env.HEALTH || "{}");
+process.stdout.write(health.openaiConfigured === true ? "true" : "false");
+NODE
+)
+
+if [[ "$OPENAI_READY" == "true" ]]; then
+  curl --fail --silent \
+    --request POST \
+    "$COMPANION_URL/api/listener/start" >/dev/null
+  echo "MetaHuman LIVE e ascolto meeting attivo."
+else
+  echo "MetaHuman LIVE. OpenAI non è ancora configurato in questo repository."
+  echo "Apri Configurazione, inserisci la API key una sola volta e salvala: resterà nella cartella locale ignorata da Git."
+fi
+
+echo "Studio completo pronto: $COMPANION_URL"
 echo "Spegnimento automatico attivo tra ${AUTO_STOP_MINUTES} minuti."
 echo "A fine prova esegui: npm run studio:3d:stop"

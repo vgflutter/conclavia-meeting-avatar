@@ -203,16 +203,24 @@ OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-live-transcribe
 
 The chat enable switch and command aliases are stored in the local avatar configuration and edited from the web application.
 
-Start or refresh the AWS Unreal studio independently:
+Start the complete local companion and AWS Unreal studio:
 
 ```bash
 npm run studio:3d:start
 ```
 
-This command is idempotent when the instance is already running. It refreshes
-the IP allow-list, supervisor token and automatic shutdown deadline, then saves
-only rotating local values to the ignored `.env`. Stop GPU billing with
+This is the single normal startup command. It is idempotent when the instance
+is already running: it refreshes the IP allow-list, supervisor token and
+automatic shutdown deadline, saves only rotating local values to the ignored
+`.env`, rebuilds and restarts the local companion, starts the selected
+MetaHuman, waits for the video to become live and starts meeting listening when
+OpenAI is configured. The command does not report the studio as ready until the
+avatar is actually live. Stop both the companion and GPU billing with
 `npm run studio:3d:stop`.
+
+The OpenAI API key is the only required one-time local configuration. Enter it
+under **Configuration** and save it; subsequent `studio:3d:start` runs reuse the
+private ignored configuration automatically.
 
 The Unreal source, infrastructure and recovery process are versioned in this
 repository. Deploy source only from a clean commit with
@@ -227,7 +235,8 @@ repository. Deploy source only from a clean commit with
 3. Open the clean MetaHuman output page from the renderer section and add it to OBS as a browser source.
 4. Start OBS Virtual Camera and select it as the camera in Teams or Google Meet.
 5. Route the MetaHuman/Pixel Streaming audio to BlackHole 2ch and select BlackHole 2ch as the meeting microphone.
-6. Start the MetaHuman from the companion console.
+6. Verify that the MetaHuman is live; the complete studio startup command
+   normally starts it automatically.
 
 The BlackHole realtime transcript uses the configured generic speaker name because a mixed audio device cannot reveal who spoke. It still feeds complete meeting memory, but natural follow-ups are intentionally disabled on this unattributed path. A Teams or Meet caption adapter posts stable `speakerId` values to `/api/transcript/segments`; that attributed path enables the two-turn dialogue lease safely in a room of 5–10 people. Direct `Mary, ...` invocations continue to work on either path.
 

@@ -16,6 +16,8 @@
     "transcript:simulate": "node adapters/generic/post-transcript.mjs",
     "studio:3d:start": "bash scripts/start-3d-studio.sh",
     "studio:3d:stop": "bash scripts/stop-3d-studio.sh",
+    "companion:start": "bash scripts/local-companion.sh start",
+    "companion:stop": "bash scripts/local-companion.sh stop",
     "studio:source:audit": "bash scripts/audit-3d-source.sh",
     "studio:source:deploy": "bash scripts/deploy-3d-source.sh",
     "build": "tsc -p tsconfig.build.json",
