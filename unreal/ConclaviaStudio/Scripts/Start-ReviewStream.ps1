@@ -745,8 +745,15 @@ if ($isCommercialLipSync) {
         -Wait `
         -PassThru
     if ($readinessProcess.ExitCode -ne 0) {
-        $readinessFailure = if (Test-Path $readinessStderr) {
-            Get-Content $readinessStderr -Raw
+        $readinessErrorText = if (Test-Path $readinessStderr) {
+            (Get-Content $readinessStderr -Raw).Trim()
+        } else {
+            ""
+        }
+        $readinessFailure = if ($readinessErrorText) {
+            $readinessErrorText
+        } elseif (Test-Path $readinessStdout) {
+            Get-Content $readinessStdout -Raw
         } else {
             "No verifier diagnostics were produced."
         }

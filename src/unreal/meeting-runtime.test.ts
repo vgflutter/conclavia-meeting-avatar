@@ -73,7 +73,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(supervisor, /performanceSemanticMood/);
   assert.match(supervisor, /bodyIdleVariantCount/);
   assert.match(supervisor, /bodyIdleSwitchCount/);
-  assert.match(readinessVerifier, /decodedFps >= 26\.8/);
+  assert.match(readinessVerifier, /decodedFps >= 25/);
+  assert.match(startScript, /\$readinessErrorText/);
   assert.match(startScript, /build_seated_idle\.py/);
   assert.match(stageBuilder, /MEETING_Chair_Seat/);
   assert.match(stageBuilder, /MEETING_Chair_Back/);
