@@ -9,8 +9,8 @@ RUNTIME_DIR="$REPO_ROOT/.conclavia/runtime"
 PID_FILE="$RUNTIME_DIR/companion.pid"
 STDOUT_LOG="$RUNTIME_DIR/companion.stdout.log"
 STDERR_LOG="$RUNTIME_DIR/companion.stderr.log"
-PLIST_FILE="$RUNTIME_DIR/com.conclavia.meeting-avatar.companion.plist"
 LAUNCH_LABEL="com.conclavia.meeting-avatar.companion"
+PLIST_FILE="$HOME/Library/LaunchAgents/$LAUNCH_LABEL.plist"
 LAUNCH_DOMAIN="gui/$(id -u)"
 PORT=$(node --env-file-if-exists=.env -e 'process.stdout.write(process.env.PORT || "4310")')
 BASE_URL="http://127.0.0.1:$PORT"
@@ -64,7 +64,7 @@ stop_companion() {
 }
 
 start_companion() {
-  mkdir -p "$RUNTIME_DIR"
+  mkdir -p "$RUNTIME_DIR" "$(dirname "$PLIST_FILE")"
   chmod 700 "$RUNTIME_DIR"
   stop_companion
 
