@@ -196,7 +196,10 @@ function percentile(values, quantile) {
       ok:
         frames.width >= 1920
         && frames.height >= 1080
-        && decodedFps >= 27
+        // requestVideoFrameCallback on Windows can report 26.9x for a stable
+        // nominal 27 fps decode window. Keep enough tolerance for clock
+        // quantisation while still rejecting the 26.3 fps cold-start sample.
+        && decodedFps >= 26.8
         // At the 30 fps broadcast target, one delayed presentation interval
         // can legitimately span two frame periods (66.7 ms). Reject actual
         // stalls through the separate >=100 ms hard-gap gate instead of

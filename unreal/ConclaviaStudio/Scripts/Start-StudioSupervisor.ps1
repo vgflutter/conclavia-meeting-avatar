@@ -188,6 +188,7 @@ function Get-State {
             $payload.performanceSolverBeatIndex = [int]$studio.performanceSolverBeatIndex
             $payload.performanceAudibleBeatIndex = [int]$studio.performanceAudibleBeatIndex
             $payload.performanceMood = $studio.performanceMood
+            $payload.performanceSemanticMood = $studio.performanceSemanticMood
             $payload.performanceTargetIntensity = [double]$studio.performanceTargetIntensity
             $payload.performanceFocus = $studio.performanceFocus
             $payload.performanceGesture = $studio.performanceGesture
@@ -199,6 +200,9 @@ function Get-State {
             $payload.physicalGestureReady = [bool]$studio.physicalGestureReady
             $payload.physicalGestureDriver = $studio.physicalGestureDriver
             $payload.bodyIdleDriver = $studio.bodyIdleDriver
+            $payload.bodyIdleVariant = $studio.bodyIdleVariant
+            $payload.bodyIdleVariantCount = [int]$studio.bodyIdleVariantCount
+            $payload.bodyIdleSwitchCount = [int]$studio.bodyIdleSwitchCount
             $payload.bodyIdlePlayRate = [double]$studio.bodyIdlePlayRate
             $payload.listeningReactionActive = [bool]$studio.listeningReactionActive
             $payload.listeningReactionRemainingMs = [int]$studio.listeningReactionRemainingMs

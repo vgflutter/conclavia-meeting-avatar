@@ -5,7 +5,14 @@ import test from "node:test";
 const repositoryFile = (path: string): URL => new URL(`../../${path}`, import.meta.url);
 
 await test("keeps legacy podcast body assets out of the meeting runtime", async () => {
-  const [engineConfig, moduleSource, startScript, stageBuilder] = await Promise.all([
+  const [
+    engineConfig,
+    moduleSource,
+    startScript,
+    stageBuilder,
+    supervisor,
+    readinessVerifier,
+  ] = await Promise.all([
     readFile(repositoryFile("unreal/ConclaviaStudio/Config/DefaultEngine.ini"), "utf8"),
     readFile(
       repositoryFile(
@@ -19,6 +26,14 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     ),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/build_meeting_avatar_stage.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Start-StudioSupervisor.ps1"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Verify-SingleHeroReadiness.cjs"),
       "utf8",
     ),
   ]);
@@ -55,6 +70,10 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(stageBuilder, /webcam_focal_length = 125\.0/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
+  assert.match(supervisor, /performanceSemanticMood/);
+  assert.match(supervisor, /bodyIdleVariantCount/);
+  assert.match(supervisor, /bodyIdleSwitchCount/);
+  assert.match(readinessVerifier, /decodedFps >= 26\.8/);
   assert.match(startScript, /build_seated_idle\.py/);
   assert.match(stageBuilder, /MEETING_Chair_Seat/);
   assert.match(stageBuilder, /MEETING_Chair_Back/);
