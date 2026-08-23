@@ -28,20 +28,25 @@ RuntimeMetaHumanLipSync plugin.
    template performs this host bootstrap; do not put credentials in user data.
 3. Install Unreal Engine 5.8.1 at `C:\Epic\UE_5.8`, including MetaHuman Creator
    Core Data, MetaHuman Character/SDK and Pixel Streaming 2.
-4. Install the licensed RuntimeMetaHumanLipSync 1.0 package at
+4. Install the Fab entitlement for MetaHuman Animator Markerless Motion Capture
+   with `Bootstrap\Install-MarkerlessBodyTracker.ps1`. Pass an ephemeral Epic
+   Launcher access-token file; never place the token in arguments, logs, Git or
+   the source archive. The installer consumes, overwrites and deletes the file,
+   compiles the versioned Fab bootstrap and installs the UE 5.8 artifact.
+5. Install the licensed RuntimeMetaHumanLipSync 1.0 package at
    `C:\ConclaviaMeetingAvatar\Plugins\RuntimeMetaHumanLipSync`. Obtain it from its
    licensed source; it is not redistributable through this repository.
-5. Clone Epic's Pixel Streaming Infrastructure at the commit pinned in
+6. Clone Epic's Pixel Streaming Infrastructure at the commit pinned in
    `unreal/renderer-manifest.json`, install its Node dependencies and place it at
    `C:\PixelStreamingInfrastructure`.
-6. Bootstrap the local Roles Anywhere profile from `infra/roles-anywhere` and
+7. Bootstrap the local Roles Anywhere profile from `infra/roles-anywhere` and
    run `npm run studio:3d:start` so the instance, private ingress, watchdog and
    rotating supervisor connection are configured.
-7. From a clean, pushed Git commit run `npm run studio:source:deploy`. The script
+8. From a clean, pushed Git commit run `npm run studio:source:deploy`. The script
    uploads an archive addressed by the Git SHA, installs it through SSM, builds
    `ConclaviaStudioEditor`, records `Saved/source-revision.json` and executes the
    source audit.
-8. The deploy copies the non-redistributable content and plugin from the legacy
+9. The deploy copies the non-redistributable content and plugin from the legacy
    renderer only during the first migration, then builds the dedicated meeting
    level automatically. Validate with `Verify-SingleHeroReadiness.cjs`, the
    speech audit and a decoded browser run.

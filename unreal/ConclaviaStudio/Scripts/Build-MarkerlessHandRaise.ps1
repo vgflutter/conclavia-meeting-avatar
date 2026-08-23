@@ -41,9 +41,13 @@ $arguments = @(
     "-abslog=$log"
 )
 
-& $editor @arguments
-if ($LASTEXITCODE -ne 0) {
-    throw "Markerless hand-raise processing failed with exit code $LASTEXITCODE. See $log"
+$editorProcess = Start-Process `
+    -FilePath $editor `
+    -ArgumentList $arguments `
+    -PassThru `
+    -Wait
+if ($editorProcess.ExitCode -ne 0) {
+    throw "Markerless hand-raise processing failed with exit code $($editorProcess.ExitCode). See $log"
 }
 
 $success = Select-String -LiteralPath $log -Pattern "CONCLAVIA_MARKERLESS_PIPELINE_OK" -Quiet

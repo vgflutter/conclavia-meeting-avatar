@@ -17,6 +17,7 @@
     { "Name": "MetaHumanSDK", "Enabled": true },
     { "Name": "MetaHuman", "Enabled": true },
     { "Name": "MetaHumanLiveLink", "Enabled": true },
+    { "Name": "MetaHumanBodyTracker", "Enabled": true },
     { "Name": "RuntimeMetaHumanLipSync", "Enabled": true },
     { "Name": "PixelStreaming2", "Enabled": true },
     { "Name": "CaptureManagerEditor", "Enabled": true },

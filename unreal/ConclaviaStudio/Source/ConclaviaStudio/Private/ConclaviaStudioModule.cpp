@@ -1527,6 +1527,13 @@ private:
         ActiveBodyGesture = TEXT("none");
         bBodyGestureLowerQueued = false;
         InitializeBodyIdle();
+        if (bMeetingAvatar)
+        {
+            // Keep the complete arm in frame until the authored lowering pass
+            // has finished. Cutting to the portrait while the hand is still
+            // moving produces a distracting camera sweep across the torso.
+            SwitchCamera(TEXT("CAM_Meeting_Portrait"), 0.0f, true);
+        }
     }
 
     void HoldRaisedHand()
@@ -3648,8 +3655,10 @@ private:
             const bool bNeedsGestureFraming =
                 bPhysicalGestureReady
                 && (ActiveBodyGesture == TEXT("raise-hand")
+                    || ActiveBodyGesture == TEXT("lower-hand")
                     || BodyGesturePhase == TEXT("raising")
-                    || BodyGesturePhase == TEXT("held"));
+                    || BodyGesturePhase == TEXT("held")
+                    || BodyGesturePhase == TEXT("lowering"));
             SwitchCamera(
                 bNeedsGestureFraming
                     ? TEXT("CAM_Meeting_Gesture")
@@ -3669,8 +3678,10 @@ private:
             const bool bNeedsGestureFraming =
                 Shot.Contains(TEXT("wide"), ESearchCase::IgnoreCase)
                 && (ActiveBodyGesture == TEXT("raise-hand")
+                    || ActiveBodyGesture == TEXT("lower-hand")
                     || BodyGesturePhase == TEXT("raising")
-                    || BodyGesturePhase == TEXT("held"));
+                    || BodyGesturePhase == TEXT("held")
+                    || BodyGesturePhase == TEXT("lowering"));
             SwitchCamera(
                 bNeedsGestureFraming
                     ? TEXT("CAM_Wide_Slider_Left")

@@ -13,10 +13,15 @@ if (!playerUrl || !controlUrl || !outputDirectory) {
   );
 }
 
+const authorization = process.env.CONCLAVIA_CONTROL_TOKEN;
+const controlHeaders = authorization
+  ? { Authorization: `Bearer ${authorization}` }
+  : {};
+
 async function cue(bodyGesture) {
   const response = await fetch(`${controlUrl.replace(/\/$/u, "")}/director/cue`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...controlHeaders },
     body: JSON.stringify({
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -37,7 +42,8 @@ async function cue(bodyGesture) {
 
 async function health() {
   const response = await fetch(`${controlUrl.replace(/\/$/u, "")}/health`, {
-    cache: "no-store"
+    cache: "no-store",
+    headers: controlHeaders
   });
   if (!response.ok) {
     throw new Error(`Health failed (${response.status}): ${await response.text()}`);

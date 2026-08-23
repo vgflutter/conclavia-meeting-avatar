@@ -71,6 +71,7 @@ start_companion() {
   npm run build
   REPO_ROOT="$REPO_ROOT" \
   NODE_BIN=$(command -v node) \
+  RUNTIME_PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
   STDOUT_LOG="$STDOUT_LOG" \
   STDERR_LOG="$STDERR_LOG" \
   PLIST_FILE="$PLIST_FILE" \
@@ -83,7 +84,7 @@ const escapeXml = (value) => value
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&apos;");
 const values = Object.fromEntries(
-  ["REPO_ROOT", "NODE_BIN", "STDOUT_LOG", "STDERR_LOG", "PLIST_FILE", "LAUNCH_LABEL"]
+  ["REPO_ROOT", "NODE_BIN", "RUNTIME_PATH", "STDOUT_LOG", "STDERR_LOG", "PLIST_FILE", "LAUNCH_LABEL"]
     .map((key) => [key, escapeXml(process.env[key] || "")]),
 );
 const plist = `<?xml version="1.0" encoding="UTF-8"?>
@@ -99,6 +100,10 @@ const plist = `<?xml version="1.0" encoding="UTF-8"?>
     <string>serve</string>
   </array>
   <key>WorkingDirectory</key><string>${values.REPO_ROOT}</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>${values.RUNTIME_PATH}</string>
+  </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
   <key>StandardOutPath</key><string>${values.STDOUT_LOG}</string>

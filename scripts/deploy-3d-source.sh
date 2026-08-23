@@ -37,6 +37,7 @@ cp "$MANIFEST" "$DEPLOY_DIR/payload/ConclaviaStudio/Saved/source-revision.json"
 for path in Config Content Scripts Source SourceAssets ConclaviaStudio.uproject README.md; do
   cp -R "$PROJECT_ROOT/unreal/ConclaviaStudio/$path" "$DEPLOY_DIR/payload/ConclaviaStudio/"
 done
+cp -R "$PROJECT_ROOT/unreal/bootstrap" "$DEPLOY_DIR/payload/ConclaviaStudio/Bootstrap"
 (
   cd "$DEPLOY_DIR/payload"
   zip -qr "$ARCHIVE" ConclaviaStudio
@@ -86,6 +87,7 @@ const commands = [
   'Copy-Item (Join-Path $incoming "Scripts") $root -Recurse -Force',
   'Copy-Item (Join-Path $incoming "Config") $root -Recurse -Force',
   'Copy-Item (Join-Path $incoming "SourceAssets") $root -Recurse -Force',
+  'Copy-Item (Join-Path $incoming "Bootstrap") $root -Recurse -Force',
   'Copy-Item (Join-Path $incoming "Content\\*") (Join-Path $root "Content") -Recurse -Force',
   'Copy-Item (Join-Path $incoming "ConclaviaStudio.uproject") $root -Force',
   'Copy-Item (Join-Path $incoming "README.md") $root -Force',

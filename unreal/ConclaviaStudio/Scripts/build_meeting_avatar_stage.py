@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v4"
+STAGE_REVISION = "v7"
 LEVEL_PATH = f"/Game/Conclavia/Meeting/L_MeetingAvatar_{STAGE_REVISION}"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 
@@ -271,9 +271,12 @@ def build() -> None:
     )
     add_camera(
         "CAM_Meeting_Gesture",
-        unreal.Vector(-520.0, 0.0, 178.0),
-        unreal.Vector(0.0, 0.0, 174.0),
-        70.0,
+        # Keep the captured hand inside a webcam-like medium close-up.  The
+        # previous 80 mm / 480 cm framing revealed most of the body, making a
+        # natural solver-authored gesture look like a stage performance.
+        unreal.Vector(-420.0, 0.0, 210.0),
+        unreal.Vector(0.0, 0.0, 190.0),
+        100.0,
     )
 
     add_rect_light(

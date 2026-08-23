@@ -327,8 +327,8 @@ The production `meeting` profile deliberately does not use the legacy
 did not contain the coherent clavicle, torso, elbow, wrist and finger
 performance required for a believable camera-close gesture. Request-to-speak
 therefore remains a control-plane state until `MeetingHandRaiseAnimation`
-references a captured or authored full-body `AnimSequence` retargeted through
-Epic's `RTG_MH_IKRig`. Runtime telemetry exposes `physicalGestureReady`,
+references a captured or authored full-body `AnimSequence` on the shared
+MetaHuman body skeleton. Runtime telemetry exposes `physicalGestureReady`,
 `physicalGestureDriver`, `bodyGesturePhase` and `bodyGestureAlpha`, and the
 meeting camera stays on the portrait shot while the asset is unavailable.
 
@@ -350,10 +350,12 @@ temporary path on the Windows renderer and run:
   -Force
 ```
 
-The pipeline ingests the mono video through Capture Manager, solves body motion
-locally, exports a body-only MetaHuman `AnimSequence` through
-`RTG_MH_IKRig`, enables foot locking and preserves the last valid pose for any
-unsolved frame. A successful build writes
+The pipeline ingests the mono video through Capture Manager and solves body
+motion locally. UE 5.8 exposes the resulting 342-track MetaHuman transforms
+directly on the performance; the builder validates the arm movement, bakes
+those native transforms onto the shared MetaHuman skeleton, and stabilizes the
+root and lower body for a fixed meeting camera. It rejects root-only or static
+exports instead of publishing a false-success asset. A successful build writes
 `/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_Markerless_v1` and the
 sentinel `CONCLAVIA_MARKERLESS_PIPELINE_OK` to
 `Saved/Logs/MarkerlessHandRaise.log`.
