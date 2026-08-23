@@ -995,9 +995,9 @@ private:
     {
         int32 AtMs = 0;
         ERealisticMetaHumanLipSyncMood Mood =
-            ERealisticMetaHumanLipSyncMood::Confidence;
-        FString MoodName = TEXT("confidence");
-        float Intensity = 0.48f;
+            ERealisticMetaHumanLipSyncMood::Neutral;
+        FString MoodName = TEXT("neutral");
+        float Intensity = 0.0f;
         FString Focus = TEXT("camera");
         FString Gesture = TEXT("none");
     };
@@ -2244,13 +2244,13 @@ private:
             return;
         }
 
-        Generator->SetMood(ERealisticMetaHumanLipSyncMood::Confidence);
-        Generator->SetMoodIntensity(0.48f);
+        Generator->SetMood(ERealisticMetaHumanLipSyncMood::Neutral);
+        Generator->SetMoodIntensity(0.0f);
         Generator->SetLookaheadMs(40);
         Generator->SetOutputType(ERealisticMetaHumanLipSyncOutputType::FullFace);
         Generator->ProcessingChunkSize = 640;
-        ActiveMoodName = TEXT("confidence");
-        ActiveMoodIntensity = 0.48f;
+        ActiveMoodName = TEXT("neutral");
+        ActiveMoodIntensity = 0.0f;
         CommercialGenerator = TStrongObjectPtr<URealisticMetaHumanLipSyncGenerator>(Generator);
         CommercialModelDeadline = FPlatformTime::Seconds() + 60.0;
         StudioWorld->GetTimerManager().SetTimer(
@@ -2757,9 +2757,9 @@ private:
         if (ActivePerformanceBeats.IsEmpty())
         {
             SetCommercialMood(
-                ERealisticMetaHumanLipSyncMood::Confidence,
-                TEXT("confidence"),
-                0.48f);
+                ERealisticMetaHumanLipSyncMood::Neutral,
+                TEXT("neutral"),
+                0.0f);
             ActivePerformanceFocus = TEXT("camera");
             ActivePerformanceGesture = TEXT("none");
         }
@@ -3626,7 +3626,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v17-showcase-cine")
+            ? TEXT("ue58-commercial-lipsync-v18-neutral-rest")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -4141,10 +4141,10 @@ private:
     TArray<FPerformanceBeat> ActivePerformanceBeats;
     int32 NextPerformanceBeatIndex = 0;
     int32 AppliedPerformanceBeatCount = 0;
-    FString ActiveMoodName = TEXT("confidence");
-    float ActiveMoodIntensity = 0.48f;
-    float PerformanceCurrentIntensity = 0.48f;
-    float PerformanceTargetIntensity = 0.48f;
+    FString ActiveMoodName = TEXT("neutral");
+    float ActiveMoodIntensity = 0.0f;
+    float PerformanceCurrentIntensity = 0.0f;
+    float PerformanceTargetIntensity = 0.0f;
     FString ActivePerformanceFocus = TEXT("camera");
     FString ActivePerformanceGesture = TEXT("none");
     FString ActiveBodyGesture = TEXT("none");

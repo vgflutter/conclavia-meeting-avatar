@@ -120,7 +120,7 @@ The companion and Unreal renderer are separate processes. The renderer can there
 
 The **Showcase** profile is a separate, reproducible UE 5.8 Cine assembly inspired by the visual family used on Epic's MetaHuman homepage. Epic does not publish that homepage character as a named Core Data preset, so the project does not present it as an exact downloadable identity. It starts from the closest installed Jelena family, keeps its own `MHC_Showcase` asset, requests 8K face and 4K body source textures, and uses the Cinematic assembly pipeline. The original 2K/Optimized Jelena profile remains available for comparison and is never overwritten.
 
-The profile is generated once by `Build-ShowcaseAvatar.ps1` during a clean AWS source deployment and persisted with the Unreal project. Runtime selection is then a warm actor swap. The dedicated meeting portrait camera, LOD 0 rendering, strand hair, full texture mips, restrained beauty lighting and high-bitrate 1080p Pixel Streaming path remain independent from the legacy Conclavia podcast project.
+The profile is generated once by `Build-ShowcaseAvatar.ps1` during a clean AWS source deployment and persisted with the Unreal project. Runtime selection is then a warm actor swap. The dedicated meeting portrait camera, LOD 0 rendering, strand hair, full texture mips, restrained beauty lighting and high-bitrate 1080p Pixel Streaming path remain independent from the legacy Conclavia podcast project. The face rests at true neutral; mood intensity is applied only by sentence-level speech beats or bounded listening reactions, so choosing a high-fidelity identity does not leave it in a permanently tense expression.
 
 ## Cross-platform chat and commands
 
