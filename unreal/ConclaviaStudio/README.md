@@ -376,8 +376,8 @@ MeetingHandRaiseHoldTimeSeconds=3.25
 MeetingHandRaiseLowerTimeSeconds=5.75
 MeetingHandRaiseEndTimeSeconds=7.50
 MeetingApplauseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1.AS_MeetingApplause_SeatedMarkerless_v1
-MeetingApplauseStartTimeSeconds=19.00
-MeetingApplauseEndTimeSeconds=22.00
+MeetingApplauseStartTimeSeconds=19.25
+MeetingApplauseEndTimeSeconds=21.65
 ```
 
 The runtime plays the captured rise, pauses on a genuine captured hold while

@@ -35,8 +35,11 @@ $pythonArguments = @(
     "--motion-tracks", "upperarm_l,upperarm_r",
     "--preserve-motion-translations",
     "--stabilize-meeting-torso",
-    "--ease-segment-start-seconds", "19.00",
-    "--ease-segment-end-seconds", "22.00",
+    # Use the elevated, continuous part of the captured applause. The source
+    # take already owns the pose; this crop avoids the low preparation and
+    # lowering frames without synthesizing shoulder or wrist rotations.
+    "--ease-segment-start-seconds", "19.25",
+    "--ease-segment-end-seconds", "21.65",
     "--transition-seconds", "0.35"
 )
 if ($ReusePerformance) {

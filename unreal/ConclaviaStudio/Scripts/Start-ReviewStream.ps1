@@ -41,8 +41,8 @@ $commercialAssetScript = "C:\ConclaviaMeetingAvatar\Scripts\ensure_commercial_li
 $grade1Map = "/Game/Conclavia/Grade1/L_Grade1HeroPop"
 $grade1MapFile = "C:\ConclaviaLipSyncLab56\RMHLipSyncDemo\Content\Conclavia\Grade1\L_Grade1HeroPop.umap"
 $grade1BuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_grade1_hero_studio.py"
-$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v14"
-$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v14.umap"
+$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v15"
+$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v15.umap"
 $meetingBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_avatar_stage.py"
 $meetingBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-stage-builder.sha256"
 $seatedIdleFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Studio\Animations\AS_Conclavia_SeatedIdle.uasset"
@@ -610,7 +610,7 @@ $arguments = @(
     # worker and leave the remaining scheduler capacity to the audio solver.
     "-foregroundworkers=0",
     "-TaskGraphForceNewBackend",
-    "-ExecCmds=t.MaxFPS 30,sg.ViewDistanceQuality 4,sg.AntiAliasingQuality 4,sg.ShadowQuality 4,sg.GlobalIlluminationQuality 4,sg.ReflectionQuality 4,sg.PostProcessQuality 4,sg.TextureQuality 4,sg.EffectsQuality 4,sg.ShadingQuality 4,r.ScreenPercentage 100,r.AntiAliasingMethod 4,r.TSR.History.ScreenPercentage 150,r.TSR.ShadingRejection.Flickering 1,r.TSR.ShadingRejection.Flickering.Period 3,r.TSR.ShadingRejection.Flickering.FrameRateCap 30,r.MotionBlurQuality 0,r.DefaultFeature.MotionBlur 0,r.Lumen.ScreenProbeGather.Temporal.MaxFramesAccumulated 8,r.Streaming.PoolSize 8192,r.Streaming.LimitPoolSizeToVRAM 1,r.Streaming.FullyLoadUsedTextures 1,r.Streaming.UseAllMips 1,r.Streaming.Boost 4,r.MipMapLODBias -1,r.SkeletalMeshLODBias -2,r.ForceLOD 0,r.HairStrands.Strands 1,r.HairStrands.Visibility.MSAA.SamplePerPixel 2,r.SSS.Quality 1,r.SSS.HalfRes 0,r.Tonemapper.Sharpen 0.40,a.ParallelAnimEvaluation 1,a.ParallelAnimUpdate 1,PixelStreaming2.WebRTC.DisableAudioSync 0",
+    "-ExecCmds=t.MaxFPS 30,sg.ViewDistanceQuality 4,sg.AntiAliasingQuality 4,sg.ShadowQuality 4,sg.GlobalIlluminationQuality 4,sg.ReflectionQuality 4,sg.PostProcessQuality 4,sg.TextureQuality 4,sg.EffectsQuality 4,sg.ShadingQuality 4,r.ScreenPercentage 100,r.AntiAliasingMethod 4,r.TSR.History.ScreenPercentage 150,r.TSR.ShadingRejection.Flickering 1,r.TSR.ShadingRejection.Flickering.Period 3,r.TSR.ShadingRejection.Flickering.FrameRateCap 30,r.MotionBlurQuality 0,r.DefaultFeature.MotionBlur 0,r.Lumen.ScreenProbeGather.Temporal.MaxFramesAccumulated 8,r.Streaming.PoolSize 8192,r.Streaming.LimitPoolSizeToVRAM 1,r.Streaming.FullyLoadUsedTextures 1,r.Streaming.UseAllMips 1,r.Streaming.Boost 4,r.MipMapLODBias -1,r.SkeletalMeshLODBias -2,r.ForceLOD 0,r.HairStrands.Strands 1,r.HairStrands.Visibility.MSAA.SamplePerPixel 2,r.SSS.Quality 2,r.SSS.SampleSet 2,r.SSS.HalfRes 0,r.Tonemapper.Sharpen 0.15,a.ParallelAnimEvaluation 1,a.ParallelAnimUpdate 1,PixelStreaming2.WebRTC.DisableAudioSync 0",
     "-log"
 )
 if ($isLegacyLipSync) {

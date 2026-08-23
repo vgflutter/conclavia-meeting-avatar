@@ -209,8 +209,8 @@ function percentile(values, quantile) {
         && intervals.filter((value) => value >= 100).length <= 1
         && percentile(heroDeltas, 0.99) <= 0.12
         && finalExposure.exposureMeanLuma >= 38
-        && finalExposure.exposureMeanLuma <= 220
-        && finalExposure.exposureNearWhiteRatio <= 0.38,
+        && finalExposure.exposureMeanLuma <= 190
+        && finalExposure.exposureNearWhiteRatio <= 0.16,
       width: frames.width,
       height: frames.height,
       decodedFrameCount: frames.frames.length,

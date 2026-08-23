@@ -50,8 +50,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     engineConfig,
     /^MeetingApplauseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingApplause_SeatedMarkerless_v1\.AS_MeetingApplause_SeatedMarkerless_v1$/mu,
   );
-  assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=19\.00$/mu);
-  assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=22\.00$/mu);
+  assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=19\.25$/mu);
+  assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=21\.65$/mu);
   assert.match(moduleSource, /Rejected non-meeting gesture asset/);
   assert.match(moduleSource, /Rejected non-meeting applause asset/);
   assert.doesNotMatch(moduleSource, /BodyGestureRaiseSeconds/);
@@ -79,10 +79,10 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.doesNotMatch(moduleSource, /CAM_Meeting_Gesture/);
   assert.match(moduleSource, /Clamp\(Intensity, 0\.0f, 0\.85f\)/);
   assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
-  assert.match(startScript, /L_MeetingAvatar_v14/);
-  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v14$/mu);
-  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v14$/mu);
-  assert.match(stageBuilder, /^STAGE_REVISION = "v14"$/mu);
+  assert.match(startScript, /L_MeetingAvatar_v15/);
+  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v15$/mu);
+  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v15$/mu);
+  assert.match(stageBuilder, /^STAGE_REVISION = "v15"$/mu);
   assert.doesNotMatch(stageBuilder, /CAM_Meeting_Applause/);
   assert.doesNotMatch(stageBuilder, /CAM_Meeting_Gesture/);
   assert.match(stageBuilder, /^CONTENT_ROOT = "\/Game\/Conclavia\/Meeting"$/mu);
@@ -90,12 +90,21 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
   assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
   assert.match(stageBuilder, /webcam_focal_length = 150\.0/);
+  assert.match(stageBuilder, /unreal\.Vector\(-300\.0, -310\.0, 375\.0\)/);
+  assert.match(stageBuilder, /\n\s{8}185\.0,\n/);
+  assert.match(engineConfig, /^r\.SSS\.Quality=2$/mu);
+  assert.match(engineConfig, /^r\.SSS\.SampleSet=2$/mu);
+  assert.match(engineConfig, /^r\.Tonemapper\.Sharpen=0\.15$/mu);
+  assert.match(startScript, /r\.SSS\.SampleSet 2/);
+  assert.match(startScript, /r\.Tonemapper\.Sharpen 0\.15/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
   assert.match(supervisor, /performanceSemanticMood/);
   assert.match(supervisor, /bodyIdleVariantCount/);
   assert.match(supervisor, /bodyIdleSwitchCount/);
   assert.match(readinessVerifier, /decodedFps >= 25/);
+  assert.match(readinessVerifier, /exposureMeanLuma <= 190/);
+  assert.match(readinessVerifier, /exposureNearWhiteRatio <= 0\.16/);
   assert.match(startScript, /\$readinessErrorText/);
   assert.match(startScript, /build_seated_idle\.py/);
   assert.match(stageBuilder, /MEETING_Chair_Seat/);
@@ -155,6 +164,7 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(solveScript, /body_tracking", True/);
   assert.match(solveScript, /enable_foot_locking", True/);
   assert.match(solveScript, /get_animation_data\(\)/);
+  assert.match(solveScript, /expected_duration_seconds/);
   assert.match(solveScript, /Bake markerless MetaHuman body solve/);
   assert.match(solveScript, /required_arm_tracks/);
   assert.match(solveScript, /motion_rotation_deltas/);
@@ -173,8 +183,8 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.doesNotMatch(applauseBuildScript, /--delta-from-stabilized-pose/);
   assert.match(applauseBuildScript, /--preserve-motion-translations/);
   assert.match(applauseBuildScript, /--stabilize-meeting-torso/);
-  assert.match(applauseBuildScript, /--ease-segment-start-seconds", "19\.00/);
-  assert.match(applauseBuildScript, /--ease-segment-end-seconds", "22\.00/);
+  assert.match(applauseBuildScript, /--ease-segment-start-seconds", "19\.25/);
+  assert.match(applauseBuildScript, /--ease-segment-end-seconds", "21\.65/);
   assert.match(solveScript, /STABLE_MEETING_TORSO_TRACKS/);
   assert.match(solveScript, /seated_transform\.rotation\.slerp_quat/);
   assert.match(solveScript, /linear \* linear \* \(3\.0 - 2\.0 \* linear\)/);

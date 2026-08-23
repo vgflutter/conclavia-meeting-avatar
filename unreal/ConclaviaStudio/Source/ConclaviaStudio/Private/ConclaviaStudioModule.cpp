@@ -4126,7 +4126,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v24-curve-smile-fixed-camera")
+            ? TEXT("ue58-commercial-lipsync-v25-natural-skin-elevated-applause")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");

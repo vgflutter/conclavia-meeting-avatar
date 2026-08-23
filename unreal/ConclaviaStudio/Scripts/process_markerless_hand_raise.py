@@ -239,6 +239,15 @@ def bake_body_animation(
         dict(frame.get_editor_property("body_animation_data"))
         for frame in solved_frames
     ]
+    # Preserve the solver's one-to-one frame cadence. A corrupted bake that
+    # expands or truncates the captured frame list turns continuous applause
+    # into long, disconnected poses and must fail before it reaches runtime.
+    expected_duration_seconds = (len(solved_frames) - 1) / OUTPUT_FRAME_RATE
+    if expected_duration_seconds <= 0.0 or expected_duration_seconds > 90.0:
+        raise RuntimeError(
+            "Markerless performance duration is implausible: "
+            f"frames={len(solved_frames)} seconds={expected_duration_seconds:.3f}"
+        )
     track_names = set(body_frames[0])
     for frame in body_frames[1:]:
         track_names.intersection_update(frame)
