@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v9"
+STAGE_REVISION = "v10"
 LEVEL_PATH = f"/Game/Conclavia/Meeting/L_MeetingAvatar_{STAGE_REVISION}"
 
 CUBE = "/Engine/BasicShapes/Cube.Cube"
@@ -286,10 +286,12 @@ def build() -> None:
     # A meeting participant should not jump between a face close-up and a
     # theatrical wide shot to raise a hand. Both semantic cameras therefore
     # share one seated webcam composition: upper torso and chair remain visible
-    # while the captured hand has enough headroom to enter frame naturally.
+    # while the captured hand has enough headroom to enter frame naturally. A
+    # restrained 140 mm crop keeps the face prominent in a conferencing tile
+    # without cutting off the authored request-to-speak or applause silhouette.
     webcam_position = unreal.Vector(-360.0, 0.0, 185.0)
     webcam_target = unreal.Vector(0.0, 0.0, 165.0)
-    webcam_focal_length = 125.0
+    webcam_focal_length = 140.0
     add_camera(
         "CAM_Meeting_Portrait",
         webcam_position,

@@ -70,13 +70,13 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /performanceSemanticMood/);
   assert.match(moduleSource, /applauseGestureReady/);
   assert.match(moduleSource, /BodyGesturePhase == TEXT\("applauding"\)/);
-  assert.match(startScript, /L_MeetingAvatar_v9/);
-  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v9$/mu);
-  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v9$/mu);
-  assert.match(stageBuilder, /^STAGE_REVISION = "v9"$/mu);
+  assert.match(startScript, /L_MeetingAvatar_v10/);
+  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v10$/mu);
+  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v10$/mu);
+  assert.match(stageBuilder, /^STAGE_REVISION = "v10"$/mu);
   assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
   assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
-  assert.match(stageBuilder, /webcam_focal_length = 125\.0/);
+  assert.match(stageBuilder, /webcam_focal_length = 140\.0/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
   assert.match(supervisor, /performanceSemanticMood/);
