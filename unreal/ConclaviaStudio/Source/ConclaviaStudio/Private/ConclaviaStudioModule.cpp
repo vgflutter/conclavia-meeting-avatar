@@ -1313,11 +1313,11 @@ private:
                     continue;
                 }
 
-                // The meeting profile owns a restrained standing sequence
-                // baked from Epic's authored source. It deliberately removes
+                // The meeting profile owns a restrained seated sequence whose
+                // upper body is baked from Epic's authored source. It removes
                 // the broad technical-review sway that reads as rocking in a
-                // fixed webcam shot. Other studio profiles retain their
-                // separately authored body layer.
+                // fixed webcam shot while preserving the seated base. Other
+                // studio profiles retain their separately authored body layer.
                 Component->PlayAnimation(BodyIdle, true);
                 Component->SetPlayRate(IdlePlayRate);
                 Component->SetPosition(
@@ -3800,7 +3800,7 @@ private:
             : TEXT("production-studio-58");
         const int32 CastCount = bLipSyncLab ? 1 : ParticipantFaces.Num();
         const FString BodyIdleDriver = bMeetingAvatar
-            ? TEXT("ue58-metahuman-authored-restrained-standing-v1")
+            ? TEXT("ue58-metahuman-authored-restrained-seated-v2")
             : TEXT("ue58-metahuman-authored-attentive-loop");
         const float BodyIdlePlayRate = bMeetingAvatar ? 0.24f : 0.58f;
         FString Body = FString::Printf(

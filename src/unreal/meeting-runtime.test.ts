@@ -25,7 +25,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
 
   assert.match(
     engineConfig,
-    /^MeetingHandRaiseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingHandRaise_Markerless_v1\.AS_MeetingHandRaise_Markerless_v1$/mu,
+    /^MeetingHandRaiseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingHandRaise_SeatedMarkerless_v1\.AS_MeetingHandRaise_SeatedMarkerless_v1$/mu,
   );
   assert.match(engineConfig, /^MeetingHandRaiseStartTimeSeconds=1\.75$/mu);
   assert.match(engineConfig, /^MeetingHandRaiseHoldTimeSeconds=3\.25$/mu);
@@ -39,13 +39,18 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     moduleSource,
     /\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingAttentiveIdle_v1/,
   );
-  assert.match(startScript, /L_MeetingAvatar_v7/);
-  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v7$/mu);
-  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v7$/mu);
-  assert.match(stageBuilder, /^STAGE_REVISION = "v7"$/mu);
-  assert.match(stageBuilder, /unreal\.Vector\(-420\.0, 0\.0, 210\.0\)/);
-  assert.match(stageBuilder, /unreal\.Vector\(0\.0, 0\.0, 190\.0\)/);
+  assert.match(startScript, /L_MeetingAvatar_v9/);
+  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v9$/mu);
+  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v9$/mu);
+  assert.match(stageBuilder, /^STAGE_REVISION = "v9"$/mu);
+  assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
+  assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
+  assert.match(stageBuilder, /webcam_focal_length = 125\.0/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
+  assert.match(startScript, /build_seated_idle\.py/);
+  assert.match(stageBuilder, /MEETING_Chair_Seat/);
+  assert.match(stageBuilder, /MEETING_Chair_Back/);
+  assert.doesNotMatch(stageBuilder, /save_directory/);
 });
 
 await test("builds hand raise from private markerless capture with a visual gate", async () => {
@@ -72,7 +77,11 @@ await test("builds hand raise from private markerless capture with a visual gate
   assert.match(solveScript, /get_animation_data\(\)/);
   assert.match(solveScript, /Bake markerless MetaHuman body solve/);
   assert.match(solveScript, /required_arm_tracks/);
-  assert.match(solveScript, /STABILIZED_BODY_TRACKS/);
+  assert.match(solveScript, /SEATED_BASE_TRACKS/);
+  assert.match(solveScript, /AS_Conclavia_SeatedIdle/);
+  assert.match(solveScript, /seated_leg_delta/);
+  assert.match(solveScript, /rotation_only_tracks/);
+  assert.match(solveScript, /transformed\.rotation = frame\[bone_name\]\.rotation/);
   assert.match(buildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
   assert.match(ignoreRules, /^unreal\/ConclaviaStudio\/Capture\/$/mu);
 });

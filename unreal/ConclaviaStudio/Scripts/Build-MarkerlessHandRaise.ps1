@@ -4,7 +4,7 @@ param(
     [string]$ProjectPath = "C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject",
     [string]$EngineRoot = "C:\Epic\UE_5.8",
     [string]$OutputPath = "/Game/Conclavia/Meeting/Animations",
-    [string]$AssetName = "AS_MeetingHandRaise_Markerless_v1",
+    [string]$AssetName = "AS_MeetingHandRaise_SeatedMarkerless_v1",
     [switch]$Force
 )
 

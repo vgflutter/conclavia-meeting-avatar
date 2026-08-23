@@ -41,10 +41,13 @@ $commercialAssetScript = "C:\ConclaviaMeetingAvatar\Scripts\ensure_commercial_li
 $grade1Map = "/Game/Conclavia/Grade1/L_Grade1HeroPop"
 $grade1MapFile = "C:\ConclaviaLipSyncLab56\RMHLipSyncDemo\Content\Conclavia\Grade1\L_Grade1HeroPop.umap"
 $grade1BuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_grade1_hero_studio.py"
-$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v7"
-$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v7.umap"
+$meetingMap = "/Game/Conclavia/Meeting/L_MeetingAvatar_v9"
+$meetingMapFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\L_MeetingAvatar_v9.umap"
 $meetingBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_avatar_stage.py"
 $meetingBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-stage-builder.sha256"
+$seatedIdleFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Studio\Animations\AS_Conclavia_SeatedIdle.uasset"
+$seatedIdleBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_seated_idle.py"
+$seatedIdleBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\seated-idle-builder.sha256"
 $meetingIdleFile = "C:\ConclaviaMeetingAvatar\Content\Conclavia\Meeting\Animations\AS_MeetingAttentiveIdle_v1.uasset"
 $meetingIdleBuildScript = "C:\ConclaviaMeetingAvatar\Scripts\build_meeting_attentive_idle.py"
 $meetingIdleBuildRevisionFile = "C:\ConclaviaMeetingAvatar\Saved\meeting-idle-builder.sha256"
@@ -286,10 +289,60 @@ if ($isMeetingAvatar -and $meetingStageNeedsBuild) {
         -Encoding ASCII
 }
 
-# The meeting avatar must not inherit the podcast's seated technical loop.
-# Build a product-owned standing idle from Epic's authored source, with its
-# broad spine and shoulder shifts attenuated for a fixed webcam crop. The hash
-# sentinel makes the asset reproducible while keeping ordinary starts fast.
+# Rebuild the product-owned seated base before any meeting animation that
+# samples it. This keeps a fresh instance reproducible without committing the
+# generated intermediate asset or inheriting the podcast set.
+if ($isMeetingAvatar) {
+    if (-not (Test-Path $seatedIdleBuildScript)) {
+        throw "Seated-idle builder is missing: $seatedIdleBuildScript"
+    }
+    $seatedIdleBuilderHash = (Get-FileHash $seatedIdleBuildScript -Algorithm SHA256).Hash.ToLowerInvariant()
+    $installedSeatedIdleBuilderHash = if (Test-Path $seatedIdleBuildRevisionFile) {
+        (Get-Content $seatedIdleBuildRevisionFile -Raw).Trim().ToLowerInvariant()
+    } else {
+        ""
+    }
+    $seatedIdleNeedsBuild = -not (Test-Path $seatedIdleFile) -or
+        $installedSeatedIdleBuilderHash -ne $seatedIdleBuilderHash
+}
+if ($isMeetingAvatar -and $seatedIdleNeedsBuild) {
+    $seatedIdleBuildLog = Join-Path $artifacts "seated-idle-build.log"
+    Remove-Item $seatedIdleBuildLog -Force -ErrorAction SilentlyContinue
+    $seatedIdleBuildProcess = Start-Process `
+        -FilePath $editorCmd `
+        -ArgumentList @(
+            "`"$projectPath`"",
+            "-run=pythonscript",
+            "-script=`"$seatedIdleBuildScript`"",
+            "-unattended",
+            "-nop4",
+            "-nosplash",
+            "-nullrhi",
+            "-stdout",
+            "-FullStdOutLogOutput",
+            "-abslog=`"$seatedIdleBuildLog`""
+        ) `
+        -Wait `
+        -PassThru
+    $seatedIdleReadyMarker = (Test-Path $seatedIdleBuildLog) -and (
+        Select-String `
+            -Path $seatedIdleBuildLog `
+            -SimpleMatch "CONCLAVIA_SEATED_IDLE: READY" `
+            -Quiet
+    )
+    if (-not (Test-Path $seatedIdleFile) -or
+        -not $seatedIdleReadyMarker) {
+        throw "Seated-idle authoring failed (exit $($seatedIdleBuildProcess.ExitCode)). See $seatedIdleBuildLog"
+    }
+    Set-Content `
+        -Path $seatedIdleBuildRevisionFile `
+        -Value $seatedIdleBuilderHash `
+        -NoNewline `
+        -Encoding ASCII
+}
+
+# Build a restrained meeting idle from that seated base. The hash sentinel
+# makes changes reproducible while keeping ordinary starts fast.
 if ($isMeetingAvatar) {
     if (-not (Test-Path $meetingIdleBuildScript)) {
         throw "Meeting attentive-idle builder is missing: $meetingIdleBuildScript"

@@ -38,8 +38,9 @@
     }
   ],
   "generatedAssets": [
-    "/Game/Conclavia/Meeting/L_MeetingAvatar_v4",
+    "/Game/Conclavia/Meeting/L_MeetingAvatar_v9",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1",
     "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase",
     "/Game/Conclavia/Studio/L_PremiumStudio",
     "/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle"
@@ -51,6 +52,8 @@
     "unreal/ConclaviaStudio/Scripts/build_premium_studio.py",
     "unreal/ConclaviaStudio/Scripts/build_metahuman_cast.py",
     "unreal/ConclaviaStudio/Scripts/build_seated_idle.py",
+    "unreal/ConclaviaStudio/Scripts/process_markerless_hand_raise.py",
+    "unreal/ConclaviaStudio/Scripts/Build-MarkerlessHandRaise.ps1",
     "unreal/ConclaviaStudio/Scripts/ensure_commercial_lipsync_assets.py"
   ]
 }

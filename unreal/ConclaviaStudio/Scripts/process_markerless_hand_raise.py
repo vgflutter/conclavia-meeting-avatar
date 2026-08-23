@@ -16,14 +16,17 @@ import unreal
 
 
 DEFAULT_OUTPUT_PATH = "/Game/Conclavia/Meeting/Animations"
-DEFAULT_ASSET_NAME = "AS_MeetingHandRaise_Markerless_v1"
+DEFAULT_ASSET_NAME = "AS_MeetingHandRaise_SeatedMarkerless_v1"
 DEFAULT_TARGET_MESH = (
     "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Body/"
     "SKM_MHC_Showcase_BodyMesh.SKM_MHC_Showcase_BodyMesh"
 )
+SEATED_IDLE_SOURCE_PATH = (
+    "/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle"
+)
 OUTPUT_FRAME_RATE = 30
 MEETING_STABILIZATION_TIME_SECONDS = 1.75
-STABILIZED_BODY_TRACKS = {
+SEATED_BASE_TRACKS = {
     "root",
     "pelvis",
     "thigh_l",
@@ -35,6 +38,14 @@ STABILIZED_BODY_TRACKS = {
     "foot_r",
     "ball_r",
 }
+
+
+def copy_transform(value: unreal.Transform) -> unreal.Transform:
+    result = unreal.Transform()
+    result.translation = value.translation
+    result.rotation = value.rotation
+    result.scale3d = value.scale3d
+    return result
 
 
 def _delete_asset_if_requested(asset_path: str, force: bool) -> None:
@@ -164,6 +175,16 @@ def bake_body_animation(
     if not isinstance(target_skeleton, unreal.Skeleton):
         raise RuntimeError(f"Target MetaHuman skeleton is unavailable: {target_mesh_path}")
 
+    seated_idle = unreal.load_asset(SEATED_IDLE_SOURCE_PATH)
+    if not isinstance(seated_idle, unreal.AnimSequence):
+        raise RuntimeError(
+            f"Seated MetaHuman base is unavailable: {SEATED_IDLE_SOURCE_PATH}"
+        )
+    pose_options = unreal.AnimPoseEvaluationOptions()
+    pose_options.set_editor_property("should_retarget", True)
+    seated_pose = seated_idle.get_anim_pose_at_time(0.0, pose_options)
+    reference_pose = target_skeleton.get_reference_pose()
+
     # The 5.8 performance already exposes solver output on the complete
     # MetaHuman body hierarchy. Its ExistingSkeleton export path currently
     # returns a root-only sequence in scripted/offscreen runs, even though the
@@ -218,6 +239,35 @@ def bake_body_animation(
         len(body_frames) - 1,
         int(round(MEETING_STABILIZATION_TIME_SECONDS * OUTPUT_FRAME_RATE)),
     )
+    seated_base_transforms = {
+        bone_name: seated_pose.get_bone_pose(
+            bone_name,
+            unreal.AnimPoseSpaces.LOCAL,
+        )
+        for bone_name in SEATED_BASE_TRACKS
+        if bone_name in track_names
+    }
+    reference_transforms = {
+        bone_name: reference_pose.get_bone_pose(
+            bone_name,
+            unreal.AnimPoseSpaces.LOCAL,
+        )
+        for bone_name in track_names
+        if bone_name not in seated_base_transforms
+    }
+    captured_thigh = body_frames[stabilization_frame]["thigh_r"].rotation
+    seated_thigh = seated_base_transforms["thigh_r"].rotation
+    seated_leg_delta = (
+        abs(seated_thigh.x - captured_thigh.x)
+        + abs(seated_thigh.y - captured_thigh.y)
+        + abs(seated_thigh.z - captured_thigh.z)
+        + abs(seated_thigh.w - captured_thigh.w)
+    )
+    if seated_leg_delta < 0.15:
+        raise RuntimeError(
+            "Seated base did not produce a meaningful leg pose: "
+            f"rotation_delta={seated_leg_delta:.4f}"
+        )
     controller.open_bracket("Bake markerless MetaHuman body solve")
     try:
         controller.set_frame_rate(unreal.FrameRate(OUTPUT_FRAME_RATE, 1), False)
@@ -226,10 +276,26 @@ def bake_body_animation(
             False,
         )
         for bone_name in sorted(track_names):
-            transforms = [frame[bone_name] for frame in body_frames]
-            if bone_name in STABILIZED_BODY_TRACKS:
-                stable_transform = body_frames[stabilization_frame][bone_name]
-                transforms = [stable_transform] * len(body_frames)
+            if bone_name in seated_base_transforms:
+                # Match Epic's Layered Blend Per Bone architecture offline:
+                # the seated asset owns root, pelvis and legs while the native
+                # markerless solve owns the complete upper-body performance.
+                # No shoulder, elbow, wrist or finger rotation is synthesized.
+                seated_transform = seated_base_transforms[bone_name]
+                transforms = [copy_transform(seated_transform) for _ in body_frames]
+            else:
+                # Markerless local translations contain calibration offsets
+                # from the captured performer. Baking those offsets verbatim
+                # makes the MetaHuman torso stretch and rise inside a fixed
+                # webcam frame. Keep the target MetaHuman's authored bone
+                # lengths and scale while preserving every captured rotation,
+                # including spine, shoulder, elbow, wrist and finger motion.
+                base_transform = reference_transforms[bone_name]
+                transforms = []
+                for frame in body_frames:
+                    transformed = copy_transform(base_transform)
+                    transformed.rotation = frame[bone_name].rotation
+                    transforms.append(transformed)
             controller.add_bone_track(bone_name, False)
             controller.set_bone_track_keys(
                 bone_name,
@@ -259,7 +325,9 @@ def bake_body_animation(
         f"asset={animation.get_path_name()} seconds={animation.get_play_length():.3f} "
         f"frames={len(body_frames)} tracks={len(baked_track_names)} "
         f"arm_delta={maximum_rotation_delta:.4f} "
-        f"stabilization_frame={stabilization_frame}"
+        f"seated_base_tracks={len(seated_base_transforms)} "
+        f"rotation_only_tracks={len(reference_transforms)} "
+        f"seated_leg_delta={seated_leg_delta:.4f}"
     )
     return animation
 

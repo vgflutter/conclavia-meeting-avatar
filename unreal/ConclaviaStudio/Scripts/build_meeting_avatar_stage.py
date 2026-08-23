@@ -15,9 +15,8 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v7"
+STAGE_REVISION = "v9"
 LEVEL_PATH = f"/Game/Conclavia/Meeting/L_MeetingAvatar_{STAGE_REVISION}"
-CONTENT_ROOT = "/Game/Conclavia/Meeting"
 
 CUBE = "/Engine/BasicShapes/Cube.Cube"
 
@@ -238,6 +237,11 @@ def build() -> None:
             f"M_MeetingJade_{STAGE_REVISION}",
             unreal.LinearColor(0.008, 0.095, 0.082, 1.0),
         ),
+        "chair": make_material(
+            f"M_MeetingChair_{STAGE_REVISION}",
+            unreal.LinearColor(0.012, 0.022, 0.025, 1.0),
+            roughness=0.86,
+        ),
     }
 
     # A restrained teal field deliberately belongs to the standalone meeting
@@ -262,27 +266,47 @@ def build() -> None:
         materials["jade"],
     )
 
-    face_target = unreal.Vector(0.0, 0.0, 162.0)
+    # A quiet product-owned chair makes the seated state visually explicit in
+    # the webcam crop without restoring the podcast desk, microphones or set.
+    # The body animation owns the actual seated biomechanics; these primitives
+    # are set dressing only and never drive bones.
+    add_panel(
+        "MEETING_Chair_Seat",
+        unreal.Vector(10.0, 0.0, 73.0),
+        unreal.Vector(0.46, 0.54, 0.08),
+        materials["chair"],
+    )
+    add_panel(
+        "MEETING_Chair_Back",
+        unreal.Vector(29.0, 0.0, 119.0),
+        unreal.Vector(0.08, 0.47, 0.70),
+        materials["chair"],
+    )
+
+    # A meeting participant should not jump between a face close-up and a
+    # theatrical wide shot to raise a hand. Both semantic cameras therefore
+    # share one seated webcam composition: upper torso and chair remain visible
+    # while the captured hand has enough headroom to enter frame naturally.
+    webcam_position = unreal.Vector(-360.0, 0.0, 185.0)
+    webcam_target = unreal.Vector(0.0, 0.0, 165.0)
+    webcam_focal_length = 125.0
     add_camera(
         "CAM_Meeting_Portrait",
-        unreal.Vector(-300.0, 0.0, 174.0),
-        face_target,
-        210.0,
+        webcam_position,
+        webcam_target,
+        webcam_focal_length,
     )
     add_camera(
         "CAM_Meeting_Gesture",
-        # Keep the captured hand inside a webcam-like medium close-up.  The
-        # previous 80 mm / 480 cm framing revealed most of the body, making a
-        # natural solver-authored gesture look like a stage performance.
-        unreal.Vector(-420.0, 0.0, 210.0),
-        unreal.Vector(0.0, 0.0, 190.0),
-        100.0,
+        webcam_position,
+        webcam_target,
+        webcam_focal_length,
     )
 
     add_rect_light(
         "MEETING_Key",
         unreal.Vector(-330.0, -360.0, 510.0),
-        face_target,
+        webcam_target,
         unreal.LinearColor(1.0, 0.91, 0.84, 1.0),
         345.0,
         520.0,
@@ -291,7 +315,7 @@ def build() -> None:
     add_rect_light(
         "MEETING_Fill",
         unreal.Vector(-250.0, 490.0, 390.0),
-        face_target,
+        webcam_target,
         unreal.LinearColor(0.26, 0.64, 1.0, 1.0),
         105.0,
         440.0,
@@ -300,7 +324,7 @@ def build() -> None:
     add_rect_light(
         "MEETING_Rim",
         unreal.Vector(330.0, -260.0, 440.0),
-        face_target,
+        webcam_target,
         unreal.LinearColor(1.0, 0.34, 0.15, 1.0),
         120.0,
         400.0,
@@ -322,11 +346,9 @@ def build() -> None:
     ).get_editor_world()
     if not unreal.EditorLoadingAndSavingUtils.save_map(world, LEVEL_PATH):
         raise RuntimeError(f"Could not save meeting map: {LEVEL_PATH}")
-    unreal.EditorAssetLibrary.save_directory(
-        CONTENT_ROOT,
-        only_if_is_dirty=False,
-        recursive=True,
-    )
+    # Materials are saved when created and the map is saved explicitly above.
+    # Saving the entire meeting directory also rewrites historical maps and
+    # markerless assets, adding roughly a minute to a clean bootstrap.
     log(
         f"READY map={LEVEL_PATH} avatar={anchor.get_actor_label()} "
         "cameras=2 podcast_assets=0 overlay=0"

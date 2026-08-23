@@ -53,10 +53,10 @@ meeting runtime revision is `ue58-commercial-lipsync-v16-meeting-presence`; read
 requires the Face AnimBP to report that its `Realistic` model route is active.
 
 The procedural IK hand-raise prototype is excluded from this production
-profile. `MeetingHandRaiseAnimation` must reference an authored or captured
-full-body clip retargeted for MetaHuman; otherwise health deliberately reports
-`physicalGestureReady=false` and request-to-speak remains a UI state. This is a
-quality gate, not a silent fallback to the rejected animation.
+profile. `MeetingHandRaiseAnimation` references the validated seated markerless
+performance; otherwise health deliberately reports `physicalGestureReady=false`
+and request-to-speak remains a UI state. This is a quality gate, not a silent
+fallback to the rejected animation.
 Proprietary Marketplace binaries and sample content are excluded from Git; only
 the integration bridge and automation belong in this repository.
 
@@ -352,11 +352,14 @@ temporary path on the Windows renderer and run:
 
 The pipeline ingests the mono video through Capture Manager and solves body
 motion locally. UE 5.8 exposes the resulting 342-track MetaHuman transforms
-directly on the performance; the builder validates the arm movement, bakes
-those native transforms onto the shared MetaHuman skeleton, and stabilizes the
-root and lower body for a fixed meeting camera. It rejects root-only or static
-exports instead of publishing a false-success asset. A successful build writes
-`/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_Markerless_v1` and the
+directly on the performance. The builder validates arm movement, uses the
+reusable seated asset for root, pelvis and legs, and transfers the 332 captured
+upper-body rotations onto the target MetaHuman's own bone lengths and scale.
+That prevents performer calibration offsets from stretching or lifting the
+avatar while retaining native spine, shoulder, elbow, wrist and finger motion.
+It rejects root-only or static exports instead of publishing a false-success
+asset. A successful build writes
+`/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1` and the
 sentinel `CONCLAVIA_MARKERLESS_PIPELINE_OK` to
 `Saved/Logs/MarkerlessHandRaise.log`.
 
@@ -367,7 +370,7 @@ visual gate, set:
 
 ```ini
 [ConclaviaStudio]
-MeetingHandRaiseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_Markerless_v1.AS_MeetingHandRaise_Markerless_v1
+MeetingHandRaiseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1.AS_MeetingHandRaise_SeatedMarkerless_v1
 MeetingHandRaiseStartTimeSeconds=1.75
 MeetingHandRaiseHoldTimeSeconds=3.25
 MeetingHandRaiseLowerTimeSeconds=5.75
@@ -440,9 +443,7 @@ MetaHuman Creator Core Data must be enabled from the engine version's
 Sync full-face model is the primary facial path and does not require OpenAI
 speech or NVIDIA ACE. Slow breathing, listener attention and restrained
 upper-spine, neck and head motion come from the authored animation and facial
-model. The current single-hero meeting path uses the restrained authored
-standing idle and semantic full-face listening moods; it does not add
-procedural per-bone motion. A licensed or captured request-to-speak performance still has to be
-retargeted and pass the visual acceptance gate before `physicalGestureReady`
-can be enabled. The remaining production work also includes licensed wardrobe
-and shot-dependent LOD.
+model. The current single-hero meeting path uses the restrained authored seated
+idle, semantic full-face listening moods and the visually validated markerless
+request-to-speak performance; it does not add procedural per-bone motion. The
+remaining production work includes licensed wardrobe and shot-dependent LOD.

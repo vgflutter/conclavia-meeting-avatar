@@ -1,11 +1,10 @@
-"""Build a restrained standing idle for the video-meeting renderer.
+"""Build a restrained seated idle for the video-meeting renderer.
 
-Epic's technical MetaHuman idle is useful source motion, but its broad spine
-and shoulder shifts read as fast rocking in a fixed webcam crop.  This builder
-keeps the authored relaxed pose and timing while retaining only a small share
-of the motion around that pose.  It never rotates bones procedurally at
-runtime; the result is one deterministic AnimSequence owned by the meeting
-product rather than by the podcast studio.
+The reusable seated base combines Epic's authored upper-body timing with a
+compact seated lower-body solve. Its broad spine and shoulder shifts still
+read as fast rocking in a fixed webcam crop, so this builder retains only a
+small share of motion around that seated pose. It never rotates bones at
+runtime and does not bring the podcast set into the meeting product.
 """
 
 from __future__ import annotations
@@ -17,8 +16,7 @@ SKELETON_PATH = (
     "/MetaHumanCharacter/Female/Medium/NormalWeight/Body/metahuman_base_skel"
 )
 SOURCE_IDLE_PATH = (
-    "/MetaHumanCharacter/Optional/Animation/TemplateAnimations/"
-    "Technical_Loops/Idle/mhc_mh001_fmn_b_idle"
+    "/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle"
 )
 OUTPUT_ROOT = "/Game/Conclavia/Meeting/Animations"
 ASSET_NAME = "AS_MeetingAttentiveIdle_v1"
@@ -44,8 +42,8 @@ MOTION_WEIGHTS = {
     "upperarm_r": 0.08,
     "lowerarm_r": 0.08,
     "hand_r": 0.06,
-    # Keep the authored standing base but remove visible weight shifting below
-    # the webcam crop. This also guarantees the meeting asset is not seated.
+    # Preserve the authored seated leg pose without introducing motion below
+    # the webcam crop.
     "thigh_l": 0.0,
     "calf_l": 0.0,
     "foot_l": 0.0,
@@ -158,7 +156,7 @@ def main() -> None:
     animation = build_animation(skeleton, samples, duration)
     log(
         f"READY asset={animation.get_path_name()} duration={duration:.3f} "
-        "standing=True authored_source=True runtime_procedural_motion=False"
+        "seated=True authored_source=True runtime_procedural_motion=False"
     )
 
 
