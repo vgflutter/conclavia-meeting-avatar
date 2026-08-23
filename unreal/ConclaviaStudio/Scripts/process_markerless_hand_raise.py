@@ -1,4 +1,4 @@
-"""Build a MetaHuman hand-raise AnimSequence from a mono video take.
+"""Build a seated MetaHuman gesture AnimSequence from a mono video take.
 
 This script uses the UE 5.8 Capture Manager and MetaHuman Animator APIs.  The
 MetaHuman Animator Markerless Motion Capture plugin must be installed and
@@ -59,7 +59,7 @@ def _delete_asset_if_requested(asset_path: str, force: bool) -> None:
         raise RuntimeError(f"Could not delete existing asset: {asset_path}")
 
 
-def ingest_video(video_path: str) -> unreal.FootageCaptureData:
+def ingest_video(video_path: str, slate: str) -> unreal.FootageCaptureData:
     if not os.path.isfile(video_path):
         raise RuntimeError(f"Capture video does not exist: {video_path}")
 
@@ -73,7 +73,7 @@ def ingest_video(video_path: str) -> unreal.FootageCaptureData:
         unreal.CaptureManagerIngestBlueprintLibrary.ingest_mono_video_sync(
             video_file_path=video_path,
             audio_file_path="",
-            slate="conclavia_meeting_hand_raise",
+            slate=slate,
             take_number=take_number,
             params=params,
         )
@@ -90,9 +90,9 @@ def ingest_video(video_path: str) -> unreal.FootageCaptureData:
 def create_and_process_performance(
     capture_data: unreal.FootageCaptureData,
     output_path: str,
+    performance_name: str,
     force: bool,
 ) -> unreal.MetaHumanPerformance:
-    performance_name = "MHP_MeetingHandRaise_Markerless_v1"
     performance_path = f"{output_path}/{performance_name}"
     existing_performance = unreal.load_asset(performance_path)
     if (
@@ -157,6 +157,9 @@ def bake_body_animation(
     output_path: str,
     asset_name: str,
     target_mesh_path: str,
+    required_tracks: set[str],
+    motion_tracks: set[str],
+    minimum_motion_delta: float,
     force: bool,
 ) -> unreal.AnimSequence:
     target_asset_path = f"{output_path}/{asset_name}"
@@ -201,7 +204,7 @@ def bake_body_animation(
     track_names = set(body_frames[0])
     for frame in body_frames[1:]:
         track_names.intersection_update(frame)
-    required_arm_tracks = {"upperarm_r", "lowerarm_r", "hand_r"}
+    required_arm_tracks = required_tracks
     missing_source_tracks = sorted(required_arm_tracks - track_names)
     if missing_source_tracks or len(track_names) < 20:
         raise RuntimeError(
@@ -209,19 +212,33 @@ def bake_body_animation(
             f"tracks={len(track_names)} missing={missing_source_tracks}"
         )
 
-    first_rotation = body_frames[0]["upperarm_r"].rotation
-    maximum_rotation_delta = max(
-        abs(transform.rotation.x - first_rotation.x)
-        + abs(transform.rotation.y - first_rotation.y)
-        + abs(transform.rotation.z - first_rotation.z)
-        + abs(transform.rotation.w - first_rotation.w)
-        for transform in (frame["upperarm_r"] for frame in body_frames)
-    )
-    if maximum_rotation_delta < 0.15:
+    missing_motion_tracks = sorted(motion_tracks - track_names)
+    if missing_motion_tracks:
         raise RuntimeError(
-            "Markerless performance has no meaningful right-arm movement: "
-            f"rotation_delta={maximum_rotation_delta:.4f}"
+            "Markerless performance is missing motion-validation tracks: "
+            f"missing={missing_motion_tracks}"
         )
+    motion_rotation_deltas = {}
+    for track_name in sorted(motion_tracks):
+        first_rotation = body_frames[0][track_name].rotation
+        motion_rotation_deltas[track_name] = max(
+            abs(transform.rotation.x - first_rotation.x)
+            + abs(transform.rotation.y - first_rotation.y)
+            + abs(transform.rotation.z - first_rotation.z)
+            + abs(transform.rotation.w - first_rotation.w)
+            for transform in (frame[track_name] for frame in body_frames)
+        )
+    insufficient_motion_tracks = {
+        track_name: delta
+        for track_name, delta in motion_rotation_deltas.items()
+        if delta < minimum_motion_delta
+    }
+    if insufficient_motion_tracks:
+        raise RuntimeError(
+            "Markerless performance has insufficient authored arm movement: "
+            f"tracks={insufficient_motion_tracks}"
+        )
+    minimum_observed_motion_delta = min(motion_rotation_deltas.values())
 
     factory = unreal.AnimSequenceFactory()
     factory.target_skeleton = target_skeleton
@@ -324,7 +341,8 @@ def bake_body_animation(
         "CONCLAVIA_MARKERLESS_BAKE_OK: "
         f"asset={animation.get_path_name()} seconds={animation.get_play_length():.3f} "
         f"frames={len(body_frames)} tracks={len(baked_track_names)} "
-        f"arm_delta={maximum_rotation_delta:.4f} "
+        f"minimum_arm_delta={minimum_observed_motion_delta:.4f} "
+        f"motion_tracks={sorted(motion_rotation_deltas)} "
         f"seated_base_tracks={len(seated_base_transforms)} "
         f"rotation_only_tracks={len(reference_transforms)} "
         f"seated_leg_delta={seated_leg_delta:.4f}"
@@ -338,6 +356,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-path", default=DEFAULT_OUTPUT_PATH)
     parser.add_argument("--asset-name", default=DEFAULT_ASSET_NAME)
     parser.add_argument("--target-mesh-path", default=DEFAULT_TARGET_MESH)
+    parser.add_argument("--slate", default="conclavia_meeting_hand_raise")
+    parser.add_argument(
+        "--performance-name",
+        default="MHP_MeetingHandRaise_Markerless_v1",
+    )
+    parser.add_argument(
+        "--required-tracks",
+        default="upperarm_r,lowerarm_r,hand_r",
+    )
+    parser.add_argument("--motion-tracks", default="upperarm_r")
+    parser.add_argument("--minimum-motion-delta", type=float, default=0.15)
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
@@ -345,10 +374,19 @@ def parse_args() -> argparse.Namespace:
 def run() -> None:
     args = parse_args()
     try:
-        capture_data = ingest_video(os.path.abspath(args.video_path))
+        required_tracks = {
+            value.strip() for value in args.required_tracks.split(",") if value.strip()
+        }
+        motion_tracks = {
+            value.strip() for value in args.motion_tracks.split(",") if value.strip()
+        }
+        if not required_tracks or not motion_tracks:
+            raise RuntimeError("Required and motion track lists cannot be empty")
+        capture_data = ingest_video(os.path.abspath(args.video_path), args.slate)
         performance = create_and_process_performance(
             capture_data,
             args.output_path,
+            args.performance_name,
             args.force,
         )
         bake_body_animation(
@@ -356,6 +394,9 @@ def run() -> None:
             args.output_path,
             args.asset_name,
             args.target_mesh_path,
+            required_tracks,
+            motion_tracks,
+            args.minimum_motion_delta,
             args.force,
         )
         unreal.log("CONCLAVIA_MARKERLESS_PIPELINE_OK")

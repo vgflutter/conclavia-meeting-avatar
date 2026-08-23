@@ -38,7 +38,8 @@ interface UnrealPerformanceBeat {
     | "emphasis"
     | "settle"
     | "raise-hand"
-    | "lower-hand";
+    | "lower-hand"
+    | "applause";
 }
 
 export interface StableListeningReaction extends AvatarListeningReaction {
@@ -383,6 +384,23 @@ export class ConclaviaRenderer {
 
   async requestToSpeak(request: AvatarInterventionRequest): Promise<void> {
     await this.raiseHand(request.speakerName);
+  }
+
+  async applaud(speakerName: string, targetName?: string): Promise<void> {
+    await this.#postJson("/api/unreal/cue", {
+      speakerId: "participant-1",
+      targetId: "meeting-participant",
+      speakerName,
+      ...(targetName ? { targetName } : {}),
+      shot: "wide",
+      intent: "applause",
+      bodyGesture: "applause",
+      listenerSemanticMood: "amused",
+      listenerMood: "playfulness",
+      listenerMoodIntensity: 0.46,
+      expectedDurationMs: 4_500,
+      performanceBeats: [],
+    });
   }
 
   async raiseHand(speakerName: string): Promise<void> {

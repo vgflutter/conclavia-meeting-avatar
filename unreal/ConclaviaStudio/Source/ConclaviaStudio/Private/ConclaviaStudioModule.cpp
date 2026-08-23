@@ -821,6 +821,16 @@ public:
                 TEXT("MeetingHandRaiseEndTimeSeconds"),
                 BodyGestureEndSeconds,
                 GEngineIni);
+            GConfig->GetFloat(
+                TEXT("ConclaviaStudio"),
+                TEXT("MeetingApplauseStartTimeSeconds"),
+                ApplauseGestureStartSeconds,
+                GEngineIni);
+            GConfig->GetFloat(
+                TEXT("ConclaviaStudio"),
+                TEXT("MeetingApplauseEndTimeSeconds"),
+                ApplauseGestureEndSeconds,
+                GEngineIni);
         }
         bLipSyncLab = FParse::Param(FCommandLine::Get(), TEXT("ConclaviaLipSyncLab"));
         FParse::Value(FCommandLine::Get(), TEXT("ConclaviaAvatar="), AvatarId);
@@ -1058,6 +1068,7 @@ private:
         }
         InitializeFacialLife();
         GetBodyGestureSequence();
+        GetApplauseGestureSequence();
         if (bLipSyncLab)
         {
             // A deliberately boring laboratory shot: one hero face, no cut,
@@ -1229,7 +1240,8 @@ private:
                 && !Beat.Gesture.Equals(TEXT("emphasis"), ESearchCase::IgnoreCase)
                 && !Beat.Gesture.Equals(TEXT("settle"), ESearchCase::IgnoreCase)
                 && !Beat.Gesture.Equals(TEXT("raise-hand"), ESearchCase::IgnoreCase)
-                && !Beat.Gesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase))
+                && !Beat.Gesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase)
+                && !Beat.Gesture.Equals(TEXT("applause"), ESearchCase::IgnoreCase))
             {
                 Beat.Gesture = TEXT("none");
             }
@@ -1534,6 +1546,64 @@ private:
         return BodyGestureSequence.Get();
     }
 
+    UAnimSequence* GetApplauseGestureSequence()
+    {
+        if (!ApplauseGestureSequence.IsValid())
+        {
+            FString AnimationPath;
+            if (bMeetingAvatar)
+            {
+                GConfig->GetString(
+                    TEXT("ConclaviaStudio"),
+                    TEXT("MeetingApplauseAnimation"),
+                    AnimationPath,
+                    GEngineIni);
+            }
+            if (AnimationPath.IsEmpty())
+            {
+                bApplauseGestureReady = false;
+                return nullptr;
+            }
+            if (!AnimationPath.StartsWith(
+                    TEXT("/Game/Conclavia/Meeting/Animations/"),
+                    ESearchCase::CaseSensitive))
+            {
+                UE_LOG(
+                    LogConclaviaStudio,
+                    Error,
+                    TEXT("Rejected non-meeting applause asset: %s"),
+                    *AnimationPath);
+                bApplauseGestureReady = false;
+                return nullptr;
+            }
+            ApplauseGestureSequence = LoadObject<UAnimSequence>(
+                nullptr,
+                *AnimationPath);
+            if (UAnimSequence* Sequence = ApplauseGestureSequence.Get())
+            {
+                const float SequenceEnd = Sequence->GetPlayLength();
+                const float MinimumSegment = 1.0f / 60.0f;
+                ApplauseGestureStartSeconds = FMath::Clamp(
+                    ApplauseGestureStartSeconds,
+                    0.0f,
+                    FMath::Max(0.0f, SequenceEnd - MinimumSegment));
+                ApplauseGestureEndSeconds = FMath::Clamp(
+                    ApplauseGestureEndSeconds,
+                    ApplauseGestureStartSeconds + MinimumSegment,
+                    SequenceEnd);
+                UE_LOG(
+                    LogConclaviaStudio,
+                    Display,
+                    TEXT("Authored applause timeline: start=%.3f end=%.3f sequence=%.3f"),
+                    ApplauseGestureStartSeconds,
+                    ApplauseGestureEndSeconds,
+                    SequenceEnd);
+            }
+        }
+        bApplauseGestureReady = ApplauseGestureSequence.IsValid();
+        return ApplauseGestureSequence.Get();
+    }
+
     static void RefreshAuthoredBodyPose(USkeletalMeshComponent* Body)
     {
         if (!Body)
@@ -1594,6 +1664,10 @@ private:
                 1.0f);
         }
         if (BodyGesturePhase == TEXT("held"))
+        {
+            return 1.0f;
+        }
+        if (BodyGesturePhase == TEXT("applauding"))
         {
             return 1.0f;
         }
@@ -1679,8 +1753,56 @@ private:
         {
             return;
         }
-        UAnimSequence* Sequence = GetBodyGestureSequence();
         USkeletalMeshComponent* Body = GetActiveBodyComponent();
+        if (Gesture.Equals(TEXT("applause"), ESearchCase::IgnoreCase))
+        {
+            UAnimSequence* ApplauseSequence = GetApplauseGestureSequence();
+            if (!ApplauseSequence || !Body)
+            {
+                UE_LOG(
+                    LogConclaviaStudio,
+                    Warning,
+                    TEXT("MetaHuman applause unavailable: sequence=%s body=%s"),
+                    ApplauseSequence ? TEXT("ready") : TEXT("missing"),
+                    Body ? TEXT("ready") : TEXT("missing"));
+                return;
+            }
+            if (BodyGesturePhase != TEXT("idle"))
+            {
+                return;
+            }
+            StudioWorld->GetTimerManager().ClearTimer(BodyIdleVariationTimer);
+            StudioWorld->GetTimerManager().ClearTimer(BodyGestureTimer);
+            BodyGestureComponent = Body;
+            Body->PlayAnimation(ApplauseSequence, false);
+            Body->SetPosition(ApplauseGestureStartSeconds, false);
+            Body->SetPlayRate(1.0f);
+            Body->VisibilityBasedAnimTickOption =
+                EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+            RefreshAuthoredBodyPose(Body);
+            const int32 RefreshedFollowers = RefreshMetaHumanBodyFollowers(Body);
+            BodyGesturePhase = TEXT("applauding");
+            BodyGesturePhaseStartedAt = FPlatformTime::Seconds();
+            ActiveBodyGesture = TEXT("applause");
+            bBodyGestureLowerQueued = false;
+            UE_LOG(
+                LogConclaviaStudio,
+                Display,
+                TEXT("Authored applause routed: actor=%s sequence=%s followers=%d"),
+                Body->GetOwner() ? *Body->GetOwner()->GetPathName() : TEXT("None"),
+                *ApplauseSequence->GetPathName(),
+                RefreshedFollowers);
+            StudioWorld->GetTimerManager().SetTimer(
+                BodyGestureTimer,
+                FTimerDelegate::CreateRaw(
+                    this,
+                    &FConclaviaStudioModule::FinishLowerHand),
+                ApplauseGestureEndSeconds - ApplauseGestureStartSeconds,
+                false);
+            return;
+        }
+
+        UAnimSequence* Sequence = GetBodyGestureSequence();
         if (!Sequence || !Body)
         {
             UE_LOG(
@@ -1739,6 +1861,11 @@ private:
 
         if (!Gesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase))
         {
+            return;
+        }
+        if (BodyGesturePhase == TEXT("applauding"))
+        {
+            FinishLowerHand();
             return;
         }
         if (BodyGesturePhase == TEXT("raising"))
@@ -2725,9 +2852,12 @@ private:
                 ? TEXT("raise-hand")
                 : Beat.Gesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase)
                     ? TEXT("lower-hand")
+                    : Beat.Gesture.Equals(TEXT("applause"), ESearchCase::IgnoreCase)
+                        ? TEXT("applause")
                     : ActiveBodyGesture;
             if (Beat.Gesture.Equals(TEXT("raise-hand"), ESearchCase::IgnoreCase)
-                || Beat.Gesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase))
+                || Beat.Gesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase)
+                || Beat.Gesture.Equals(TEXT("applause"), ESearchCase::IgnoreCase))
             {
                 StartBodyGesture(Beat.Gesture);
             }
@@ -3029,7 +3159,8 @@ private:
             ActivePerformanceFocus = FirstBeat.Focus;
             ActivePerformanceGesture = FirstBeat.Gesture;
             if (FirstBeat.Gesture.Equals(TEXT("raise-hand"), ESearchCase::IgnoreCase)
-                || FirstBeat.Gesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase))
+                || FirstBeat.Gesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase)
+                || FirstBeat.Gesture.Equals(TEXT("applause"), ESearchCase::IgnoreCase))
             {
                 StartBodyGesture(FirstBeat.Gesture);
             }
@@ -3754,12 +3885,14 @@ private:
         if (bMeetingAvatar)
         {
             const bool bNeedsGestureFraming =
-                bPhysicalGestureReady
+                (bPhysicalGestureReady || bApplauseGestureReady)
                 && (ActiveBodyGesture == TEXT("raise-hand")
                     || ActiveBodyGesture == TEXT("lower-hand")
+                    || ActiveBodyGesture == TEXT("applause")
                     || BodyGesturePhase == TEXT("raising")
                     || BodyGesturePhase == TEXT("held")
-                    || BodyGesturePhase == TEXT("lowering"));
+                    || BodyGesturePhase == TEXT("lowering")
+                    || BodyGesturePhase == TEXT("applauding"));
             SwitchCamera(
                 bNeedsGestureFraming
                     ? TEXT("CAM_Meeting_Gesture")
@@ -3780,9 +3913,11 @@ private:
                 Shot.Contains(TEXT("wide"), ESearchCase::IgnoreCase)
                 && (ActiveBodyGesture == TEXT("raise-hand")
                     || ActiveBodyGesture == TEXT("lower-hand")
+                    || ActiveBodyGesture == TEXT("applause")
                     || BodyGesturePhase == TEXT("raising")
                     || BodyGesturePhase == TEXT("held")
-                    || BodyGesturePhase == TEXT("lowering"));
+                    || BodyGesturePhase == TEXT("lowering")
+                    || BodyGesturePhase == TEXT("applauding"));
             SwitchCamera(
                 bNeedsGestureFraming
                     ? TEXT("CAM_Wide_Slider_Left")
@@ -3889,7 +4024,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v19-twelve-moods-live-idle")
+            ? TEXT("ue58-commercial-lipsync-v20-authored-applause")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -3990,6 +4125,13 @@ private:
             bListeningModelReady ? TEXT("true") : TEXT("false"),
             ListeningSolverChunksSubmitted,
             bCommercialEyesAimBound ? TEXT("true") : TEXT("false"));
+        Body.RemoveFromEnd(TEXT("}"));
+        Body += FString::Printf(
+            TEXT(",\"applauseGestureReady\":%s,\"applauseGestureDriver\":\"%s\"}"),
+            bApplauseGestureReady ? TEXT("true") : TEXT("false"),
+            bApplauseGestureReady
+                ? TEXT("ue58-markerless-authored-upper-body-retarget")
+                : TEXT("awaiting-markerless-applause-animation"));
         OnComplete(ConclaviaStudio::JsonResponse(Body));
         return true;
     }
@@ -4082,7 +4224,8 @@ private:
                 return;
             }
             PendingPerformanceBeats = CuePerformanceBeats;
-            if (CueIntent.Equals(TEXT("listen-react"), ESearchCase::IgnoreCase))
+            if (CueIntent.Equals(TEXT("listen-react"), ESearchCase::IgnoreCase)
+                || CueIntent.Equals(TEXT("applause"), ESearchCase::IgnoreCase))
             {
                 ERealisticMetaHumanLipSyncMood ListeningMood;
                 if (PerformanceMoodFromName(CueListenerMoodName, ListeningMood))
@@ -4099,6 +4242,11 @@ private:
                 || CueIntent.Equals(TEXT("request-to-speak"), ESearchCase::IgnoreCase))
             {
                 StartBodyGesture(TEXT("raise-hand"));
+            }
+            else if (CueBodyGesture.Equals(TEXT("applause"), ESearchCase::IgnoreCase)
+                || CueIntent.Equals(TEXT("applause"), ESearchCase::IgnoreCase))
+            {
+                StartBodyGesture(TEXT("applause"));
             }
             else if (CueBodyGesture.Equals(TEXT("lower-hand"), ESearchCase::IgnoreCase)
                 || CueIntent.Equals(TEXT("listen"), ESearchCase::IgnoreCase)
@@ -4381,6 +4529,7 @@ private:
     TWeakObjectPtr<USkeletalMeshComponent> BodyGestureComponent;
     FVector BodyGestureStartHandLocation = FVector::ZeroVector;
     TWeakObjectPtr<UAnimSequence> BodyGestureSequence;
+    TWeakObjectPtr<UAnimSequence> ApplauseGestureSequence;
     TMap<FString, TWeakObjectPtr<AActor>> CommercialAvatarActors;
     TStrongObjectPtr<URealisticMetaHumanLipSyncGenerator> CommercialGenerator;
     TStrongObjectPtr<URealisticMetaHumanLipSyncGenerator> ListeningGenerator;
@@ -4429,6 +4578,8 @@ private:
     float BodyGestureHoldSeconds = 2.4f;
     float BodyGestureLowerStartSeconds = 3.5f;
     float BodyGestureEndSeconds = 4.7f;
+    float ApplauseGestureStartSeconds = 1.5f;
+    float ApplauseGestureEndSeconds = 6.0f;
     double BodyGesturePhaseStartedAt = 0.0;
     float ActiveBodyIdlePlayRate = 0.58f;
     int32 ActiveBodyIdleIndex = -1;
@@ -4448,6 +4599,7 @@ private:
     bool bListeningVisualActive = false;
     bool bCommercialEyesAimBound = false;
     bool bPhysicalGestureReady = false;
+    bool bApplauseGestureReady = false;
     bool bBodyGestureLowerQueued = false;
     int32 ListeningSolverChunksSubmitted = 0;
     int32 ActiveFaceIndex = -1;

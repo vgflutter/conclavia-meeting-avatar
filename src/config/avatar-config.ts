@@ -38,6 +38,7 @@ export type VoiceStyle = (typeof voiceStyles)[number];
 export const defaultChatCommandAliases: ChatCommandAliases = {
   raiseHand: ["alza la mano", "chiedi la parola", "raise your hand", "request to speak"],
   lowerHand: ["abbassa la mano", "ritira la richiesta", "lower your hand"],
+  applaud: ["applaudi", "fai un applauso", "batti le mani", "clap", "applaud"],
   summarizeInChat: ["riassumi in chat", "scrivi un riassunto", "summarize in chat"],
   replyInChat: ["rispondi in chat", "scrivi in chat", "reply in chat"],
   speak: ["intervieni", "parla", "rispondi a voce", "speak"],
@@ -53,6 +54,7 @@ export interface AvatarConfig {
   systemPrompt: string;
   webSearchEnabled: boolean;
   requestToSpeakEnabled: boolean;
+  autonomousApplauseEnabled: boolean;
   chatEnabled: boolean;
   chatCommandAliases: ChatCommandAliases;
   voiceStyle: VoiceStyle;
@@ -78,6 +80,7 @@ export interface AvatarConfigInput {
   systemPrompt?: unknown;
   webSearchEnabled?: unknown;
   requestToSpeakEnabled?: unknown;
+  autonomousApplauseEnabled?: unknown;
   chatEnabled?: unknown;
   chatCommandAliases?: unknown;
   voiceStyle?: unknown;
@@ -134,6 +137,7 @@ function commandAliases(
     return {
       raiseHand: [...fallback.raiseHand],
       lowerHand: [...fallback.lowerHand],
+      applaud: [...fallback.applaud],
       summarizeInChat: [...fallback.summarizeInChat],
       replyInChat: [...fallback.replyInChat],
       speak: [...fallback.speak],
@@ -146,6 +150,7 @@ function commandAliases(
   return {
     raiseHand: commandAliasList(record.raiseHand, fallback.raiseHand, "Comandi alza mano"),
     lowerHand: commandAliasList(record.lowerHand, fallback.lowerHand, "Comandi abbassa mano"),
+    applaud: commandAliasList(record.applaud, fallback.applaud, "Comandi applauso"),
     summarizeInChat: commandAliasList(
       record.summarizeInChat,
       fallback.summarizeInChat,
@@ -182,6 +187,9 @@ function parseStored(value: unknown, fallback: AvatarConfig): AvatarConfig | nul
       requestToSpeakEnabled: typeof record.requestToSpeakEnabled === "boolean"
         ? record.requestToSpeakEnabled
         : fallback.requestToSpeakEnabled,
+      autonomousApplauseEnabled: typeof record.autonomousApplauseEnabled === "boolean"
+        ? record.autonomousApplauseEnabled
+        : fallback.autonomousApplauseEnabled,
       chatEnabled: typeof record.chatEnabled === "boolean"
         ? record.chatEnabled
         : fallback.chatEnabled,
@@ -321,6 +329,11 @@ export class AvatarConfigStore {
         input.requestToSpeakEnabled,
         current.requestToSpeakEnabled,
         "Richiesta di parola",
+      ),
+      autonomousApplauseEnabled: boolUpdate(
+        input.autonomousApplauseEnabled,
+        current.autonomousApplauseEnabled,
+        "Applauso autonomo",
       ),
       chatEnabled: boolUpdate(input.chatEnabled, current.chatEnabled, "Lettura chat"),
       chatCommandAliases: commandAliases(

@@ -20,7 +20,7 @@ const maxReplySentences = 2;
 const maxSentenceLength = 360;
 
 export type ParticipationMode = "direct" | "observer";
-export type ParticipationAction = "silence" | "speak" | "request-to-speak";
+export type ParticipationAction = "silence" | "speak" | "request-to-speak" | "applaud";
 export type ParticipationLane = "direct" | "observer-listening" | "observer-autonomy";
 
 export function participationLane(
@@ -92,8 +92,21 @@ export function qualifiesAutonomousIntervention(
 ): decision is typeof decision & {
   interventionType: Exclude<AutonomousInterventionType, "none">;
 } {
-  return decision.interventionType !== "none" &&
+  return (
+    decision.interventionType === "factual-correction" ||
+    decision.interventionType === "critical-omission" ||
+    decision.interventionType === "material-addition"
+  ) &&
     decision.importance >= 4 &&
+    decision.confidence >= 4;
+}
+
+export function qualifiesAutonomousApplause(
+  decision: Pick<ParsedMaryTurn, "action" | "interventionType" | "importance" | "confidence">,
+): boolean {
+  return decision.action === "applaud" &&
+    decision.interventionType === "meaningful-conclusion" &&
+    decision.importance === 5 &&
     decision.confidence >= 4;
 }
 
@@ -117,7 +130,10 @@ function stripMarkdownFence(value: string): string {
 }
 
 function normalizedAction(value: unknown): ParticipationAction | null {
-  if (value === "silence" || value === "speak" || value === "request-to-speak") {
+  if (
+    value === "silence" || value === "speak" ||
+    value === "request-to-speak" || value === "applaud"
+  ) {
     return value;
   }
   if (value === "request_to_speak") return "request-to-speak";
@@ -177,7 +193,8 @@ export function parseMaryTurn(value: string, mode: ParticipationMode): ParsedMar
   const confidence = cleanMoodLevel(record.confidence ?? 1);
   if (mode === "observer" && action === "speak") action = "request-to-speak";
   if (mode === "direct" && action === "request-to-speak") action = "speak";
-  if (action === "silence") {
+  if (mode === "direct" && action === "applaud") action = "silence";
+  if (action === "silence" || action === "applaud") {
     return {
       action,
       reason: cleanReason(record.reason),
@@ -362,7 +379,7 @@ function responseFormatForLane(lane: ParticipationLane) {
       properties: {
         action: {
           type: "string",
-          enum: ["silence", "request-to-speak"],
+          enum: ["silence", "request-to-speak", "applaud"],
         },
         reason: { type: "string" },
         interventionType: {
@@ -489,9 +506,9 @@ export class MeetingIntelligence {
       observedSpeakerName: latestSegment.speakerName,
       createdAt: new Date().toISOString(),
     };
-    if (parsed.action === "silence") {
+    if (parsed.action === "silence" || parsed.action === "applaud") {
       return {
-        action: "silence",
+        action: parsed.action,
         reason: parsed.reason,
         interventionType: parsed.interventionType,
         importance: parsed.importance,
@@ -579,13 +596,15 @@ export class MeetingIntelligence {
       ...identity,
       "Non puoi parlare autonomamente. Usa request-to-speak solo per una correzione fattuale che cambia la conclusione, un rischio o vincolo decisivo omesso, oppure un'aggiunta indispensabile a una decisione importante.",
       "Usa rispettivamente interventionType factual-correction, critical-omission o material-addition. importance e confidence devono essere almeno 4; nel dubbio usa silence.",
+      "Usa action=applaud e interventionType=meaningful-conclusion soltanto quando l'ultimo intervento conclude davvero un ragionamento complesso, risolve un problema difficile, raggiunge un traguardo importante o formula un'intuizione eccezionale che in una riunione reale meriterebbe un applauso.",
+      "Per applaud servono importance=5 e confidence almeno 4. Non applaudire una semplice informazione interessante, un accordo, una battuta, un aggiornamento ordinario, una frase incompleta, una tua stessa risposta o una conclusione negativa o delicata. Nel dubbio usa silence.",
       "Non ripetere punti già espressi, non anticipare frasi incomplete e non intervenire per confermare, riassumere l'ovvio o correggere dettagli marginali.",
       `Scegli anche listeningMood e listeningLevel come reazione sociale silenziosa di ${this.#options.avatarName}; normalmente usa livello 1 o 2.`,
       ...(webSearchAvailable
         ? ["Usa il web solo per verificare una possibile correzione materiale; senza alta confidenza resta in silenzio."]
         : []),
       ...responseRules,
-      `Restituisci solo il JSON richiesto. Per silence usa interventionType=none e sentences vuoto. I mood ammessi sono: ${avatarMoods.join(", ")}.`,
+      `Restituisci solo il JSON richiesto. Per silence usa interventionType=none e sentences vuoto; anche per applaud usa sentences vuoto. I mood ammessi sono: ${avatarMoods.join(", ")}.`,
     ].join(" ");
   }
 

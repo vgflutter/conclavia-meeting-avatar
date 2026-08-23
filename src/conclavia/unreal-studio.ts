@@ -26,7 +26,7 @@ export interface UnrealDirectorCue {
   targetName?: string;
   shot: string;
   intent: string;
-  bodyGesture?: "none" | "raise-hand" | "lower-hand";
+  bodyGesture?: "none" | "raise-hand" | "lower-hand" | "applause";
   listenerSemanticMood?: string;
   listenerMood?: string;
   listenerMoodIntensity?: number;
@@ -48,6 +48,8 @@ export interface UnrealStudioHealth {
   grade1PropCount?: number;
   commercialLipSyncReady?: boolean;
   commercialModelRouteReady?: boolean;
+  physicalGestureReady?: boolean;
+  applauseGestureReady?: boolean;
   [key: string]: unknown;
 }
 

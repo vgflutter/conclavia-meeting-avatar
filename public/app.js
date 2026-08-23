@@ -76,9 +76,11 @@ const elements = {
   systemPrompt: $("#avatar-system-prompt"),
   webSearch: $("#web-search-enabled"),
   requestToSpeak: $("#request-to-speak-enabled"),
+  autonomousApplause: $("#autonomous-applause-enabled"),
   chatEnabled: $("#chat-enabled"),
   commandRaiseHand: $("#command-raise-hand"),
   commandLowerHand: $("#command-lower-hand"),
+  commandApplaud: $("#command-applaud"),
   commandSummarizeChat: $("#command-summarize-chat"),
   commandReplyChat: $("#command-reply-chat"),
   commandSpeak: $("#command-speak"),
@@ -165,6 +167,9 @@ function setStageMode(mode, detail) {
   } else if (mode === "requesting") {
     elements.stageListeningState.textContent = "CHIEDE PAROLA";
     elements.stageListeningState.classList.add("active");
+  } else if (mode === "applauding") {
+    elements.stageListeningState.textContent = "APPLAUDE";
+    elements.stageListeningState.classList.add("active");
   } else {
     elements.stageListeningState.textContent = "IN ASCOLTO";
   }
@@ -249,9 +254,11 @@ function renderConfig(payload) {
   elements.systemPrompt.value = config.systemPrompt;
   elements.webSearch.checked = config.webSearchEnabled;
   elements.requestToSpeak.checked = config.requestToSpeakEnabled;
+  elements.autonomousApplause.checked = config.autonomousApplauseEnabled;
   elements.chatEnabled.checked = config.chatEnabled;
   renderCommandAliases(elements.commandRaiseHand, config.chatCommandAliases.raiseHand);
   renderCommandAliases(elements.commandLowerHand, config.chatCommandAliases.lowerHand);
+  renderCommandAliases(elements.commandApplaud, config.chatCommandAliases.applaud);
   renderCommandAliases(elements.commandSummarizeChat, config.chatCommandAliases.summarizeInChat);
   renderCommandAliases(elements.commandReplyChat, config.chatCommandAliases.replyInChat);
   renderCommandAliases(elements.commandSpeak, config.chatCommandAliases.speak);
@@ -425,6 +432,10 @@ function renderTurn(result) {
     setDecision(`${avatarName} è stata chiamata, ma usa la risposta diagnostica: configura OpenAI per la risposta reale.`, "responding");
   } else if (result.decision?.reason === "autonomous-request") {
     setDecision(`${avatarName} ha un contributo e ha chiesto la parola senza interrompere.`, "requesting");
+  } else if (result.decision?.reason === "autonomous-applause") {
+    setDecision(`${avatarName} ha riconosciuto una conclusione eccezionale e applaude.`, "responding");
+    setStageMode("applauding", "Apprezzamento del contributo");
+    settleStageAfter(5_000);
   } else {
     setDecision(`Intervento acquisito. ${avatarName} continua ad ascoltare senza rispondere.`, "listening");
   }
@@ -480,6 +491,7 @@ function describeChatResult(result) {
   if (outbound) return `${outbound.speakerName} ha scritto nella chat.`;
   if (result.action === "raise-hand") return `${avatarName} ha chiesto la parola.`;
   if (result.action === "lower-hand") return `${avatarName} ha abbassato la mano.`;
+  if (result.action === "applaud") return `${avatarName} applaude.`;
   if (result.turn?.decision?.activated) return `${avatarName} interviene a voce.`;
   if (result.reason === "chat-disabled") return "La lettura chat è disattivata nella configurazione.";
   if (result.reason === "self-message") return "Messaggio dell’avatar ignorato per evitare un loop.";
@@ -497,7 +509,16 @@ async function submitMeetingMessage(channel, text) {
       const result = await sendChatMessage(cleanText);
       if (result.turn) renderTurn(result.turn);
       else {
-        setDecision(describeChatResult(result), result.action === "raise-hand" ? "requesting" : "listening");
+        const decisionState = result.action === "raise-hand"
+          ? "requesting"
+          : result.action === "applaud"
+            ? "responding"
+            : "listening";
+        setDecision(describeChatResult(result), decisionState);
+        if (result.action === "applaud") {
+          setStageMode("applauding", "Comando dalla chat");
+          settleStageAfter(5_000);
+        }
         renderDebug(result, "EVENTO CHAT");
       }
       elements.chatTestStatus.textContent = describeChatResult(result);
@@ -1141,10 +1162,12 @@ elements.configForm.addEventListener("submit", async (event) => {
         systemPrompt: elements.systemPrompt.value,
         webSearchEnabled: elements.webSearch.checked,
         requestToSpeakEnabled: elements.requestToSpeak.checked,
+        autonomousApplauseEnabled: elements.autonomousApplause.checked,
         chatEnabled: elements.chatEnabled.checked,
         chatCommandAliases: {
           raiseHand: parseCommandAliases(elements.commandRaiseHand),
           lowerHand: parseCommandAliases(elements.commandLowerHand),
+          applaud: parseCommandAliases(elements.commandApplaud),
           summarizeInChat: parseCommandAliases(elements.commandSummarizeChat),
           replyInChat: parseCommandAliases(elements.commandReplyChat),
           speak: parseCommandAliases(elements.commandSpeak),

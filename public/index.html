@@ -136,6 +136,7 @@
               <div id="quick-commands" class="quick-commands">
                 <button type="button" data-command="raiseHand"><span>✋</span> Alza la mano</button>
                 <button type="button" data-command="lowerHand"><span>✓</span> Abbassa la mano</button>
+                <button type="button" data-command="applaud"><span>◎</span> Applaudi</button>
                 <button type="button" data-command="summarizeInChat"><span>≡</span> Riassumi in chat</button>
                 <button type="button" data-command="replyInChat"><span>↩</span> Rispondi in chat</button>
                 <button type="button" data-command="speak"><span>◉</span> Intervieni a voce</button>
@@ -203,6 +204,7 @@
             <div class="config-toggles">
               <label class="toggle-row"><input id="web-search-enabled" name="webSearchEnabled" type="checkbox" /><span><strong>Ricerca web</strong><small>Usa dati aggiornati quando servono.</small></span></label>
               <label class="toggle-row"><input id="request-to-speak-enabled" name="requestToSpeakEnabled" type="checkbox" /><span><strong>Request to speak</strong><small>Propone un intervento e attende il permesso.</small></span></label>
+              <label class="toggle-row"><input id="autonomous-applause-enabled" name="autonomousApplauseEnabled" type="checkbox" /><span><strong>Applauso autonomo</strong><small>Applaude soltanto conclusioni eccezionali e realmente meritevoli.</small></span></label>
               <label class="toggle-row"><input id="chat-enabled" name="chatEnabled" type="checkbox" /><span><strong>Chat del meeting</strong><small>Legge Teams, Meet e adapter generici.</small></span></label>
             </div>
           </section>
@@ -212,6 +214,7 @@
             <div class="command-grid">
               <label>Alza la mano<input id="command-raise-hand" maxlength="500" /></label>
               <label>Abbassa la mano<input id="command-lower-hand" maxlength="500" /></label>
+              <label>Applaudi<input id="command-applaud" maxlength="500" /></label>
               <label>Riassumi nella chat<input id="command-summarize-chat" maxlength="500" /></label>
               <label>Rispondi nella chat<input id="command-reply-chat" maxlength="500" /></label>
               <label>Intervieni a voce<input id="command-speak" maxlength="500" /></label>

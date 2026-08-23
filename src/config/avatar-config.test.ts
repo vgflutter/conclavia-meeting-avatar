@@ -20,6 +20,7 @@ const defaults: AvatarConfig = {
   systemPrompt: "Distingui fatti e opinioni.",
   webSearchEnabled: true,
   requestToSpeakEnabled: true,
+  autonomousApplauseEnabled: true,
   chatEnabled: true,
   chatCommandAliases: defaultChatCommandAliases,
   voiceStyle: "natural",
@@ -91,4 +92,19 @@ await test("persists configurable chat commands and returns defensive copies", (
   assert.deepEqual(config.chatCommandAliases.raiseHand, ["fai un cenno"]);
   config.chatCommandAliases.raiseHand.push("mutazione esterna");
   assert.deepEqual(store.current.chatCommandAliases.raiseHand, ["fai un cenno"]);
+});
+
+await test("persists applause policy and configurable aliases", () => {
+  const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
+  const store = new AvatarConfigStore(path, defaults);
+  store.update({
+    autonomousApplauseEnabled: false,
+    chatCommandAliases: {
+      ...defaultChatCommandAliases,
+      applaud: ["festeggia il risultato"],
+    },
+  });
+
+  assert.equal(store.current.autonomousApplauseEnabled, false);
+  assert.deepEqual(store.current.chatCommandAliases.applaud, ["festeggia il risultato"]);
 });

@@ -51,6 +51,7 @@ import type {
 import { chatPlatforms } from "./domain/protocol.js";
 import {
   MeetingIntelligence,
+  qualifiesAutonomousApplause,
   qualifiesAutonomousIntervention,
 } from "./openai/meeting-intelligence.js";
 import { runMacosPreflight } from "./preflight/macos.js";
@@ -71,6 +72,7 @@ const maxSeenTranscriptSegments = 4_000;
 const maxAudioBytes = 20 * 1024 * 1024;
 const interventionRequestTtlMs = 45_000;
 const autonomousInterventionCooldownMs = 60_000;
+const autonomousApplauseCooldownMs = 180_000;
 
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
   response.writeHead(statusCode, {
@@ -181,7 +183,8 @@ function parseUnrealDirectorCue(value: unknown): UnrealDirectorCue | null {
       : undefined;
   };
   const bodyGesture = record.bodyGesture === "raise-hand" ||
-      record.bodyGesture === "lower-hand" || record.bodyGesture === "none"
+      record.bodyGesture === "lower-hand" || record.bodyGesture === "applause" ||
+      record.bodyGesture === "none"
     ? record.bodyGesture
     : undefined;
   const listenerMoodIntensity = typeof record.listenerMoodIntensity === "number"
@@ -372,6 +375,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       "Agisci come una partecipante reale alla riunione. Distingui fatti, ipotesi e opinioni; sii concisa e orientata all'obiettivo.",
     webSearchEnabled: true,
     requestToSpeakEnabled: true,
+    autonomousApplauseEnabled: true,
     chatEnabled: true,
     chatCommandAliases: defaultChatCommandAliases,
     voiceStyle: "lively",
@@ -410,6 +414,7 @@ export function startServer(options: ServerOptions): Promise<void> {
   );
   let pendingRequest: AvatarInterventionRequest | null = null;
   let lastAutonomousRequestAt = 0;
+  let lastAutonomousApplauseAt = 0;
   let avatarHandRaised = false;
   const listeningReactions = new ListeningReactionStabilizer();
 
@@ -545,6 +550,12 @@ export function startServer(options: ServerOptions): Promise<void> {
 
     let warning: string | null = null;
     let delivery: Awaited<ReturnType<ConclaviaRenderer["deliver"]>> | null = null;
+    let physicalAction: {
+      kind: "applause";
+      reason: string;
+      importance: number;
+      confidence: number;
+    } | null = null;
     const currentRequest = participationSnapshot();
 
     if (isDialogueDismissal(segment.text, runtimeConfig.name)) {
@@ -584,6 +595,13 @@ export function startServer(options: ServerOptions): Promise<void> {
         runtimeConfig.requestToSpeakEnabled &&
         Date.now() - lastAutonomousRequestAt >= autonomousInterventionCooldownMs &&
         isAutonomyCandidate(segment.text);
+      const allowAutonomousApplause =
+        !direct &&
+        !currentRequest &&
+        !avatarHandRaised &&
+        runtimeConfig.autonomousApplauseEnabled &&
+        Date.now() - lastAutonomousApplauseAt >= autonomousApplauseCooldownMs &&
+        isAutonomyCandidate(segment.text);
 
       if (direct && currentRequest) pendingRequest = null;
 
@@ -598,15 +616,18 @@ export function startServer(options: ServerOptions): Promise<void> {
             segment,
             direct ? "direct" : "observer",
             responseChannel,
-            allowAutonomousRequest,
+            allowAutonomousRequest || allowAutonomousApplause,
           );
           llmMs = Math.round(performance.now() - llmStartedAt);
           usedWebSearch = turn.usedWebSearch;
           const qualifiedAutonomousRequest = allowAutonomousRequest &&
             qualifiesAutonomousIntervention(turn);
+          const qualifiedAutonomousApplause = allowAutonomousApplause &&
+            qualifiesAutonomousApplause(turn);
 
           const shouldPerformListeningReaction = turn.action === "silence" ||
-            (turn.action === "request-to-speak" && !qualifiedAutonomousRequest);
+            (turn.action === "request-to-speak" && !qualifiedAutonomousRequest) ||
+            (turn.action === "applaud" && !qualifiedAutonomousApplause);
           const stableReaction = shouldPerformListeningReaction
             ? listeningReactions.consider(turn.listeningReaction)
             : null;
@@ -642,6 +663,31 @@ export function startServer(options: ServerOptions): Promise<void> {
               responseChannel === "chat" ? "chat" : "speech",
               segment,
             );
+          } else if (qualifiedAutonomousApplause) {
+            lastAutonomousApplauseAt = Date.now();
+            physicalAction = {
+              kind: "applause",
+              reason: turn.reason,
+              importance: turn.importance,
+              confidence: turn.confidence,
+            };
+            decision = {
+              ingested: decision.ingested,
+              activated: false,
+              reason: "autonomous-applause",
+            };
+            if (rendererArmed) {
+              try {
+                const rendererStartedAt = performance.now();
+                await renderer.applaud(runtimeConfig.name, segment.speakerName);
+                rendererMs = Math.round(performance.now() - rendererStartedAt);
+              } catch (error: unknown) {
+                console.error("Conclavia autonomous applause cue failed:", error);
+                warning = `${runtimeConfig.name} ha apprezzato la conclusione, ma il gesto di applauso non è riuscito.`;
+              }
+            } else {
+              warning = `${runtimeConfig.name} ha apprezzato la conclusione, ma il renderer non è armato.`;
+            }
           } else if (
             turn.action === "request-to-speak" &&
             turn.cue &&
@@ -735,6 +781,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         playerUrl: rendererPlayerUrl ?? null,
         delivery,
       },
+      physicalAction,
       latency: {
         llmMs,
         rendererMs,
@@ -796,17 +843,22 @@ export function startServer(options: ServerOptions): Promise<void> {
       runtimeConfig.chatCommandAliases,
     );
 
-    if (command?.kind === "raise-hand" || command?.kind === "lower-hand") {
+    if (
+      command?.kind === "raise-hand" || command?.kind === "lower-hand" ||
+      command?.kind === "applaud"
+    ) {
       retainSegment(segment);
       let warning: string | null = null;
       if (command.kind === "lower-hand") pendingRequest = null;
-      avatarHandRaised = command.kind === "raise-hand";
+      if (command.kind !== "applaud") avatarHandRaised = command.kind === "raise-hand";
       if (rendererArmed) {
         try {
           if (command.kind === "raise-hand") {
             await renderer.raiseHand(runtimeConfig.name);
-          } else {
+          } else if (command.kind === "lower-hand") {
             await renderer.lowerHand(runtimeConfig.name);
+          } else {
+            await renderer.applaud(runtimeConfig.name, input.speakerName);
           }
         } catch (error: unknown) {
           warning = error instanceof Error ? error.message : "Comando gesto non riuscito.";
@@ -1027,6 +1079,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         pendingRequest = null;
         avatarHandRaised = false;
         lastAutonomousRequestAt = 0;
+        lastAutonomousApplauseAt = 0;
         dialogueLease.close();
 
         let listenerWarning: string | null = null;
@@ -1169,6 +1222,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         pendingRequest = null;
         avatarHandRaised = false;
         lastAutonomousRequestAt = 0;
+        lastAutonomousApplauseAt = 0;
         dialogueLease.close();
         if (rendererArmed) {
           try {

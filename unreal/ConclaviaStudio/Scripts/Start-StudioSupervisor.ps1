@@ -199,6 +199,8 @@ function Get-State {
             $payload.bodyGesturePhase = $studio.bodyGesturePhase
             $payload.physicalGestureReady = [bool]$studio.physicalGestureReady
             $payload.physicalGestureDriver = $studio.physicalGestureDriver
+            $payload.applauseGestureReady = [bool]$studio.applauseGestureReady
+            $payload.applauseGestureDriver = $studio.applauseGestureDriver
             $payload.bodyIdleDriver = $studio.bodyIdleDriver
             $payload.bodyIdleVariant = $studio.bodyIdleVariant
             $payload.bodyIdleVariantCount = [int]$studio.bodyIdleVariantCount

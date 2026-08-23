@@ -6,6 +6,7 @@ import {
   parseMaryReply,
   parseMaryTurn,
   participationLane,
+  qualifiesAutonomousApplause,
   qualifiesAutonomousIntervention,
 } from "./meeting-intelligence.js";
 
@@ -114,4 +115,20 @@ await test("requires material importance and confidence before an autonomous req
   assert.equal(qualifiesAutonomousIntervention(materialCorrection), true);
   assert.equal(qualifiesAutonomousIntervention(marginalAddition), false);
   assert.equal(qualifiesAutonomousIntervention(uncertainCorrection), false);
+});
+
+await test("reserves autonomous applause for a highly significant conclusion", () => {
+  const meaningfulConclusion = parseMaryTurn(
+    '{"action":"applaud","reason":"Il gruppo ha concluso un ragionamento complesso con un risultato decisivo.","interventionType":"meaningful-conclusion","importance":5,"confidence":4,"listeningMood":"amused","listeningLevel":3,"sentences":[]}',
+    "observer",
+  );
+  const ordinaryGoodPoint = parseMaryTurn(
+    '{"action":"applaud","reason":"È un punto interessante.","interventionType":"meaningful-conclusion","importance":4,"confidence":5,"listeningMood":"attentive","listeningLevel":2,"sentences":[]}',
+    "observer",
+  );
+
+  assert.equal(meaningfulConclusion.action, "applaud");
+  assert.equal(qualifiesAutonomousApplause(meaningfulConclusion), true);
+  assert.equal(qualifiesAutonomousApplause(ordinaryGoodPoint), false);
+  assert.equal(qualifiesAutonomousIntervention(meaningfulConclusion), false);
 });

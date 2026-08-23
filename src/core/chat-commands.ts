@@ -8,6 +8,7 @@ import { isFloorGrant } from "./activation.js";
 const commandKeys: ReadonlyArray<readonly [keyof ChatCommandAliases, ChatCommandKind]> = [
   ["raiseHand", "raise-hand"],
   ["lowerHand", "lower-hand"],
+  ["applaud", "applaud"],
   ["summarizeInChat", "summarize-in-chat"],
   ["replyInChat", "reply-in-chat"],
   ["speak", "speak"],

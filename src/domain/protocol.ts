@@ -27,6 +27,7 @@ export const autonomousInterventionTypes = [
   "factual-correction",
   "critical-omission",
   "material-addition",
+  "meaningful-conclusion",
 ] as const;
 export type AutonomousInterventionType =
   (typeof autonomousInterventionTypes)[number];
@@ -34,6 +35,7 @@ export type AutonomousInterventionType =
 export const chatCommandKinds = [
   "raise-hand",
   "lower-hand",
+  "applaud",
   "summarize-in-chat",
   "reply-in-chat",
   "speak",
@@ -43,6 +45,7 @@ export type ChatCommandKind = (typeof chatCommandKinds)[number];
 export interface ChatCommandAliases {
   raiseHand: string[];
   lowerHand: string[];
+  applaud: string[];
   summarizeInChat: string[];
   replyInChat: string[];
   speak: string[];
@@ -148,6 +151,7 @@ export interface ActivationDecision {
     | "conversation-follow-up"
     | "conversation-observed"
     | "autonomous-request"
+    | "autonomous-applause"
     | "not-final"
     | "not-addressed";
   cue?: AvatarSpeechCue;

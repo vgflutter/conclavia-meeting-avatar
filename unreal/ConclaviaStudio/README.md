@@ -330,7 +330,7 @@ uses the validated seated markerless capture configured by
 `MeetingHandRaiseAnimation`; runtime telemetry exposes `physicalGestureReady`,
 `physicalGestureDriver`, `bodyGesturePhase` and `bodyGestureAlpha`.
 
-### Markerless hand-raise build
+### Markerless meeting-gesture builds
 
 The preferred production source is a real, single-person performance processed
 by the UE 5.8 MetaHuman Animator Markerless Motion Capture plugin. Capture the
@@ -340,11 +340,15 @@ rate and resolution improve tracking; upscaling can help framing but cannot add
 motion detail that the camera did not record.
 
 Source footage is private input and must remain outside Git. Copy it to a
-temporary path on the Windows renderer and run:
+temporary path on the Windows renderer and run the matching builder:
 
 ```powershell
 & C:\ConclaviaMeetingAvatar\Scripts\Build-MarkerlessHandRaise.ps1 `
   -CapturePath C:\ConclaviaMeetingAvatar\Capture\gesture_hand_raise_take.mp4 `
+  -Force
+
+& C:\ConclaviaMeetingAvatar\Scripts\Build-MarkerlessApplause.ps1 `
+  -CapturePath C:\ConclaviaMeetingAvatar\Capture\gesture_applause_take.mp4 `
   -Force
 ```
 
@@ -355,11 +359,10 @@ reusable seated asset for root, pelvis and legs, and transfers the 332 captured
 upper-body rotations onto the target MetaHuman's own bone lengths and scale.
 That prevents performer calibration offsets from stretching or lifting the
 avatar while retaining native spine, shoulder, elbow, wrist and finger motion.
-It rejects root-only or static exports instead of publishing a false-success
-asset. A successful build writes
-`/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1` and the
-sentinel `CONCLAVIA_MARKERLESS_PIPELINE_OK` to
-`Saved/Logs/MarkerlessHandRaise.log`.
+It rejects root-only, static, or one-sided applause exports instead of
+publishing a false-success asset. Successful builds write the stable hand-raise
+or applause asset under `/Game/Conclavia/Meeting/Animations` and the sentinel
+`CONCLAVIA_MARKERLESS_PIPELINE_OK` to the corresponding log under `Saved/Logs`.
 
 Do not configure the generated asset solely because the solve completed. First
 review the portrait and gesture-camera renders for shoulder popping, wrist or
@@ -373,12 +376,23 @@ MeetingHandRaiseStartTimeSeconds=1.75
 MeetingHandRaiseHoldTimeSeconds=3.25
 MeetingHandRaiseLowerTimeSeconds=5.75
 MeetingHandRaiseEndTimeSeconds=7.50
+MeetingApplauseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1.AS_MeetingApplause_SeatedMarkerless_v1
+MeetingApplauseStartTimeSeconds=1.50
+MeetingApplauseEndTimeSeconds=6.00
 ```
 
 The runtime plays the captured rise, pauses on a genuine captured hold while
 permission is pending, and resumes the captured lowering motion when the hand is
 cleared. It never reconstructs the shoulder or arm with procedural bone
 rotations.
+
+Applause plays the captured two-arm and finger performance once, then returns
+to the varied seated idle. It can be invoked deterministically by the
+companion's `applause` cue. Autonomous applause is a separate, conservative
+social decision: it requires an exceptional complex conclusion, maximum
+importance, high confidence, no pending request to speak, and a three-minute
+cooldown. Ordinary agreement or merely interesting information never passes
+that gate.
 
 Listening reactions use the purchased Runtime MetaHuman Lip Sync full-face
 model even when the avatar is silent. A `listen-react` cue carries a semantic
