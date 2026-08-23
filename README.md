@@ -12,6 +12,15 @@ This first implementation does not create a separate bot identity. The host join
 
 _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel Streaming, OBS Virtual Camera, and virtual audio routing._
 
+## In action
+
+| Requesting the floor | Reacting while listening |
+| --- | --- |
+| ![Mary raises her hand with the seated markerless request-to-speak animation](docs/images/mary-request-to-speak.jpg) | ![Mary displays the playfulness listening mood](docs/images/mary-listening-playfulness.jpg) |
+| The validated seated markerless performance raises, holds, and lowers the hand without constructing an arm pose at runtime. | The listening pipeline applies the same twelve semantic moods even when Mary decides not to interrupt. This frame shows `amused` mapped to the calibrated `playfulness` face primitive. |
+
+_Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920x1080, using production control cues rather than mock poses._
+
 ## Current capabilities
 
 - Continuous meeting audio capture from BlackHole 16ch using ffmpeg and OpenAI Realtime transcription.
