@@ -3,8 +3,10 @@ import { randomUUID } from "node:crypto";
 import OpenAI, { toFile } from "openai";
 
 import {
+  autonomousInterventionTypes,
   avatarMoods,
   speechLanguages,
+  type AutonomousInterventionType,
   type AvatarMood,
   type AvatarMoodLevel,
   type AvatarListeningReaction,
@@ -23,6 +25,9 @@ export type ParticipationAction = "silence" | "speak" | "request-to-speak";
 export interface ParsedMaryTurn {
   action: ParticipationAction;
   reason: string;
+  interventionType: AutonomousInterventionType;
+  importance: AvatarMoodLevel;
+  confidence: AvatarMoodLevel;
   sentences: AvatarSpeechSentence[];
   listeningMood: AvatarMood;
   listeningLevel: AvatarMoodLevel;
@@ -31,6 +36,9 @@ export interface ParsedMaryTurn {
 export interface MaryTurnDecision {
   action: ParticipationAction;
   reason: string;
+  interventionType: AutonomousInterventionType;
+  importance: AvatarMoodLevel;
+  confidence: AvatarMoodLevel;
   cue: AvatarSpeechCue | null;
   listeningReaction: AvatarListeningReaction;
   usedWebSearch: boolean;
@@ -55,6 +63,23 @@ function cleanReason(value: unknown): string {
 function cleanMoodLevel(value: unknown): AvatarMoodLevel {
   if (typeof value !== "number" || !Number.isFinite(value)) return 3;
   return Math.max(1, Math.min(5, Math.round(value))) as AvatarMoodLevel;
+}
+
+function cleanInterventionType(value: unknown): AutonomousInterventionType {
+  return typeof value === "string" &&
+      (autonomousInterventionTypes as readonly string[]).includes(value)
+    ? value as AutonomousInterventionType
+    : "none";
+}
+
+export function qualifiesAutonomousIntervention(
+  decision: Pick<ParsedMaryTurn, "interventionType" | "importance" | "confidence">,
+): decision is typeof decision & {
+  interventionType: Exclude<AutonomousInterventionType, "none">;
+} {
+  return decision.interventionType !== "none" &&
+    decision.importance >= 4 &&
+    decision.confidence >= 4;
 }
 
 function sentenceLanguage(value: unknown, text: string): SpeechLanguage {
@@ -96,6 +121,9 @@ export function parseMaryTurn(value: string, mode: ParticipationMode): ParsedMar
       return {
         action: "silence",
         reason: "Nessun intervento necessario.",
+        interventionType: "none",
+        importance: 1,
+        confidence: 1,
         sentences: [],
         listeningMood: "attentive",
         listeningLevel: 2,
@@ -104,6 +132,9 @@ export function parseMaryTurn(value: string, mode: ParticipationMode): ParsedMar
     return {
       action: "speak",
       reason: "Risposta diretta.",
+      interventionType: "none",
+      importance: 1,
+      confidence: 1,
       sentences: [{
         text: sentence,
         mood: "neutral",
@@ -126,12 +157,18 @@ export function parseMaryTurn(value: string, mode: ParticipationMode): ParsedMar
     ? record.listeningMood
     : "attentive";
   const listeningLevel = cleanMoodLevel(record.listeningLevel ?? 2);
+  const interventionType = cleanInterventionType(record.interventionType);
+  const importance = cleanMoodLevel(record.importance ?? 1);
+  const confidence = cleanMoodLevel(record.confidence ?? 1);
   if (mode === "observer" && action === "speak") action = "request-to-speak";
   if (mode === "direct" && action === "request-to-speak") action = "speak";
   if (action === "silence") {
     return {
       action,
       reason: cleanReason(record.reason),
+      interventionType,
+      importance,
+      confidence,
       sentences: [],
       listeningMood,
       listeningLevel,
@@ -166,6 +203,9 @@ export function parseMaryTurn(value: string, mode: ParticipationMode): ParsedMar
   return {
     action,
     reason: cleanReason(record.reason),
+    interventionType,
+    importance,
+    confidence,
     sentences,
     listeningMood,
     listeningLevel,
@@ -266,7 +306,7 @@ export class MeetingIntelligence {
     responseChannel: "voice" | "chat" = "voice",
   ): Promise<MaryTurnDecision> {
     const controller = this.#requestController();
-    const webSearchAvailable = mode === "direct" && this.#options.webSearchEnabled;
+    const webSearchAvailable = this.#options.webSearchEnabled;
     let response;
     try {
       response = await this.#client.responses.create({
@@ -289,6 +329,12 @@ export class MeetingIntelligence {
                   enum: ["silence", "speak", "request-to-speak"],
                 },
                 reason: { type: "string" },
+                interventionType: {
+                  type: "string",
+                  enum: autonomousInterventionTypes,
+                },
+                importance: { type: "integer", minimum: 1, maximum: 5 },
+                confidence: { type: "integer", minimum: 1, maximum: 5 },
                 listeningMood: { type: "string", enum: avatarMoods },
                 listeningLevel: { type: "integer", minimum: 1, maximum: 5 },
                 sentences: {
@@ -310,6 +356,9 @@ export class MeetingIntelligence {
               required: [
                 "action",
                 "reason",
+                "interventionType",
+                "importance",
+                "confidence",
                 "listeningMood",
                 "listeningLevel",
                 "sentences",
@@ -359,6 +408,9 @@ export class MeetingIntelligence {
       return {
         action: "silence",
         reason: parsed.reason,
+        interventionType: parsed.interventionType,
+        importance: parsed.importance,
+        confidence: parsed.confidence,
         cue: null,
         listeningReaction,
         usedWebSearch,
@@ -369,6 +421,9 @@ export class MeetingIntelligence {
     return {
       action: parsed.action,
       reason: parsed.reason,
+      interventionType: parsed.interventionType,
+      importance: parsed.importance,
+      confidence: parsed.confidence,
       listeningReaction,
       usedWebSearch,
       cue: {
@@ -403,8 +458,11 @@ export class MeetingIntelligence {
     ];
     const observerRules = [
       "Non puoi parlare in autonomia.",
-      "Usa action=request-to-speak soltanto quando hai un contributo concreto, nuovo e davvero utile rispetto a quanto appena detto.",
-      "Non chiedere la parola per confermare, riassumere l'ovvio, correggere dettagli marginali, rispondere a intercalari o inserirti in ogni scambio.",
+      "Usa action=request-to-speak soltanto se rilevi uno di questi tre casi: una factual-correction che cambia materialmente la conclusione; una critical-omission, inclusi rischi o vincoli decisivi non considerati; una material-addition indispensabile per rendere completa una decisione importante.",
+      "Imposta interventionType al caso rilevato. importance misura quanto il contributo cambierebbe comprensione, rischio o decisione; confidence misura quanto sei sicura che il contributo sia corretto, pertinente e non sia già emerso nella trascrizione.",
+      "Chiedi la parola solo con importance almeno 4 e confidence almeno 4. Il software applica questa soglia anche se scegli erroneamente request-to-speak.",
+      "Prima di chiedere la parola rileggi l'intera trascrizione: non ripetere un punto già espresso, non anticipare una conclusione che il relatore sta ancora formulando e non intervenire due volte sullo stesso punto.",
+      "Non chiedere la parola per confermare, mostrare interesse, riassumere l'ovvio, esprimere una preferenza, correggere dettagli marginali, rispondere a intercalari o inserirti in ogni scambio.",
       "In tutti gli altri casi usa action=silence. Nel dubbio resta in silenzio.",
     ];
     return [
@@ -420,6 +478,9 @@ export class MeetingIntelligence {
         ? [
             "Hai accesso alla ricerca web. Usala quando servono fatti aggiornati, informazioni esterne o dati che non puoi conoscere con affidabilità.",
             "Non dire di non avere accesso a Internet o a dati aggiornati: cerca prima. Non usare il web per opinioni o domande che si risolvono dal contesto della riunione.",
+            ...(mode === "observer"
+              ? ["In modalità osservatore usa la ricerca solo per verificare una possibile correzione materiale; se non riesci a verificarla con alta confidenza, resta in silenzio."]
+              : []),
           ]
         : []),
       responseChannel === "chat"
@@ -429,7 +490,7 @@ export class MeetingIntelligence {
       "Ogni elemento sentences contiene esattamente una frase completa, il mood di quella singola frase, level da 1 (appena percettibile) a 5 (molto marcato) e language (it-IT oppure en-US).",
       "Mantieni ogni frase in una sola lingua. Se devi usare davvero l'inglese, preferisci una frase inglese completa separata: la sintesi userà una voce madrelingua diversa per quella frase.",
       "Scegli level 2 o 3 normalmente; usa 4 solo quando il contenuto lo giustifica e 5 soltanto in casi eccezionali. Per neutral usa level 1 o 2. Evita un'espressione costantemente intensa.",
-      `Restituisci solo il JSON richiesto dallo schema. Compila sempre listeningMood e listeningLevel, anche per silence; per silence usa sentences vuoto. I mood ammessi sono: ${avatarMoods.join(", ")}.`,
+      `Restituisci solo il JSON richiesto dallo schema. Compila sempre interventionType, importance, confidence, listeningMood e listeningLevel. Per silence e per le risposte dirette non autonome usa interventionType=none; per silence usa sentences vuoto. I mood ammessi sono: ${avatarMoods.join(", ")}.`,
     ].join(" ");
   }
 

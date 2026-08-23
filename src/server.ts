@@ -49,7 +49,10 @@ import type {
   TranscriptSegment,
 } from "./domain/protocol.js";
 import { chatPlatforms } from "./domain/protocol.js";
-import { MeetingIntelligence } from "./openai/meeting-intelligence.js";
+import {
+  MeetingIntelligence,
+  qualifiesAutonomousIntervention,
+} from "./openai/meeting-intelligence.js";
 import { runMacosPreflight } from "./preflight/macos.js";
 import { MeetingListener } from "./teams/meeting-listener.js";
 
@@ -67,6 +70,7 @@ const maxSeenChatMessages = 2_000;
 const maxSeenTranscriptSegments = 4_000;
 const maxAudioBytes = 20 * 1024 * 1024;
 const interventionRequestTtlMs = 45_000;
+const autonomousInterventionCooldownMs = 60_000;
 
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
   response.writeHead(statusCode, {
@@ -400,6 +404,7 @@ export function startServer(options: ServerOptions): Promise<void> {
     options.dialogueMaxFollowUps,
   );
   let pendingRequest: AvatarInterventionRequest | null = null;
+  let lastAutonomousRequestAt = 0;
   let avatarHandRaised = false;
   const listeningReactions = new ListeningReactionStabilizer();
 
@@ -572,6 +577,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         !direct &&
         !currentRequest &&
         runtimeConfig.requestToSpeakEnabled &&
+        Date.now() - lastAutonomousRequestAt >= autonomousInterventionCooldownMs &&
         isAutonomyCandidate(segment.text);
 
       if (direct && currentRequest) pendingRequest = null;
@@ -590,9 +596,11 @@ export function startServer(options: ServerOptions): Promise<void> {
           );
           llmMs = Math.round(performance.now() - llmStartedAt);
           usedWebSearch = turn.usedWebSearch;
+          const qualifiedAutonomousRequest = allowAutonomousRequest &&
+            qualifiesAutonomousIntervention(turn);
 
           const shouldPerformListeningReaction = turn.action === "silence" ||
-            (turn.action === "request-to-speak" && !allowAutonomousRequest);
+            (turn.action === "request-to-speak" && !qualifiedAutonomousRequest);
           const stableReaction = shouldPerformListeningReaction
             ? listeningReactions.consider(turn.listeningReaction)
             : null;
@@ -631,7 +639,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           } else if (
             turn.action === "request-to-speak" &&
             turn.cue &&
-            allowAutonomousRequest
+            qualifiedAutonomousRequest
           ) {
             const createdAt = new Date();
             const request: AvatarInterventionRequest = {
@@ -639,11 +647,15 @@ export function startServer(options: ServerOptions): Promise<void> {
               kind: "request-to-speak",
               speakerName: runtimeConfig.name,
               reason: turn.reason,
+              interventionType: turn.interventionType,
+              importance: turn.importance,
+              confidence: turn.confidence,
               proposedCue: turn.cue,
               createdAt: createdAt.toISOString(),
               expiresAt: new Date(createdAt.getTime() + interventionRequestTtlMs).toISOString(),
             };
             pendingRequest = request;
+            lastAutonomousRequestAt = createdAt.getTime();
             avatarHandRaised = true;
             decision = {
               ingested: decision.ingested,
@@ -1003,6 +1015,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         listener = createListener();
         pendingRequest = null;
         avatarHandRaised = false;
+        lastAutonomousRequestAt = 0;
         dialogueLease.close();
 
         let listenerWarning: string | null = null;
@@ -1144,6 +1157,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         transcriptHistory.length = 0;
         pendingRequest = null;
         avatarHandRaised = false;
+        lastAutonomousRequestAt = 0;
         dialogueLease.close();
         if (rendererArmed) {
           try {

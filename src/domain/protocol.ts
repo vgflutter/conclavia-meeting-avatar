@@ -22,6 +22,15 @@ export type TranscriptSource = (typeof transcriptSources)[number];
 export const chatPlatforms = ["teams", "google-meet", "generic"] as const;
 export type ChatPlatform = (typeof chatPlatforms)[number];
 
+export const autonomousInterventionTypes = [
+  "none",
+  "factual-correction",
+  "critical-omission",
+  "material-addition",
+] as const;
+export type AutonomousInterventionType =
+  (typeof autonomousInterventionTypes)[number];
+
 export const chatCommandKinds = [
   "raise-hand",
   "lower-hand",
@@ -123,6 +132,9 @@ export interface AvatarInterventionRequest {
   kind: "request-to-speak";
   speakerName: string;
   reason: string;
+  interventionType: Exclude<AutonomousInterventionType, "none">;
+  importance: AvatarMoodLevel;
+  confidence: AvatarMoodLevel;
   proposedCue: AvatarSpeechCue;
   createdAt: string;
   expiresAt: string;

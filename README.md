@@ -47,6 +47,8 @@ The avatar has three possible actions for each evaluated turn:
 2. `speak`: answer immediately when addressed directly or during an active follow-up dialogue.
 3. `request-to-speak`: prepare a concise answer, show a matching output indicator, request the configured authored body gesture when available, and wait for approval.
 
+Autonomous requests are limited to three material cases: a factual correction that changes the conclusion, a critical omission such as an unaddressed risk or constraint, or an addition required to make an important decision complete. The structured LLM decision includes an intervention type, importance, and confidence. Runtime code requires both scores to be at least 4/5 and applies a 60-second cooldown; prompt compliance alone cannot make the avatar raise its hand.
+
 A pending request expires after 45 seconds. Granting the floor uses the already prepared response, reducing perceived latency. Dismissing it produces no speech and clears the request. Body gestures are semantic requests for an authored Unreal animation state; the runtime does not construct arm poses bone by bone. The old procedural hand-raise prototype is explicitly disabled in the production `meeting` profile. The production request-to-speak gesture is a seated markerless performance captured from video, baked onto the MetaHuman skeleton and validated from the 1920x1080 Pixel Streaming output.
 
 ### Dialogue and floor control
@@ -63,6 +65,9 @@ The LLM returns structured output for each spoken sentence:
 {
   "action": "speak",
   "reason": "Direct answer",
+  "interventionType": "none",
+  "importance": 1,
+  "confidence": 1,
   "listeningMood": "attentive",
   "listeningLevel": 2,
   "sentences": [

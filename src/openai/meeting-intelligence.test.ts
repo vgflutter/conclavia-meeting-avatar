@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { parseMaryReply, parseMaryTurn } from "./meeting-intelligence.js";
+import {
+  parseMaryReply,
+  parseMaryTurn,
+  qualifiesAutonomousIntervention,
+} from "./meeting-intelligence.js";
 
 await test("parses sentence-level moods from Mary JSON", () => {
   assert.deepEqual(
@@ -35,18 +39,21 @@ await test("accepts a deliberate no-response participation decision", () => {
 await test("turns an observer response into a request instead of autonomous speech", () => {
   assert.deepEqual(
     parseMaryTurn(
-      '{"action":"speak","reason":"Ho un dato utile.","sentences":[{"text":"Posso aggiungere un dato.","mood":"attentive","level":2}]}',
+      '{"action":"speak","reason":"Manca un vincolo decisivo.","interventionType":"critical-omission","importance":5,"confidence":4,"sentences":[{"text":"Posso aggiungere un vincolo importante.","mood":"concerned","level":3}]}',
       "observer",
     ),
     {
       action: "request-to-speak",
-      reason: "Ho un dato utile.",
+      reason: "Manca un vincolo decisivo.",
+      interventionType: "critical-omission",
+      importance: 5,
+      confidence: 4,
       listeningMood: "attentive",
       listeningLevel: 2,
       sentences: [{
-        text: "Posso aggiungere un dato.",
-        mood: "attentive",
-        level: 2,
+        text: "Posso aggiungere un vincolo importante.",
+        mood: "concerned",
+        level: 3,
         language: "it-IT",
       }],
     },
@@ -62,6 +69,9 @@ await test("parses the social reaction to what Mary heard even when she stays si
     {
       action: "silence",
       reason: "Sto ascoltando.",
+      interventionType: "none",
+      importance: 1,
+      confidence: 1,
       listeningMood: "empathetic",
       listeningLevel: 3,
       sentences: [],
@@ -71,4 +81,23 @@ await test("parses the social reaction to what Mary heard even when she stays si
 
 await test("never lets malformed observer output speak", () => {
   assert.equal(parseMaryTurn("Vorrei intervenire.", "observer").action, "silence");
+});
+
+await test("requires material importance and confidence before an autonomous request", () => {
+  const materialCorrection = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Il dato è materialmente errato.","interventionType":"factual-correction","importance":4,"confidence":5,"sentences":[{"text":"Il dato corretto cambia la conclusione.","mood":"assertive","level":3}]}',
+    "observer",
+  );
+  const marginalAddition = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Potrei aggiungere un dettaglio.","interventionType":"material-addition","importance":3,"confidence":5,"sentences":[{"text":"Aggiungerei un dettaglio.","mood":"attentive","level":2}]}',
+    "observer",
+  );
+  const uncertainCorrection = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Forse il dato è errato.","interventionType":"factual-correction","importance":5,"confidence":3,"sentences":[{"text":"Forse il dato non è corretto.","mood":"skeptical","level":2}]}',
+    "observer",
+  );
+
+  assert.equal(qualifiesAutonomousIntervention(materialCorrection), true);
+  assert.equal(qualifiesAutonomousIntervention(marginalAddition), false);
+  assert.equal(qualifiesAutonomousIntervention(uncertainCorrection), false);
 });

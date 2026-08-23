@@ -382,8 +382,16 @@ async function refreshContext() {
 function renderParticipationRequest(request) {
   elements.participationRequest.hidden = !request;
   if (!request) return;
+  const interventionLabels = {
+    "factual-correction": "Correzione fattuale",
+    "critical-omission": "Omissione critica",
+    "material-addition": "Integrazione materiale",
+  };
+  const assessment = request.interventionType
+    ? ` · ${interventionLabels[request.interventionType] || request.interventionType} · importanza ${request.importance}/5 · confidenza ${request.confidence}/5`
+    : "";
   elements.participationTitle.textContent = `${request.speakerName || avatarName} chiede la parola`;
-  elements.participationReason.textContent = request.reason || "Ha un contributo utile alla conversazione.";
+  elements.participationReason.textContent = `${request.reason || "Ha un contributo utile alla conversazione."}${assessment}`;
   setStageMode("requesting", "In attesa del permesso");
   setDecision(`${avatarName} ha alzato la mano: scegli se darle la parola.`, "requesting");
 }
