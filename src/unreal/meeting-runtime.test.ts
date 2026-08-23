@@ -93,6 +93,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
 await test("builds meeting gestures from private markerless captures with visual gates", async () => {
   const [
     project,
+    rendererManifest,
     solveScript,
     handBuildScript,
     applauseBuildScript,
@@ -102,6 +103,7 @@ await test("builds meeting gestures from private markerless captures with visual
   ] =
     await Promise.all([
     readFile(repositoryFile("unreal/ConclaviaStudio/ConclaviaStudio.uproject"), "utf8"),
+    readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/process_markerless_hand_raise.py"),
       "utf8",
@@ -151,6 +153,11 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseCaptureScript, /applauseGestureReady/);
   assert.match(applauseCaptureScript, /bodyGesturePhase === "applauding"/);
   assert.match(supervisor, /applauseGestureDriver/);
+  assert.match(
+    rendererManifest,
+    /AS_MeetingApplause_SeatedMarkerless_v1/,
+  );
+  assert.match(rendererManifest, /Build-MarkerlessApplause\.ps1/);
   assert.match(ignoreRules, /^unreal\/ConclaviaStudio\/Capture\/$/mu);
 });
 
