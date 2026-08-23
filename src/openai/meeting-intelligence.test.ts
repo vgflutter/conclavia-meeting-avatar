@@ -48,6 +48,16 @@ await test("keeps a plain text response usable", () => {
   ]);
 });
 
+await test("never publishes truncated structured output as speech or chat text", () => {
+  assert.throws(
+    () => parseMaryTurn(
+      '{"action":"speak","sentences":[{"text":"Risposta interrotta',
+      "direct",
+    ),
+    /incomplete structured response/u,
+  );
+});
+
 await test("accepts a deliberate no-response participation decision", () => {
   assert.deepEqual(parseMaryReply('{"respond":false,"sentences":[]}'), []);
 });

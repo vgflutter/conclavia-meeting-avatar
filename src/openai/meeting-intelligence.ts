@@ -33,8 +33,12 @@ export function participationLane(
 
 export function maxOutputTokensForLane(lane: ParticipationLane): number {
   if (lane === "observer-listening") return 80;
-  if (lane === "direct") return 160;
-  return 240;
+  // JSON Schema keys, per-sentence mood metadata and Italian prose consume
+  // substantially more tokens than the spoken words alone. These are caps,
+  // not targets, so a concise answer keeps the same latency while a summary
+  // or web-grounded answer is no longer cut in the middle of its JSON object.
+  if (lane === "direct") return 320;
+  return 400;
 }
 
 export interface ParsedMaryTurn {
@@ -166,6 +170,9 @@ export function parseMaryTurn(value: string, mode: ParticipationMode): ParsedMar
   try {
     parsed = JSON.parse(cleaned);
   } catch {
+    if (/^[{[]/u.test(cleaned)) {
+      throw new Error("Mary returned an incomplete structured response");
+    }
     const sentence = cleanSentence(cleaned);
     if (!sentence || mode === "observer") {
       return {
