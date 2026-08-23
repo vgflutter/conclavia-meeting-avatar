@@ -2798,11 +2798,11 @@ private:
         if (URealisticMetaHumanLipSyncGenerator* Generator = ListeningGenerator.Get())
         {
             Generator->SetMood(Mood);
-            Generator->SetMoodIntensity(FMath::Clamp(Intensity, 0.0f, 0.68f));
+            Generator->SetMoodIntensity(FMath::Clamp(Intensity, 0.0f, 0.85f));
         }
         ActiveMoodName = Name;
         ActiveSemanticMoodName = SemanticName.IsEmpty() ? Name : SemanticName;
-        ActiveMoodIntensity = FMath::Clamp(Intensity, 0.0f, 0.68f);
+        ActiveMoodIntensity = FMath::Clamp(Intensity, 0.0f, 0.85f);
         PerformanceCurrentIntensity = ActiveMoodIntensity;
         PerformanceTargetIntensity = ActiveMoodIntensity;
         ActivePerformanceFocus = TEXT("target");
@@ -4239,7 +4239,7 @@ private:
                     ERealisticMetaHumanLipSyncMood::Happiness,
                     TEXT("happiness"),
                     TEXT("amused"),
-                    0.68f,
+                    0.82f,
                     ApplauseSmileSeconds);
             }
             else if (CueIntent.Equals(TEXT("listen-react"), ESearchCase::IgnoreCase))
