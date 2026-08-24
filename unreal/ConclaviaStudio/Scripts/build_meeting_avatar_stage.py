@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v18"
+STAGE_REVISION = "v19"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
 MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4.0
@@ -299,7 +299,12 @@ def build() -> None:
     # or Meet participant.
     webcam_position = unreal.Vector(-360.0, 0.0, 185.0)
     webcam_target = unreal.Vector(0.0, 0.0, 165.0)
-    webcam_focal_length = 168.0
+    # The previous 168 mm crop looked good at rest but removed the wrist and
+    # outer fingers from the captured request-to-speak performance.  Keep the
+    # same immutable camera position and optical axis, then widen the lens by
+    # roughly 18% so both authored arm gestures fit without a runtime camera
+    # move or any procedural correction to the MetaHuman skeleton.
+    webcam_focal_length = 142.0
     add_camera(
         "CAM_Meeting_Portrait",
         webcam_position,
