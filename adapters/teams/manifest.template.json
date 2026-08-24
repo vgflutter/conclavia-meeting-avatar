@@ -23,6 +23,7 @@
     "full": "Reads messages only in conversations where the app is installed, sends them to the configured meeting companion, and publishes only explicitly requested avatar responses."
   },
   "accentColor": "#07110F",
+  "defaultInstallScope": "groupChat",
   "webApplicationInfo": {
     "id": "00000000-0000-0000-0000-000000000000",
     "resource": "https://example.com/conclavia-meeting-avatar"
@@ -33,6 +34,10 @@
         {
           "type": "Application",
           "name": "ChatMessage.Read.Chat"
+        },
+        {
+          "type": "Application",
+          "name": "ChannelMessage.Read.Group"
         }
       ]
     }
@@ -41,6 +46,7 @@
     {
       "botId": "00000000-0000-0000-0000-000000000000",
       "scopes": [
+        "team",
         "groupchat"
       ],
       "supportsFiles": false,

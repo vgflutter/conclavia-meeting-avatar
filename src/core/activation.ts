@@ -46,7 +46,7 @@ export function isAddressedToAvatar(text: string, wakeWord: string): boolean {
     const explicitPunctuation = /[,.:;!?-]/u.test(separator);
     const directQuestion = value.endsWith("?") ||
       isDialogueFollowUpCandidate(remainder) ||
-      /^(?:sei|hai|sai|vuoi|devi|pensi|credi|ricordi|ritieni|puoi|potresti|riesci)(?=$|[\s,.:;!?-])/iu
+      /^(?:(?:sei|hai|sai|vuoi|devi|pensi|credi|ricordi|ritieni|puoi|potresti|riesci)(?=$|[\s,.:;!?-])|(?:mi|ci)\s+(?:ascolti|senti|aiuti|rispondi|segui|capisci|spieghi|dici)(?=$|[\s,.:;!?-])|ciao|buongiorno|buonasera|salve|ehi|hey)(?=$|[\s,.:;!?-])/iu
         .test(remainder);
     if (atStart.groups.mention || explicitPunctuation || !remainder || directQuestion) {
       return true;

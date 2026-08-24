@@ -13,6 +13,10 @@
     "preflight": "node --env-file-if-exists=.env --import tsx src/cli.ts preflight",
     "simulate": "node --env-file-if-exists=.env --import tsx src/cli.ts simulate",
     "chat:simulate": "node adapters/generic/post-message.mjs",
+    "meet:bridge:open": "bash scripts/open-meet-bridge.sh",
+    "teams:bridge:open": "bash scripts/open-teams-bridge.sh",
+    "teams:agent:start": "node --env-file-if-exists=.env dist/teams/teams-agent.js",
+    "teams:agent:dev": "node --env-file-if-exists=.env --import tsx src/teams/teams-agent.ts",
     "transcript:simulate": "node adapters/generic/post-transcript.mjs",
     "studio:3d:start": "bash scripts/start-3d-studio.sh",
     "studio:3d:stop": "bash scripts/stop-3d-studio.sh",
@@ -38,6 +42,7 @@
     "@aws-sdk/client-ec2": "^3.1116.0",
     "@aws-sdk/client-polly": "^3.1116.0",
     "@aws-sdk/credential-providers": "^3.1116.0",
+    "@microsoft/teams.apps": "^2.0.15",
     "openai": "^7.5.0",
     "ws": "^8.21.3"
   }

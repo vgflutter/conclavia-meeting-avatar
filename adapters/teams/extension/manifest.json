@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Conclavia Microsoft Teams Bridge",
+  "version": "0.1.0",
+  "description": "Forwards visible Microsoft Teams meeting-chat messages to the local Conclavia Meeting Avatar companion.",
+  "action": {
+    "default_title": "Conclavia Teams chat bridge"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://teams.microsoft.com/*",
+        "https://teams.cloud.microsoft/*",
+        "https://teams.live.com/*"
+      ],
+      "js": ["teams-dom.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ]
+}

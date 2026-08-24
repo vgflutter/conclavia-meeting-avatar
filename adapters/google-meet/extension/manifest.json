@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Conclavia Google Meet Bridge",
+  "version": "0.1.0",
+  "description": "Forwards visible Google Meet chat messages to the local Conclavia Meeting Avatar companion.",
+  "action": {
+    "default_title": "Conclavia Meet chat bridge"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["meet-dom.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ]
+}

@@ -179,7 +179,9 @@ Mary, applaudi
 
 Messages that do not contain a command still enter meeting memory. Chat is silent by default: `@Mary, what do you think?` receives a written reply. Voice starts only for the configured `speak` command, such as `Mary, intervieni ...`, or when chat explicitly grants a pending request to speak. Unaddressed chat can inform memory or cause a conservative `request-to-speak`, but cannot make the avatar speak immediately.
 
-Teams uses an installed agent with `groupchat` scope and resource-specific `ChatMessage.Read.Chat` consent. Google Meet does not expose live chat through its REST API, so Meet uses an isolated browser adapter; a Meet DOM change cannot affect the companion core. See the [chat adapter contract](docs/chat-adapter-contract.md), [transcript adapter contract](docs/transcript-adapter-contract.md), [Teams adapter template](adapters/teams/README.md), and [Google Meet adapter design](adapters/google-meet/README.md).
+For immediate local testing, the project includes isolated Chrome bridges for both Teams Web and Google Meet. Run `npm run teams:bridge:open` or `npm run meet:bridge:open`, load the corresponding unpacked extension, reload the meeting tab, and keep its chat panel open. Each bridge reads only newly rendered messages, sends them through the same canonical endpoint, posts Mary’s written replies back into the meeting chat, and reports `ON`, `OPEN`, `OFF`, or `ERR` in its badge. Private Teams or Meet markup never enters the companion core.
+
+The production Teams desktop path is the included Microsoft Teams SDK agent runtime (`npm run teams:agent:dev`). Its manifest supports ordinary meeting group chats and channel meetings with conversation-scoped `ChatMessage.Read.Chat` and `ChannelMessage.Read.Group` consent. Once the owner installs the app and grants that scope, Mary receives all new chat messages without requiring `@Mary`; the wake name is required only when a participant wants to command or question her. See the [chat adapter contract](docs/chat-adapter-contract.md), [transcript adapter contract](docs/transcript-adapter-contract.md), [Teams adapter guide](adapters/teams/README.md), and [Google Meet adapter guide](adapters/google-meet/README.md).
 
 ## Facial animation architecture
 
@@ -341,9 +343,9 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 
 - Stream TTS generation and playback to reduce time to first audio further.
 - Move the validated request-to-speak and seated-idle repertoire into a blended Animation Blueprint state machine; keep every body pose asset-driven.
-- Calibrate and package the Teams caption bridge against the production client accessibility tree.
-- Finish and calibrate the isolated Google Meet browser bridge against the current Meet accessibility tree.
-- Deploy the Teams RSC agent and authenticated relay from the included manifest template.
+- Calibrate and package the Teams attributed-caption bridge; keep the isolated Teams Web chat bridge aligned with Teams DOM changes.
+- Keep the isolated Google Meet browser bridge calibrated as Meet's private DOM evolves, and add attributed-caption extraction.
+- Provision the included Teams SDK agent and RSC manifest in a managed tenant, then move its local relay to an authenticated outbound production channel.
 - Add persistent latency histograms and percentile dashboards for transcription, web search, TTS, and renderer handoff.
 - Add optional diarization for conferencing clients that cannot expose attributed captions.
 

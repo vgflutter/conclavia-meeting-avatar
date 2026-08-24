@@ -85,6 +85,9 @@ await test("does not treat unrelated meeting chatter as an active-dialogue follo
 
 await test("distinguishes addressing Mary from talking about Mary", () => {
   assert.equal(isAddressedToAvatar("Mary, cosa suggerisci?", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Mary mi ascolti", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Mary mi senti", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Mary buongiorno", "Mary"), true);
   assert.equal(isAddressedToAvatar("Che cosa suggerisci, Mary?", "Mary"), true);
   assert.equal(isAddressedToAvatar("Mary ha già risposto a questa domanda.", "Mary"), false);
   assert.equal(
