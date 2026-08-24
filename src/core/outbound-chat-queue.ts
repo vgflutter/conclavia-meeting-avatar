@@ -15,6 +15,10 @@ export class OutboundChatQueue {
   enqueue(message: OutboundChatMessage): void {
     const key = queueKey(message.platform, message.meetingId);
     const queue = this.#queues.get(key) ?? [];
+    const supersededIndex = queue.findIndex((entry) =>
+      entry.message.replyToMessageId === message.replyToMessageId
+    );
+    if (supersededIndex >= 0) queue.splice(supersededIndex, 1);
     queue.push({ message, leasedUntil: 0 });
     if (queue.length > 100) queue.splice(0, queue.length - 100);
     this.#queues.set(key, queue);

@@ -32,3 +32,13 @@ await test("isolates queues belonging to different meetings", () => {
   queue.enqueue({ ...message("two"), meetingId: "meeting-2" });
   assert.deepEqual(queue.lease("teams", "meeting-2", 1_000).map(({ id }) => id), ["two"]);
 });
+
+await test("keeps only the newest agenda reminder while a chat panel is unavailable", () => {
+  const queue = new OutboundChatQueue();
+  queue.enqueue(message("warning"));
+  queue.enqueue(message("transition"));
+  assert.deepEqual(
+    queue.lease("teams", "meeting-1", 1_000).map(({ id }) => id),
+    ["transition"],
+  );
+});
