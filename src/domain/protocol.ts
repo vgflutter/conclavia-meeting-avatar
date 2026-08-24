@@ -124,7 +124,7 @@ export interface AvatarListeningReaction {
 export interface AvatarSpeechCue {
   id: string;
   kind: "speak";
-  provider: "diagnostic" | "openai";
+  provider: "diagnostic" | "openai" | "system";
   model: string | null;
   speakerName?: string;
   sentences: AvatarSpeechSentence[];
@@ -156,6 +156,7 @@ export interface ActivationDecision {
     | "conversation-observed"
     | "autonomous-request"
     | "autonomous-applause"
+    | "collective-farewell"
     | "not-final"
     | "not-addressed";
   cue?: AvatarSpeechCue;

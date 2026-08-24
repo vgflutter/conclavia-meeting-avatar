@@ -11,6 +11,7 @@ import {
   isDialogueDismissal,
   isFloorGrant,
 } from "./core/activation.js";
+import { CollectiveFarewellTracker } from "./core/collective-farewell.js";
 import { ListeningReactionStabilizer } from "./core/listening-reaction.js";
 import { DialogueLease } from "./core/dialogue-lease.js";
 import { chatResponseChannel, matchChatCommand } from "./core/chat-commands.js";
@@ -429,6 +430,7 @@ export function startServer(options: ServerOptions): Promise<void> {
   let lastAutonomousApplauseAt = 0;
   let avatarHandRaised = false;
   const listeningReactions = new ListeningReactionStabilizer();
+  const collectiveFarewells = new CollectiveFarewellTracker();
 
   const markRendererReady = (playerUrl?: string): void => {
     const shouldRestoreRaisedHand = !rendererArmed && avatarHandRaised;
@@ -600,7 +602,37 @@ export function startServer(options: ServerOptions): Promise<void> {
     } | null = null;
     const currentRequest = participationSnapshot();
 
-    if (isDialogueDismissal(segment.text, runtimeConfig.name)) {
+    const collectiveFarewell = decision.ingested
+      ? collectiveFarewells.consider(transcriptHistory, segment, runtimeConfig.name)
+      : null;
+
+    if (collectiveFarewell) {
+      const shouldLowerHand = avatarHandRaised;
+      intelligence?.abortPending();
+      pendingRequest = null;
+      avatarHandRaised = false;
+      dialogueLease.close();
+      decision = {
+        ingested: true,
+        activated: true,
+        reason: "collective-farewell",
+        cue: collectiveFarewell.cue,
+      };
+      retainAvatarCue(
+        collectiveFarewell.cue,
+        responseChannel === "chat" ? "chat" : "speech",
+        segment,
+      );
+      if (shouldLowerHand && rendererArmed) {
+        try {
+          const rendererStartedAt = performance.now();
+          await renderer.lowerHand(runtimeConfig.name);
+          rendererMs = Math.round(performance.now() - rendererStartedAt);
+        } catch (error: unknown) {
+          console.error("Conclavia farewell lower-hand cue failed:", error);
+        }
+      }
+    } else if (isDialogueDismissal(segment.text, runtimeConfig.name)) {
       intelligence?.abortPending();
       pendingRequest = null;
       avatarHandRaised = false;
@@ -804,7 +836,8 @@ export function startServer(options: ServerOptions): Promise<void> {
     if (
       responseChannel === "voice" &&
       rendererArmed &&
-      decision.cue?.provider === "openai"
+      decision.cue &&
+      decision.cue.provider !== "diagnostic"
     ) {
       try {
         const rendererStartedAt = performance.now();
@@ -1190,6 +1223,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         avatarHandRaised = false;
         lastAutonomousRequestAt = 0;
         lastAutonomousApplauseAt = 0;
+        collectiveFarewells.reset();
         dialogueLease.close();
 
         let listenerWarning: string | null = null;
@@ -1333,6 +1367,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         avatarHandRaised = false;
         lastAutonomousRequestAt = 0;
         lastAutonomousApplauseAt = 0;
+        collectiveFarewells.reset();
         dialogueLease.close();
         agendas.reset();
         outboundChat.clear();

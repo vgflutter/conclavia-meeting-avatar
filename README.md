@@ -32,6 +32,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Chat message idempotency and avatar self-message filtering to prevent duplicate actions and response loops.
 - Configurable avatar name, which is also the direct voice trigger.
 - Speaker-scoped dialogue leases: invoke the avatar once, then continue naturally for up to two relevant follow-ups without repeating its name.
+- Collective farewell awareness: after a real discussion, Mary joins a closing wave of goodbyes once, in Italian or English, without requiring her wake name or an LLM round trip.
 - Automatic Realtime transcription reconnection after provider session expiry or a transient socket failure, with bounded exponential backoff.
 - Conservative participation control that keeps the avatar silent for fillers, incomplete remarks, and conversations between human participants.
 - `request-to-speak` autonomy: the avatar may prepare a useful contribution and visibly request the floor, but it cannot speak until a participant grants permission.
@@ -55,11 +56,13 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 
 ## Participation model
 
-The avatar has three possible actions for each evaluated turn:
+The participation LLM has three possible actions for each evaluated turn:
 
 1. `silence`: retain the utterance as context and do not interrupt.
 2. `speak`: answer immediately when addressed directly or during an active follow-up dialogue.
 3. `request-to-speak`: prepare a concise answer, show a matching output indicator, request the configured authored body gesture when available, and wait for approval.
+
+A separate deterministic social controller handles collective farewells. It waits for either multiple independent goodbye signals in a short closing window or an explicit group farewell after substantive meeting context. This prevents opening greetings and ordinary “thank you” remarks from ending the meeting. Mary responds once per closing wave, lowers a pending raised hand first, uses the configured native-language voice with a restrained positive mood, and bypasses the LLM for immediate delivery. The same rule publishes a written farewell when the closing wave occurs in Teams or Meet chat.
 
 Autonomous requests are limited to three material cases: a factual correction that changes the conclusion, a critical omission such as an unaddressed risk or constraint, or an addition required to make an important decision complete. The structured LLM decision includes an intervention type, importance, and confidence. Runtime code requires both scores to be at least 4/5 and applies a 60-second cooldown; prompt compliance alone cannot make the avatar raise its hand.
 

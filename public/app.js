@@ -472,7 +472,11 @@ function renderMaryResponse(decision) {
     elements.maryResponse.innerHTML = "";
     return;
   }
-  const provider = decision.cue.provider === "openai" ? "OPENAI" : "DIAGNOSTICA";
+  const provider = decision.cue.provider === "openai"
+    ? "OPENAI"
+    : decision.cue.provider === "system"
+      ? "CONCLAVIA"
+      : "DIAGNOSTICA";
   const sources = decision.cue.webSources ?? [];
   elements.maryResponse.innerHTML = `
     <div class="mary-response-heading"><strong>${escapeHtml(decision.cue.speakerName || avatarName)}</strong><span>${provider}${decision.cue.model ? ` · ${escapeHtml(decision.cue.model)}` : ""}</span></div>
@@ -489,7 +493,9 @@ function renderTurn(result) {
   renderMaryResponse(result.decision);
   renderParticipationRequest(result.decision?.request ?? result.llmContext?.participationRequest ?? null);
 
-  if (result.decision?.activated && result.decision.cue?.provider === "openai") {
+  if (result.decision?.reason === "collective-farewell") {
+    setDecision(`${avatarName} ha riconosciuto la chiusura del meeting e saluta il gruppo.`, "responding");
+  } else if (result.decision?.activated && result.decision.cue?.provider === "openai") {
     setDecision(`${avatarName} ha letto la conversazione e sta rispondendo${result.usedWebSearch ? " con ricerca web" : ""}.`, "responding");
   } else if (result.decision?.activated) {
     setDecision(`${avatarName} è stata chiamata, ma usa la risposta diagnostica: configura OpenAI per la risposta reale.`, "responding");
