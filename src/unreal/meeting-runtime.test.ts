@@ -50,8 +50,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     engineConfig,
     /^MeetingApplauseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingApplause_SeatedMarkerless_v1\.AS_MeetingApplause_SeatedMarkerless_v1$/mu,
   );
-  assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=19\.25$/mu);
-  assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=21\.65$/mu);
+  assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=3\.25$/mu);
+  assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=6\.75$/mu);
   assert.match(moduleSource, /Rejected non-meeting gesture asset/);
   assert.match(moduleSource, /Rejected non-meeting applause asset/);
   assert.doesNotMatch(moduleSource, /BodyGestureRaiseSeconds/);
@@ -184,8 +184,8 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.doesNotMatch(applauseBuildScript, /--delta-from-stabilized-pose/);
   assert.match(applauseBuildScript, /--preserve-motion-translations/);
   assert.match(applauseBuildScript, /--stabilize-meeting-torso/);
-  assert.match(applauseBuildScript, /--ease-segment-start-seconds", "19\.25/);
-  assert.match(applauseBuildScript, /--ease-segment-end-seconds", "21\.65/);
+  assert.match(applauseBuildScript, /--ease-segment-start-seconds", "3\.25/);
+  assert.match(applauseBuildScript, /--ease-segment-end-seconds", "6\.75/);
   assert.match(handBuildScript, /--transition-seconds", "0\.80/);
   assert.match(handBuildScript, /\[string\]\$CapturePath = ""/);
   assert.match(handBuildScript, /if \(-not \$ReusePerformance/);
@@ -196,6 +196,10 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseBuildScript, /--gesture-strength", "0\.94/);
   assert.match(solveScript, /def release_weight/);
   assert.match(solveScript, /gesture_weight\(frame_index\) \* gesture_strength/);
+  assert.match(
+    solveScript,
+    /Markerless gesture segment exceeds the solved performance/,
+  );
   assert.match(solveScript, /STABLE_MEETING_TORSO_TRACKS/);
   assert.match(solveScript, /seated_transform\.rotation\.slerp_quat/);
   assert.match(solveScript, /linear \* linear \* \(3\.0 - 2\.0 \* linear\)/);

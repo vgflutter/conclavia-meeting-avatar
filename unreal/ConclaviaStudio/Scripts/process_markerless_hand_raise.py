@@ -252,6 +252,32 @@ def bake_body_animation(
             "Markerless performance duration is implausible: "
             f"frames={len(solved_frames)} seconds={expected_duration_seconds:.3f}"
         )
+    if ease_segment_start_seconds >= 0.0 or ease_segment_end_seconds >= 0.0:
+        if (
+            ease_segment_start_seconds < 0.0
+            or ease_segment_end_seconds <= ease_segment_start_seconds
+        ):
+            raise RuntimeError(
+                "Markerless gesture segment is invalid: "
+                f"start={ease_segment_start_seconds:.3f} "
+                f"end={ease_segment_end_seconds:.3f}"
+            )
+        if ease_segment_end_seconds > expected_duration_seconds:
+            raise RuntimeError(
+                "Markerless gesture segment exceeds the solved performance: "
+                f"segment={ease_segment_start_seconds:.3f}-"
+                f"{ease_segment_end_seconds:.3f} "
+                f"performance={expected_duration_seconds:.3f}"
+            )
+        if transition_seconds * 2.0 >= (
+            ease_segment_end_seconds - ease_segment_start_seconds
+        ):
+            raise RuntimeError(
+                "Markerless gesture transitions consume the complete segment: "
+                f"transition={transition_seconds:.3f} "
+                f"segment={ease_segment_start_seconds:.3f}-"
+                f"{ease_segment_end_seconds:.3f}"
+            )
     track_names = set(body_frames[0])
     for frame in body_frames[1:]:
         track_names.intersection_update(frame)

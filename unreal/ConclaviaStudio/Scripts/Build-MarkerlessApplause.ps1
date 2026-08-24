@@ -35,11 +35,12 @@ $pythonArguments = @(
     "--motion-tracks", "upperarm_l,upperarm_r",
     "--preserve-motion-translations",
     "--stabilize-meeting-torso",
-    # Use the elevated, continuous part of the captured applause. The source
-    # take already owns the pose; this crop avoids the low preparation and
-    # lowering frames without synthesizing shoulder or wrist rotations.
-    "--ease-segment-start-seconds", "19.25",
-    "--ease-segment-end-seconds", "21.65",
+    # Capture Manager exposes the first eight tracked seconds of this take,
+    # not the original 28-second video timecode. Use the complete first clap
+    # cycle in that solved timeline and retain its authored preparation and
+    # lowering. The long boundary ease keeps both transitions quiet.
+    "--ease-segment-start-seconds", "3.25",
+    "--ease-segment-end-seconds", "6.75",
     "--transition-seconds", "0.75",
     "--gesture-strength", "0.94"
 )
