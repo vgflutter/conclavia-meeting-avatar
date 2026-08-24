@@ -375,7 +375,7 @@ MeetingHandRaiseStartTimeSeconds=1.75
 MeetingHandRaiseHoldTimeSeconds=3.25
 MeetingHandRaiseLowerTimeSeconds=5.75
 MeetingHandRaiseEndTimeSeconds=7.50
-MeetingApplauseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1.AS_MeetingApplause_SeatedMarkerless_v1
+MeetingApplauseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedContactIK_v3.AS_MeetingApplause_SeatedContactIK_v3
 MeetingApplauseStartTimeSeconds=3.25
 MeetingApplauseEndTimeSeconds=6.75
 ```
@@ -385,8 +385,11 @@ permission is pending, and resumes the captured lowering motion when the hand is
 cleared. It never reconstructs the shoulder or arm with procedural bone
 rotations.
 
-Applause plays the captured two-arm and finger performance once, then returns
-to the varied seated idle. It can be invoked deterministically by the
+Applause plays the captured two-arm and finger performance once. A MetaHuman
+Control Rig backwards-solve pass applies hand IK only around the 46 closest
+contact frames, reducing the minimum wrist separation from 10.96 cm to 5.74 cm
+while retaining the captured shoulder, elbow, finger and timing performance.
+It then returns to the varied seated idle. It can be invoked deterministically by the
 companion's `applause` cue. Autonomous applause is a separate, conservative
 social decision: it requires an exceptional complex conclusion, maximum
 importance, high confidence, no pending request to speak, and a three-minute

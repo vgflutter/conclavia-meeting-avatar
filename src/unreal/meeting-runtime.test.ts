@@ -48,7 +48,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(engineConfig, /^MeetingHandRaiseEndTimeSeconds=7\.50$/mu);
   assert.match(
     engineConfig,
-    /^MeetingApplauseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingApplause_SeatedMarkerless_v1\.AS_MeetingApplause_SeatedMarkerless_v1$/mu,
+    /^MeetingApplauseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingApplause_SeatedContactIK_v3\.AS_MeetingApplause_SeatedContactIK_v3$/mu,
   );
   assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=3\.25$/mu);
   assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=6\.75$/mu);
