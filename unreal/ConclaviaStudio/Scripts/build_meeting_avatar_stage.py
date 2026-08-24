@@ -15,9 +15,10 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v15"
+STAGE_REVISION = "v16"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
+MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4.0
 
 CUBE = "/Engine/BasicShapes/Cube.Cube"
 
@@ -184,7 +185,15 @@ def keep_single_avatar_anchor() -> unreal.Actor:
     # bounds rather than the Blueprint root because MetaHuman identities have
     # different internal component offsets.
     bounds_origin, _ = anchor.get_actor_bounds(False)
-    correction = unreal.Vector(-bounds_origin.x, -bounds_origin.y, 0.0)
+    # MetaHuman's full assembled bounds are not identical to the visual centre
+    # of the head and shoulders. Keep a tiny product-level offset here instead
+    # of changing camera state or animation root motion: all gestures retain
+    # their authored trajectories while the participant reads as centred.
+    correction = unreal.Vector(
+        -bounds_origin.x,
+        -bounds_origin.y + MEETING_AVATAR_SCREEN_OFFSET_Y_CM,
+        0.0,
+    )
     anchor.set_actor_location(
         unreal.MathLibrary.add_vector_vector(anchor.get_actor_location(), correction),
         False,
@@ -290,7 +299,7 @@ def build() -> None:
     # or Meet participant.
     webcam_position = unreal.Vector(-360.0, 0.0, 185.0)
     webcam_target = unreal.Vector(0.0, 0.0, 165.0)
-    webcam_focal_length = 150.0
+    webcam_focal_length = 162.0
     add_camera(
         "CAM_Meeting_Portrait",
         webcam_position,
