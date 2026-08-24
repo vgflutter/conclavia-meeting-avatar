@@ -34,13 +34,13 @@ LEVEL_PATH = "/Game/Conclavia/Meeting/L_MeetingAvatar_v19"
 SOURCE_PATH = "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1"
 CONTROL_RIG_PATH = "/Game/Conclavia/Meeting/MetaHumans/Common/Common/MetaHuman_ControlRig"
 OUTPUT_ROOT = "/Game/Conclavia/Meeting/Animations"
-OUTPUT_NAME = "AS_MeetingApplause_SeatedContactIK_v2"
+OUTPUT_NAME = "AS_MeetingApplause_SeatedContactIK_v3"
 OUTPUT_PATH = f"{OUTPUT_ROOT}/{OUTPUT_NAME}"
-TEMP_NAME = "LS_MeetingApplause_ContactIK_v2"
+TEMP_NAME = "LS_MeetingApplause_ContactIK_v3"
 TEMP_PATH = f"{OUTPUT_ROOT}/{TEMP_NAME}"
 FPS = 30
 CONTACT_ENTRY_CM = 32.0
-CONTACT_TARGET_CM = 12.0
+CONTACT_TARGET_CM = 5.0
 
 
 def log(message: str) -> None:

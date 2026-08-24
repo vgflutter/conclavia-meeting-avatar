@@ -221,9 +221,9 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseBuildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
   assert.match(applauseContactScript, /MetaHuman_ControlRig/);
   assert.match(applauseContactScript, /hand_\{side\}_ik_ctrl/);
-  assert.match(applauseContactScript, /CONTACT_TARGET_CM = 12\.0/);
+  assert.match(applauseContactScript, /CONTACT_TARGET_CM = 5\.0/);
   assert.match(applauseContactScript, /corrected_pair/);
-  assert.match(rendererManifest, /AS_MeetingApplause_SeatedContactIK_v2/);
+  assert.match(rendererManifest, /AS_MeetingApplause_SeatedContactIK_v3/);
   assert.match(applauseCaptureScript, /applauseGestureReady/);
   assert.match(applauseCaptureScript, /bodyGesturePhase === "applauding"/);
   assert.match(applauseCaptureScript, /commercialMood === "happiness"/);
