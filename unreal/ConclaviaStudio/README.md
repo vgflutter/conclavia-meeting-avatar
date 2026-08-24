@@ -375,7 +375,7 @@ MeetingHandRaiseStartTimeSeconds=1.75
 MeetingHandRaiseHoldTimeSeconds=3.25
 MeetingHandRaiseLowerTimeSeconds=5.75
 MeetingHandRaiseEndTimeSeconds=7.50
-MeetingApplauseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedContactIK_v3.AS_MeetingApplause_SeatedContactIK_v3
+MeetingApplauseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1.AS_MeetingApplause_SeatedMarkerless_v1
 MeetingApplauseStartTimeSeconds=3.25
 MeetingApplauseEndTimeSeconds=6.75
 ```
