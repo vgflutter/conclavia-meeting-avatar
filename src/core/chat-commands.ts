@@ -12,6 +12,8 @@ const commandKeys: ReadonlyArray<readonly [keyof ChatCommandAliases, ChatCommand
   ["summarizeInChat", "summarize-in-chat"],
   ["replyInChat", "reply-in-chat"],
   ["speak", "speak"],
+  ["setAgenda", "set-agenda"],
+  ["cancelAgenda", "cancel-agenda"],
 ];
 
 function escapeRegExp(value: string): string {

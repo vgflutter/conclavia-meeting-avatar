@@ -39,6 +39,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Floor approval from the web console or by saying phrases such as `Mary, go ahead` or `Go ahead, Mary`.
 - Optional live web search for direct questions that require current or external information.
 - Configurable OpenAI response model, API key, purpose, free-form personality, structured temperament, and system prompt.
+- Timestamped meeting agendas loaded from chat, with reliable one-minute warnings, scheduled topic transitions, and end-of-meeting reminders for both Teams and Google Meet.
 - Structured LLM output with one mood and one intensity level for every sentence.
 - Separate semantic listening reactions: the LLM selects how the avatar socially reacts to what it hears, even when its action is `silence`.
 - Sentence-level language selection with separate native Italian and US English voices.
@@ -222,6 +223,23 @@ Open [http://127.0.0.1:4310](http://127.0.0.1:4310).
 The web application can configure the meeting platform, avatar profile, name/trigger, model, native Italian and English voices, delivery style, API key, purpose, personality, system prompt, web search, autonomous requests to speak, and exceptional-conclusion applause. It also exposes six operational temperament traits: **calmness**, **assertiveness**, **impulsiveness**, **empathy**, **concision**, and **expressiveness**. These values are not cosmetic metadata: they shape response length, tone, listening and speaking mood intensity, and the minimum interval between autonomous requests to speak, while the materiality and confidence safety gates remain mandatory. Saving applies the new configuration without restarting the companion; if the meeting listener was active, it is restarted automatically. Changing the MetaHuman profile switches the warm Unreal performer immediately and does not require a second **Start avatar** action.
 
 The default **Test room** is an end-to-end meeting simulator rather than a mocked UI. Text entered as speech uses the normal activation and meeting-memory pipeline; chat messages use the canonical Teams/Meet adapter endpoint; quick actions use the currently configured command aliases; and browser microphone input uses the production transcription path. The transcript, chat, participant list, pending floor request, physical-gesture readiness, per-sentence moods, renderer delivery, and latency are visible in one place. **New session** clears the in-memory meeting history and resets pending participation state without changing avatar configuration.
+
+### Agenda timekeeper
+
+Mary can turn a chat message into a live meeting agenda. Address the configured avatar, use the `scaletta` (or `meeting agenda`) command, and put one relative timestamp on every following line:
+
+```text
+Mary, scaletta
+00:00 Opening and objectives
+05:00 Project status
+15:00 Decisions
+25:00 Actions and owners
+30:00 Close
+```
+
+Two-part timestamps are `MM:SS`; three-part timestamps are `HH:MM:SS`. The first item must start at `00:00`, timestamps must be strictly increasing, and the last timestamp is the planned meeting duration. The chat message's `capturedAt` value anchors the clock. Mary confirms the agenda immediately, posts a timestamped warning one minute before each transition, announces the next item at its scheduled time, and flags the planned close. A newer agenda replaces the current one for that meeting. `Mary, annulla scaletta` cancels it.
+
+Timed messages do not wait for another participant to write. The local companion keeps a per-meeting outbound queue with short delivery leases, while the Chrome Teams and Google Meet bridges poll it every 1.5 seconds and acknowledge messages only after posting them. This prevents a temporarily hidden or unavailable chat composer from silently losing a reminder. Reload the unpacked extension after updating its source.
 
 You can alternatively provide the API key through the environment:
 

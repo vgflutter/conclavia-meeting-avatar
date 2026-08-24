@@ -46,6 +46,8 @@ export const defaultChatCommandAliases: ChatCommandAliases = {
   summarizeInChat: ["riassumi in chat", "scrivi un riassunto", "summarize in chat"],
   replyInChat: ["rispondi in chat", "scrivi in chat", "reply in chat"],
   speak: ["intervieni", "parla", "rispondi a voce", "speak"],
+  setAgenda: ["scaletta", "agenda meeting", "meeting agenda"],
+  cancelAgenda: ["annulla scaletta", "cancella scaletta", "cancel agenda"],
 };
 
 export interface AvatarConfig {
@@ -147,6 +149,8 @@ function commandAliases(
       summarizeInChat: [...fallback.summarizeInChat],
       replyInChat: [...fallback.replyInChat],
       speak: [...fallback.speak],
+      setAgenda: [...fallback.setAgenda],
+      cancelAgenda: [...fallback.cancelAgenda],
     };
   }
   if (typeof value !== "object" || value === null) {
@@ -168,6 +172,12 @@ function commandAliases(
       "Comandi risposta chat",
     ),
     speak: commandAliasList(record.speak, fallback.speak, "Comandi intervento vocale"),
+    setAgenda: commandAliasList(record.setAgenda, fallback.setAgenda, "Comandi scaletta"),
+    cancelAgenda: commandAliasList(
+      record.cancelAgenda,
+      fallback.cancelAgenda,
+      "Comandi annulla scaletta",
+    ),
   };
 }
 

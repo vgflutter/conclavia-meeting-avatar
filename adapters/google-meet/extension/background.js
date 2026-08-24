@@ -91,6 +91,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message?.type === "conclavia:chat-outbound") {
+    if (!validText(message.meetingId, 240)) {
+      sendResponse({ ok: false, error: "Invalid meeting id." });
+      return false;
+    }
+    const query = new URLSearchParams({ platform: "google-meet", meetingId: message.meetingId });
+    void companionRequest(`/api/chat/outbound?${query}`, { method: "GET" })
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((error) => sendResponse({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+    return true;
+  }
+
+  if (message?.type === "conclavia:chat-outbound-ack") {
+    const messageIds = Array.isArray(message.messageIds)
+      ? message.messageIds.filter((value) => validText(value, 240)).slice(0, 20)
+      : [];
+    if (!validText(message.meetingId, 240) || !messageIds.length) {
+      sendResponse({ ok: false, error: "Invalid outbound acknowledgement." });
+      return false;
+    }
+    void companionRequest("/api/chat/outbound/ack", {
+      method: "POST",
+      body: JSON.stringify({
+        platform: "google-meet",
+        meetingId: message.meetingId,
+        messageIds,
+      }),
+    })
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((error) => sendResponse({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+    return true;
+  }
+
   return false;
 });
 

@@ -85,6 +85,8 @@ const elements = {
   commandSummarizeChat: $("#command-summarize-chat"),
   commandReplyChat: $("#command-reply-chat"),
   commandSpeak: $("#command-speak"),
+  commandSetAgenda: $("#command-set-agenda"),
+  commandCancelAgenda: $("#command-cancel-agenda"),
   preflightButton: $("#preflight-button"),
   preflightResults: $("#preflight-results"),
   simulationResult: $("#simulation-result"),
@@ -107,6 +109,7 @@ let rendererActionInProgress = false;
 let rendererActionProfile = null;
 let rendererWasAvailable = false;
 let rendererStatusRefreshInFlight = false;
+let outboundChatPollInFlight = false;
 const meetingId = `conclavia-gui-${crypto.randomUUID()}`;
 
 function escapeHtml(value) {
@@ -139,6 +142,13 @@ function formatTime(value) {
   return Number.isNaN(date.getTime())
     ? ""
     : new Intl.DateTimeFormat("it-IT", { hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function formatElapsed(milliseconds) {
+  const totalSeconds = Math.max(0, Math.floor(Number(milliseconds || 0) / 1_000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function renderDebug(value, label = "ULTIMO TURNO") {
@@ -280,6 +290,8 @@ function renderConfig(payload) {
   renderCommandAliases(elements.commandSummarizeChat, config.chatCommandAliases.summarizeInChat);
   renderCommandAliases(elements.commandReplyChat, config.chatCommandAliases.replyInChat);
   renderCommandAliases(elements.commandSpeak, config.chatCommandAliases.speak);
+  renderCommandAliases(elements.commandSetAgenda, config.chatCommandAliases.setAgenda);
+  renderCommandAliases(elements.commandCancelAgenda, config.chatCommandAliases.cancelAgenda);
   elements.apiKey.value = "";
   elements.apiKeyState.textContent = config.apiKeyConfigured
     ? `Chiave configurata (${config.apiKeySource === "environment" ? "ambiente" : "archivio locale"}). Lascia vuoto per mantenerla.`
@@ -376,11 +388,16 @@ function renderContext(context) {
   const participants = meetingParticipants();
   elements.participantCount.textContent = `${participants.length} ${participants.length === 1 ? "partecipante" : "partecipanti"}`;
   elements.contextCount.textContent = `${count} ${count === 1 ? "intervento" : "interventi"}`;
+  const activeAgenda = context.agendas?.find((agenda) =>
+    agenda.meetingId === meetingId && !agenda.completed
+  );
   elements.dialogueState.textContent = context.dialogue?.active
     ? `${avatarName} con ${context.dialogue.speakerName || "partecipante"} · ${context.dialogue.remainingFollowUps} follow-up`
     : context.avatarHandRaised
       ? `${avatarName} chiede la parola`
-      : `${avatarName} in ascolto`;
+      : activeAgenda
+        ? `Scaletta ${formatElapsed(activeAgenda.elapsedMs)}/${formatElapsed(activeAgenda.totalDurationMs)} · ${activeAgenda.currentItem.label}`
+        : `${avatarName} in ascolto`;
   if (context.avatarHandRaised) setStageMode("requesting", "In attesa del permesso");
   else if (elements.stageListeningState.textContent === "CHIEDE PAROLA") setStageMode("listening", "Partecipante virtuale");
   const listeningReaction = context.listeningReaction;
@@ -401,6 +418,34 @@ async function refreshContext() {
     renderContext(await requestJson("/api/context"));
   } catch {
     // A failed background refresh must not interrupt an active meeting control.
+  }
+}
+
+async function pollOutboundChat() {
+  if (!currentConfig?.chatEnabled || outboundChatPollInFlight) return;
+  outboundChatPollInFlight = true;
+  try {
+    const platform = currentConfig.meetingPlatform ?? "generic";
+    const query = new URLSearchParams({ platform, meetingId });
+    const result = await requestJson(`/api/chat/outbound?${query}`);
+    const messages = Array.isArray(result.messages) ? result.messages : [];
+    if (!messages.length) return;
+    await requestJson("/api/chat/outbound/ack", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        platform,
+        meetingId,
+        messageIds: messages.map((message) => message.id),
+      }),
+    });
+    elements.chatTestStatus.textContent = messages.at(-1)?.text ?? "Aggiornamento scaletta.";
+    setDecision(`${avatarName} ha aggiornato i tempi della scaletta in chat.`, "responding");
+    await refreshContext();
+  } catch {
+    // The lease expires automatically; a temporary UI failure never loses the reminder.
+  } finally {
+    outboundChatPollInFlight = false;
   }
 }
 
@@ -510,6 +555,9 @@ function describeChatResult(result) {
   if (result.action === "raise-hand") return `${avatarName} ha chiesto la parola.`;
   if (result.action === "lower-hand") return `${avatarName} ha abbassato la mano.`;
   if (result.action === "applaud") return `${avatarName} applaude.`;
+  if (result.reason === "agenda-activated") return `${avatarName} ha attivato la scaletta temporale.`;
+  if (result.reason === "agenda-cancelled") return `${avatarName} ha annullato la scaletta.`;
+  if (result.reason === "agenda-invalid") return `${avatarName} ha segnalato un errore nella scaletta.`;
   if (result.turn?.decision?.activated) return `${avatarName} interviene a voce.`;
   if (result.reason === "chat-disabled") return "La lettura chat è disattivata nella configurazione.";
   if (result.reason === "self-message") return "Messaggio dell’avatar ignorato per evitare un loop.";
@@ -628,6 +676,7 @@ function quickCommandText(kind) {
     summarizeInChat: "i punti principali emersi finora",
     replyInChat: "con il punto più utile per proseguire",
     speak: "riportando la discussione sul punto principale",
+    setAgenda: "\n00:00 Apertura e obiettivi\n02:00 Stato progetto\n05:00 Decisioni\n08:00 Azioni e responsabili\n10:00 Fine",
   }[kind];
   return `${avatarName}, ${alias}${argument ? ` ${argument}` : ""}`;
 }
@@ -1197,6 +1246,8 @@ elements.configForm.addEventListener("submit", async (event) => {
           summarizeInChat: parseCommandAliases(elements.commandSummarizeChat),
           replyInChat: parseCommandAliases(elements.commandReplyChat),
           speak: parseCommandAliases(elements.commandSpeak),
+          setAgenda: parseCommandAliases(elements.commandSetAgenda),
+          cancelAgenda: parseCommandAliases(elements.commandCancelAgenda),
         },
       }),
     });
@@ -1249,4 +1300,5 @@ updateMeetingClock();
 window.setInterval(updateMeetingClock, 1_000);
 window.setInterval(refreshListenerStatus, 900);
 window.setInterval(refreshContext, 1_500);
+window.setInterval(pollOutboundChat, 1_500);
 window.setInterval(refreshRendererStatus, 4_000);

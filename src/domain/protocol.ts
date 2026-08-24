@@ -39,6 +39,8 @@ export const chatCommandKinds = [
   "summarize-in-chat",
   "reply-in-chat",
   "speak",
+  "set-agenda",
+  "cancel-agenda",
 ] as const;
 export type ChatCommandKind = (typeof chatCommandKinds)[number];
 
@@ -49,6 +51,8 @@ export interface ChatCommandAliases {
   summarizeInChat: string[];
   replyInChat: string[];
   speak: string[];
+  setAgenda: string[];
+  cancelAgenda: string[];
 }
 
 export interface TranscriptSegment {

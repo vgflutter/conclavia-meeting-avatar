@@ -154,6 +154,9 @@ void test("Teams bridge is restricted to Teams pages and emits canonical Teams e
     "https://teams.live.com/*",
   ]);
   assert.match(contentSource, /platform: "teams"/);
+  assert.match(contentSource, /conclavia:chat-outbound/u);
+  assert.match(contentSource, /1_500/u);
   assert.match(backgroundSource, /payload\.platform === "teams"/);
+  assert.match(backgroundSource, /api\/chat\/outbound/u);
   assert.doesNotMatch(contentSource, /https?:\/\//);
 });

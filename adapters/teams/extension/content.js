@@ -10,6 +10,8 @@
   let baselineComplete = false;
   let scanTimer = null;
   let statusTimer = null;
+  let outboundTimer = null;
+  let outboundPollInFlight = false;
   let observer = null;
   let lastState = "offline";
 
@@ -249,6 +251,40 @@
     if (enabled) scheduleScan(0);
   }
 
+  async function pollOutboundMessages() {
+    if (!enabled || outboundPollInFlight || !dom.findChatPanel(document)) return;
+    outboundPollInFlight = true;
+    try {
+      const currentMeetingId = meetingId();
+      const response = await runtimeMessage({
+        type: "conclavia:chat-outbound",
+        meetingId: currentMeetingId,
+      });
+      if (!response.ok) return;
+      const messages = Array.isArray(response.result?.messages) ? response.result.messages : [];
+      const postedIds = [];
+      for (const outbound of messages) {
+        if (typeof outbound?.id !== "string" || typeof outbound?.text !== "string" || !outbound.text.trim()) continue;
+        try {
+          await postToTeamsChat(outbound.text.trim());
+          postedIds.push(outbound.id);
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : String(error), "error");
+          break;
+        }
+      }
+      if (postedIds.length) {
+        await runtimeMessage({
+          type: "conclavia:chat-outbound-ack",
+          meetingId: currentMeetingId,
+          messageIds: postedIds,
+        });
+      }
+    } finally {
+      outboundPollInFlight = false;
+    }
+  }
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type !== "conclavia:toggle") return false;
     enabled = !enabled;
@@ -264,9 +300,11 @@
   observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
   void refreshStatus();
   statusTimer = setInterval(() => void refreshStatus(), 10_000);
+  outboundTimer = setInterval(() => void pollOutboundMessages(), 1_500);
   globalThis.addEventListener("pagehide", () => {
     observer?.disconnect();
     if (scanTimer !== null) clearTimeout(scanTimer);
     if (statusTimer !== null) clearInterval(statusTimer);
+    if (outboundTimer !== null) clearInterval(outboundTimer);
   }, { once: true });
 })();

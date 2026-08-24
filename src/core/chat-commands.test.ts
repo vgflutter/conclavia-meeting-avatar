@@ -43,6 +43,18 @@ await test("supports multilingual aliases and a configurable avatar name", () =>
     matchChatCommand("Mary, applaudi", "Mary", defaultChatCommandAliases)?.kind,
     "applaud",
   );
+  assert.equal(
+    matchChatCommand(
+      "Mary, scaletta\n00:00 Apertura\n10:00 Fine",
+      "Mary",
+      defaultChatCommandAliases,
+    )?.kind,
+    "set-agenda",
+  );
+  assert.equal(
+    matchChatCommand("Mary, annulla scaletta", "Mary", defaultChatCommandAliases)?.kind,
+    "cancel-agenda",
+  );
 });
 
 await test("keeps ordinary chat questions silent unless voice is explicit", () => {

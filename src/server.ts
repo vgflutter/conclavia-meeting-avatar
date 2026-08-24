@@ -14,6 +14,8 @@ import {
 import { ListeningReactionStabilizer } from "./core/listening-reaction.js";
 import { DialogueLease } from "./core/dialogue-lease.js";
 import { chatResponseChannel, matchChatCommand } from "./core/chat-commands.js";
+import { formatAgendaOffset, MeetingAgendaManager } from "./core/meeting-agenda.js";
+import { OutboundChatQueue } from "./core/outbound-chat-queue.js";
 import { dialogueParticipantKey } from "./core/participant-identity.js";
 import { ConclaviaRenderer } from "./conclavia/renderer.js";
 import { synthesizeUnrealSpeech } from "./conclavia/unreal-speech.js";
@@ -47,6 +49,7 @@ import type {
   ActivationDecision,
   AvatarInterventionRequest,
   AvatarSpeechCue,
+  ChatPlatform,
   ChatMessageInput,
   MeetingTranscriptInput,
   OutboundChatMessage,
@@ -366,6 +369,8 @@ export function startServer(options: ServerOptions): Promise<void> {
   const activeChatMessageKeys = new Set<string>();
   const seenTranscriptSegmentKeys = new Set<string>();
   const activeTranscriptSegmentKeys = new Set<string>();
+  const agendas = new MeetingAgendaManager();
+  const outboundChat = new OutboundChatQueue();
   const configStore = new AvatarConfigStore(options.configPath, {
     avatarProfile: "aera",
     name: options.wakeWord,
@@ -536,7 +541,37 @@ export function startServer(options: ServerOptions): Promise<void> {
     participationRequest: participationSnapshot(),
     avatarHandRaised,
     listeningReaction: listeningReactions.snapshot,
+    agendas: agendas.snapshots(),
   });
+
+  const createOutboundChatMessage = (input: {
+    platform: ChatPlatform;
+    meetingId: string;
+    replyToMessageId: string;
+    text: string;
+  }): OutboundChatMessage => ({
+    id: randomUUID(),
+    platform: input.platform,
+    meetingId: input.meetingId,
+    replyToMessageId: input.replyToMessageId,
+    speakerName: runtimeConfig.name,
+    text: input.text,
+    createdAt: new Date().toISOString(),
+  });
+
+  const retainOutboundChatMessage = (message: OutboundChatMessage): void => {
+    retainSegment({
+      id: message.id,
+      speakerName: message.speakerName,
+      text: message.text,
+      isFinal: true,
+      capturedAt: message.createdAt,
+      source: "chat",
+      platform: message.platform,
+      meetingId: message.meetingId,
+      externalId: message.id,
+    });
+  };
 
   const processSegment = async (
     segment: TranscriptSegment,
@@ -857,6 +892,51 @@ export function startServer(options: ServerOptions): Promise<void> {
       runtimeConfig.chatCommandAliases,
     );
 
+    if (command?.kind === "set-agenda" || command?.kind === "cancel-agenda") {
+      retainSegment(segment);
+      let text: string;
+      let agenda = null;
+      if (command.kind === "cancel-agenda") {
+        const cancelled = agendas.cancel(input.platform, input.meetingId);
+        text = cancelled
+          ? "Scaletta annullata. Non invierò altri richiami temporali."
+          : "Non c’è una scaletta attiva da annullare.";
+      } else {
+        try {
+          agenda = agendas.activate({
+            platform: input.platform,
+            meetingId: input.meetingId,
+            sourceMessageId: input.messageId,
+            createdBy: input.speakerName,
+            capturedAt: input.capturedAt ?? new Date().toISOString(),
+            agendaText: command.argument,
+          });
+          text = `⏱ Scaletta attiva: ${agenda.items.length} punti in ${formatAgendaOffset(agenda.totalDurationMs)}. Partiamo da “${agenda.currentItem.label}”; avviserò un minuto prima di ogni cambio e al timestamp previsto.`;
+        } catch (error: unknown) {
+          const detail = error instanceof Error ? error.message : "Formato non valido";
+          text = `Non riesco a caricare la scaletta: ${detail}. Esempio: Mary, scaletta ↵ 00:00 Apertura ↵ 05:00 Decisioni ↵ 10:00 Fine.`;
+        }
+      }
+      const outbound = createOutboundChatMessage({
+        platform: input.platform,
+        meetingId: input.meetingId,
+        replyToMessageId: input.messageId,
+        text,
+      });
+      retainOutboundChatMessage(outbound);
+      return {
+        accepted: true,
+        reason: agenda ? "agenda-activated" : command.kind === "cancel-agenda"
+          ? "agenda-cancelled"
+          : "agenda-invalid",
+        segment,
+        command,
+        agenda,
+        turn: null,
+        outboundMessages: [outbound],
+      };
+    }
+
     if (
       command?.kind === "raise-hand" || command?.kind === "lower-hand" ||
       command?.kind === "applaud"
@@ -925,6 +1005,21 @@ export function startServer(options: ServerOptions): Promise<void> {
       outboundMessages,
     };
   };
+
+  const agendaTimer = setInterval(() => {
+    if (!runtimeConfig.chatEnabled) return;
+    for (const notification of agendas.tick()) {
+      const message = createOutboundChatMessage({
+        platform: notification.platform,
+        meetingId: notification.meetingId,
+        replyToMessageId: notification.sourceMessageId,
+        text: notification.text,
+      });
+      outboundChat.enqueue(message);
+      retainOutboundChatMessage(message);
+    }
+  }, 1_000);
+  agendaTimer.unref();
 
   const createListener = () => runtimeConfig.apiKey
     ? new MeetingListener({
@@ -1238,6 +1333,8 @@ export function startServer(options: ServerOptions): Promise<void> {
         lastAutonomousRequestAt = 0;
         lastAutonomousApplauseAt = 0;
         dialogueLease.close();
+        agendas.reset();
+        outboundChat.clear();
         if (rendererArmed) {
           try {
             await renderer.settleRequest(runtimeConfig.name);
@@ -1256,6 +1353,49 @@ export function startServer(options: ServerOptions): Promise<void> {
           platforms: chatPlatforms,
           commandAliases: runtimeConfig.chatCommandAliases,
           retainedChatMessages: transcriptHistory.filter((segment) => segment.source === "chat").length,
+          agendas: agendas.snapshots(),
+        });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/chat/outbound") {
+        const platform = url.searchParams.get("platform");
+        const meetingId = url.searchParams.get("meetingId")?.trim() ?? "";
+        if (
+          !chatPlatforms.includes(platform as ChatPlatform) ||
+          !meetingId || meetingId.length > 240
+        ) {
+          sendJson(response, 400, { error: "Piattaforma o meetingId non validi." });
+          return;
+        }
+        sendJson(response, 200, {
+          messages: outboundChat.lease(platform as ChatPlatform, meetingId),
+        });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/chat/outbound/ack") {
+        const body = await readJsonBody(request) as Record<string, unknown>;
+        const platform = body.platform;
+        const meetingId = typeof body.meetingId === "string" ? body.meetingId.trim() : "";
+        const messageIds = Array.isArray(body.messageIds)
+          ? body.messageIds.filter((value): value is string =>
+              typeof value === "string" && value.length > 0 && value.length <= 240
+            ).slice(0, 20)
+          : [];
+        if (
+          !chatPlatforms.includes(platform as ChatPlatform) ||
+          !meetingId || meetingId.length > 240 || !messageIds.length
+        ) {
+          sendJson(response, 400, { error: "Conferma messaggi non valida." });
+          return;
+        }
+        sendJson(response, 200, {
+          acknowledged: outboundChat.acknowledge(
+            platform as ChatPlatform,
+            meetingId,
+            messageIds,
+          ),
         });
         return;
       }
@@ -1549,6 +1689,7 @@ export function startServer(options: ServerOptions): Promise<void> {
     const forceExit = setTimeout(() => process.exit(0), 2_500);
     void (async () => {
       intelligence?.abortPending();
+      clearInterval(agendaTimer);
       renderer.abortPending();
       await listener?.stop();
       server.closeAllConnections();
@@ -1558,6 +1699,7 @@ export function startServer(options: ServerOptions): Promise<void> {
   process.once("SIGINT", shutdown);
   process.once("SIGTERM", shutdown);
   server.once("close", () => {
+    clearInterval(agendaTimer);
     process.off("SIGINT", shutdown);
     process.off("SIGTERM", shutdown);
   });
