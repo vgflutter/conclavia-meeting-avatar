@@ -5,17 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <title>Conclavia Meeting Avatar</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <meta name="theme-color" content="#071433" />
+    <link rel="stylesheet" href="/styles.css?v=conclavia-blue-1" />
   </head>
   <body>
     <main class="app-shell">
       <header class="topbar">
         <div class="brand-lockup">
-          <div class="brand-mark" aria-hidden="true">C</div>
-          <div>
-            <p class="eyebrow">CONCLAVIA LAB</p>
-            <h1>Meeting Avatar</h1>
-          </div>
+          <span class="brand-logo-panel">
+            <img class="brand-logo" src="/assets/conclavia-logo.png" alt="Conclavia" />
+          </span>
+          <span class="brand-product">
+            <strong>Meeting Avatar</strong>
+            <small>Live orchestration console</small>
+          </span>
         </div>
         <nav class="workspace-nav" aria-label="Area di lavoro">
           <button class="nav-button active" type="button" data-view="meeting">Sala test</button>
@@ -32,6 +35,7 @@
       <section id="meeting-view" class="workspace-view active" data-view-panel="meeting">
         <header class="meeting-header">
           <div>
+            <p class="eyebrow">LIVE WORKSPACE</p>
             <div class="meeting-title-line">
               <span class="live-dot" aria-hidden="true"></span>
               <h2>Riunione di prova</h2>
@@ -84,12 +88,21 @@
             </div>
 
             <div class="meeting-controls" aria-label="Controlli riunione">
-              <button id="record-button" class="control-button" type="button"><span class="control-icon">●</span><span>Microfono</span></button>
-              <button id="stop-button" class="control-button danger" type="button" disabled><span class="control-icon">■</span><span>Stop e invia</span></button>
-              <button id="listener-start-button" class="control-button" type="button"><span class="control-icon">◉</span><span>Ascolta meeting</span></button>
-              <button id="listener-stop-button" class="control-button" type="button" disabled><span class="control-icon">○</span><span>Ferma ascolto</span></button>
-              <button id="renderer-start-button" class="control-button primary-control" type="button"><span class="control-icon">▶</span><span>Avvia avatar</span></button>
-              <button id="renderer-stop-button" class="control-button" type="button" disabled><span class="control-icon">■</span><span>Ferma avatar</span></button>
+              <div class="control-group">
+                <span class="control-label">Il tuo intervento</span>
+                <button id="record-button" class="control-button" type="button"><span class="control-icon">●</span><span>Microfono</span></button>
+                <button id="stop-button" class="control-button danger" type="button" disabled><span class="control-icon">■</span><span>Stop e invia</span></button>
+              </div>
+              <div class="control-group">
+                <span class="control-label">Meeting</span>
+                <button id="listener-start-button" class="control-button" type="button"><span class="control-icon">◉</span><span>Avvia ascolto</span></button>
+                <button id="listener-stop-button" class="control-button" type="button" disabled><span class="control-icon">○</span><span>Ferma</span></button>
+              </div>
+              <div class="control-group featured-control-group">
+                <span class="control-label">MetaHuman</span>
+                <button id="renderer-start-button" class="control-button primary-control" type="button"><span class="control-icon">▶</span><span>Avvia avatar</span></button>
+                <button id="renderer-stop-button" class="control-button" type="button" disabled><span class="control-icon">■</span><span>Ferma</span></button>
+              </div>
             </div>
 
             <div class="avatar-switcher">
@@ -111,6 +124,10 @@
             </div>
 
             <form id="meeting-composer-form" class="meeting-composer">
+              <div class="composer-heading">
+                <div><p class="eyebrow">INTERAZIONE</p><h3>Parla o scrivi nel meeting</h3></div>
+                <span>Mary riceve sempre il contesto</span>
+              </div>
               <div class="composer-topline">
                 <label>Partecipa come<input id="speaker-name" name="speakerName" value="Vincenzo" maxlength="80" required /></label>
                 <div class="channel-switch" role="group" aria-label="Canale del messaggio">
@@ -128,11 +145,11 @@
               </div>
             </form>
 
-            <section class="command-dock" aria-labelledby="command-dock-title">
-              <div class="command-dock-heading">
-                <div><p class="eyebrow">REGIA RAPIDA</p><h3 id="command-dock-title">Prova tutti i comandi</h3></div>
-                <span>inviati attraverso la chat reale</span>
-              </div>
+            <details class="command-dock">
+              <summary class="command-dock-heading">
+                <div><p class="eyebrow">REGIA RAPIDA</p><h3 id="command-dock-title">Azioni e comandi di test</h3></div>
+                <span>7 comandi <b aria-hidden="true">⌄</b></span>
+              </summary>
               <div id="quick-commands" class="quick-commands">
                 <button type="button" data-command="raiseHand"><span>✋</span> Alza la mano</button>
                 <button type="button" data-command="lowerHand"><span>✓</span> Abbassa la mano</button>
@@ -142,7 +159,8 @@
                 <button type="button" data-command="speak"><span>◉</span> Intervieni a voce</button>
                 <button type="button" data-command="setAgenda"><span>◷</span> Scaletta demo</button>
               </div>
-            </section>
+              <p class="command-dock-note">Le azioni passano dalla stessa pipeline della chat reale di Teams, Meet o dell’adapter generico.</p>
+            </details>
           </section>
 
           <aside class="meeting-sidebar" aria-label="Conversazione del meeting">

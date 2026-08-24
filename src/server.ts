@@ -73,6 +73,7 @@ const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
   ["/output.js", ["output.js", "text/javascript; charset=utf-8"]],
   ["/app.js", ["app.js", "text/javascript; charset=utf-8"]],
   ["/styles.css", ["styles.css", "text/css; charset=utf-8"]],
+  ["/assets/conclavia-logo.png", ["assets/conclavia-logo.png", "image/png"]],
 ] as const);
 const maxRetainedSegments = 200;
 const maxSeenChatMessages = 2_000;
