@@ -299,12 +299,11 @@ def build() -> None:
     # or Meet participant.
     webcam_position = unreal.Vector(-360.0, 0.0, 185.0)
     webcam_target = unreal.Vector(0.0, 0.0, 165.0)
-    # The previous 168 mm crop looked good at rest but removed the wrist and
-    # outer fingers from the captured request-to-speak performance.  Keep the
-    # same immutable camera position and optical axis, then widen the lens by
-    # roughly 18% so both authored arm gestures fit without a runtime camera
-    # move or any procedural correction to the MetaHuman skeleton.
-    webcam_focal_length = 142.0
+    # Move fifteen percent closer optically without moving the camera or its
+    # target.  At 163 mm this remains marginally wider than the rejected 168 mm
+    # crop, preserving the authored applause and request-to-speak gestures
+    # while giving the face more presence in a meeting tile.
+    webcam_focal_length = 163.0
     add_camera(
         "CAM_Meeting_Portrait",
         webcam_position,

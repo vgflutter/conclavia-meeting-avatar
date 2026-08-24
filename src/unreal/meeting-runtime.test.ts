@@ -90,7 +90,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
   assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
   assert.match(stageBuilder, /^MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4\.0$/mu);
-  assert.match(stageBuilder, /webcam_focal_length = 142\.0/);
+  assert.match(stageBuilder, /webcam_focal_length = 163\.0/);
   assert.match(stageBuilder, /unreal\.Vector\(-300\.0, -335\.0, 335\.0\)/);
   assert.match(stageBuilder, /\n\s{8}132\.0,\n/);
   assert.match(stageBuilder, /sky_component\.set_editor_property\("intensity", 0\.035\)/);
