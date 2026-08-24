@@ -17,6 +17,20 @@ await test("keeps the OBS output free of meeting-console overlays", async () => 
   assert.doesNotMatch(script, /api\/participation|handRequest/i);
   assert.match(script, /document\.createElement\("iframe"\)/);
   assert.match(script, /renderer\.streamId/);
+  assert.match(script, /conclavia:frame-heartbeat/);
+  assert.match(script, /FRAME_STALL_TIMEOUT_MS/);
+  assert.match(script, /reconnectStalledPlayer/);
   assert.match(managementScript, /frame\.dataset\.stream !== streamId/);
   assert.match(managementScript, /status\.streamId \|\| ""/);
+});
+
+await test("publishes decoded-frame heartbeats from the clean Unreal player", async () => {
+  const source = await readFile(
+    new URL("../../unreal/ConclaviaStudio/Scripts/Start-ReviewStream.ps1", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /requestVideoFrameCallback/);
+  assert.match(source, /conclavia:frame-heartbeat/);
+  assert.match(source, /presentedFrames/);
 });

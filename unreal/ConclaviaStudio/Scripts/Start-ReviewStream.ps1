@@ -416,6 +416,7 @@ video { background: #020617; }
 <script>
 (() => {
   let unlockInFlight = false;
+  const frameHeartbeatVideos = new WeakSet();
 
   const getVideo = () => {
     const videos = [...document.querySelectorAll("video")];
@@ -461,9 +462,29 @@ video { background: #020617; }
     }
   };
 
+  const startFrameHeartbeat = (video) => {
+    if (!video || frameHeartbeatVideos.has(video)) return;
+    frameHeartbeatVideos.add(video);
+    if (typeof video.requestVideoFrameCallback !== "function") return;
+    let lastReportAt = 0;
+    const reportFrame = (now, metadata) => {
+      if (now - lastReportAt >= 1_000) {
+        lastReportAt = now;
+        window.parent.postMessage({
+          type: "conclavia:frame-heartbeat",
+          mediaReady: true,
+          presentedFrames: metadata?.presentedFrames ?? null
+        }, "*");
+      }
+      video.requestVideoFrameCallback(reportFrame);
+    };
+    video.requestVideoFrameCallback(reportFrame);
+  };
+
   const isolateBroadcastVideo = () => {
     const video = getVideo();
     if (!video) return;
+    startFrameHeartbeat(video);
 
     let branch = video;
     while (branch.parentElement && branch.parentElement !== document.body) {
