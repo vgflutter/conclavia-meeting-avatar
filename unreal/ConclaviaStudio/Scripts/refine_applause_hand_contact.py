@@ -9,8 +9,17 @@ symmetrically.  No pose, timing or camera motion is hand-authored.
 from __future__ import annotations
 
 import math
+import os
+import sys
 
 import unreal
+
+# UnrealEditor-Cmd does not add the project Scripts directory to sys.path.
+# Resolve sibling builders explicitly so this pass works both interactively
+# and in the unattended AWS bake.
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
 
 from build_metahuman_hand_raise import (
     control_channels,
