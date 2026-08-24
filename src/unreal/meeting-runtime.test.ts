@@ -79,10 +79,10 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.doesNotMatch(moduleSource, /CAM_Meeting_Gesture/);
   assert.match(moduleSource, /Clamp\(Intensity, 0\.0f, 0\.85f\)/);
   assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
-  assert.match(startScript, /L_MeetingAvatar_v16/);
-  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v16$/mu);
-  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v16$/mu);
-  assert.match(stageBuilder, /^STAGE_REVISION = "v16"$/mu);
+  assert.match(startScript, /L_MeetingAvatar_v17/);
+  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v17$/mu);
+  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v17$/mu);
+  assert.match(stageBuilder, /^STAGE_REVISION = "v17"$/mu);
   assert.doesNotMatch(stageBuilder, /CAM_Meeting_Applause/);
   assert.doesNotMatch(stageBuilder, /CAM_Meeting_Gesture/);
   assert.match(stageBuilder, /^CONTENT_ROOT = "\/Game\/Conclavia\/Meeting"$/mu);
@@ -90,7 +90,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
   assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
   assert.match(stageBuilder, /^MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4\.0$/mu);
-  assert.match(stageBuilder, /webcam_focal_length = 162\.0/);
+  assert.match(stageBuilder, /webcam_focal_length = 168\.0/);
   assert.match(stageBuilder, /unreal\.Vector\(-300\.0, -310\.0, 375\.0\)/);
   assert.match(stageBuilder, /\n\s{8}185\.0,\n/);
   assert.match(engineConfig, /^r\.SSS\.Quality=2$/mu);
