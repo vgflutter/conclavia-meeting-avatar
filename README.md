@@ -243,7 +243,7 @@ CONCLAVIA_MEETING_AUDIO_DEVICE=BlackHole 16ch
 CONCLAVIA_MEETING_SPEAKER_NAME=Meeting participant
 OPENAI_RESPONSE_MODEL=gpt-5.4-mini
 OPENAI_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
-OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-live-transcribe
+OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
 ```
 
 The chat enable switch and command aliases are stored in the local avatar configuration and edited from the web application.

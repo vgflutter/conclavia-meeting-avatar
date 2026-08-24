@@ -18,9 +18,11 @@ import {
 const pcmChunkBytes = 4_800; // 100 ms of mono PCM16 at 24 kHz.
 const connectionTimeoutMs = 15_000;
 const clientVadSpeechThreshold = 0.006;
-const clientVadSilenceChunks = 3; // 300 ms at the current chunk size.
+const clientVadHoldThreshold = 0.0015;
+const clientVadSilenceChunks = 6; // 600 ms at the current chunk size.
 const reconnectInitialDelayMs = 1_000;
 const reconnectMaxDelayMs = 30_000;
+const ffmpegForceKillDelayMs = 750;
 
 export function pcm16Rms(chunk: Buffer): number {
   const sampleCount = Math.floor(chunk.byteLength / 2);
@@ -55,6 +57,14 @@ export interface MeetingListenerStatus {
   connectedAt: string | null;
   speechDetected: boolean;
   partialTranscript: string;
+  capturedAudioBytes: number;
+  audibleAudioChunks: number;
+  audioRms: number;
+  lastAudioAt: string | null;
+  committedAudioTurns: number;
+  confirmedAudioTurns: number;
+  transcriptionFailures: number;
+  lastRealtimeEvent: string | null;
   completedTurns: number;
   lastSegment: TranscriptSegment | null;
   lastResult: unknown;
@@ -100,6 +110,14 @@ export class MeetingListener {
   #connectedAt: string | null = null;
   #speechDetected = false;
   #partialTranscript = "";
+  #capturedAudioBytes = 0;
+  #audibleAudioChunks = 0;
+  #audioRms = 0;
+  #lastAudioAt: string | null = null;
+  #committedAudioTurns = 0;
+  #confirmedAudioTurns = 0;
+  #transcriptionFailures = 0;
+  #lastRealtimeEvent: string | null = null;
   #completedTurns = 0;
   #lastSegment: TranscriptSegment | null = null;
   #lastResult: unknown = null;
@@ -128,10 +146,20 @@ export class MeetingListener {
       resolvedAudioDevice: this.#resolvedAudioDevice,
       speakerName: this.#options.speakerName,
       model: this.#options.transcriptionModel,
-      turnDetection: this.#manualTurnDetection ? "client-vad-300ms" : "server-vad-450ms",
+      turnDetection: this.#manualTurnDetection
+        ? `client-vad-${clientVadSilenceChunks * 100}ms`
+        : "server-vad-450ms",
       connectedAt: this.#connectedAt,
       speechDetected: this.#speechDetected,
       partialTranscript: this.#partialTranscript,
+      capturedAudioBytes: this.#capturedAudioBytes,
+      audibleAudioChunks: this.#audibleAudioChunks,
+      audioRms: this.#audioRms,
+      lastAudioAt: this.#lastAudioAt,
+      committedAudioTurns: this.#committedAudioTurns,
+      confirmedAudioTurns: this.#confirmedAudioTurns,
+      transcriptionFailures: this.#transcriptionFailures,
+      lastRealtimeEvent: this.#lastRealtimeEvent,
       completedTurns: this.#completedTurns,
       lastSegment: this.#lastSegment,
       lastResult: this.#lastResult,
@@ -149,6 +177,14 @@ export class MeetingListener {
     this.#lastError = null;
     this.#partialTranscript = "";
     this.#speechDetected = false;
+    this.#capturedAudioBytes = 0;
+    this.#audibleAudioChunks = 0;
+    this.#audioRms = 0;
+    this.#lastAudioAt = null;
+    this.#committedAudioTurns = 0;
+    this.#confirmedAudioTurns = 0;
+    this.#transcriptionFailures = 0;
+    this.#lastRealtimeEvent = null;
 
     try {
       const devices = await listAvfoundationAudioDevices();
@@ -164,6 +200,9 @@ export class MeetingListener {
       const client = new OpenAI({ apiKey: this.#options.apiKey });
       const realtime = new OpenAIRealtimeWS({ intent: "transcription" }, client);
       this.#realtime = realtime;
+      realtime.on("event", (event) => {
+        this.#lastRealtimeEvent = event.type;
+      });
       realtime.on("error", (error) => this.#fail(`OpenAI Realtime: ${error.message}`));
       realtime.socket.on("close", () => {
         if (this.#phase === "running") {
@@ -198,6 +237,13 @@ export class MeetingListener {
         }
         this.#enqueueTranscript(transcript, event.item_id);
       });
+      realtime.on("input_audio_buffer.committed", () => {
+        this.#confirmedAudioTurns += 1;
+      });
+      realtime.on("conversation.item.input_audio_transcription.failed", (event) => {
+        this.#transcriptionFailures += 1;
+        this.#lastError = `Trascrizione Realtime: ${event.error.message}`;
+      });
 
       await withTimeout(
         new Promise<void>((resolve, reject) => {
@@ -212,7 +258,9 @@ export class MeetingListener {
       const supportsLiveHints = ["gpt-live-transcribe", "gpt-transcribe"].includes(
         this.#options.transcriptionModel,
       );
-      this.#manualTurnDetection = this.#options.transcriptionModel === "gpt-live-transcribe";
+      this.#manualTurnDetection = ["gpt-live-transcribe", "gpt-transcribe"].includes(
+        this.#options.transcriptionModel,
+      );
       realtime.send({
         type: "session.update",
         session: {
@@ -221,19 +269,21 @@ export class MeetingListener {
             input: {
               format: { type: "audio/pcm", rate: 24_000 },
               transcription: supportsLiveHints
-                ? {
+                ? this.#options.transcriptionModel === "gpt-live-transcribe"
+                  ? {
                     model: this.#options.transcriptionModel,
-                  languages: ["it", "en"],
-                  prompt: `Riunione di lavoro. L'assistente virtuale si chiama ${this.#options.wakeWord}.`,
-                  keywords: [
-                    this.#options.wakeWord,
-                    "Conclavia",
-                    "MetaHuman",
-                    "Microsoft Teams",
-                    "Google Meet",
-                  ],
-                  ...(this.#manualTurnDetection ? { delay: "minimal" as const } : {}),
+                    languages: ["it", "en"],
+                    prompt: `Riunione di lavoro. L'assistente virtuale si chiama ${this.#options.wakeWord}.`,
+                    keywords: [
+                      this.#options.wakeWord,
+                      "Conclavia",
+                      "MetaHuman",
+                      "Microsoft Teams",
+                      "Google Meet",
+                    ],
+                    delay: "minimal" as const,
                   }
+                  : { model: this.#options.transcriptionModel }
                 : {
                     model: this.#options.transcriptionModel,
                     language: "it",
@@ -245,8 +295,6 @@ export class MeetingListener {
                 interrupt_response: false,
                 threshold: 0.5,
                 prefix_padding_ms: 300,
-                // A meeting assistant should react promptly once a speaker
-                // finishes, while still tolerating short pauses inside a phrase.
                 silence_duration_ms: 450,
               },
             },
@@ -279,13 +327,21 @@ export class MeetingListener {
         { stdio: ["ignore", "pipe", "pipe"] },
       );
       this.#ffmpeg = ffmpeg;
-      ffmpeg.stdout.on("data", (chunk: Buffer) => this.#appendAudio(chunk));
+      ffmpeg.stdout.on("data", (chunk: Buffer) => {
+        if (this.#ffmpeg !== ffmpeg) return;
+        this.#appendAudio(chunk);
+      });
       ffmpeg.stderr.on("data", (chunk: Buffer) => {
+        if (this.#ffmpeg !== ffmpeg) return;
         const detail = chunk.toString("utf8").trim();
         if (detail) this.#lastError = detail.split("\n").at(-1) ?? detail;
       });
-      ffmpeg.once("error", (error) => this.#fail(`ffmpeg: ${error.message}`));
+      ffmpeg.once("error", (error) => {
+        if (this.#ffmpeg !== ffmpeg) return;
+        this.#fail(`ffmpeg: ${error.message}`);
+      });
       ffmpeg.once("close", (code, signal) => {
+        if (this.#ffmpeg !== ffmpeg) return;
         if (this.#phase === "stopping" || this.#phase === "stopped") return;
         this.#fail(`ffmpeg si è fermato (codice ${String(code)}, segnale ${String(signal)}).`);
       });
@@ -326,6 +382,8 @@ export class MeetingListener {
   }
 
   #appendAudio(chunk: Buffer): void {
+    this.#capturedAudioBytes += chunk.byteLength;
+    this.#lastAudioAt = new Date().toISOString();
     const realtime = this.#realtime;
     if (this.#phase !== "running" || !realtime || realtime.socket.readyState !== realtime.socket.OPEN) {
       return;
@@ -334,13 +392,18 @@ export class MeetingListener {
     while (this.#pendingAudio.byteLength >= pcmChunkBytes) {
       const pcm = this.#pendingAudio.subarray(0, pcmChunkBytes);
       this.#pendingAudio = this.#pendingAudio.subarray(pcmChunkBytes);
+      this.#audioRms = pcm16Rms(pcm);
+      if (this.#audioRms >= clientVadSpeechThreshold) this.#audibleAudioChunks += 1;
       realtime.send({ type: "input_audio_buffer.append", audio: pcm.toString("base64") });
       if (this.#manualTurnDetection) this.#detectManualTurn(pcm, realtime);
     }
   }
 
   #detectManualTurn(pcm: Buffer, realtime: OpenAIRealtimeWS): void {
-    if (pcm16Rms(pcm) >= clientVadSpeechThreshold) {
+    const threshold = this.#clientVadSpeechSeen
+      ? clientVadHoldThreshold
+      : clientVadSpeechThreshold;
+    if (pcm16Rms(pcm) >= threshold) {
       this.#clientVadSpeechSeen = true;
       this.#clientVadSilentChunks = 0;
       this.#speechDetected = true;
@@ -364,6 +427,7 @@ export class MeetingListener {
       this.#speculativeByItem.set(itemId, this.#enqueueTranscript(partial, itemId));
     }
     realtime.send({ type: "input_audio_buffer.commit" });
+    this.#committedAudioTurns += 1;
     this.#clientVadSpeechSeen = false;
     this.#clientVadSilentChunks = 0;
     this.#speechDetected = false;
@@ -420,8 +484,16 @@ export class MeetingListener {
   }
 
   #cleanup(): void {
-    this.#ffmpeg?.kill("SIGTERM");
+    const ffmpeg = this.#ffmpeg;
     this.#ffmpeg = null;
+    if (ffmpeg) {
+      ffmpeg.kill("SIGTERM");
+      const forceKillTimer = setTimeout(() => {
+        if (ffmpeg.exitCode === null && ffmpeg.signalCode === null) ffmpeg.kill("SIGKILL");
+      }, ffmpegForceKillDelayMs);
+      forceKillTimer.unref();
+      ffmpeg.once("close", () => clearTimeout(forceKillTimer));
+    }
     const realtime = this.#realtime;
     this.#realtime = null;
     if (realtime) {

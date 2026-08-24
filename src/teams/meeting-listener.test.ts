@@ -15,6 +15,14 @@ await test("detects an audible PCM16 signal above the client VAD threshold", () 
   assert.ok(pcm16Rms(pcm) > 0.006);
 });
 
+await test("does not mistake a low-level PCM16 signal for speech", () => {
+  const pcm = Buffer.alloc(4_800);
+  for (let offset = 0; offset < pcm.byteLength; offset += 2) {
+    pcm.writeInt16LE(offset % 4 === 0 ? 100 : -100, offset);
+  }
+  assert.ok(pcm16Rms(pcm) < 0.006);
+});
+
 await test("speculates only when a useful partial turn addresses Mary", () => {
   assert.equal(canSpeculateAddressedTurn("Mary, cosa ne pensi?", "Mary"), true);
   assert.equal(canSpeculateAddressedTurn("Cosa ne pensi, Mary?", "Mary"), true);
