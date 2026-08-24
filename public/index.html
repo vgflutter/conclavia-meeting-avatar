@@ -196,6 +196,42 @@
             <div class="settings-card-heading"><span>02</span><div><h3>Scopo e personalità</h3><p>Le istruzioni che governano tutte le risposte.</p></div></div>
             <label>Scopo<textarea id="avatar-purpose" name="purpose" rows="2" maxlength="1500" required></textarea></label>
             <label>Personalità<textarea id="avatar-personality" name="personality" rows="2" maxlength="1500" required></textarea></label>
+            <div class="character-heading">
+              <div><strong>Temperamento operativo</strong><small>I tratti cambiano davvero risposte, mood e iniziativa nel meeting.</small></div>
+              <span>0–100</span>
+            </div>
+            <div class="character-grid">
+              <label class="character-control" for="character-calmness">
+                <span><strong>Calma</strong><output id="character-calmness-value" for="character-calmness">72</output></span>
+                <input id="character-calmness" data-character-trait="calmness" type="range" min="0" max="100" step="1" value="72" />
+                <small>Stabilità emotiva e autocontrollo.</small>
+              </label>
+              <label class="character-control" for="character-assertiveness">
+                <span><strong>Assertività</strong><output id="character-assertiveness-value" for="character-assertiveness">62</output></span>
+                <input id="character-assertiveness" data-character-trait="assertiveness" type="range" min="0" max="100" step="1" value="62" />
+                <small>Chiarezza, fermezza e sicurezza.</small>
+              </label>
+              <label class="character-control" for="character-impulsiveness">
+                <span><strong>Irruenza</strong><output id="character-impulsiveness-value" for="character-impulsiveness">30</output></span>
+                <input id="character-impulsiveness" data-character-trait="impulsiveness" type="range" min="0" max="100" step="1" value="30" />
+                <small>Rapidità nel chiedere la parola.</small>
+              </label>
+              <label class="character-control" for="character-empathy">
+                <span><strong>Empatia</strong><output id="character-empathy-value" for="character-empathy">70</output></span>
+                <input id="character-empathy" data-character-trait="empathy" type="range" min="0" max="100" step="1" value="70" />
+                <small>Calore e sensibilità verso il gruppo.</small>
+              </label>
+              <label class="character-control" for="character-concision">
+                <span><strong>Sintesi</strong><output id="character-concision-value" for="character-concision">78</output></span>
+                <input id="character-concision" data-character-trait="concision" type="range" min="0" max="100" step="1" value="78" />
+                <small>Brevità e densità delle risposte.</small>
+              </label>
+              <label class="character-control" for="character-expressiveness">
+                <span><strong>Espressività</strong><output id="character-expressiveness-value" for="character-expressiveness">58</output></span>
+                <input id="character-expressiveness" data-character-trait="expressiveness" type="range" min="0" max="100" step="1" value="58" />
+                <small>Varietà e intensità dei dodici mood.</small>
+              </label>
+            </div>
             <label>System prompt<textarea id="avatar-system-prompt" name="systemPrompt" rows="5" maxlength="6000" required></textarea></label>
           </section>
 

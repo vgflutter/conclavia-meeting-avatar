@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -9,6 +9,7 @@ import {
   defaultChatCommandAliases,
   type AvatarConfig,
 } from "./avatar-config.js";
+import { defaultCharacterTraits } from "./avatar-character.js";
 
 const defaults: AvatarConfig = {
   avatarProfile: "aera",
@@ -17,6 +18,7 @@ const defaults: AvatarConfig = {
   responseModel: "gpt-5.4-mini",
   purpose: "Aiutare la riunione.",
   personality: "Curiosa e concreta.",
+  characterTraits: defaultCharacterTraits,
   systemPrompt: "Distingui fatti e opinioni.",
   webSearchEnabled: true,
   requestToSpeakEnabled: true,
@@ -107,4 +109,46 @@ await test("persists applause policy and configurable aliases", () => {
 
   assert.equal(store.current.autonomousApplauseEnabled, false);
   assert.deepEqual(store.current.chatCommandAliases.applaud, ["festeggia il risultato"]);
+});
+
+await test("persists structured character traits and returns defensive copies", () => {
+  const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
+  const store = new AvatarConfigStore(path, defaults);
+  store.update({
+    characterTraits: {
+      ...defaultCharacterTraits,
+      calmness: 88,
+      impulsiveness: 18,
+    },
+  });
+
+  const config = store.current;
+  assert.equal(config.characterTraits.calmness, 88);
+  assert.equal(config.characterTraits.impulsiveness, 18);
+  config.characterTraits.calmness = 0;
+  assert.equal(store.current.characterTraits.calmness, 88);
+  assert.match(readFileSync(path, "utf8"), /"version": 3/u);
+});
+
+await test("rejects character trait values outside the 0-100 range", () => {
+  const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
+  const store = new AvatarConfigStore(path, defaults);
+  assert.throws(
+    () => store.update({ characterTraits: { calmness: 101 } }),
+    /tra 0 e 100/u,
+  );
+});
+
+await test("migrates a version 2 configuration to the default character profile", () => {
+  const path = join(mkdtempSync(join(tmpdir(), "conclavia-config-")), "avatar.json");
+  writeFileSync(path, JSON.stringify({
+    version: 2,
+    avatarProfile: "aera",
+    name: "Legacy Mary",
+    personality: "Calma e concreta.",
+  }));
+
+  const store = new AvatarConfigStore(path, defaults);
+  assert.equal(store.current.name, "Legacy Mary");
+  assert.deepEqual(store.current.characterTraits, defaultCharacterTraits);
 });

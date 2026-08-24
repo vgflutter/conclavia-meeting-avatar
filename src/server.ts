@@ -39,6 +39,10 @@ import {
   type AvatarConfig,
   type AvatarConfigInput,
 } from "./config/avatar-config.js";
+import {
+  autonomousInterventionCooldownMs,
+  defaultCharacterTraits,
+} from "./config/avatar-character.js";
 import type {
   ActivationDecision,
   AvatarInterventionRequest,
@@ -72,7 +76,6 @@ const maxSeenChatMessages = 2_000;
 const maxSeenTranscriptSegments = 4_000;
 const maxAudioBytes = 20 * 1024 * 1024;
 const interventionRequestTtlMs = 45_000;
-const autonomousInterventionCooldownMs = 60_000;
 const autonomousApplauseCooldownMs = 180_000;
 
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
@@ -372,6 +375,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       "Aiutare il gruppo a prendere decisioni migliori con informazioni verificabili, sintesi e punti di vista utili.",
     personality:
       "Competente, curiosa, concreta e cordiale. Non monopolizza la conversazione e non finge di sapere ciò che non sa.",
+    characterTraits: defaultCharacterTraits,
     systemPrompt:
       "Agisci come una partecipante reale alla riunione. Distingui fatti, ipotesi e opinioni; sii concisa e orientata all'obiettivo.",
     webSearchEnabled: true,
@@ -395,6 +399,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         avatarName: config.name,
         purpose: config.purpose,
         personality: config.personality,
+        characterTraits: config.characterTraits,
         systemPrompt: config.systemPrompt,
         webSearchEnabled: config.webSearchEnabled,
       })
@@ -594,7 +599,8 @@ export function startServer(options: ServerOptions): Promise<void> {
         !direct &&
         !currentRequest &&
         runtimeConfig.requestToSpeakEnabled &&
-        Date.now() - lastAutonomousRequestAt >= autonomousInterventionCooldownMs &&
+        Date.now() - lastAutonomousRequestAt >=
+          autonomousInterventionCooldownMs(runtimeConfig.characterTraits) &&
         isAutonomyCandidate(segment.text);
       const allowAutonomousApplause =
         !direct &&

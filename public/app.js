@@ -73,6 +73,7 @@ const elements = {
   apiKeyState: $("#api-key-state"),
   purpose: $("#avatar-purpose"),
   personality: $("#avatar-personality"),
+  characterTraitInputs: $$('[data-character-trait]'),
   systemPrompt: $("#avatar-system-prompt"),
   webSearch: $("#web-search-enabled"),
   requestToSpeak: $("#request-to-speak-enabled"),
@@ -198,6 +199,22 @@ function renderCommandAliases(input, aliases) {
   input.value = (aliases ?? []).join(", ");
 }
 
+function renderCharacterTraits(traits = {}) {
+  for (const input of elements.characterTraitInputs) {
+    const value = Number(traits[input.dataset.characterTrait] ?? input.value);
+    input.value = String(value);
+    const output = $(`#${input.id}-value`);
+    if (output) output.value = String(value);
+  }
+}
+
+function configuredCharacterTraits() {
+  return Object.fromEntries(elements.characterTraitInputs.map((input) => [
+    input.dataset.characterTrait,
+    Number(input.value),
+  ]));
+}
+
 function parseCommandAliases(input) {
   return [...new Set(input.value
     .split(",")
@@ -251,6 +268,7 @@ function renderConfig(payload) {
   elements.meetingSpeakerName.value = config.meetingSpeakerName;
   elements.purpose.value = config.purpose;
   elements.personality.value = config.personality;
+  renderCharacterTraits(config.characterTraits);
   elements.systemPrompt.value = config.systemPrompt;
   elements.webSearch.checked = config.webSearchEnabled;
   elements.requestToSpeak.checked = config.requestToSpeakEnabled;
@@ -1138,6 +1156,13 @@ elements.configForm.addEventListener("input", () => {
   elements.configStatus.textContent = "Modifiche non ancora salvate.";
 });
 
+for (const input of elements.characterTraitInputs) {
+  input.addEventListener("input", () => {
+    const output = $(`#${input.id}-value`);
+    if (output) output.value = input.value;
+  });
+}
+
 elements.configForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   elements.configSaveButton.disabled = true;
@@ -1159,6 +1184,7 @@ elements.configForm.addEventListener("submit", async (event) => {
         apiKey: elements.apiKey.value,
         purpose: elements.purpose.value,
         personality: elements.personality.value,
+        characterTraits: configuredCharacterTraits(),
         systemPrompt: elements.systemPrompt.value,
         webSearchEnabled: elements.webSearch.checked,
         requestToSpeakEnabled: elements.requestToSpeak.checked,

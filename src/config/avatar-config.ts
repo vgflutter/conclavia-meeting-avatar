@@ -2,6 +2,10 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSy
 import { dirname } from "node:path";
 
 import type { ChatCommandAliases } from "../domain/protocol.js";
+import {
+  characterTraits,
+  type AvatarCharacterTraits,
+} from "./avatar-character.js";
 
 export const avatarProfiles = [
   { id: "showcase", label: "Showcase · Cine MetaHuman" },
@@ -51,6 +55,7 @@ export interface AvatarConfig {
   responseModel: string;
   purpose: string;
   personality: string;
+  characterTraits: AvatarCharacterTraits;
   systemPrompt: string;
   webSearchEnabled: boolean;
   requestToSpeakEnabled: boolean;
@@ -77,6 +82,7 @@ export interface AvatarConfigInput {
   responseModel?: unknown;
   purpose?: unknown;
   personality?: unknown;
+  characterTraits?: unknown;
   systemPrompt?: unknown;
   webSearchEnabled?: unknown;
   requestToSpeakEnabled?: unknown;
@@ -92,7 +98,7 @@ export interface AvatarConfigInput {
 }
 
 interface StoredAvatarConfig extends Omit<AvatarConfig, "apiKey"> {
-  version: 2;
+  version: 3;
   apiKey?: string;
 }
 
@@ -180,6 +186,7 @@ function parseStored(value: unknown, fallback: AvatarConfig): AvatarConfig | nul
       responseModel: optionalUpdate(record.responseModel, fallback.responseModel, "Modello", 120),
       purpose: optionalUpdate(record.purpose, fallback.purpose, "Scopo", 1_500),
       personality: optionalUpdate(record.personality, fallback.personality, "Personalità", 1_500),
+      characterTraits: characterTraits(record.characterTraits, fallback.characterTraits),
       systemPrompt: optionalUpdate(record.systemPrompt, fallback.systemPrompt, "System prompt", 6_000),
       webSearchEnabled: typeof record.webSearchEnabled === "boolean"
         ? record.webSearchEnabled
@@ -252,6 +259,7 @@ export class AvatarConfigStore {
   get current(): AvatarConfig {
     return {
       ...this.#config,
+      characterTraits: characterTraits(undefined, this.#config.characterTraits),
       chatCommandAliases: commandAliases(undefined, this.#config.chatCommandAliases),
     };
   }
@@ -260,6 +268,7 @@ export class AvatarConfigStore {
     const { apiKey, ...config } = this.#config;
     return {
       ...config,
+      characterTraits: characterTraits(undefined, config.characterTraits),
       chatCommandAliases: commandAliases(undefined, config.chatCommandAliases),
       apiKeyConfigured: apiKey.length > 0,
       apiKeySource: this.#hasLocalApiKey
@@ -323,6 +332,7 @@ export class AvatarConfigStore {
       responseModel: optionalUpdate(input.responseModel, current.responseModel, "Modello", 120),
       purpose: optionalUpdate(input.purpose, current.purpose, "Scopo", 1_500),
       personality: optionalUpdate(input.personality, current.personality, "Personalità", 1_500),
+      characterTraits: characterTraits(input.characterTraits, current.characterTraits),
       systemPrompt: optionalUpdate(input.systemPrompt, current.systemPrompt, "System prompt", 6_000),
       webSearchEnabled: boolUpdate(input.webSearchEnabled, current.webSearchEnabled, "Ricerca web"),
       requestToSpeakEnabled: boolUpdate(
@@ -366,7 +376,7 @@ export class AvatarConfigStore {
     const temporaryPath = `${this.#path}.tmp`;
     const { apiKey, ...publicFields } = this.#config;
     const stored: StoredAvatarConfig = {
-      version: 2,
+      version: 3,
       ...publicFields,
       ...(this.#hasLocalApiKey ? { apiKey } : {}),
     };

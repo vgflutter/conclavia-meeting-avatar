@@ -238,6 +238,18 @@ h3 { margin-bottom: 0; font-size: 16px; }
 .avatar-choice small { margin-top: 3px; color: var(--muted-soft); font-size: 8px; }
 .config-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .config-grid.three-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.character-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.character-heading strong, .character-heading small { display: block; }
+.character-heading strong { color: #dce9e5; font-size: 12px; }
+.character-heading small { margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 500; }
+.character-heading > span { color: var(--accent); font-size: 9px; font-weight: 900; letter-spacing: .08em; }
+.character-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.character-control { gap: 9px; padding: 13px 14px; border: 1px solid #29483f; border-radius: 13px; background: #081411; }
+.character-control > span { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.character-control strong { color: #d9e7e2; font-size: 11px; }
+.character-control output { min-width: 30px; border-radius: 8px; padding: 4px 6px; color: #06100d; background: var(--accent); font-size: 9px; font-weight: 900; text-align: center; }
+.character-control input[type="range"] { height: 4px; padding: 0; border: 0; border-radius: 999px; background: #24483d; accent-color: var(--accent); cursor: pointer; }
+.character-control small { color: var(--muted); font-size: 9px; font-weight: 500; line-height: 1.35; }
 .config-toggles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .toggle-row { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 14px; border: 1px solid #29483f; border-radius: 13px; background: #081411; cursor: pointer; }
 .toggle-row input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--accent); }
@@ -299,7 +311,7 @@ textarea { resize: vertical; }
   .conversation-feed { min-height: 420px; max-height: 620px; }
   .video-stage, .renderer-preview, .renderer-frame-shell, .renderer-preview iframe { min-height: 360px; }
   .meeting-result { align-items: flex-start; flex-direction: column; }
-  .config-grid, .config-grid.three-columns, .config-toggles, .command-grid, .diagnostics-grid { grid-template-columns: 1fr; }
+  .config-grid, .config-grid.three-columns, .character-grid, .config-toggles, .command-grid, .diagnostics-grid { grid-template-columns: 1fr; }
   .command-grid label:last-child, .full-width { grid-column: auto; }
   .avatar-switcher { grid-template-columns: 1fr; }
   .avatar-switcher > span { grid-column: auto; }
