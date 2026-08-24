@@ -103,7 +103,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(supervisor, /performanceSemanticMood/);
   assert.match(supervisor, /bodyIdleVariantCount/);
   assert.match(supervisor, /bodyIdleSwitchCount/);
-  assert.match(readinessVerifier, /decodedFps >= 25/);
+  assert.match(readinessVerifier, /decodedFps >= 24\.5/);
   assert.match(readinessVerifier, /exposureMeanLuma <= 190/);
   assert.match(readinessVerifier, /exposureNearWhiteRatio <= 0\.16/);
   assert.match(startScript, /\$readinessErrorText/);
@@ -187,6 +187,8 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseBuildScript, /--ease-segment-start-seconds", "19\.25/);
   assert.match(applauseBuildScript, /--ease-segment-end-seconds", "21\.65/);
   assert.match(handBuildScript, /--transition-seconds", "0\.80/);
+  assert.match(handBuildScript, /\[string\]\$CapturePath = ""/);
+  assert.match(handBuildScript, /if \(-not \$ReusePerformance/);
   assert.match(handBuildScript, /--gesture-strength", "0\.82/);
   assert.match(handBuildScript, /--hold-pose-seconds", "3\.25/);
   assert.match(handBuildScript, /--lower-segment-start-seconds", "5\.75/);

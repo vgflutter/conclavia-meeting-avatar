@@ -1,6 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$CapturePath,
+    [string]$CapturePath = "",
     [string]$ProjectPath = "C:\ConclaviaMeetingAvatar\ConclaviaStudio.uproject",
     [string]$EngineRoot = "C:\Epic\UE_5.8",
     [string]$OutputPath = "/Game/Conclavia/Meeting/Animations",
