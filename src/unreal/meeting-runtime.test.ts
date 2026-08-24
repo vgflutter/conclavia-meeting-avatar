@@ -186,7 +186,7 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(solveScript, /transformed\.rotation = frame\[bone_name\]\.rotation/);
   assert.match(handBuildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
   assert.match(applauseBuildScript, /MHP_MeetingApplause_Markerless_v1/);
-  assert.doesNotMatch(applauseBuildScript, /--delta-from-stabilized-pose/);
+  assert.match(applauseBuildScript, /--delta-from-stabilized-pose/);
   assert.match(applauseBuildScript, /--preserve-motion-translations/);
   assert.match(applauseBuildScript, /--stabilize-meeting-torso/);
   assert.match(applauseBuildScript, /--ease-segment-start-seconds", "3\.25/);

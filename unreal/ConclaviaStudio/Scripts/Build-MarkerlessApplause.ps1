@@ -35,6 +35,10 @@ $pythonArguments = @(
     "--motion-tracks", "upperarm_l,upperarm_r",
     "--preserve-motion-translations",
     "--stabilize-meeting-torso",
+    # Retarget the captured motion delta onto the seated MetaHuman reference
+    # instead of copying the performer's absolute joint rotations. This keeps
+    # the clap trajectory coherent when shoulder width and arm length differ.
+    "--delta-from-stabilized-pose",
     # Capture Manager exposes the first eight tracked seconds of this take,
     # not the original 28-second video timecode. Use the complete first clap
     # cycle in that solved timeline and retain its authored preparation and
