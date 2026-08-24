@@ -198,7 +198,7 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(handBuildScript, /--hold-pose-seconds", "3\.25/);
   assert.match(handBuildScript, /--lower-segment-start-seconds", "5\.75/);
   assert.match(applauseBuildScript, /--transition-seconds", "0\.75/);
-  assert.match(applauseBuildScript, /--gesture-strength", "0\.94/);
+  assert.match(applauseBuildScript, /--gesture-strength", "1\.0/);
   assert.match(solveScript, /def release_weight/);
   assert.match(solveScript, /gesture_weight\(frame_index\) \* gesture_strength/);
   assert.match(

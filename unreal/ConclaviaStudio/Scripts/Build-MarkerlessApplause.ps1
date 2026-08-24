@@ -42,7 +42,11 @@ $pythonArguments = @(
     "--ease-segment-start-seconds", "3.25",
     "--ease-segment-end-seconds", "6.75",
     "--transition-seconds", "0.75",
-    "--gesture-strength", "0.94"
+    # Preserve the complete markerless take. Blending even six percent back
+    # toward the seated base separates and lowers the wrists on MetaHumans
+    # whose arm proportions differ from the performer, so the palms no longer
+    # meet at the captured contact frames.
+    "--gesture-strength", "1.0"
 )
 if ($ReusePerformance) {
     $pythonArguments += "--reuse-performance"
