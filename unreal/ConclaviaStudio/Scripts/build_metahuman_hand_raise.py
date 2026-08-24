@@ -429,4 +429,5 @@ def build() -> None:
     actor_subsystem.destroy_actor(temporary_actor)
 
 
-build()
+if __name__ == "__main__":
+    build()

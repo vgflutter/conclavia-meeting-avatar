@@ -125,6 +125,7 @@ await test("builds meeting gestures from private markerless captures with visual
     solveScript,
     handBuildScript,
     applauseBuildScript,
+    applauseContactScript,
     applauseCaptureScript,
     positiveExpressionBuilder,
     deployScript,
@@ -144,6 +145,10 @@ await test("builds meeting gestures from private markerless captures with visual
     ),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/Build-MarkerlessApplause.ps1"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/refine_applause_hand_contact.py"),
       "utf8",
     ),
     readFile(
@@ -214,6 +219,11 @@ await test("builds meeting gestures from private markerless captures with visual
     /upperarm_l,lowerarm_l,hand_l,upperarm_r,lowerarm_r,hand_r/,
   );
   assert.match(applauseBuildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
+  assert.match(applauseContactScript, /MetaHuman_ControlRig/);
+  assert.match(applauseContactScript, /hand_\{side\}_ik_ctrl/);
+  assert.match(applauseContactScript, /CONTACT_TARGET_CM = 12\.0/);
+  assert.match(applauseContactScript, /corrected_pair/);
+  assert.match(rendererManifest, /AS_MeetingApplause_SeatedContactIK_v2/);
   assert.match(applauseCaptureScript, /applauseGestureReady/);
   assert.match(applauseCaptureScript, /bodyGesturePhase === "applauding"/);
   assert.match(applauseCaptureScript, /commercialMood === "happiness"/);

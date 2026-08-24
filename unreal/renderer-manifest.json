@@ -46,6 +46,7 @@
     "/Game/Conclavia/Meeting/Animations/AS_MeetingPositiveExpression_CurveOnly_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedContactIK_v2",
     "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase",
     "/Game/Conclavia/Studio/L_PremiumStudio",
     "/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle"
@@ -60,6 +61,7 @@
     "unreal/ConclaviaStudio/Scripts/process_markerless_hand_raise.py",
     "unreal/ConclaviaStudio/Scripts/Build-MarkerlessHandRaise.ps1",
     "unreal/ConclaviaStudio/Scripts/Build-MarkerlessApplause.ps1",
+    "unreal/ConclaviaStudio/Scripts/refine_applause_hand_contact.py",
     "unreal/ConclaviaStudio/Scripts/Capture-ApplauseSequence.cjs",
     "unreal/ConclaviaStudio/Scripts/ensure_commercial_lipsync_assets.py"
   ]
