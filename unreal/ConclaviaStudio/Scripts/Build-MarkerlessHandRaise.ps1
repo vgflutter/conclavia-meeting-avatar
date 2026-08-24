@@ -5,6 +5,7 @@ param(
     [string]$EngineRoot = "C:\Epic\UE_5.8",
     [string]$OutputPath = "/Game/Conclavia/Meeting/Animations",
     [string]$AssetName = "AS_MeetingHandRaise_SeatedMarkerless_v1",
+    [switch]$ReusePerformance,
     [switch]$Force
 )
 
@@ -14,18 +15,33 @@ $editor = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor.exe"
 $script = Join-Path (Split-Path $ProjectPath -Parent) "Scripts\process_markerless_hand_raise.py"
 $log = Join-Path (Split-Path $ProjectPath -Parent) "Saved\Logs\MarkerlessHandRaise.log"
 
-foreach ($requiredPath in @($CapturePath, $ProjectPath, $editor, $script)) {
+foreach ($requiredPath in @($ProjectPath, $editor, $script)) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
         throw "Required markerless input is unavailable: $requiredPath"
     }
 }
+if (-not $ReusePerformance -and -not (Test-Path -LiteralPath $CapturePath)) {
+    throw "Required markerless hand-raise capture is unavailable: $CapturePath"
+}
 
+$videoPath = if ($ReusePerformance) { "reuse" } else { $CapturePath.Replace("\", "/") }
 $pythonArguments = @(
     $script.Replace("\", "/"),
-    "--video-path", $CapturePath.Replace("\", "/"),
+    "--video-path", $videoPath,
     "--output-path", $OutputPath,
-    "--asset-name", $AssetName
+    "--asset-name", $AssetName,
+    "--stabilize-meeting-torso",
+    "--ease-segment-start-seconds", "1.75",
+    "--ease-segment-end-seconds", "7.50",
+    "--transition-seconds", "0.80",
+    "--gesture-strength", "0.82",
+    "--hold-pose-seconds", "3.25",
+    "--lower-segment-start-seconds", "5.75",
+    "--release-transition-seconds", "0.60"
 )
+if ($ReusePerformance) {
+    $pythonArguments += "--reuse-performance"
+}
 if ($Force) {
     $pythonArguments += "--force"
 }

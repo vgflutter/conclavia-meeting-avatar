@@ -396,19 +396,23 @@ that gate.
 The applause bake retains the markerless solver's constant arm-chain
 translations in addition to its rotations. This preserves the performer's
 hand contact after retargeting to a MetaHuman with different proportions
-without synthesizing a hand pose. A 350 ms smoothstep blends the captured upper
-body from and back to the authored seated pose at the configured segment
-boundaries. The seated layer also owns spine, neck, and head while the capture
-owns clavicles, arms, hands, and fingers, so the continuous applause cannot
-look like a camera move. The meeting camera remains unchanged throughout.
+without synthesizing a hand pose. The captured performance is blended at 78%
+strength, and a 750 ms smoothstep blends the upper body from and back to the
+authored seated pose at the configured segment boundaries. The hand-raise bake
+uses 82% strength, an 800 ms boundary ease, and a dedicated 600 ms release from
+the captured hold into the recorded lowering. The seated layer also owns spine,
+neck, and head while each capture owns clavicles, arms, hands, and fingers, so
+the gestures cannot look like camera moves. The meeting camera remains
+unchanged throughout.
 
 The accompanying positive face is not the commercial silent-happiness preset
 and does not copy Epic template bone tracks between identities. Deployment
 builds `AS_MeetingPositiveExpression_CurveOnly_v1` from six restrained
 MetaHuman control curves sampled from the official happy pose. Jaw-open,
 brow-down, eye-look, and 875 identity-specific facial-bone tracks are excluded;
-the retained controls ease in and out over the bounded applause. Health exposes
-its independent readiness, activity, and driver fields.
+the retained controls use a low-amplitude 680 ms ease in and out over the exact
+2.4-second body performance. Health exposes its independent readiness,
+activity, and driver fields.
 
 Listening reactions use the purchased Runtime MetaHuman Lip Sync full-face
 model even when the avatar is silent. A `listen-react` cue carries a semantic

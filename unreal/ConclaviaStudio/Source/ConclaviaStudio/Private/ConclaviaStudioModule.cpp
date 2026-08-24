@@ -1687,9 +1687,9 @@ private:
         Face->MarkRenderDynamicDataDirty();
         ActiveMoodName = TEXT("happiness");
         ActiveSemanticMoodName = TEXT("amused");
-        ActiveMoodIntensity = 0.35f;
-        PerformanceCurrentIntensity = 0.35f;
-        PerformanceTargetIntensity = 0.35f;
+        ActiveMoodIntensity = 0.22f;
+        PerformanceCurrentIntensity = 0.22f;
+        PerformanceTargetIntensity = 0.22f;
         ActivePerformanceFocus = TEXT("target");
         ActivePerformanceGesture = TEXT("applause");
         bMetaHumanApplauseExpressionActive = true;
@@ -1755,12 +1755,12 @@ private:
             FPlatformTime::Seconds() - BodyGesturePhaseStartedAt);
         if (BodyGesturePhase == TEXT("raising"))
         {
-            return FMath::Clamp(
+            return FMath::SmoothStep(0.0f, 1.0f, FMath::Clamp(
                 Elapsed / FMath::Max(
                     BodyGestureHoldSeconds - BodyGestureStartSeconds,
                     UE_SMALL_NUMBER),
                 0.0f,
-                1.0f);
+                1.0f));
         }
         if (BodyGesturePhase == TEXT("held"))
         {
@@ -1772,12 +1772,12 @@ private:
         }
         if (BodyGesturePhase == TEXT("lowering"))
         {
-            return 1.0f - FMath::Clamp(
+            return 1.0f - FMath::SmoothStep(0.0f, 1.0f, FMath::Clamp(
                 Elapsed / FMath::Max(
                     BodyGestureEndSeconds - BodyGestureLowerStartSeconds,
                     UE_SMALL_NUMBER),
                 0.0f,
-                1.0f);
+                1.0f));
         }
         return 0.0f;
     }
@@ -4358,9 +4358,12 @@ private:
                 StartBodyGesture(TEXT("applause"));
                 if (BodyGesturePhase == TEXT("applauding"))
                 {
-                    const float ApplauseExpressionSeconds = FMath::Max(
-                        ExpectedDurationSeconds,
-                        ApplauseGestureEndSeconds - ApplauseGestureStartSeconds);
+                    // Keep the curve-only smile on the exact same eased
+                    // boundaries as the authored body take. Stretching it to
+                    // the generic cue duration leaves the face at peak
+                    // intensity when the body returns to idle.
+                    const float ApplauseExpressionSeconds =
+                        ApplauseGestureEndSeconds - ApplauseGestureStartSeconds;
                     if (!StartMetaHumanApplauseExpression(ApplauseExpressionSeconds))
                     {
                         // Never fall back to the commercial silent happiness

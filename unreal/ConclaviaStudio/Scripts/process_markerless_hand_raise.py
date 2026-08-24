@@ -198,6 +198,10 @@ def bake_body_animation(
     ease_segment_start_seconds: float,
     ease_segment_end_seconds: float,
     transition_seconds: float,
+    gesture_strength: float,
+    hold_pose_seconds: float,
+    lower_segment_start_seconds: float,
+    release_transition_seconds: float,
     force: bool,
 ) -> unreal.AnimSequence:
     target_asset_path = f"{output_path}/{asset_name}"
@@ -331,6 +335,11 @@ def bake_body_animation(
         if bone_name not in seated_base_transforms
     }
     stabilized_source_transforms = body_frames[stabilization_frame]
+    hold_pose_frame = min(
+        len(body_frames) - 1,
+        max(0, int(round(hold_pose_seconds * OUTPUT_FRAME_RATE))),
+    )
+    held_source_transforms = body_frames[hold_pose_frame]
     preserve_translation_tracks = (
         required_tracks if preserve_motion_translations else set()
     )
@@ -365,6 +374,33 @@ def bake_body_animation(
             )
             return linear * linear * (3.0 - 2.0 * linear)
         return 1.0
+
+    def release_weight(frame_index: int) -> float:
+        """Ease from the frozen authored hold into the captured lowering.
+
+        Runtime pauses at ``hold_pose_seconds`` and resumes at
+        ``lower_segment_start_seconds``. The performer naturally moved a
+        little between those instants, so jumping straight to the latter frame
+        creates a visible shoulder pop. Rebase the first lowering frames on
+        the genuine captured hold and smoothly release into the recording.
+        """
+
+        if hold_pose_seconds < 0.0 or lower_segment_start_seconds < 0.0:
+            return 1.0
+        frame_time = frame_index / OUTPUT_FRAME_RATE
+        if frame_time < lower_segment_start_seconds:
+            return 1.0
+        if release_transition_seconds <= 0.0:
+            return 1.0
+        linear = max(
+            0.0,
+            min(
+                1.0,
+                (frame_time - lower_segment_start_seconds)
+                / release_transition_seconds,
+            ),
+        )
+        return linear * linear * (3.0 - 2.0 * linear)
     captured_thigh = body_frames[stabilization_frame]["thigh_r"].rotation
     seated_thigh = seated_base_transforms["thigh_r"].rotation
     seated_leg_delta = (
@@ -432,7 +468,34 @@ def bake_body_animation(
                         transformed.translation = stabilized_source_transforms[
                             bone_name
                         ].translation
-                    weight = gesture_weight(frame_index)
+                    release = release_weight(frame_index)
+                    if release < 1.0:
+                        held_transform = copy_transform(base_transform)
+                        if delta_from_stabilized_pose:
+                            held_delta = (
+                                captured_base_rotation.inversed()
+                                * held_source_transforms[bone_name].rotation
+                            )
+                            held_transform.rotation = (
+                                base_transform.rotation * held_delta
+                            ).normalized()
+                        else:
+                            held_transform.rotation = held_source_transforms[
+                                bone_name
+                            ].rotation
+                        if bone_name in preserve_translation_tracks:
+                            held_transform.translation = stabilized_source_transforms[
+                                bone_name
+                            ].translation
+                        transformed.translation = (
+                            held_transform.translation * (1.0 - release)
+                            + transformed.translation * release
+                        )
+                        transformed.rotation = held_transform.rotation.slerp_quat(
+                            transformed.rotation,
+                            release,
+                        )
+                    weight = gesture_weight(frame_index) * gesture_strength
                     if weight < 1.0:
                         seated_transform = seated_upper_body_transforms[bone_name]
                         transformed.translation = (
@@ -481,6 +544,10 @@ def bake_body_animation(
         f"stabilized_meeting_torso={stabilize_meeting_torso} "
         f"ease_segment={ease_segment_start_seconds:.3f}-"
         f"{ease_segment_end_seconds:.3f} transition={transition_seconds:.3f} "
+        f"gesture_strength={gesture_strength:.3f} "
+        f"hold_release={hold_pose_seconds:.3f}-"
+        f"{lower_segment_start_seconds:.3f} "
+        f"release_transition={release_transition_seconds:.3f} "
         f"seated_leg_delta={seated_leg_delta:.4f}"
     )
     return animation
@@ -509,6 +576,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ease-segment-start-seconds", type=float, default=-1.0)
     parser.add_argument("--ease-segment-end-seconds", type=float, default=-1.0)
     parser.add_argument("--transition-seconds", type=float, default=0.45)
+    parser.add_argument("--gesture-strength", type=float, default=1.0)
+    parser.add_argument("--hold-pose-seconds", type=float, default=-1.0)
+    parser.add_argument("--lower-segment-start-seconds", type=float, default=-1.0)
+    parser.add_argument("--release-transition-seconds", type=float, default=0.55)
     parser.add_argument("--reuse-performance", action="store_true")
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
@@ -525,6 +596,8 @@ def run() -> None:
         }
         if not required_tracks or not motion_tracks:
             raise RuntimeError("Required and motion track lists cannot be empty")
+        if not 0.0 < args.gesture_strength <= 1.0:
+            raise RuntimeError("Gesture strength must be greater than 0 and at most 1")
         if args.reuse_performance:
             performance = load_processed_performance(
                 args.output_path,
@@ -552,6 +625,10 @@ def run() -> None:
             args.ease_segment_start_seconds,
             args.ease_segment_end_seconds,
             args.transition_seconds,
+            args.gesture_strength,
+            args.hold_pose_seconds,
+            args.lower_segment_start_seconds,
+            args.release_transition_seconds,
             args.force,
         )
         unreal.log("CONCLAVIA_MARKERLESS_PIPELINE_OK")

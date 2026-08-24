@@ -40,7 +40,8 @@ $pythonArguments = @(
     # lowering frames without synthesizing shoulder or wrist rotations.
     "--ease-segment-start-seconds", "19.25",
     "--ease-segment-end-seconds", "21.65",
-    "--transition-seconds", "0.35"
+    "--transition-seconds", "0.75",
+    "--gesture-strength", "0.78"
 )
 if ($ReusePerformance) {
     $pythonArguments += "--reuse-performance"

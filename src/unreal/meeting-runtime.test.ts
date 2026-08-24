@@ -186,6 +186,14 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseBuildScript, /--stabilize-meeting-torso/);
   assert.match(applauseBuildScript, /--ease-segment-start-seconds", "19\.25/);
   assert.match(applauseBuildScript, /--ease-segment-end-seconds", "21\.65/);
+  assert.match(handBuildScript, /--transition-seconds", "0\.80/);
+  assert.match(handBuildScript, /--gesture-strength", "0\.82/);
+  assert.match(handBuildScript, /--hold-pose-seconds", "3\.25/);
+  assert.match(handBuildScript, /--lower-segment-start-seconds", "5\.75/);
+  assert.match(applauseBuildScript, /--transition-seconds", "0\.75/);
+  assert.match(applauseBuildScript, /--gesture-strength", "0\.78/);
+  assert.match(solveScript, /def release_weight/);
+  assert.match(solveScript, /gesture_weight\(frame_index\) \* gesture_strength/);
   assert.match(solveScript, /STABLE_MEETING_TORSO_TRACKS/);
   assert.match(solveScript, /seated_transform\.rotation\.slerp_quat/);
   assert.match(solveScript, /linear \* linear \* \(3\.0 - 2\.0 \* linear\)/);
@@ -207,6 +215,8 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(positiveExpressionBuilder, /RawCurveTrackTypes\.RCT_FLOAT/);
   assert.match(positiveExpressionBuilder, /ctrl_expressions_mouthcornerpull/);
   assert.match(positiveExpressionBuilder, /ctrl_expressions_eyecheekraise/);
+  assert.match(positiveExpressionBuilder, /DURATION_SECONDS = 2\.4/);
+  assert.match(positiveExpressionBuilder, /mouthcornerpulll": 0\.20/);
   assert.match(positiveExpressionBuilder, /if bone_tracks or len\(curve_names\)/);
   assert.doesNotMatch(positiveExpressionBuilder, /browdown|jawopen|eyelook/iu);
   assert.match(deployScript, /Build-MeetingPositiveExpression\.ps1/);

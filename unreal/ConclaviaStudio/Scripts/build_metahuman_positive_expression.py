@@ -19,19 +19,43 @@ SOURCE_PATH = (
 OUTPUT_PATH = "/Game/Conclavia/Meeting/Animations"
 ASSET_NAME = "AS_MeetingPositiveExpression_CurveOnly_v1"
 FRAME_RATE = 30
-DURATION_SECONDS = 4.5
+DURATION_SECONDS = 2.4
+EXPRESSION_KEY_TIMES = [
+    0.0,
+    0.18,
+    0.36,
+    0.52,
+    0.68,
+    1.72,
+    1.88,
+    2.04,
+    2.22,
+    DURATION_SECONDS,
+]
+EXPRESSION_KEY_WEIGHTS = [
+    0.0,
+    0.08,
+    0.45,
+    0.82,
+    1.0,
+    1.0,
+    0.82,
+    0.45,
+    0.08,
+    0.0,
+]
 
 # These are sampled from Epic's official positive pose.  Brow-down, jaw-open,
 # eye-look and all identity-specific bone tracks are deliberately excluded.
 # The per-control gains turn the broad template expression into a warm,
 # closed-mouth meeting smile.
 CONTROL_GAINS = {
-    "ctrl_expressions_mouthcornerpulll": 0.35,
-    "ctrl_expressions_mouthcornerpullr": 0.35,
-    "ctrl_expressions_mouthdimplel": 0.18,
-    "ctrl_expressions_mouthdimpler": 0.18,
-    "ctrl_expressions_eyecheekraisel": 0.24,
-    "ctrl_expressions_eyecheekraiser": 0.24,
+    "ctrl_expressions_mouthcornerpulll": 0.20,
+    "ctrl_expressions_mouthcornerpullr": 0.20,
+    "ctrl_expressions_mouthdimplel": 0.08,
+    "ctrl_expressions_mouthdimpler": 0.08,
+    "ctrl_expressions_eyecheekraisel": 0.12,
+    "ctrl_expressions_eyecheekraiser": 0.12,
 }
 
 
@@ -101,8 +125,8 @@ def build() -> None:
         unreal.AnimationLibrary.add_float_curve_keys(
             animation,
             curve_name,
-            [0.0, 0.45, 4.05, DURATION_SECONDS],
-            [0.0, value, value, 0.0],
+            EXPRESSION_KEY_TIMES,
+            [value * weight for weight in EXPRESSION_KEY_WEIGHTS],
         )
         applied_values.append(f"{curve_name}:{value:.4f}")
 

@@ -419,7 +419,7 @@ export class ConclaviaRenderer {
           atMs: 0,
           semanticMood: "assertive",
           mood: "confidence",
-          intensity: 0.72,
+          intensity: 0.46,
           focus: "camera",
           gesture: "raise-hand",
         },
