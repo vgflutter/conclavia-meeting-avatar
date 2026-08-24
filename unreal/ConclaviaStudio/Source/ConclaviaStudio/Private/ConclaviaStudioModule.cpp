@@ -1687,9 +1687,9 @@ private:
         Face->MarkRenderDynamicDataDirty();
         ActiveMoodName = TEXT("happiness");
         ActiveSemanticMoodName = TEXT("amused");
-        ActiveMoodIntensity = 0.22f;
-        PerformanceCurrentIntensity = 0.22f;
-        PerformanceTargetIntensity = 0.22f;
+        ActiveMoodIntensity = 0.28f;
+        PerformanceCurrentIntensity = 0.28f;
+        PerformanceTargetIntensity = 0.28f;
         ActivePerformanceFocus = TEXT("target");
         ActivePerformanceGesture = TEXT("applause");
         bMetaHumanApplauseExpressionActive = true;

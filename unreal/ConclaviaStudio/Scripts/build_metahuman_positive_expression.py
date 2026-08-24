@@ -50,12 +50,12 @@ EXPRESSION_KEY_WEIGHTS = [
 # The per-control gains turn the broad template expression into a warm,
 # closed-mouth meeting smile.
 CONTROL_GAINS = {
-    "ctrl_expressions_mouthcornerpulll": 0.20,
-    "ctrl_expressions_mouthcornerpullr": 0.20,
-    "ctrl_expressions_mouthdimplel": 0.08,
-    "ctrl_expressions_mouthdimpler": 0.08,
-    "ctrl_expressions_eyecheekraisel": 0.12,
-    "ctrl_expressions_eyecheekraiser": 0.12,
+    "ctrl_expressions_mouthcornerpulll": 0.27,
+    "ctrl_expressions_mouthcornerpullr": 0.27,
+    "ctrl_expressions_mouthdimplel": 0.11,
+    "ctrl_expressions_mouthdimpler": 0.11,
+    "ctrl_expressions_eyecheekraisel": 0.16,
+    "ctrl_expressions_eyecheekraiser": 0.16,
 }
 
 

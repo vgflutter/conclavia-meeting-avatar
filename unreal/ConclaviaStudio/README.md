@@ -396,7 +396,7 @@ that gate.
 The applause bake retains the markerless solver's constant arm-chain
 translations in addition to its rotations. This preserves the performer's
 hand contact after retargeting to a MetaHuman with different proportions
-without synthesizing a hand pose. The captured performance is blended at 78%
+without synthesizing a hand pose. The captured performance is blended at 94%
 strength, and a 750 ms smoothstep blends the upper body from and back to the
 authored seated pose at the configured segment boundaries. The hand-raise bake
 uses 82% strength, an 800 ms boundary ease, and a dedicated 600 ms release from
