@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v17"
+STAGE_REVISION = "v18"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
 MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4.0
@@ -306,33 +306,36 @@ def build() -> None:
         webcam_target,
         webcam_focal_length,
     )
-    # A large, warm key placed to one side retains pore/specular variation and
-    # avoids the flat white wash of a frontal webcam lamp. The fill and rim
-    # only separate the silhouette; they must not become competing keys.
+    # A warm key placed well off-axis retains pore, cavity and roughness
+    # variation instead of filling every facial plane with the same white
+    # value.  The source is still broad enough to flatter a webcam portrait,
+    # but smaller and lower than v17 so the Cine skin normals remain readable
+    # after the 1080p H.264 encode.  Fill, ambient and rim only preserve shadow
+    # detail and silhouette separation; they must never become competing keys.
     add_rect_light(
         "MEETING_Key",
-        unreal.Vector(-300.0, -310.0, 375.0),
+        unreal.Vector(-300.0, -335.0, 335.0),
         webcam_target,
-        unreal.LinearColor(1.0, 0.78, 0.66, 1.0),
-        185.0,
-        460.0,
-        280.0,
+        unreal.LinearColor(1.0, 0.82, 0.72, 1.0),
+        132.0,
+        320.0,
+        210.0,
     )
     add_rect_light(
         "MEETING_Fill",
         unreal.Vector(-230.0, 430.0, 330.0),
         webcam_target,
-        unreal.LinearColor(0.35, 0.50, 0.68, 1.0),
-        42.0,
-        440.0,
-        260.0,
+        unreal.LinearColor(0.32, 0.46, 0.62, 1.0),
+        22.0,
+        400.0,
+        240.0,
     )
     add_rect_light(
         "MEETING_Rim",
         unreal.Vector(320.0, -250.0, 390.0),
         webcam_target,
         unreal.LinearColor(1.0, 0.58, 0.38, 1.0),
-        45.0,
+        30.0,
         400.0,
         220.0,
     )
@@ -342,7 +345,7 @@ def build() -> None:
         "MEETING_Ambient",
     )
     sky_component = skylight.get_component_by_class(unreal.SkyLightComponent)
-    sky_component.set_editor_property("intensity", 0.08)
+    sky_component.set_editor_property("intensity", 0.035)
     sky_component.set_editor_property("real_time_capture", False)
     sky_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     skylight.tags = [unreal.Name("ConclaviaMeetingSet")]

@@ -25,6 +25,7 @@
 #include "ILiveLinkSource.h"
 #include "Interfaces/IPluginManager.h"
 #include "LiveLinkSourceSettings.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Roles/LiveLinkAnimationRole.h"
 #include "Roles/LiveLinkAnimationTypes.h"
 #include "Roles/LiveLinkBasicRole.h"
@@ -1289,6 +1290,54 @@ private:
         State.Face = Face;
     }
 
+    static int32 ConfigureShowcaseSkinDetail(USkeletalMeshComponent* Face)
+    {
+        if (!Face)
+        {
+            return 0;
+        }
+
+        int32 TunedMaterials = 0;
+        for (int32 MaterialIndex = 0;
+             MaterialIndex < Face->GetNumMaterials();
+             ++MaterialIndex)
+        {
+            UMaterialInterface* Material = Face->GetMaterial(MaterialIndex);
+            if (!Material)
+            {
+                continue;
+            }
+
+            const FString MaterialPath = Material->GetPathName();
+            if (!MaterialPath.Contains(TEXT("Face_Skin"), ESearchCase::IgnoreCase)
+                && !MaterialPath.Contains(TEXT("FaceSkin"), ESearchCase::IgnoreCase)
+                && !MaterialPath.Contains(TEXT("face_skin_baked"), ESearchCase::IgnoreCase))
+            {
+                continue;
+            }
+
+            UMaterialInstanceDynamic* Skin =
+                Face->CreateDynamicMaterialInstance(MaterialIndex, Material);
+            if (!Skin)
+            {
+                continue;
+            }
+
+            // Preserve MetaHuman's full-resolution subsurface profile while
+            // recovering pore-scale normal and cavity variation at webcam
+            // resolution.  These are restrained lookdev offsets, not a
+            // screen-space beauty filter: albedo and complexion stay native.
+            Skin->SetScalarParameterValue(
+                TEXT("Micro Skin Normal Strength"), 1.22f);
+            Skin->SetScalarParameterValue(
+                TEXT("Micro Skin Cavity Specular Multiply"), 0.76f);
+            Skin->SetScalarParameterValue(TEXT("Roughness Adjust"), 1.16f);
+            Skin->SetScalarParameterValue(TEXT("Spec Adjust"), 0.78f);
+            ++TunedMaterials;
+        }
+        return TunedMaterials;
+    }
+
     static const TArray<FString>& MeetingIdlePaths()
     {
         static const TArray<FString> Paths = {
@@ -2493,6 +2542,15 @@ private:
         {
             UE_LOG(LogConclaviaStudio, Error, TEXT("Commercial lip sync: hero Face component missing"));
             return false;
+        }
+        if (AvatarId.Equals(TEXT("showcase"), ESearchCase::IgnoreCase))
+        {
+            const int32 TunedSkinMaterials = ConfigureShowcaseSkinDetail(Face);
+            UE_LOG(
+                LogConclaviaStudio,
+                Display,
+                TEXT("Showcase Cine skin detail active: materials=%d"),
+                TunedSkinMaterials);
         }
 
         if (!AvatarId.Equals(TEXT("aera"), ESearchCase::IgnoreCase))
@@ -4126,7 +4184,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v25-natural-skin-elevated-applause")
+            ? TEXT("ue58-commercial-lipsync-v26-showcase-skin-detail")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");

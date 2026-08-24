@@ -15,7 +15,7 @@
     "root": "C:\\ConclaviaMeetingAvatar",
     "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
     "editorTarget": "ConclaviaStudioEditor",
-    "runtimeRevision": "ue58-commercial-lipsync-v24-curve-smile-fixed-camera"
+    "runtimeRevision": "ue58-commercial-lipsync-v26-showcase-skin-detail"
   },
   "pixelStreamingInfrastructure": {
     "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",
@@ -38,7 +38,7 @@
     }
   ],
   "generatedAssets": [
-    "/Game/Conclavia/Meeting/L_MeetingAvatar_v17",
+    "/Game/Conclavia/Meeting/L_MeetingAvatar_v18",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingCalmIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingEngagedIdle_v1",
