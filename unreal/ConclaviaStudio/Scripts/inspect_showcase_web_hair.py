@@ -85,14 +85,17 @@ def source_entry(entry: Any) -> dict[str, Any]:
 
 def component_inventory(component: unreal.SceneComponent) -> dict[str, Any]:
     parent = component.get_attach_parent()
+    relative_location = component.get_editor_property("relative_location")
+    relative_rotation = component.get_editor_property("relative_rotation")
+    relative_scale = component.get_editor_property("relative_scale3d")
     payload: dict[str, Any] = {
         "name": component.get_name(),
         "class": component.get_class().get_path_name(),
         "parent": parent.get_name() if parent is not None else None,
         "socket": str(component.get_attach_socket_name()),
-        "relativeLocation": vector(component.get_relative_location()),
-        "relativeRotation": rotator(component.get_relative_rotation()),
-        "relativeScale": vector(component.get_relative_scale3d()),
+        "relativeLocation": vector(relative_location),
+        "relativeRotation": rotator(relative_rotation),
+        "relativeScale": vector(relative_scale),
     }
     if isinstance(component, unreal.SkeletalMeshComponent):
         payload["skeletalMesh"] = asset_path(component.get_skeletal_mesh_asset())
