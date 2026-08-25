@@ -325,6 +325,7 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
   assert.match(facialBaker, /SequencerTools\.export_anim_sequence/);
   assert.match(facialBaker, /evaluate_all_skeletal_mesh_components/);
+  assert.match(facialBaker, /close_level_sequence\(\)/);
   assert.match(facialBaker, /"export_preview_mesh": False/);
   assert.match(facialBaker, /"export_morph_targets": False/);
   assert.match(facialBaker, /anim-face-\{mood\}\.glb/);
@@ -335,6 +336,7 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(wrapper, /Web avatar export directory must be empty/);
   assert.match(wrapper, /bake_web_facial_moods\.py/);
   assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_MOODS: READY/);
+  assert.match(wrapper, /completedBeforeShutdown/);
 });
 
 await test("bakes curve-driven facial performance on the staged MetaHuman identity", async () => {

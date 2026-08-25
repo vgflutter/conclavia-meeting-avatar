@@ -340,6 +340,10 @@ def bake_and_export(
         gltf_options(),
         set(),
     )
+    # Commandlet shutdown can dereference the active Sequencer toolkit after
+    # all assets have already been exported. Explicitly close each sequence so
+    # the unattended authoring process exits cleanly as well as producing data.
+    unreal.LevelSequenceEditorBlueprintLibrary.close_level_sequence()
     if not output.is_file() or output.stat().st_size < 20:
         raise RuntimeError(f"Facial GLB export failed for {mood}: {output}")
     recipe_controls = RECIPES[mood].controls

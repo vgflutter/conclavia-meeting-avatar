@@ -58,7 +58,13 @@ try {
         -NoSound `
         "-abslog=$facialLog"
     if ($LASTEXITCODE -ne 0) {
-        throw "Web facial export failed with exit code $LASTEXITCODE. See $facialLog"
+        $completedBeforeShutdown = `
+            (Select-String -LiteralPath $facialLog -Pattern "CONCLAVIA_WEB_FACIAL_MOODS: READY" -Quiet) -and `
+            (Test-Path -LiteralPath (Join-Path $OutputDirectory "facial-moods.json"))
+        if (-not $completedBeforeShutdown) {
+            throw "Web facial export failed with exit code $LASTEXITCODE. See $facialLog"
+        }
+        Write-Warning "Unreal exited after completing every facial export. Accepting the verified READY bundle."
     }
 } finally {
     $env:CONCLAVIA_WEB_AVATAR_EXPORT_DIR = $previousExportDirectory
