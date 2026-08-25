@@ -68,6 +68,10 @@ import { runMacosPreflight } from "./preflight/macos.js";
 import { PerformanceHub } from "./performance/performance-hub.js";
 import type { PerformancePacket } from "./performance/performance-packet.js";
 import { WebPerformanceRenderer } from "./performance/web-performance-renderer.js";
+import {
+  loadWebAvatarManifest,
+  webAvatarModelPath,
+} from "./performance/web-avatar-manifest.js";
 import { MeetingListener } from "./teams/meeting-listener.js";
 
 const publicDirectory = join(dirname(fileURLToPath(import.meta.url)), "../public");
@@ -79,11 +83,18 @@ const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
   ["/web-output", ["web-output.html", "text/html; charset=utf-8"]],
   ["/web-output.html", ["web-output.html", "text/html; charset=utf-8"]],
   ["/web-output.js", ["web-output.js", "text/javascript; charset=utf-8"]],
+  ["/web-avatar-performer.js", ["web-avatar-performer.js", "text/javascript; charset=utf-8"]],
   ["/web-output.css", ["web-output.css", "text/css; charset=utf-8"]],
   ["/app.js", ["app.js", "text/javascript; charset=utf-8"]],
   ["/styles.css", ["styles.css", "text/css; charset=utf-8"]],
   ["/assets/conclavia-logo.png", ["assets/conclavia-logo.png", "image/png"]],
+  ["/favicon.ico", ["assets/conclavia-logo.png", "image/png"]],
   ["/assets/web-avatar.jpg", ["../docs/images/mary-listening-playfulness.jpg", "image/jpeg"]],
+  ["/vendor/three/build/three.module.js", ["../node_modules/three/build/three.module.js", "text/javascript; charset=utf-8"]],
+  ["/vendor/three/build/three.core.js", ["../node_modules/three/build/three.core.js", "text/javascript; charset=utf-8"]],
+  ["/vendor/three/examples/jsm/loaders/GLTFLoader.js", ["../node_modules/three/examples/jsm/loaders/GLTFLoader.js", "text/javascript; charset=utf-8"]],
+  ["/vendor/three/examples/jsm/utils/BufferGeometryUtils.js", ["../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js", "text/javascript; charset=utf-8"]],
+  ["/vendor/three/examples/jsm/utils/SkeletonUtils.js", ["../node_modules/three/examples/jsm/utils/SkeletonUtils.js", "text/javascript; charset=utf-8"]],
 ] as const);
 const maxRetainedSegments = 200;
 const maxSeenChatMessages = 2_000;
@@ -373,6 +384,7 @@ export interface ServerOptions {
   meetingSpeakerName: string;
   rendererUrl: string | undefined;
   rendererMode: "unreal" | "web";
+  webAvatarDirectory: string;
 }
 
 export function startServer(options: ServerOptions): Promise<void> {
@@ -1133,6 +1145,9 @@ export function startServer(options: ServerOptions): Promise<void> {
       const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
 
       if (request.method === "GET" && url.pathname === "/api/performance/status") {
+        const webAvatar = options.rendererMode === "web"
+          ? await loadWebAvatarManifest(options.webAvatarDirectory, runtimeConfig.avatarProfile)
+          : null;
         sendJson(response, 200, {
           schema: "conclavia.performance",
           version: 1,
@@ -1140,7 +1155,57 @@ export function startServer(options: ServerOptions): Promise<void> {
           listeners: performanceHub.listenerCount,
           latestSequence: performanceHub.latestSequence,
           outputUrl: `${companionBaseUrl}/web-output`,
+          webAvatar: {
+            id: runtimeConfig.avatarProfile,
+            installed: Boolean(webAvatar),
+            assetVersion: webAvatar?.assetVersion ?? null,
+            performer: webAvatar ? "three" : "photo-fallback",
+          },
         });
+        return;
+      }
+
+      const avatarManifestMatch = /^\/api\/performance\/avatar\/([a-z0-9][a-z0-9_-]{0,63})$/u
+        .exec(url.pathname);
+      if (request.method === "GET" && avatarManifestMatch?.[1]) {
+        const manifest = await loadWebAvatarManifest(
+          options.webAvatarDirectory,
+          avatarManifestMatch[1],
+        );
+        if (!manifest) {
+          sendJson(response, 404, { error: "Web avatar asset not installed" });
+          return;
+        }
+        sendJson(response, 200, {
+          ...manifest,
+          model: `/api/performance/avatar/${manifest.id}/model.glb`,
+        });
+        return;
+      }
+
+      const avatarModelMatch = /^\/api\/performance\/avatar\/([a-z0-9][a-z0-9_-]{0,63})\/model\.glb$/u
+        .exec(url.pathname);
+      if (request.method === "GET" && avatarModelMatch?.[1]) {
+        const manifest = await loadWebAvatarManifest(
+          options.webAvatarDirectory,
+          avatarModelMatch[1],
+        );
+        if (!manifest) {
+          sendJson(response, 404, { error: "Web avatar asset not installed" });
+          return;
+        }
+        const path = webAvatarModelPath(options.webAvatarDirectory, manifest);
+        try {
+          const metadata = await stat(path);
+          response.writeHead(200, {
+            "content-type": "model/gltf-binary",
+            "content-length": metadata.size,
+            "cache-control": "private, max-age=3600, immutable",
+          });
+          createReadStream(path).pipe(response);
+        } catch {
+          sendJson(response, 404, { error: "Web avatar model not found" });
+        }
         return;
       }
 
@@ -1559,6 +1624,9 @@ export function startServer(options: ServerOptions): Promise<void> {
 
       if (request.method === "GET" && url.pathname === "/api/renderer/status") {
         const status = await renderer.status();
+        const webAvatar = options.rendererMode === "web"
+          ? await loadWebAvatarManifest(options.webAvatarDirectory, runtimeConfig.avatarProfile)
+          : null;
         if (status.playerUrl) rendererPlayerUrl = status.playerUrl;
         reconcileRendererStatus(status);
         sendJson(response, 200, {
@@ -1568,6 +1636,14 @@ export function startServer(options: ServerOptions): Promise<void> {
           targetAvatarProfile: rendererTargetProfile ?? rendererDesiredProfile,
           lastError: rendererStartError,
           playerUrl: rendererPlayerUrl ?? status.playerUrl ?? null,
+          webAvatar: options.rendererMode === "web"
+            ? {
+                id: runtimeConfig.avatarProfile,
+                installed: Boolean(webAvatar),
+                assetVersion: webAvatar?.assetVersion ?? null,
+                performer: webAvatar ? "three" : "photo-fallback",
+              }
+            : null,
         });
         return;
       }

@@ -1,3 +1,5 @@
+import { loadThreeAvatarPerformer } from "/web-avatar-performer.js";
+
 const runtime = document.querySelector("#runtime");
 const canvas = document.querySelector("#stage");
 const context = canvas.getContext("2d", { alpha: false, desynchronized: true });
@@ -9,6 +11,8 @@ const sequenceLabel = document.querySelector("#sequence");
 const clockLabel = document.querySelector("#clock");
 const moodLabel = document.querySelector("#mood");
 const visemeLabel = document.querySelector("#viseme");
+const outputMode = new URLSearchParams(window.location.search).get("conclaviaOutput");
+runtime.dataset.output = outputMode === "obs" ? "clean" : "console";
 const image = new Image();
 image.src = "/assets/web-avatar.jpg";
 
@@ -21,11 +25,17 @@ let activeStartedAtAudio = 0;
 let currentMood = "neutral";
 let currentMoodLevel = 0;
 let currentViseme = "-";
+let currentGaze = "camera";
+let currentGesture = "none";
 let handRaised = false;
 let applauseUntil = 0;
 let latestSequence = 0;
 let lastHeartbeat = 0;
 let animationStarted = false;
+let lastFrameAt = performance.now();
+let avatarPerformer = null;
+let loadedAvatarId = "";
+let avatarLoadGeneration = 0;
 
 const moodTints = {
   neutral: [18, 35, 61],
@@ -73,16 +83,60 @@ function latestAt(track, elapsed) {
   return value;
 }
 
+async function loadAvatar(avatarId) {
+  if (!avatarId || avatarId === loadedAvatarId) return;
+  const generation = ++avatarLoadGeneration;
+  loadedAvatarId = avatarId;
+  runtime.dataset.performer = "loading";
+  try {
+    const performer = await loadThreeAvatarPerformer(avatarId);
+    if (generation !== avatarLoadGeneration) {
+      performer?.dispose();
+      return;
+    }
+    avatarPerformer?.dispose();
+    avatarPerformer = performer;
+    runtime.dataset.performer = performer ? "three" : "photo";
+    runtimeStatus.textContent = performer
+      ? `Web LOD ${performer.manifest.assetVersion} caricato`
+      : "Fallback fotografico: Web LOD non installata";
+  } catch (error) {
+    if (generation !== avatarLoadGeneration) return;
+    avatarPerformer?.dispose();
+    avatarPerformer = null;
+    loadedAvatarId = "";
+    runtime.dataset.performer = "photo";
+    runtimeStatus.textContent = `Fallback fotografico: ${error.message}`;
+  }
+}
+
 function updatePerformanceState(elapsed) {
   if (!activePacket) return;
+  const running = activePacket.clock.durationMs > 0
+    && elapsed < activePacket.clock.durationMs;
+  if (!running) {
+    currentViseme = "-";
+    currentGesture = handRaised ? "raise-hand" : "none";
+    if (activePacket.kind === "listening" || activePacket.kind === "gesture") {
+      currentMood = "neutral";
+      currentMoodLevel = 0;
+    }
+    moodLabel.textContent = `${currentMood} ${currentMoodLevel.toFixed(2)}`;
+    visemeLabel.textContent = `viseme ${currentViseme}`;
+    clockLabel.textContent = `${Math.round(elapsed)} ms`;
+    return;
+  }
   const expression = latestAt(activePacket.tracks.expressions, elapsed);
   const viseme = latestAt(activePacket.tracks.visemes, elapsed);
+  const gaze = latestAt(activePacket.tracks.gaze, elapsed);
   if (expression) {
     currentMood = expression.semanticMood;
     currentMoodLevel = expression.level;
   }
   currentViseme = viseme?.value || "-";
+  currentGaze = gaze?.target || "camera";
   const gesture = latestAt(activePacket.tracks.gestures, elapsed);
+  currentGesture = gesture?.clip || (handRaised ? "raise-hand" : "none");
   if (gesture?.clip === "raise-hand") handRaised = true;
   if (gesture?.clip === "lower-hand") handRaised = false;
   if (gesture?.clip === "applause") applauseUntil = activeStartedAt + activePacket.clock.durationMs;
@@ -104,6 +158,8 @@ function coverRect(sourceWidth, sourceHeight, targetWidth, targetHeight, zoom) {
 }
 
 function drawFrame(now) {
+  const deltaSeconds = Math.min(0.1, Math.max(0, now - lastFrameAt) / 1000);
+  lastFrameAt = now;
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
   const width = Math.max(1, Math.round(canvas.clientWidth * pixelRatio));
   const height = Math.max(1, Math.round(canvas.clientHeight * pixelRatio));
@@ -120,7 +176,25 @@ function drawFrame(now) {
   const zoom = 1.035 + idle + Math.abs(gestureLift);
   context.fillStyle = "#071026";
   context.fillRect(0, 0, width, height);
-  if (image.complete && image.naturalWidth) {
+  const performanceRunning = Boolean(
+    activePacket
+    && activePacket.clock.durationMs > 0
+    && elapsed < activePacket.clock.durationMs,
+  );
+  if (avatarPerformer) {
+    avatarPerformer.resize(width, height);
+    avatarPerformer.update({
+      performanceId: activePacket?.performanceId || "idle",
+      mood: currentMood,
+      moodLevel: currentMoodLevel,
+      viseme: currentViseme,
+      gaze: currentGaze,
+      gesture: currentGesture,
+      speaking: performanceRunning && activePacket?.kind === "speech",
+      listening: !performanceRunning || activePacket?.kind === "listening",
+    }, deltaSeconds);
+    context.drawImage(avatarPerformer.canvas, 0, 0, width, height);
+  } else if (image.complete && image.naturalWidth) {
     const rect = coverRect(image.naturalWidth, image.naturalHeight, width, height, zoom);
     context.save();
     context.translate(0, gestureLift * height);
@@ -132,8 +206,6 @@ function drawFrame(now) {
   context.fillStyle = `rgba(${tint[0]}, ${tint[1]}, ${tint[2]}, ${alpha})`;
   context.fillRect(0, 0, width, height);
 
-  const performanceRunning = activePacket
-    && (activePacket.clock.durationMs === 0 || elapsed < activePacket.clock.durationMs);
   if (handRaised || applause) {
     actionBadge.textContent = handRaised ? "CHIEDE PAROLA" : "APPLAUSO";
   } else if (performanceRunning && activePacket?.kind === "speech") {
@@ -185,6 +257,7 @@ async function acceptPacket(packet) {
   if (!packet || packet.schema !== "conclavia.performance" || packet.version !== 1) return;
   if (packet.sequence <= latestSequence) return;
   latestSequence = packet.sequence;
+  void loadAvatar(packet.avatar.id);
   sequenceLabel.textContent = `packet ${packet.sequence}`;
   avatarName.textContent = packet.avatar.name;
   const interrupt = packet.events.some((event) => event.type === "interrupt");
@@ -219,6 +292,13 @@ async function connectEvents() {
       after = Number.isFinite(status.latestSequence) ? status.latestSequence : 0;
       latestSequence = after;
       sequenceLabel.textContent = `packet ${after}`;
+    }
+  } catch { }
+  try {
+    const rendererResponse = await fetch("/api/renderer/status", { cache: "no-store" });
+    if (rendererResponse.ok) {
+      const renderer = await rendererResponse.json();
+      void loadAvatar(renderer.avatarProfile || "showcase");
     }
   } catch { }
   const events = new EventSource(`/api/performance/events?after=${after}`);

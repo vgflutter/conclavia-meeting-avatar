@@ -5,6 +5,11 @@ import { randomUUID } from "node:crypto";
 import { decideActivation } from "./core/activation.js";
 import type { TranscriptSegment } from "./domain/protocol.js";
 import { runMacosPreflight } from "./preflight/macos.js";
+import { auditWebAvatar } from "./performance/web-avatar-audit.js";
+import {
+  loadWebAvatarManifest,
+  webAvatarModelPath,
+} from "./performance/web-avatar-manifest.js";
 import { startServer } from "./server.js";
 
 const command = process.argv[2] ?? "serve";
@@ -26,6 +31,18 @@ async function main(): Promise<void> {
       capturedAt: new Date().toISOString(),
     };
     console.log(JSON.stringify(decideActivation(segment, wakeWord), null, 2));
+    return;
+  }
+
+  if (command === "web-avatar:audit") {
+    const avatarId = process.argv[3]?.trim() || "showcase";
+    const directory = process.env.CONCLAVIA_WEB_AVATAR_DIRECTORY?.trim()
+      || ".conclavia/web-avatars";
+    const manifest = await loadWebAvatarManifest(directory, avatarId);
+    if (!manifest) throw new Error(`Web avatar manifest not found or invalid: ${avatarId}`);
+    const audit = await auditWebAvatar(manifest, webAvatarModelPath(directory, manifest));
+    console.log(JSON.stringify(audit, null, 2));
+    if (!audit.valid) process.exitCode = 1;
     return;
   }
 
@@ -85,6 +102,9 @@ async function main(): Promise<void> {
     rendererUrl:
       process.env.CONCLAVIA_RENDERER_URL?.trim() || `http://${host}:${port}`,
     rendererMode,
+    webAvatarDirectory:
+      process.env.CONCLAVIA_WEB_AVATAR_DIRECTORY?.trim()
+      || ".conclavia/web-avatars",
   });
 }
 

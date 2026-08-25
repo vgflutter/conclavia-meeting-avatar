@@ -890,7 +890,7 @@ function mountRendererPlayer(playerUrl, force = false, streamId = "") {
   ) {
     elements.rendererPreview.innerHTML = `
       <div class="renderer-frame-shell">
-        <iframe title="Conclavia MetaHuman" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" data-stream="${escapeHtml(streamId)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
+        <iframe title="Conclavia meeting avatar" src="${escapeHtml(outputUrl)}" data-source="${escapeHtml(playerUrl)}" data-stream="${escapeHtml(streamId)}" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
         <div class="renderer-frame-state" aria-live="polite"><span class="renderer-spinner" aria-hidden="true"></span>Collegamento al video…</div>
       </div>`;
     const mountedFrame = elements.rendererPreview.querySelector("iframe");
@@ -910,6 +910,8 @@ function mountRendererPlayer(playerUrl, force = false, streamId = "") {
 function renderRendererStatus(status) {
   const reachable = status.serverStatus !== "unreachable";
   const starting = rendererActionInProgress || status.starting === true;
+  const isWebRuntime = Boolean(status.webAvatar);
+  const webFallback = isWebRuntime && !status.webAvatar.installed;
   elements.rendererStartButton.disabled = rendererActionInProgress || !status.configured || !reachable || status.armed;
   elements.rendererStopButton.disabled = rendererActionInProgress || (!status.armed && !starting);
   elements.meetingAvatarSwitchButton.disabled = starting;
@@ -930,14 +932,16 @@ function renderRendererStatus(status) {
     const label = displayedProfile.charAt(0).toUpperCase() + displayedProfile.slice(1);
     elements.activeAvatarLabel.textContent = `${label} · ${avatarName}`;
     elements.meetingAvatarSelect.value = displayedProfile;
-    elements.stageSpeakerDetail.textContent = `MetaHuman ${label}`;
+    elements.stageSpeakerDetail.textContent = isWebRuntime
+      ? `Web avatar ${label}`
+      : `MetaHuman ${label}`;
   } else if (!activeAvatarProfile) {
     elements.activeAvatarLabel.textContent = `${currentConfig?.avatarProfile ?? "Avatar"} · configurato`;
   }
 
   if (starting) {
     elements.rendererPill.textContent = "Avatar: avvio";
-    elements.rendererStatus.textContent = "Cambio già in corso: Unreal e Pixel Streaming verranno collegati automaticamente, senza un secondo avvio.";
+    elements.rendererStatus.textContent = "Cambio già in corso: renderer e canale multimediale verranno collegati automaticamente, senza un secondo avvio.";
     elements.avatarSwitchStatus.className = "switching";
     elements.avatarSwitchStatus.textContent = `Sto caricando ${status.targetAvatarProfile || rendererActionProfile || currentConfig?.avatarProfile || "il MetaHuman"}; non premere altro, passerà automaticamente a LIVE.`;
   } else if (status.lastError && !status.available) {
@@ -958,15 +962,22 @@ function renderRendererStatus(status) {
     elements.avatarSwitchStatus.className = "";
     elements.avatarSwitchStatus.textContent = "Il bridge del renderer non è raggiungibile.";
   } else if (status.armed && status.available) {
-    elements.rendererPill.textContent = `Avatar: ${status.avatarProfile ?? activeAvatarProfile ?? "pronto"}`;
-    elements.rendererStatus.textContent = `MetaHuman pronto: la prossima risposta di ${avatarName} andrà in onda.`;
+    elements.rendererPill.textContent = webFallback
+      ? "Avatar: fallback fotografico"
+      : `Avatar: ${status.avatarProfile ?? activeAvatarProfile ?? "pronto"}`;
+    if (webFallback) elements.rendererPill.className = "status-pill warning";
+    elements.rendererStatus.textContent = webFallback
+      ? `Il Web LOD ${status.webAvatar.id} non è installato: il controllo funziona, ma il video usa il fallback fotografico.`
+      : isWebRuntime
+      ? `Web avatar 3D pronto${status.webAvatar.assetVersion ? ` · asset ${status.webAvatar.assetVersion}` : ""}: la prossima risposta di ${avatarName} andrà in onda.`
+      : `MetaHuman pronto: la prossima risposta di ${avatarName} andrà in onda.`;
     if (!elements.avatarSwitchStatus.classList.contains("switching")) {
       elements.avatarSwitchStatus.className = "ready";
       elements.avatarSwitchStatus.textContent = `${avatarName} è attiva: audio, labiale e mood verranno inviati al meeting.`;
     }
   } else if (status.armed) {
     elements.rendererPill.textContent = "Avatar: avvio";
-    elements.rendererStatus.textContent = "MetaHuman armato; il renderer sta completando l’avvio.";
+    elements.rendererStatus.textContent = "Avatar armato; il renderer sta completando l’avvio.";
   } else if (status.available) {
     elements.rendererPill.textContent = `Avatar: ${status.avatarProfile ?? activeAvatarProfile ?? "online"}`;
     elements.rendererStatus.textContent = `Renderer online. Premi “Avvia avatar” per collegarlo a ${avatarName}.`;
@@ -988,7 +999,7 @@ function renderRendererStatus(status) {
     elements.rendererOutputLink.hidden = true;
     renderRendererPlaceholder(
       starting
-        ? "Cambio avatar in corso: un solo avvio, collegamento automatico appena Unreal è pronto…"
+        ? "Cambio avatar in corso: un solo avvio, collegamento automatico appena il renderer è pronto…"
         : "Il renderer video è fermo. Premi “Avvia avatar” per collegarlo.",
       { loading: starting },
     );
@@ -1016,13 +1027,13 @@ elements.rendererStartButton.addEventListener("click", async () => {
   rendererActionProfile = currentConfig?.avatarProfile || activeAvatarProfile;
   elements.rendererStartButton.disabled = true;
   elements.rendererStartButton.innerHTML = '<span class="control-icon">◌</span><span>Avvio…</span>';
-  elements.rendererStatus.textContent = "Avvio MetaHuman e Pixel Streaming; può richiedere alcuni minuti.";
+  elements.rendererStatus.textContent = "Avvio del renderer e del canale multimediale; il Web runtime è immediato, Unreal può richiedere alcuni minuti.";
   elements.rendererPill.textContent = "Avatar: avvio";
   elements.stageLiveState.className = "stage-badge";
   elements.stageLiveState.textContent = "AVVIO…";
   elements.avatarSwitchStatus.className = "switching";
   elements.avatarSwitchStatus.textContent = "Collegamento del renderer e abilitazione delle risposte in corso…";
-  renderRendererPlaceholder("Sto avviando Unreal Engine e preparando il collegamento video…", { loading: true });
+  renderRendererPlaceholder("Sto avviando il renderer e preparando il collegamento video…", { loading: true });
   setDecision(`Sto attivando ${avatarName}.`, "listening");
   try {
     const result = await requestJson("/api/renderer/start", { method: "POST" });
@@ -1043,7 +1054,7 @@ elements.rendererStartButton.addEventListener("click", async () => {
     setDecision(
       result.starting
         ? `${avatarName} si sta collegando; non serve premere di nuovo Avvia avatar.`
-        : `${avatarName} è attiva: il prossimo intervento verrà riprodotto dal MetaHuman.`,
+        : `${avatarName} è attiva: il prossimo intervento verrà riprodotto dall’avatar.`,
       result.starting ? "listening" : "responding",
     );
     renderDebug(result, result.starting ? "AVATAR IN AVVIO" : "AVATAR ATTIVATO");
@@ -1071,8 +1082,8 @@ elements.meetingAvatarSwitchButton.addEventListener("click", async () => {
   elements.avatarSwitchStatus.textContent = `Sto caricando ${avatarProfile}. Il renderer può impiegare alcuni minuti…`;
   elements.stageLiveState.className = "stage-badge";
   elements.stageLiveState.textContent = "AVVIO…";
-  renderRendererPlaceholder("Cambio MetaHuman: riavvio di Unreal Engine e del collegamento video…", { loading: true });
-  setDecision(`Cambio MetaHuman in corso: ${avatarProfile}.`, "listening");
+  renderRendererPlaceholder("Cambio avatar: preparo il performer e il collegamento video…", { loading: true });
+  setDecision(`Cambio avatar in corso: ${avatarProfile}.`, "listening");
   try {
     const result = await requestJson("/api/renderer/avatar", {
       method: "POST",
@@ -1095,11 +1106,11 @@ elements.meetingAvatarSwitchButton.addEventListener("click", async () => {
     elements.avatarSwitchStatus.className = result.starting ? "switching" : "ready";
     elements.avatarSwitchStatus.textContent = result.starting
       ? `${avatarProfile} è in caricamento; diventerà attivo automaticamente.`
-      : `${avatarProfile} è ora il MetaHuman attivo.`;
+      : `${avatarProfile} è ora l’avatar attivo.`;
     setDecision(
       result.starting
         ? `Cambio verso ${avatarProfile} avviato; non serve premere Avvia avatar.`
-        : `${avatarName} ora usa il MetaHuman ${avatarProfile}.`,
+        : `${avatarName} ora usa l’avatar ${avatarProfile}.`,
       result.starting ? "listening" : "responding",
     );
     renderDebug(result, result.starting ? "CAMBIO AVATAR IN CORSO" : "CAMBIO AVATAR");

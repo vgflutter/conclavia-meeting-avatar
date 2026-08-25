@@ -40,6 +40,12 @@ body { background: #071026; }
   backdrop-filter: blur(14px);
 }
 
+#runtime[data-output="clean"] .runtime-badges,
+#runtime[data-output="clean"] .runtime-card,
+#runtime[data-output="clean"] #diagnostics {
+  display: none;
+}
+
 .runtime-badges span {
   border-radius: 999px;
   padding: 9px 14px;

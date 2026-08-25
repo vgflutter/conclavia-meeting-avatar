@@ -60,7 +60,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Live latency breakdown for the LLM, parallel TTS synthesis, Unreal cue/audio handoff, and total response time.
 - Versioned `PerformancePacket` output containing audio, Polly visemes, sentence-level expressions, gaze, gestures, interruption events, and an audio-master clock.
 - Server-Sent Events transport and immutable short-lived WAV assets for renderer-neutral playback.
-- A GPU-independent Web Performance Runtime that exposes a combined canvas and audio `MediaStream` for the future desktop virtual-camera adapter. Its current photographic performer is a synchronization diagnostic, not yet the final Web LOD.
+- A GPU-independent Web Performance Runtime with a rigged Three.js/glTF performer, explicit photographic fallback, and combined canvas plus audio `MediaStream` for the future desktop virtual-camera adapter.
 
 ## Participation model
 
@@ -202,6 +202,13 @@ connected consumers, latest sequence, and Web output URL. Event sequence IDs
 support deterministic recovery without replaying old speech after an output
 page refresh.
 
+When a compatible glTF performer is installed, the Web runtime renders it with
+Three.js, applies viseme and mood morph targets together, drives optional head
+and eye nodes, and crossfades authored idle, listening and physical-gesture
+clips. Without that asset it remains in the explicit photographic diagnostic
+mode. The complete asset contract, local directory layout and validation
+command are documented in the [Web avatar asset pipeline](docs/web-avatar-runtime.md).
+
 ### Showcase identity and visual fidelity
 
 The **Showcase** profile is a separate, reproducible UE 5.8 Cine assembly inspired by the visual family used on Epic's MetaHuman homepage. Epic does not publish that homepage character as a named Core Data preset, so the project does not present it as an exact downloadable identity. It starts from the closest installed Jelena family, keeps its own `MHC_Showcase` asset, requests 8K face and 4K body source textures, and uses the Cinematic assembly pipeline. The original 2K/Optimized Jelena profile remains available for comparison and is never overwritten.
@@ -276,15 +283,33 @@ Then use **Start avatar** normally and open
 [http://127.0.0.1:4310/web-output](http://127.0.0.1:4310/web-output). The current
 page proves audio-clock synchronization, real Polly visemes, all semantic mood
 tracks, gaze, gesture events, interruption, SSE recovery, and canvas plus audio
-`MediaStream` generation. Replacing its diagnostic photographic performer with
-an optimized rigged Web LOD is the next asset milestone; the protocol and
-meeting pipeline do not change when that asset arrives.
+`MediaStream` generation. If the selected avatar has a valid local manifest and
+GLB, it uses the Three.js skinned performer; otherwise it identifies the
+photographic fallback explicitly. The protocol and meeting pipeline are the
+same in both cases.
 
 For a one-command Web runtime run without editing `.env`:
 
 ```bash
 npm run studio:web:start
 ```
+
+Validate an installed Web LOD before using it:
+
+```bash
+npm run studio:web:avatar:audit -- showcase
+```
+
+With the companion running, verify both presentation modes in Google Chrome:
+
+```bash
+npm run studio:web:runtime:audit
+CONCLAVIA_WEB_RUNTIME_URL='http://127.0.0.1:4310/web-output?conclaviaOutput=obs' \
+  npm run studio:web:runtime:audit
+```
+
+The second command also fails if any console overlay leaks into the clean
+OBS/Teams/Meet feed.
 
 The web application can configure the meeting platform, avatar profile, name/trigger, model, native Italian and English voices, delivery style, API key, purpose, personality, system prompt, web search, autonomous requests to speak, and exceptional-conclusion applause. It also exposes six operational temperament traits: **calmness**, **assertiveness**, **impulsiveness**, **empathy**, **concision**, and **expressiveness**. These values are not cosmetic metadata: they shape response length, tone, listening and speaking mood intensity, and the minimum interval between autonomous requests to speak, while the materiality and confidence safety gates remain mandatory. Saving applies the new configuration without restarting the companion; if the meeting listener was active, it is restarted automatically. Changing the MetaHuman profile switches the warm Unreal performer immediately and does not require a second **Start avatar** action.
 

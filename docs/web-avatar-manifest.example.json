@@ -1,0 +1,72 @@
+{
+  "schema": "conclavia.web-avatar",
+  "version": 1,
+  "id": "showcase",
+  "displayName": "Mary Showcase Web LOD",
+  "assetVersion": "2026.08.1",
+  "model": "showcase.glb",
+  "framing": {
+    "camera": [0, 1.56, 1.18],
+    "target": [0, 1.49, 0],
+    "fov": 34,
+    "scale": 1
+  },
+  "nodes": {
+    "head": "head",
+    "leftEye": "eye_l",
+    "rightEye": "eye_r"
+  },
+  "morphs": {
+    "visemes": {
+      "sil": {},
+      "p": { "mouthClose": 0.9, "mouthPressLeft": 0.2, "mouthPressRight": 0.2 },
+      "t": { "jawOpen": 0.14, "mouthClose": 0.18 },
+      "S": { "mouthPucker": 0.4, "mouthFunnel": 0.2 },
+      "T": { "mouthFunnel": 0.55 },
+      "f": { "mouthLowerDownLeft": 0.22, "mouthLowerDownRight": 0.22, "mouthPressLeft": 0.18, "mouthPressRight": 0.18 },
+      "k": { "jawOpen": 0.3 },
+      "i": { "jawOpen": 0.13, "mouthSmileLeft": 0.2, "mouthSmileRight": 0.2 },
+      "r": { "mouthPucker": 0.26, "jawOpen": 0.12 },
+      "s": { "mouthStretchLeft": 0.34, "mouthStretchRight": 0.34, "jawOpen": 0.12 },
+      "u": { "mouthPucker": 0.54, "mouthFunnel": 0.18 },
+      "@": { "jawOpen": 0.35 },
+      "a": { "jawOpen": 0.58, "mouthFunnel": 0.12 },
+      "e": { "jawOpen": 0.34, "mouthSmileLeft": 0.16, "mouthSmileRight": 0.16 },
+      "E": { "jawOpen": 0.28, "mouthStretchLeft": 0.2, "mouthStretchRight": 0.2 },
+      "o": { "jawOpen": 0.46, "mouthFunnel": 0.52 },
+      "O": { "jawOpen": 0.32, "mouthPucker": 0.5 }
+    },
+    "moods": {
+      "neutral": {},
+      "attentive": { "browInnerUp": 0.12, "eyeWideLeft": 0.1, "eyeWideRight": 0.1 },
+      "curious": { "browOuterUpLeft": 0.28, "browOuterUpRight": 0.12 },
+      "amused": { "mouthSmileLeft": 0.55, "mouthSmileRight": 0.55, "cheekSquintLeft": 0.2, "cheekSquintRight": 0.2 },
+      "confident": { "mouthSmileLeft": 0.28, "mouthSmileRight": 0.28, "browOuterUpLeft": 0.1, "browOuterUpRight": 0.1 },
+      "skeptical": { "browDownLeft": 0.3, "browOuterUpRight": 0.24, "mouthDimpleLeft": 0.14 },
+      "concerned": { "browInnerUp": 0.42, "mouthFrownLeft": 0.2, "mouthFrownRight": 0.2 },
+      "surprised": { "browInnerUp": 0.7, "eyeWideLeft": 0.62, "eyeWideRight": 0.62, "jawOpen": 0.2 },
+      "empathetic": { "browInnerUp": 0.3, "mouthFrownLeft": 0.1, "mouthFrownRight": 0.1 },
+      "assertive": { "browDownLeft": 0.2, "browDownRight": 0.2, "mouthPressLeft": 0.12, "mouthPressRight": 0.12 },
+      "frustrated": { "browDownLeft": 0.44, "browDownRight": 0.44, "mouthPressLeft": 0.26, "mouthPressRight": 0.26 },
+      "reflective": { "browInnerUp": 0.16, "eyeSquintLeft": 0.12, "eyeSquintRight": 0.12 }
+    }
+  },
+  "clips": {
+    "idle": ["Idle_Attentive_A", "Idle_Attentive_B", "Idle_Breathe"],
+    "listening": ["Listen_Neutral_A", "Listen_Nod_Micro", "Listen_Reflective"],
+    "gestures": {
+      "nod": "Gesture_Nod",
+      "tilt": "Gesture_HeadTilt",
+      "emphasis": "Gesture_Emphasis",
+      "settle": "Gesture_Settle",
+      "raise-hand": "Gesture_RaiseHand_Seated",
+      "lower-hand": "Gesture_LowerHand_Seated",
+      "applause": "Gesture_Applause_Seated"
+    }
+  },
+  "environment": {
+    "background": "#123b35",
+    "keyLightIntensity": 2.4,
+    "fillLightIntensity": 1.1
+  }
+}

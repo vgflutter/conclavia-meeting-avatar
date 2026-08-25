@@ -6,9 +6,17 @@
     <meta name="color-scheme" content="dark" />
     <title>Conclavia Web Performance Runtime</title>
     <link rel="stylesheet" href="/web-output.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/vendor/three/build/three.module.js",
+          "three/addons/": "/vendor/three/examples/jsm/"
+        }
+      }
+    </script>
   </head>
   <body>
-    <main id="runtime" data-state="connecting" data-mood="neutral">
+    <main id="runtime" data-state="connecting" data-mood="neutral" data-output="console">
       <canvas id="stage" aria-label="Conclavia Web avatar runtime"></canvas>
       <div class="runtime-badges" aria-live="polite">
         <span id="live-badge">CONNESSIONE</span>

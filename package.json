@@ -21,6 +21,8 @@
     "studio:3d:start": "bash scripts/start-3d-studio.sh",
     "studio:3d:stop": "bash scripts/stop-3d-studio.sh",
     "studio:web:start": "CONCLAVIA_RENDERER_MODE=web node --env-file-if-exists=.env --import tsx src/cli.ts serve",
+    "studio:web:avatar:audit": "node --env-file-if-exists=.env --import tsx src/cli.ts web-avatar:audit",
+    "studio:web:runtime:audit": "node scripts/audit-web-runtime.cjs",
     "companion:start": "bash scripts/local-companion.sh start",
     "companion:stop": "bash scripts/local-companion.sh stop",
     "studio:source:audit": "bash scripts/audit-3d-source.sh",
@@ -46,6 +48,7 @@
     "@aws-sdk/credential-providers": "^3.1116.0",
     "@microsoft/teams.apps": "^2.0.15",
     "openai": "^7.5.0",
+    "three": "^0.185.1",
     "ws": "^8.21.3"
   }
 }

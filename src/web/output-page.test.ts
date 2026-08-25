@@ -7,6 +7,9 @@ const outputScriptUrl = new URL("../../public/output.js", import.meta.url);
 const managementScriptUrl = new URL("../../public/app.js", import.meta.url);
 const managementHtmlUrl = new URL("../../public/index.html", import.meta.url);
 const managementStylesUrl = new URL("../../public/styles.css", import.meta.url);
+const webOutputHtmlUrl = new URL("../../public/web-output.html", import.meta.url);
+const webOutputScriptUrl = new URL("../../public/web-output.js", import.meta.url);
+const webPerformerUrl = new URL("../../public/web-avatar-performer.js", import.meta.url);
 const serverUrl = new URL("../server.ts", import.meta.url);
 
 await test("keeps the OBS output free of meeting-console overlays", async () => {
@@ -25,6 +28,8 @@ await test("keeps the OBS output free of meeting-console overlays", async () => 
   assert.match(script, /reconnectStalledPlayer/);
   assert.match(managementScript, /frame\.dataset\.stream !== streamId/);
   assert.match(managementScript, /status\.streamId \|\| ""/);
+  assert.match(managementScript, /fallback fotografico/);
+  assert.match(managementScript, /Web avatar 3D pronto/);
 });
 
 await test("publishes decoded-frame heartbeats from the clean Unreal player", async () => {
@@ -52,4 +57,37 @@ await test("uses the Conclavia brand system in the meeting console", async () =>
   assert.match(styles, /--brand-navy:\s*#0b2d82/i);
   assert.match(styles, /--brand-blue:\s*#428cff/i);
   assert.match(server, /\/assets\/conclavia-logo\.png/);
+});
+
+await test("loads a rigged Web performer while retaining a diagnostic fallback", async () => {
+  const [html, output, performer, server] = await Promise.all([
+    readFile(webOutputHtmlUrl, "utf8"),
+    readFile(webOutputScriptUrl, "utf8"),
+    readFile(webPerformerUrl, "utf8"),
+    readFile(serverUrl, "utf8"),
+  ]);
+
+  assert.match(html, /type="importmap"/);
+  assert.match(html, /\/vendor\/three\/build\/three\.module\.js/);
+  assert.match(output, /loadThreeAvatarPerformer/);
+  assert.match(output, /Fallback fotografico/);
+  assert.match(output, /outputMode === "obs" \? "clean" : "console"/);
+  assert.match(html, /data-output="console"/);
+  assert.match(performer, /new THREE\.AnimationMixer/);
+  assert.match(performer, /morphTargetInfluences/);
+  assert.match(performer, /fadeIn\(0\.32\)/);
+  assert.match(server, /api\/performance\/avatar/);
+  assert.match(server, /model\/gltf-binary/);
+});
+
+await test("removes all Web runtime overlays from the OBS feed", async () => {
+  const [styles, output] = await Promise.all([
+    readFile(new URL("../../public/web-output.css", import.meta.url), "utf8"),
+    readFile(outputScriptUrl, "utf8"),
+  ]);
+
+  assert.match(output, /conclaviaOutput/);
+  assert.match(styles, /data-output="clean"[^}]+runtime-badges/s);
+  assert.match(styles, /data-output="clean"[^}]+runtime-card/s);
+  assert.match(styles, /data-output="clean"[^}]+#diagnostics/s);
 });
