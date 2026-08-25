@@ -412,5 +412,6 @@ await test("samples every licensed mood without coupling it to spoken audio", as
   assert.match(wrapper, /Start-Sleep -Milliseconds 520/);
   assert.match(wrapper, /authoring\/facial-controls/);
   assert.match(rendererManifest, /Sample-WebFacialControls\.ps1/);
+  assert.match(rendererManifest, /Sample-WebVisemeControls\.ps1/);
   assert.doesNotMatch(rendererManifest, /sample_web_facial_controls\.py/);
 });

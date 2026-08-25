@@ -68,6 +68,7 @@
     "unreal/ConclaviaStudio/Scripts/audit_web_facial_api.py",
     "unreal/ConclaviaStudio/Scripts/Audit-WebFacialApi.ps1",
     "unreal/ConclaviaStudio/Scripts/Sample-WebFacialControls.ps1",
+    "unreal/ConclaviaStudio/Scripts/Sample-WebVisemeControls.ps1",
     "unreal/ConclaviaStudio/Scripts/audit_official_facial_pose_catalog.py",
     "unreal/ConclaviaStudio/Scripts/Audit-OfficialFacialPoseCatalog.ps1",
     "unreal/ConclaviaStudio/Scripts/bake_web_facial_moods.py",
