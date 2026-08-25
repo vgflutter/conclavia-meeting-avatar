@@ -27,7 +27,8 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "test:e2e:meeting-audio": "bash scripts/test-meeting-audio-e2e.sh"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

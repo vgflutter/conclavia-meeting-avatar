@@ -467,7 +467,6 @@ export class MeetingIntelligence {
         model: this.transcriptionModel,
         language: "it",
         response_format: "json",
-        prompt: `Riunione di lavoro in italiano. Il nome dell'assistente virtuale è ${this.#options.avatarName}.`,
       }, { signal: controller.signal });
       return transcription.text.trim();
     } finally {

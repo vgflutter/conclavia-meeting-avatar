@@ -52,6 +52,7 @@ stop_companion() {
       return 1
     fi
   fi
+  rm -f "$PLIST_FILE"
 
   local pid=""
   for _ in $(seq 1 30); do
@@ -90,81 +91,32 @@ stop_companion() {
 }
 
 start_companion() {
-  mkdir -p "$RUNTIME_DIR" "$(dirname "$PLIST_FILE")"
+  mkdir -p "$RUNTIME_DIR"
   chmod 700 "$RUNTIME_DIR"
   stop_companion
 
   npm run build
-  REPO_ROOT="$REPO_ROOT" \
-  NODE_BIN=$(command -v node) \
-  RUNTIME_PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-  STDOUT_LOG="$STDOUT_LOG" \
-  STDERR_LOG="$STDERR_LOG" \
-  PLIST_FILE="$PLIST_FILE" \
-  LAUNCH_LABEL="$LAUNCH_LABEL" node <<'NODE'
-const fs = require("node:fs");
-const escapeXml = (value) => value
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll('"', "&quot;")
-  .replaceAll("'", "&apos;");
-const values = Object.fromEntries(
-  ["REPO_ROOT", "NODE_BIN", "RUNTIME_PATH", "STDOUT_LOG", "STDERR_LOG", "PLIST_FILE", "LAUNCH_LABEL"]
-    .map((key) => [key, escapeXml(process.env[key] || "")]),
-);
-const plist = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key><string>${values.LAUNCH_LABEL}</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>${values.NODE_BIN}</string>
-    <string>--env-file-if-exists=.env</string>
-    <string>dist/cli.js</string>
-    <string>serve</string>
-  </array>
-  <key>WorkingDirectory</key><string>${values.REPO_ROOT}</string>
-  <key>EnvironmentVariables</key>
-  <dict>
-    <key>PATH</key><string>${values.RUNTIME_PATH}</string>
-  </dict>
-  <key>RunAtLoad</key><true/>
-  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
-  <key>StandardOutPath</key><string>${values.STDOUT_LOG}</string>
-  <key>StandardErrorPath</key><string>${values.STDERR_LOG}</string>
-</dict>
-</plist>
-`;
-fs.writeFileSync(process.env.PLIST_FILE, plist, { mode: 0o600 });
-NODE
   : > "$STDOUT_LOG"
   : > "$STDERR_LOG"
-  chmod 600 "$PLIST_FILE" "$STDOUT_LOG" "$STDERR_LOG"
-  local bootstrap_error=""
-  if ! bootstrap_error=$(launchctl bootstrap "$LAUNCH_DOMAIN" "$PLIST_FILE" 2>&1); then
-    # Some macOS releases can return EIO after accepting the job. If the job
-    # is present, kick it once; otherwise perform one clean bootstrap retry.
-    if is_service_loaded; then
-      launchctl kickstart -k "$LAUNCH_DOMAIN/$LAUNCH_LABEL"
-    else
-      sleep 0.5
-      if ! bootstrap_error=$(launchctl bootstrap "$LAUNCH_DOMAIN" "$PLIST_FILE" 2>&1); then
-        echo "$bootstrap_error" >&2
-        return 1
-      fi
-    fi
-  fi
+  chmod 600 "$STDOUT_LOG" "$STDERR_LOG"
+
+  # Microphone access is attributed by macOS TCC to the responsible interactive
+  # application. A launchd daemon can open BlackHole but receives unusable audio.
+  # Starting this detached child from the user's studio command preserves the
+  # already-authorized Terminal/IDE context while keeping the companion alive.
+  nohup "$(command -v node)" --env-file-if-exists=.env dist/cli.js serve \
+    >"$STDOUT_LOG" 2>"$STDERR_LOG" </dev/null &
+  local companion_pid=$!
+  printf '%s\n' "$companion_pid" > "$PID_FILE"
+  chmod 600 "$PID_FILE"
 
   for _ in $(seq 1 100); do
     if is_companion_api; then
-      local pid
-      pid=$(listening_pid)
-      printf '%s\n' "$pid" > "$PID_FILE"
-      chmod 600 "$PID_FILE"
       echo "$BASE_URL"
       return
+    fi
+    if ! kill -0 "$companion_pid" 2>/dev/null; then
+      break
     fi
     sleep 0.1
   done

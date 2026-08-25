@@ -42,10 +42,32 @@ if [[ "$CURRENT_STATE" == "stopping" ]]; then
     --region "$AWS_REGION" \
     --instance-ids "$INSTANCE_ID"
 fi
-aws ec2 start-instances \
-  --region "$AWS_REGION" \
-  --instance-ids "$INSTANCE_ID" \
-  --output text >/dev/null
+# GPU capacity can be temporarily unavailable in a single Availability Zone.
+# Retry the idempotent start request before failing; this avoids turning a
+# short EC2 allocation race into a manual restart of the whole local stack.
+STARTED=false
+for attempt in $(seq 1 8); do
+  START_OUTPUT=""
+  if START_OUTPUT=$(aws ec2 start-instances \
+    --region "$AWS_REGION" \
+    --instance-ids "$INSTANCE_ID" \
+    --output text 2>&1); then
+    STARTED=true
+    break
+  fi
+  if [[ "$START_OUTPUT" != *"InsufficientInstanceCapacity"* ]]; then
+    echo "$START_OUTPUT" >&2
+    exit 1
+  fi
+  if (( attempt < 8 )); then
+    echo "Capacità GPU temporaneamente esaurita; nuovo tentativo $((attempt + 1))/8 tra 15 secondi…"
+    sleep 15
+  fi
+done
+if [[ "$STARTED" != "true" ]]; then
+  echo "$START_OUTPUT" >&2
+  exit 1
+fi
 aws ec2 wait instance-running \
   --region "$AWS_REGION" \
   --instance-ids "$INSTANCE_ID"

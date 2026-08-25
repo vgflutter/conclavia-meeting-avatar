@@ -23,7 +23,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 
 ## Current capabilities
 
-- Continuous meeting audio capture from BlackHole 16ch using ffmpeg and OpenAI Realtime transcription.
+- Continuous meeting audio capture from BlackHole 16ch using ffmpeg, client-side turn detection, and low-latency OpenAI transcription.
 - Canonical speaker-attributed caption ingestion for safe natural dialogue in multi-participant Teams, Meet, and generic meetings.
 - Persistent meeting memory: every final utterance is retained and evaluated by the LLM, including turns that do not address the avatar.
 - Low-latency participation lanes: direct questions use a compact response contract, ordinary listening turns use a minimal mood-only contract, and only genuine autonomous-intervention candidates pay for the full decision schema.
@@ -266,7 +266,7 @@ CONCLAVIA_MEETING_AUDIO_DEVICE=BlackHole 16ch
 CONCLAVIA_MEETING_SPEAKER_NAME=Meeting participant
 OPENAI_RESPONSE_MODEL=gpt-5.4-mini
 OPENAI_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
-OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-live-transcribe
+OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
 ```
 
 The chat enable switch and command aliases are stored in the local avatar configuration and edited from the web application.
@@ -285,6 +285,11 @@ MetaHuman, waits for the video to become live and starts meeting listening when
 OpenAI is configured. The command does not report the studio as ready until the
 avatar is actually live. Stop both the companion and GPU billing with
 `npm run studio:3d:stop`.
+
+On macOS the companion is launched as a detached child of this interactive
+command, rather than as a LaunchAgent. This keeps BlackHole capture inside the
+Terminal or IDE microphone-permission context; moving it to `launchd` can yield
+corrupted transcription even when the device opens normally.
 
 The OpenAI API key is the only required one-time local configuration. Enter it
 under **Configuration** and save it; subsequent `studio:3d:start` runs reuse the
@@ -355,6 +360,19 @@ npm run typecheck
 npm test
 npm run build
 ```
+
+With the companion and Unreal renderer running, exercise the real BlackHole
+capture, turn detection, transcription, wake word, LLM answer, and renderer
+delivery path:
+
+```bash
+npm run test:e2e:meeting-audio
+```
+
+The E2E expects Mary to answer a spoken `2 + 2` question with “four” and fails
+unless the synchronized cue reaches the renderer. Set
+`CONCLAVIA_E2E_REQUIRE_RENDERER=false` only when isolating the local audio and
+LLM path during an AWS outage.
 
 ## Privacy and security
 

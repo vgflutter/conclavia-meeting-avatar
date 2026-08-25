@@ -2,7 +2,7 @@ import { spawn, type ChildProcessByStdio } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import type { Readable } from "node:stream";
 
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 import { OpenAIRealtimeWS } from "openai/realtime/ws";
 
 import {
@@ -17,9 +17,11 @@ import {
 
 const pcmChunkBytes = 4_800; // 100 ms of mono PCM16 at 24 kHz.
 const connectionTimeoutMs = 15_000;
-const clientVadSpeechThreshold = 0.0035;
-const clientVadHoldThreshold = 0.001;
-const clientVadSilenceChunks = 5; // 500 ms at the current chunk size.
+const clientVadSpeechThreshold = 0.0025;
+const clientVadHoldThreshold = 0.0005;
+const clientVadSilenceChunks = 9; // 900 ms keeps natural pauses inside one utterance.
+const clientVadPrerollChunks = 4; // Preserve 400 ms before the first detected syllable.
+const clientVadMaxTurnChunks = 120; // Never leave a noisy meeting turn open beyond 12 seconds.
 const reconnectInitialDelayMs = 1_000;
 const reconnectMaxDelayMs = 30_000;
 const ffmpegForceKillDelayMs = 750;
@@ -33,6 +35,24 @@ export function pcm16Rms(chunk: Buffer): number {
     squareSum += sample * sample;
   }
   return Math.sqrt(squareSum / sampleCount);
+}
+
+export function pcm16MonoToWav(pcm: Buffer, sampleRate = 24_000): Buffer {
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0, "ascii");
+  header.writeUInt32LE(36 + pcm.byteLength, 4);
+  header.write("WAVE", 8, "ascii");
+  header.write("fmt ", 12, "ascii");
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(sampleRate * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write("data", 36, "ascii");
+  header.writeUInt32LE(pcm.byteLength, 40);
+  return Buffer.concat([header, pcm]);
 }
 
 export function canSpeculateAddressedTurn(text: string, wakeWord: string): boolean {
@@ -57,8 +77,13 @@ function normalizedTranscript(value: string): string {
 export function isTranscriptionPromptEcho(text: string, wakeWord: string): boolean {
   const normalized = normalizedTranscript(text);
   const name = normalizedTranscript(wakeWord);
-  return normalized === `riunione di lavoro in italiano l assistente virtuale si chiama ${name}`
-    || normalized === `riunione di lavoro l assistente virtuale si chiama ${name}`;
+  const promptEchoes = [
+    `riunione di lavoro in italiano l assistente virtuale si chiama ${name}`,
+    `riunione di lavoro l assistente virtuale si chiama ${name}`,
+    `riunione di lavoro in italiano il nome dell assistente virtuale e ${name}`,
+    `riunione di lavoro il nome dell assistente virtuale e ${name}`,
+  ];
+  return promptEchoes.includes(normalized);
 }
 
 export type MeetingListenerPhase = "stopped" | "starting" | "running" | "stopping" | "error";
@@ -82,6 +107,9 @@ export interface MeetingListenerStatus {
   confirmedAudioTurns: number;
   transcriptionFailures: number;
   lastRealtimeEvent: string | null;
+  lastRawTranscript: string | null;
+  ignoredTranscriptionTurns: number;
+  lastIgnoredTranscriptReason: "empty" | "prompt-echo" | null;
   completedTurns: number;
   lastSegment: TranscriptSegment | null;
   lastResult: unknown;
@@ -122,6 +150,7 @@ export class MeetingListener {
   readonly #options: MeetingListenerOptions;
   #phase: MeetingListenerPhase = "stopped";
   #realtime: OpenAIRealtimeWS | null = null;
+  #openai: OpenAI | null = null;
   #ffmpeg: ChildProcessByStdio<null, Readable, Readable> | null = null;
   #resolvedAudioDevice: string | null = null;
   #connectedAt: string | null = null;
@@ -135,6 +164,9 @@ export class MeetingListener {
   #confirmedAudioTurns = 0;
   #transcriptionFailures = 0;
   #lastRealtimeEvent: string | null = null;
+  #lastRawTranscript: string | null = null;
+  #ignoredTranscriptionTurns = 0;
+  #lastIgnoredTranscriptReason: "empty" | "prompt-echo" | null = null;
   #completedTurns = 0;
   #lastSegment: TranscriptSegment | null = null;
   #lastResult: unknown = null;
@@ -143,6 +175,12 @@ export class MeetingListener {
   #manualTurnDetection = false;
   #clientVadSpeechSeen = false;
   #clientVadSilentChunks = 0;
+  #clientVadPreroll: Buffer[] = [];
+  #clientVadTurnChunks = 0;
+  #clientVadPeakRms = 0;
+  #localFileTranscription = false;
+  #localAudioChunks: Buffer[] = [];
+  #transcriptionQueue: Promise<void> = Promise.resolve();
   #activePartialItemId: string | null = null;
   #partialByItem = new Map<string, string>();
   #speculativeByItem = new Map<string, TranscriptSegment>();
@@ -165,7 +203,7 @@ export class MeetingListener {
       model: this.#options.transcriptionModel,
       turnDetection: this.#manualTurnDetection
         ? `client-vad-${clientVadSilenceChunks * 100}ms`
-        : "server-vad-450ms",
+        : "server-vad-350ms",
       connectedAt: this.#connectedAt,
       speechDetected: this.#speechDetected,
       partialTranscript: this.#partialTranscript,
@@ -177,6 +215,9 @@ export class MeetingListener {
       confirmedAudioTurns: this.#confirmedAudioTurns,
       transcriptionFailures: this.#transcriptionFailures,
       lastRealtimeEvent: this.#lastRealtimeEvent,
+      lastRawTranscript: this.#lastRawTranscript,
+      ignoredTranscriptionTurns: this.#ignoredTranscriptionTurns,
+      lastIgnoredTranscriptReason: this.#lastIgnoredTranscriptReason,
       completedTurns: this.#completedTurns,
       lastSegment: this.#lastSegment,
       lastResult: this.#lastResult,
@@ -202,6 +243,9 @@ export class MeetingListener {
     this.#confirmedAudioTurns = 0;
     this.#transcriptionFailures = 0;
     this.#lastRealtimeEvent = null;
+    this.#lastRawTranscript = null;
+    this.#ignoredTranscriptionTurns = 0;
+    this.#lastIgnoredTranscriptReason = null;
 
     try {
       const devices = await listAvfoundationAudioDevices();
@@ -215,6 +259,7 @@ export class MeetingListener {
       this.#resolvedAudioDevice = `${device.name} (indice ${device.index})`;
 
       const client = new OpenAI({ apiKey: this.#options.apiKey });
+      this.#openai = client;
       const realtime = new OpenAIRealtimeWS({ intent: "transcription" }, client);
       this.#realtime = realtime;
       realtime.on("event", (event) => {
@@ -244,7 +289,18 @@ export class MeetingListener {
         if (this.#activePartialItemId === event.item_id) this.#activePartialItemId = null;
         this.#partialTranscript = "";
         const transcript = event.transcript.trim();
-        if (!transcript || isTranscriptionPromptEcho(transcript, this.#options.wakeWord)) return;
+        this.#lastRawTranscript = transcript;
+        if (!transcript) {
+          this.#ignoredTranscriptionTurns += 1;
+          this.#lastIgnoredTranscriptReason = "empty";
+          return;
+        }
+        if (isTranscriptionPromptEcho(transcript, this.#options.wakeWord)) {
+          this.#ignoredTranscriptionTurns += 1;
+          this.#lastIgnoredTranscriptReason = "prompt-echo";
+          return;
+        }
+        this.#lastIgnoredTranscriptReason = null;
         const speculative = this.#speculativeByItem.get(event.item_id);
         if (speculative) {
           speculative.text = transcript;
@@ -275,7 +331,14 @@ export class MeetingListener {
       const supportsLiveHints = ["gpt-live-transcribe", "gpt-transcribe"].includes(
         this.#options.transcriptionModel,
       );
-      this.#manualTurnDetection = ["gpt-live-transcribe", "gpt-transcribe"].includes(
+      this.#manualTurnDetection = [
+        "gpt-live-transcribe",
+        "gpt-transcribe",
+        "gpt-4o-mini-transcribe",
+      ].includes(
+        this.#options.transcriptionModel,
+      );
+      this.#localFileTranscription = ["gpt-transcribe", "gpt-4o-mini-transcribe"].includes(
         this.#options.transcriptionModel,
       );
       realtime.send({
@@ -310,9 +373,9 @@ export class MeetingListener {
                 type: "server_vad",
                 create_response: false,
                 interrupt_response: false,
-                threshold: 0.5,
-                prefix_padding_ms: 300,
-                silence_duration_ms: 450,
+                threshold: 0.12,
+                prefix_padding_ms: 600,
+                silence_duration_ms: 350,
               },
             },
           },
@@ -331,8 +394,8 @@ export class MeetingListener {
           "avfoundation",
           "-i",
           `:${device.index}`,
-          "-ac",
-          "1",
+          "-af",
+          "pan=mono|c0=c0",
           "-ar",
           "24000",
           "-c:a",
@@ -388,7 +451,10 @@ export class MeetingListener {
     this.#phase = "stopping";
     this.#cleanup();
     await Promise.race([
-      this.#turnQueue.catch(() => undefined),
+      Promise.all([
+        this.#transcriptionQueue.catch(() => undefined),
+        this.#turnQueue.catch(() => undefined),
+      ]).then(() => undefined),
       new Promise<void>((resolve) => setTimeout(resolve, 1_500)),
     ]);
     this.#phase = "stopped";
@@ -411,24 +477,53 @@ export class MeetingListener {
       this.#pendingAudio = this.#pendingAudio.subarray(pcmChunkBytes);
       this.#audioRms = pcm16Rms(pcm);
       if (this.#audioRms >= clientVadSpeechThreshold) this.#audibleAudioChunks += 1;
-      realtime.send({ type: "input_audio_buffer.append", audio: pcm.toString("base64") });
-      if (this.#manualTurnDetection) this.#detectManualTurn(pcm, realtime);
+      if (this.#manualTurnDetection) {
+        this.#appendManualAudio(pcm, this.#audioRms, realtime);
+      } else {
+        realtime.send({ type: "input_audio_buffer.append", audio: pcm.toString("base64") });
+      }
     }
   }
 
-  #detectManualTurn(pcm: Buffer, realtime: OpenAIRealtimeWS): void {
-    const threshold = this.#clientVadSpeechSeen
-      ? clientVadHoldThreshold
-      : clientVadSpeechThreshold;
-    if (pcm16Rms(pcm) >= threshold) {
+  #appendManualAudio(pcm: Buffer, rms: number, realtime: OpenAIRealtimeWS): void {
+    if (!this.#clientVadSpeechSeen) {
+      if (rms < clientVadSpeechThreshold) {
+        this.#clientVadPreroll.push(Buffer.from(pcm));
+        if (this.#clientVadPreroll.length > clientVadPrerollChunks) {
+          this.#clientVadPreroll.shift();
+        }
+        return;
+      }
+
       this.#clientVadSpeechSeen = true;
       this.#clientVadSilentChunks = 0;
+      this.#clientVadTurnChunks = 1;
+      this.#clientVadPeakRms = rms;
       this.#speechDetected = true;
+      for (const prefix of this.#clientVadPreroll) {
+        this.#appendTurnAudio(prefix, realtime);
+      }
+      this.#clientVadPreroll = [];
+      this.#appendTurnAudio(pcm, realtime);
       return;
     }
-    if (!this.#clientVadSpeechSeen) return;
-    this.#clientVadSilentChunks += 1;
-    if (this.#clientVadSilentChunks < clientVadSilenceChunks) return;
+
+    this.#appendTurnAudio(pcm, realtime);
+    this.#clientVadTurnChunks += 1;
+    this.#clientVadPeakRms = Math.max(this.#clientVadPeakRms, rms);
+    // Once speech starts, keep a fixed low floor. A relative floor tied to the
+    // loudest syllable truncates quieter words after a transient or plosive.
+    if (rms >= clientVadHoldThreshold) {
+      this.#clientVadSilentChunks = 0;
+      this.#speechDetected = true;
+      if (this.#clientVadTurnChunks < clientVadMaxTurnChunks) return;
+    } else {
+      this.#clientVadSilentChunks += 1;
+      if (
+        this.#clientVadSilentChunks < clientVadSilenceChunks
+        && this.#clientVadTurnChunks < clientVadMaxTurnChunks
+      ) return;
+    }
 
     const itemId = this.#activePartialItemId;
     const partial = itemId ? this.#partialByItem.get(itemId)?.trim() : undefined;
@@ -443,11 +538,62 @@ export class MeetingListener {
     ) {
       this.#speculativeByItem.set(itemId, this.#enqueueTranscript(partial, itemId));
     }
-    realtime.send({ type: "input_audio_buffer.commit" });
     this.#committedAudioTurns += 1;
+    if (this.#localFileTranscription) {
+      const audio = Buffer.concat(this.#localAudioChunks);
+      this.#localAudioChunks = [];
+      this.#confirmedAudioTurns += 1;
+      this.#queueLocalTranscription(audio);
+    } else {
+      realtime.send({ type: "input_audio_buffer.commit" });
+    }
     this.#clientVadSpeechSeen = false;
     this.#clientVadSilentChunks = 0;
+    this.#clientVadPreroll = [];
+    this.#clientVadTurnChunks = 0;
+    this.#clientVadPeakRms = 0;
     this.#speechDetected = false;
+  }
+
+  #appendTurnAudio(pcm: Buffer, realtime: OpenAIRealtimeWS): void {
+    if (this.#localFileTranscription) {
+      this.#localAudioChunks.push(Buffer.from(pcm));
+      return;
+    }
+    realtime.send({ type: "input_audio_buffer.append", audio: pcm.toString("base64") });
+  }
+
+  #queueLocalTranscription(pcm: Buffer): void {
+    this.#transcriptionQueue = this.#transcriptionQueue
+      .then(async () => {
+        if (this.#phase !== "running" || pcm.byteLength === 0 || !this.#openai) return;
+        const wav = pcm16MonoToWav(pcm);
+        const file = await toFile(wav, `meeting-turn-${Date.now()}.wav`, { type: "audio/wav" });
+        const transcription = await this.#openai.audio.transcriptions.create({
+          file,
+          model: this.#options.transcriptionModel,
+          language: "it",
+          response_format: "json",
+        });
+        const transcript = transcription.text.trim();
+        this.#lastRawTranscript = transcript;
+        if (!transcript) {
+          this.#ignoredTranscriptionTurns += 1;
+          this.#lastIgnoredTranscriptReason = "empty";
+          return;
+        }
+        if (isTranscriptionPromptEcho(transcript, this.#options.wakeWord)) {
+          this.#ignoredTranscriptionTurns += 1;
+          this.#lastIgnoredTranscriptReason = "prompt-echo";
+          return;
+        }
+        this.#lastIgnoredTranscriptReason = null;
+        this.#enqueueTranscript(transcript);
+      })
+      .catch((error: unknown) => {
+        this.#transcriptionFailures += 1;
+        this.#lastError = `Trascrizione turno: ${errorMessage(error)}`;
+      });
   }
 
   #enqueueTranscript(text: string, id: string = randomUUID()): TranscriptSegment {
@@ -521,6 +667,11 @@ export class MeetingListener {
     this.#manualTurnDetection = false;
     this.#clientVadSpeechSeen = false;
     this.#clientVadSilentChunks = 0;
+    this.#clientVadPreroll = [];
+    this.#clientVadTurnChunks = 0;
+    this.#clientVadPeakRms = 0;
+    this.#localFileTranscription = false;
+    this.#localAudioChunks = [];
     this.#activePartialItemId = null;
     this.#partialByItem.clear();
     this.#speculativeByItem.clear();
