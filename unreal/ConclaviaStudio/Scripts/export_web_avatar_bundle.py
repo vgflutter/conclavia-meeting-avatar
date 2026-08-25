@@ -186,7 +186,9 @@ def main() -> None:
         export_object(
             animation,
             OUTPUT_DIRECTORY / filename,
-            configure_options(preview_mesh=True),
+            # The base GLB already owns the MetaHuman mesh and textures. Keep
+            # body performances as compact skeleton-plus-track assets.
+            configure_options(preview_mesh=False),
         )
         animation_files.append(filename)
 
