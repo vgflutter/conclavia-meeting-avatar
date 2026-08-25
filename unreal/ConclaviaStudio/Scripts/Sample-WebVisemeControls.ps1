@@ -7,24 +7,24 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$visemes = [ordered]@{
-    p = "p.pcm"
-    t = "t.pcm"
-    S = "sh.pcm"
-    T = "th.pcm"
-    f = "f.pcm"
-    k = "k.pcm"
-    i = "i.pcm"
-    r = "r.pcm"
-    s = "s.pcm"
-    u = "u.pcm"
-    "@" = "schwa.pcm"
-    a = "a.pcm"
-    e = "e-close.pcm"
-    E = "e-open.pcm"
-    o = "o-close.pcm"
-    O = "o-open.pcm"
-}
+$visemes = @(
+    [pscustomobject]@{ viseme = "p"; source = "p.pcm" }
+    [pscustomobject]@{ viseme = "t"; source = "t.pcm" }
+    [pscustomobject]@{ viseme = "S"; source = "sh.pcm" }
+    [pscustomobject]@{ viseme = "T"; source = "th.pcm" }
+    [pscustomobject]@{ viseme = "f"; source = "f.pcm" }
+    [pscustomobject]@{ viseme = "k"; source = "k.pcm" }
+    [pscustomobject]@{ viseme = "i"; source = "i.pcm" }
+    [pscustomobject]@{ viseme = "r"; source = "r.pcm" }
+    [pscustomobject]@{ viseme = "s"; source = "s.pcm" }
+    [pscustomobject]@{ viseme = "u"; source = "u.pcm" }
+    [pscustomobject]@{ viseme = "@"; source = "schwa.pcm" }
+    [pscustomobject]@{ viseme = "a"; source = "a.pcm" }
+    [pscustomobject]@{ viseme = "e"; source = "e-close.pcm" }
+    [pscustomobject]@{ viseme = "E"; source = "e-open.pcm" }
+    [pscustomobject]@{ viseme = "o"; source = "o-close.pcm" }
+    [pscustomobject]@{ viseme = "O"; source = "o-open.pcm" }
+)
 
 function Wait-RendererReady {
     param([int]$TimeoutSeconds = 180)
@@ -64,17 +64,17 @@ function Wait-SpeechIdle {
     throw "The commercial speech solver did not become idle."
 }
 
-foreach ($entry in $visemes.GetEnumerator()) {
-    $pcmPath = Join-Path $InputDirectory $entry.Value
+foreach ($entry in $visemes) {
+    $pcmPath = Join-Path $InputDirectory $entry.source
     if (-not (Test-Path -LiteralPath $pcmPath)) {
-        throw "Missing calibrated PCM for viseme $($entry.Key): $pcmPath"
+        throw "Missing calibrated PCM for viseme $($entry.viseme): $pcmPath"
     }
 }
 
 $health = Wait-RendererReady
-$captures = [ordered]@{}
+$captures = [System.Collections.Generic.List[object]]::new()
 
-foreach ($entry in $visemes.GetEnumerator()) {
+foreach ($entry in $visemes) {
     Wait-SpeechIdle | Out-Null
 
     $neutral = @{
@@ -90,7 +90,7 @@ foreach ($entry in $visemes.GetEnumerator()) {
         -TimeoutSec 5 | Out-Null
     Start-Sleep -Milliseconds 180
 
-    $pcmPath = Join-Path $InputDirectory $entry.Value
+    $pcmPath = Join-Path $InputDirectory $entry.source
     [byte[]]$pcm = [System.IO.File]::ReadAllBytes($pcmPath)
     $durationMs = [Math]::Round(($pcm.Length / 2.0 / 16000.0) * 1000.0)
     $speechResponse = Invoke-RestMethod `
@@ -100,7 +100,7 @@ foreach ($entry in $visemes.GetEnumerator()) {
         -Body $pcm `
         -TimeoutSec 10
     if ($speechResponse.ok -eq $false) {
-        throw "The renderer rejected calibrated speech for viseme $($entry.Key)."
+        throw "The renderer rejected calibrated speech for viseme $($entry.viseme)."
     }
 
     $frames = [System.Collections.Generic.List[object]]::new()
@@ -122,13 +122,14 @@ foreach ($entry in $visemes.GetEnumerator()) {
     } while ($timer.ElapsedMilliseconds -lt $captureDeadlineMs)
     $timer.Stop()
 
-    $captures[$entry.Key] = [ordered]@{
-        source = $entry.Value
+    $captures.Add([ordered]@{
+        viseme = $entry.viseme
+        source = $entry.source
         pcmBytes = $pcm.Length
         durationMs = $durationMs
         frameCount = $frames.Count
         frames = $frames
-    }
+    })
 }
 
 Wait-SpeechIdle | Out-Null
@@ -152,7 +153,7 @@ $report = [ordered]@{
     runtimeRevision = $health.runtimeRevision
     engineVersion = $health.engineVersion
     sampleIntervalMs = $SampleIntervalMs
-    captures = $captures
+    captures = @($captures)
 }
 
 $directory = Split-Path $OutputPath -Parent
@@ -163,6 +164,6 @@ $report | ConvertTo-Json -Depth 14 | Set-Content -LiteralPath $OutputPath -Encod
     path = $OutputPath
     bytes = (Get-Item -LiteralPath $OutputPath).Length
     visemes = $captures.Count
-    frames = [int](($captures.Values | ForEach-Object { $_.frameCount } | Measure-Object -Sum).Sum)
+    frames = [int](($captures | ForEach-Object { $_.frameCount } | Measure-Object -Sum).Sum)
     runtimeRevision = $health.runtimeRevision
 } | ConvertTo-Json -Compress

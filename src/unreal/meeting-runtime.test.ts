@@ -384,8 +384,8 @@ await test("audits the licensed facial generator before authoring Web clips", as
   assert.match(rendererManifest, /Audit-WebFacialApi\.ps1/);
 });
 
-await test("samples every licensed mood without coupling it to spoken audio", async () => {
-  const [moduleSource, wrapper, rendererManifest] = await Promise.all([
+await test("samples every licensed mood and case-sensitive viseme", async () => {
+  const [moduleSource, wrapper, visemeWrapper, rendererManifest] = await Promise.all([
     readFile(
       repositoryFile(
         "unreal/ConclaviaStudio/Source/ConclaviaStudio/Private/ConclaviaStudioModule.cpp",
@@ -394,6 +394,10 @@ await test("samples every licensed mood without coupling it to spoken audio", as
     ),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/Sample-WebFacialControls.ps1"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Sample-WebVisemeControls.ps1"),
       "utf8",
     ),
     readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
@@ -411,6 +415,12 @@ await test("samples every licensed mood without coupling it to spoken audio", as
   assert.match(wrapper, /silenceChunks = 8/);
   assert.match(wrapper, /Start-Sleep -Milliseconds 520/);
   assert.match(wrapper, /authoring\/facial-controls/);
+  assert.match(visemeWrapper, /viseme = "S"; source = "sh\.pcm"/);
+  assert.match(visemeWrapper, /viseme = "T"; source = "th\.pcm"/);
+  assert.match(visemeWrapper, /viseme = "e"; source = "e-close\.pcm"/);
+  assert.match(visemeWrapper, /viseme = "E"; source = "e-open\.pcm"/);
+  assert.match(visemeWrapper, /\$captures\.Add/);
+  assert.doesNotMatch(visemeWrapper, /\$visemes = \[ordered\]@/);
   assert.match(rendererManifest, /Sample-WebFacialControls\.ps1/);
   assert.match(rendererManifest, /Sample-WebVisemeControls\.ps1/);
   assert.doesNotMatch(rendererManifest, /sample_web_facial_controls\.py/);
