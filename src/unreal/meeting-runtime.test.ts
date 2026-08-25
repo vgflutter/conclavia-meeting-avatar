@@ -422,6 +422,8 @@ await test("samples every licensed mood and case-sensitive viseme", async () => 
   assert.match(visemeWrapper, /\$captures\.Add/);
   assert.match(visemeWrapper, /commercialModelReady -eq \$true/);
   assert.doesNotMatch(visemeWrapper, /commercialControlsBound -eq \$true/);
+  assert.match(visemeWrapper, /\$durationMs \+ 480/);
+  assert.match(visemeWrapper, /Wait-RendererReady \| Out-Null/);
   assert.doesNotMatch(visemeWrapper, /\$visemes = \[ordered\]@/);
   assert.match(rendererManifest, /Sample-WebFacialControls\.ps1/);
   assert.match(rendererManifest, /Sample-WebVisemeControls\.ps1/);

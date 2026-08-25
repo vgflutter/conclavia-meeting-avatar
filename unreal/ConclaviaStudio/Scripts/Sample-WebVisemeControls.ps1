@@ -72,6 +72,7 @@ $captures = [System.Collections.Generic.List[object]]::new()
 
 foreach ($entry in $visemes) {
     Wait-SpeechIdle | Out-Null
+    Wait-RendererReady | Out-Null
 
     $neutral = @{
         mood = "neutral"
@@ -101,12 +102,21 @@ foreach ($entry in $visemes) {
 
     $frames = [System.Collections.Generic.List[object]]::new()
     $timer = [System.Diagnostics.Stopwatch]::StartNew()
-    $captureDeadlineMs = $durationMs + 900
+    # The vendor explicitly creates one generator per playback and begins
+    # warming its replacement 620 ms after the source audio duration. Stop
+    # sampling before that handoff so a healthy lifecycle is never mistaken
+    # for a failed model.
+    $captureDeadlineMs = $durationMs + 480
     do {
-        $sample = Invoke-RestMethod `
-            -Uri "$ControlUrl/authoring/facial-controls" `
-            -Method Get `
-            -TimeoutSec 5
+        try {
+            $sample = Invoke-RestMethod `
+                -Uri "$ControlUrl/authoring/facial-controls" `
+                -Method Get `
+                -TimeoutSec 5
+        } catch {
+            if ($frames.Count -gt 0) { break }
+            throw
+        }
         if ($sample.ok -ne $false -and $sample.controls) {
             $frames.Add([ordered]@{
                 atMs = [int]$timer.ElapsedMilliseconds
