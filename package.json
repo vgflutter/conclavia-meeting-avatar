@@ -24,6 +24,7 @@
     "studio:web:avatar:audit": "node --env-file-if-exists=.env --import tsx src/cli.ts web-avatar:audit",
     "studio:web:avatar:install": "node --env-file-if-exists=.env --import tsx src/cli.ts web-avatar:install",
     "studio:web:avatar:probe": "node --env-file-if-exists=.env --import tsx src/cli.ts web-avatar:probe",
+    "studio:web:avatar:review": "node scripts/render-web-avatar-preview.cjs",
     "studio:web:avatar:scaffold": "node --env-file-if-exists=.env --import tsx src/cli.ts web-avatar:scaffold",
     "studio:web:avatar:scaffold-bundle": "node --env-file-if-exists=.env --import tsx src/cli.ts web-avatar:scaffold-bundle",
     "studio:web:visemes:reduce": "node --import tsx src/performance/web-viseme-authoring.ts",

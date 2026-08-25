@@ -31,7 +31,7 @@ LEVEL_PATH = os.environ.get(
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
 ASSET_VERSION = os.environ.get(
     "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
-    "ue58-v31-web-hair",
+    "ue58-v32-optimized",
 )
 OUTPUT_DIRECTORY = Path(
     os.environ.get(
@@ -201,7 +201,7 @@ def write_bundle_inventory(
             "webHairMeshes": list(graph.hair_mesh_paths),
             # The stock glTF exporter ignores Groom Components. Showcase's
             # dedicated Optimized/Low assembly supplies an ordinary helmet
-            # mesh that is exported with the Cine face and body instead.
+            # mesh that is exported with the portable face and body.
             "hairGeometry": "mesh",
             "visualReview": "pending",
         },

@@ -1,11 +1,13 @@
-"""Resolve the one authoritative Showcase actor used by every Web bake.
+"""Resolve the authoritative portable Showcase assembly used by every Web bake.
 
 The meeting level deliberately keeps a production actor as a runtime anchor.
 That actor is not the Showcase identity: the native meeting renderer replaces
 it at runtime after reading ``AvatarId``. Editor-only Web exports do not run
 that replacement, so selecting the tagged level actor silently exported the
-old Elena identity. This module mirrors the native replacement explicitly and
-fails closed whenever the spawned Face or Body does not belong to Showcase.
+old Elena identity. Exporting the Cine assembly is also invalid for browsers:
+its face relies on Unreal-only MetaHuman materials and loses geometry when the
+stock glTF exporter flattens it.  This module therefore spawns the separately
+assembled Optimized/Low Showcase and fails closed on any identity mismatch.
 """
 
 from __future__ import annotations
@@ -18,10 +20,10 @@ import unreal
 MEETING_ANCHOR_TAG = "MeetingAvatarAnchor"
 WEB_EXPORT_TAG = "ConclaviaWebShowcase"
 SHOWCASE_CLASS_PATH = (
-    "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/"
-    "BP_MHC_Showcase.BP_MHC_Showcase_C"
+    "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebLow/"
+    "MHC_Showcase_WebLow/BP_MHC_Showcase_WebLow.BP_MHC_Showcase_WebLow_C"
 )
-SHOWCASE_ASSET_FRAGMENT = "/MHC_Showcase/"
+SHOWCASE_ASSET_FRAGMENT = "/MHC_Showcase_WebLow/"
 WEB_HAIR_MESH_PATH = (
     "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebLow/"
     "MHC_Showcase_WebLow/Grooms/Hair_S_UpdoBraids_Helmet_LOD5."
@@ -101,7 +103,7 @@ def _spawn_showcase(anchor: unreal.Actor) -> unreal.Actor:
     )
     if actor is None:
         raise RuntimeError("Could not spawn the Showcase Web export actor")
-    actor.set_actor_label("WEB_ShowcaseExportAnchor")
+    actor.set_actor_label("WEB_ShowcaseOptimizedExportAnchor")
     actor.tags = [unreal.Name(WEB_EXPORT_TAG)]
     actor.set_actor_scale3d(anchor.get_actor_scale3d())
     actor.set_actor_hidden_in_game(False)
@@ -171,7 +173,7 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
         if groom is not None:
             groom_paths.append(groom.get_path_name())
     if not groom_paths:
-        raise RuntimeError("Showcase has no Groom components; refusing a bald Web export")
+        raise RuntimeError("Optimized Showcase has no Groom components; refusing a bald Web export")
 
     hair_actors = _spawn_web_hair(actor, body)
     hair_mesh_paths = tuple(

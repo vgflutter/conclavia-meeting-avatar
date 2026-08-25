@@ -323,7 +323,8 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19/);
   assert.match(exporter, /ensure_showcase_export_actor/);
   assert.match(showcaseResolver, /MeetingAvatarAnchor/);
-  assert.match(showcaseResolver, /BP_MHC_Showcase\.BP_MHC_Showcase_C/);
+  assert.match(showcaseResolver, /BP_MHC_Showcase_WebLow\.BP_MHC_Showcase_WebLow_C/);
+  assert.match(showcaseResolver, /Optimized\/Low Showcase/);
   assert.match(showcaseResolver, /refusing a bald Web export/);
   assert.match(exporter, /export_vertex_skin_weights/);
   assert.match(exporter, /export_morph_targets/);
