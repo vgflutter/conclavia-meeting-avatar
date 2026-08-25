@@ -23,7 +23,6 @@ import {
   pcm16MonoToWav,
   speechPerformancePacket,
   type PerformanceAudioTrack,
-  type SpeechMark,
 } from "./performance-packet.js";
 
 const voiceDirections: Readonly<Record<ConclaviaVoiceConfig["voiceStyle"], string>> = {
@@ -40,7 +39,7 @@ export class WebPerformanceRenderer {
   #avatarProfile = "showcase";
   #sessionId = randomUUID();
   #activePerformanceId: string | null = null;
-  #pendingController = new AbortController();
+  #deliveryGeneration = 0;
 
   constructor(
     hub: PerformanceHub,
@@ -83,6 +82,7 @@ export class WebPerformanceRenderer {
   }
 
   stop(): Promise<void> {
+    this.abortPending();
     if (this.#activePerformanceId) {
       this.#hub.publish(controlPerformancePacket({
         avatarId: this.#avatarProfile,
@@ -188,8 +188,11 @@ export class WebPerformanceRenderer {
   ): Promise<ConclaviaDelivery> {
     this.#requireArmed();
     if (!speechTextForCue(cue)) throw new Error("La risposta di Mary è vuota");
+    if (!cue.sentences[0]) throw new Error("La risposta di Mary non contiene frasi");
+    const deliveryId = randomUUID();
+    const generation = ++this.#deliveryGeneration;
     const deliveryStartedAt = performance.now();
-    const sentenceSpeech = await Promise.all(cue.sentences.map(async (sentence) => {
+    const sentencePromises = cue.sentences.map(async (sentence) => {
       const speech = await this.#synthesize({
         text: sentence.text,
         voice: sentence.language === "en-US"
@@ -199,63 +202,85 @@ export class WebPerformanceRenderer {
         direction: voiceDirections[voice.voiceStyle],
       });
       return speech;
-    }));
-    const synthesisMs = Math.round(performance.now() - deliveryStartedAt);
+    });
+    const remainingResult = Promise.all(sentencePromises.slice(1)).then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({ ok: false as const, error }),
+    );
     const pauseBytes = 80 * 16_000 * 2 / 1_000;
-    const totalBytes = sentenceSpeech.reduce(
-      (total, sentence) => total + sentence.audio.byteLength,
-      Math.max(0, sentenceSpeech.length - 1) * pauseBytes,
-    );
-    const pcm = new Uint8Array(totalBytes);
-    const sentenceDurationsMs: number[] = [];
-    const marks: SpeechMark[] = [];
-    let cursor = 0;
-    let elapsedMs = 0;
-    for (const [index, sentence] of sentenceSpeech.entries()) {
-      pcm.set(sentence.audio, cursor);
-      cursor += sentence.audio.byteLength;
-      marks.push(...sentence.marks.map((mark) => ({
-        ...mark,
-        time: mark.time + elapsedMs,
-      })));
-      const hasPause = index < sentenceSpeech.length - 1;
-      if (hasPause) cursor += pauseBytes;
-      const durationMs = Math.round((sentence.audio.byteLength / 2 / 16_000) * 1_000)
-        + (hasPause ? 80 : 0);
-      sentenceDurationsMs.push(durationMs);
-      elapsedMs += durationMs;
-    }
-
-    const durationMs = Math.max(1, Math.round((pcm.byteLength / 2 / 16_000) * 1_000));
-    const assetId = randomUUID();
-    const audioTrack: PerformanceAudioTrack = {
-      assetId,
-      url: `${this.#baseUrl}/api/performance/audio/${assetId}.wav`,
-      mimeType: "audio/wav",
-      sampleRate: 16_000,
-      channels: 1,
-      durationMs,
-      clockRole: "master",
-    };
-    const cueStartedAt = performance.now();
-    const packet = this.#hub.publish(
-      speechPerformancePacket({
-        cue,
-        avatarId: this.#avatarProfile,
-        avatarName: cue.speakerName ?? "Mary",
-        audio: audioTrack,
-        beats: performanceBeatsForCue(cue, durationMs, sentenceDurationsMs),
-        speechMarks: marks,
-      }),
-      {
-        id: assetId,
-        bytes: pcm16MonoToWav(pcm),
+    let cueMs = 0;
+    let timeToFirstAudioMs = 0;
+    const durations: number[] = [];
+    const sentenceSpeech: Awaited<(typeof sentencePromises)[number]>[] = [];
+    const publishChunk = (
+      index: number,
+      speech: Awaited<(typeof sentencePromises)[number]>,
+    ): void => {
+      this.#assertDeliveryGeneration(generation);
+      const sentence = cue.sentences[index];
+      if (!sentence) throw new Error(`Frase ${index + 1} non disponibile`);
+      const hasPause = index < cue.sentences.length - 1;
+      const pcm = new Uint8Array(speech.audio.byteLength + (hasPause ? pauseBytes : 0));
+      pcm.set(speech.audio);
+      const durationMs = Math.max(
+        1,
+        Math.round((pcm.byteLength / 2 / 16_000) * 1_000),
+      );
+      durations[index] = durationMs;
+      const assetId = randomUUID();
+      const audioTrack: PerformanceAudioTrack = {
+        assetId,
+        url: `${this.#baseUrl}/api/performance/audio/${assetId}.wav`,
         mimeType: "audio/wav",
-        createdAt: new Date().toISOString(),
-      },
-    );
-    this.#activePerformanceId = packet.performanceId;
-    const cueMs = Math.round(performance.now() - cueStartedAt);
+        sampleRate: 16_000,
+        channels: 1,
+        durationMs,
+        clockRole: "master",
+      };
+      const chunkCue: AvatarSpeechCue = { ...cue, sentences: [sentence] };
+      const cueStartedAt = performance.now();
+      const packet = this.#hub.publish(
+        speechPerformancePacket({
+          cue: chunkCue,
+          avatarId: this.#avatarProfile,
+          avatarName: cue.speakerName ?? "Mary",
+          audio: audioTrack,
+          beats: performanceBeatsForCue(chunkCue, durationMs, [durationMs]),
+          speechMarks: speech.marks,
+          delivery: { id: deliveryId, chunkIndex: index, chunkCount: cue.sentences.length },
+        }),
+        {
+          id: assetId,
+          bytes: pcm16MonoToWav(pcm),
+          mimeType: "audio/wav",
+          createdAt: new Date().toISOString(),
+        },
+      );
+      cueMs += Math.round(performance.now() - cueStartedAt);
+      this.#activePerformanceId = packet.performanceId;
+    };
+
+    const firstPromise = sentencePromises[0];
+    if (!firstPromise) throw new Error("Sintesi della prima frase non disponibile");
+    const first = await firstPromise;
+    sentenceSpeech[0] = first;
+    publishChunk(0, first);
+    timeToFirstAudioMs = Math.round(performance.now() - deliveryStartedAt);
+    try {
+      const result = await remainingResult;
+      if (!result.ok) throw result.error;
+      this.#assertDeliveryGeneration(generation);
+      result.value.forEach((speech, offset) => {
+        const index = offset + 1;
+        sentenceSpeech[index] = speech;
+        publishChunk(index, speech);
+      });
+    } catch (error) {
+      await this.interruptSpeech(cue.speakerName ?? "Mary");
+      throw error;
+    }
+    const synthesisMs = Math.round(performance.now() - deliveryStartedAt);
+    const durationMs = durations.reduce((total, duration) => total + duration, 0);
     return {
       delivered: true,
       durationMs,
@@ -263,14 +288,21 @@ export class WebPerformanceRenderer {
       synthesisMs,
       cueMs,
       playbackMs: 0,
-      timeToFirstAudioMs: Math.round(performance.now() - deliveryStartedAt),
+      timeToFirstAudioMs,
       voiceEngines: [...new Set(sentenceSpeech.map((sentence) => sentence.engine))],
     };
   }
 
   abortPending(): void {
-    this.#pendingController.abort();
-    this.#pendingController = new AbortController();
+    this.#deliveryGeneration += 1;
+  }
+
+  #assertDeliveryGeneration(generation: number): void {
+    if (generation !== this.#deliveryGeneration) {
+      const error = new Error("Web performance delivery interrupted");
+      error.name = "AbortError";
+      throw error;
+    }
   }
 
   #requireArmed(): void {

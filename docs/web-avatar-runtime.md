@@ -86,6 +86,10 @@ morph; every other mood and viseme must affect at least one target.
 The runtime applies mood and viseme morphs simultaneously, smooths their
 weights, drives optional head and eye nodes, crossfades authored body clips and
 varies the listening/idle repertoire instead of repeating one short loop.
+For multi-sentence speech, each sentence arrives as an ordered chunk in one
+delivery. The first chunk starts as soon as its audio and speech marks are
+ready; subsequent chunks remain queued against the WebAudio master clock and
+an interrupt clears the whole delivery.
 
 ## Validation
 

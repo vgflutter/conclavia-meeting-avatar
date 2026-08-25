@@ -60,6 +60,8 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Live latency breakdown for the LLM, parallel TTS synthesis, Unreal cue/audio handoff, and total response time.
 - Versioned `PerformancePacket` output containing audio, Polly visemes, sentence-level expressions, gaze, gestures, interruption events, and an audio-master clock.
 - Server-Sent Events transport and immutable short-lived WAV assets for renderer-neutral playback.
+- Progressive sentence delivery: the first synchronized audio, viseme, mood,
+  gaze, and gesture chunk starts while later sentences are still being synthesized.
 - A GPU-independent Web Performance Runtime with a rigged Three.js/glTF performer, explicit photographic fallback, and combined canvas plus audio `MediaStream` for the future desktop virtual-camera adapter.
 
 ## Participation model
@@ -201,6 +203,12 @@ Web Audio clock. `/api/performance/status` exposes the protocol version,
 connected consumers, latest sequence, and Web output URL. Event sequence IDs
 support deterministic recovery without replaying old speech after an output
 page refresh.
+
+Multi-sentence answers share a delivery ID and carry ordered chunk indexes. The
+first sentence is published as soon as its TTS and speech marks are ready; the
+browser queues later chunks without stopping the active WebAudio source. A new
+intervention replaces that queue, while an interrupt cancels both playback and
+all not-yet-published synthesis results.
 
 When a compatible glTF performer is installed, the Web runtime renders it with
 Three.js, applies viseme and mood morph targets together, drives optional head
@@ -487,7 +495,6 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 
 - Export and validate the Showcase Web LOD with facial morph targets, a meeting body rig, compressed textures, and authored gesture clips.
 - Package the browser canvas plus WebAudio stream in a desktop virtual-camera and virtual-microphone adapter.
-- Make speech packets progressive so the first audio chunk and its visemes can start before the complete response is synthesized.
 - Move the validated request-to-speak and seated-idle repertoire into a blended Animation Blueprint state machine; keep every body pose asset-driven.
 - Calibrate and package the Teams attributed-caption bridge; keep the isolated Teams Web chat bridge aligned with Teams DOM changes.
 - Keep the isolated Google Meet browser bridge calibrated as Meet's private DOM evolves, and add attributed-caption extraction.

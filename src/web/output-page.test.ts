@@ -73,6 +73,10 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(output, /loadThreeAvatarPerformer/);
   assert.match(output, /Fallback fotografico/);
   assert.match(output, /speechExpressionReleased/);
+  assert.match(output, /queueContinuation/);
+  assert.match(output, /playNextSpeechChunk/);
+  assert.match(output, /packetDeliveryId !== activeDeliveryId/);
+  assert.doesNotMatch(output, /packet\.sequence < latestSequence/);
   assert.match(output, /if \(!avatarPerformer\)/);
   assert.match(output, /outputMode === "obs" \? "clean" : "console"/);
   assert.match(html, /data-output="console"/);

@@ -106,6 +106,9 @@ export interface PerformancePacket {
     sourceCueId?: string;
     sourceSegmentIds?: string[];
     observedSpeakerName?: string;
+    deliveryId?: string;
+    chunkIndex?: number;
+    chunkCount?: number;
   };
   createdAt: string;
 }
@@ -120,6 +123,11 @@ export interface SpeechPerformanceInput {
   audio: PerformanceAudioTrack;
   beats: readonly PerformanceBeat[];
   speechMarks: readonly SpeechMark[];
+  delivery?: {
+    id: string;
+    chunkIndex: number;
+    chunkCount: number;
+  };
 }
 
 function emptyTracks(): PerformancePacket["tracks"] {
@@ -178,6 +186,13 @@ export function speechPerformancePacket(
       addressedTo: input.cue.addressedTo,
       sourceCueId: input.cue.id,
       sourceSegmentIds: [...input.cue.sourceSegmentIds],
+      ...(input.delivery
+        ? {
+            deliveryId: input.delivery.id,
+            chunkIndex: input.delivery.chunkIndex,
+            chunkCount: input.delivery.chunkCount,
+          }
+        : {}),
     },
     createdAt: new Date().toISOString(),
   };

@@ -36,6 +36,10 @@ let lastFrameAt = performance.now();
 let avatarPerformer = null;
 let loadedAvatarId = "";
 let avatarLoadGeneration = 0;
+let speechQueue = [];
+let activeDeliveryId = "";
+let activeChunkIndex = -1;
+let speechStarting = false;
 
 const moodTints = {
   neutral: [18, 35, 61],
@@ -242,24 +246,93 @@ function stopActiveAudio() {
   activeSource = null;
 }
 
+function deliveryId(packet) {
+  return typeof packet?.metadata?.deliveryId === "string"
+    ? packet.metadata.deliveryId
+    : "";
+}
+
+function chunkIndex(packet) {
+  return Number.isInteger(packet?.metadata?.chunkIndex)
+    ? packet.metadata.chunkIndex
+    : 0;
+}
+
+function resetSpeechQueue() {
+  speechQueue = [];
+  activeDeliveryId = "";
+  activeChunkIndex = -1;
+  speechStarting = false;
+}
+
+function queueContinuation(packet) {
+  const packetDeliveryId = deliveryId(packet);
+  if (
+    packet.kind !== "speech"
+    || !packet.audio
+    || !packetDeliveryId
+    || packetDeliveryId !== activeDeliveryId
+    || chunkIndex(packet) <= activeChunkIndex
+    || (!activeSource && !speechStarting)
+  ) return false;
+  speechQueue.push(packet);
+  speechQueue.sort((left, right) => chunkIndex(left) - chunkIndex(right));
+  runtimeStatus.textContent = `Frase ${chunkIndex(packet) + 1} in coda`;
+  return true;
+}
+
+function playNextSpeechChunk() {
+  const next = speechQueue.shift();
+  if (next) {
+    void activatePacket(next);
+    return;
+  }
+  activeDeliveryId = "";
+  activeChunkIndex = -1;
+  speechStarting = false;
+}
+
 async function playSpeech(packet) {
+  speechStarting = true;
   const audio = ensureAudio();
   const response = await fetch(packet.audio.url, { cache: "force-cache" });
   if (!response.ok) throw new Error(`Audio HTTP ${response.status}`);
   const buffer = await audio.decodeAudioData(await response.arrayBuffer());
-  if (packet.sequence < latestSequence) return;
+  if (activePacket?.performanceId !== packet.performanceId) return;
   stopActiveAudio();
   const source = audio.createBufferSource();
   source.buffer = buffer;
   source.connect(audio.destination);
   source.connect(mediaDestination);
   activeSource = source;
+  speechStarting = false;
   activeStartedAtAudio = audio.currentTime + 0.04;
   activeStartedAt = performance.now() + 40;
   source.start(activeStartedAtAudio);
   source.addEventListener("ended", () => {
-    if (activeSource === source) activeSource = null;
+    if (activeSource !== source) return;
+    activeSource = null;
+    playNextSpeechChunk();
   });
+}
+
+async function activatePacket(packet) {
+  activePacket = packet;
+  activeStartedAt = performance.now();
+  activeStartedAtAudio = audioContext?.currentTime || 0;
+  runtimeStatus.textContent = `${packet.kind} sincronizzata`;
+  if (packet.events.some((event) => event.type === "lower-hand")) handRaised = false;
+  if (!packet.audio) return;
+  activeDeliveryId = deliveryId(packet);
+  activeChunkIndex = chunkIndex(packet);
+  try {
+    await playSpeech(packet);
+  } catch (error) {
+    if (activePacket?.performanceId !== packet.performanceId) return;
+    speechStarting = false;
+    runtimeStatus.textContent = `Audio non disponibile: ${error.message}`;
+    playNextSpeechChunk();
+  }
 }
 
 async function acceptPacket(packet) {
@@ -271,25 +344,20 @@ async function acceptPacket(packet) {
   avatarName.textContent = packet.avatar.name;
   const interrupt = packet.events.some((event) => event.type === "interrupt");
   if (interrupt) {
+    resetSpeechQueue();
     stopActiveAudio();
     activePacket = null;
     currentViseme = "-";
     runtimeStatus.textContent = "Interruzione ricevuta";
     return;
   }
-
-  activePacket = packet;
-  activeStartedAt = performance.now();
-  activeStartedAtAudio = audioContext?.currentTime || 0;
-  runtimeStatus.textContent = `${packet.kind} sincronizzata`;
-  if (packet.events.some((event) => event.type === "lower-hand")) handRaised = false;
-  if (packet.audio) {
-    try {
-      await playSpeech(packet);
-    } catch (error) {
-      runtimeStatus.textContent = `Audio non disponibile: ${error.message}`;
-    }
+  if (queueContinuation(packet)) return;
+  const speechIsActive = activeSource || speechStarting;
+  if (speechIsActive && activePacket?.kind === "speech" && packet.priority < activePacket.priority) {
+    return;
   }
+  resetSpeechQueue();
+  await activatePacket(packet);
 }
 
 async function connectEvents() {

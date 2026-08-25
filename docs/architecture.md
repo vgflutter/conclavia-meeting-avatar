@@ -42,6 +42,13 @@ Listening and physical actions use a monotonic local timeline. Interruption is
 an explicit priority-100 event that names the performance to cancel when one is
 active.
 
+Speech delivery is progressive at sentence boundaries. All sentence TTS work
+starts in parallel, but the first completed sentence is published immediately
+instead of waiting for the slowest one. Ordered packets share a delivery ID;
+the browser queues them behind the active WebAudio source and applies each
+sentence's local viseme, mood, gaze, and gesture timeline. A new delivery
+replaces that queue and an interrupt invalidates pending synthesis results.
+
 The in-memory event hub keeps a bounded replay window and removes audio when no
 retained packet references it. Browser clients connect using the latest known
 sequence, so a refresh cannot replay an answer that participants have already

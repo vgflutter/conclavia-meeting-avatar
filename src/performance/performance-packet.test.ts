@@ -53,6 +53,7 @@ await test("builds a versioned audio-clock performance packet", () => {
       { time: 20, type: "word", value: "Una", start: 0, end: 3 },
       { time: 45, type: "viseme", value: "u" },
     ],
+    delivery: { id: "delivery-1", chunkIndex: 0, chunkCount: 2 },
   });
 
   assert.equal(draft.schema, "conclavia.performance");
@@ -67,6 +68,9 @@ await test("builds a versioned audio-clock performance packet", () => {
   }]);
   assert.equal(draft.events.at(-1)?.type, "speech-end");
   assert.equal(draft.events.at(-1)?.atMs, 1_200);
+  assert.equal(draft.metadata.deliveryId, "delivery-1");
+  assert.equal(draft.metadata.chunkIndex, 0);
+  assert.equal(draft.metadata.chunkCount, 2);
 });
 
 await test("wraps mono PCM16 in a valid WAV container", () => {
