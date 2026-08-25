@@ -17,9 +17,9 @@ import {
 
 const pcmChunkBytes = 4_800; // 100 ms of mono PCM16 at 24 kHz.
 const connectionTimeoutMs = 15_000;
-const clientVadSpeechThreshold = 0.006;
-const clientVadHoldThreshold = 0.0015;
-const clientVadSilenceChunks = 6; // 600 ms at the current chunk size.
+const clientVadSpeechThreshold = 0.0035;
+const clientVadHoldThreshold = 0.001;
+const clientVadSilenceChunks = 5; // 500 ms at the current chunk size.
 const reconnectInitialDelayMs = 1_000;
 const reconnectMaxDelayMs = 30_000;
 const ffmpegForceKillDelayMs = 750;
@@ -42,6 +42,23 @@ export function canSpeculateAddressedTurn(text: string, wakeWord: string): boole
 
 export function canSpeculateTurn(text: string): boolean {
   return text.trim().split(/\s+/u).filter(Boolean).length >= 3;
+}
+
+function normalizedTranscript(value: string): string {
+  return value
+    .toLocaleLowerCase("it-IT")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+export function isTranscriptionPromptEcho(text: string, wakeWord: string): boolean {
+  const normalized = normalizedTranscript(text);
+  const name = normalizedTranscript(wakeWord);
+  return normalized === `riunione di lavoro in italiano l assistente virtuale si chiama ${name}`
+    || normalized === `riunione di lavoro l assistente virtuale si chiama ${name}`;
 }
 
 export type MeetingListenerPhase = "stopped" | "starting" | "running" | "stopping" | "error";
@@ -227,7 +244,7 @@ export class MeetingListener {
         if (this.#activePartialItemId === event.item_id) this.#activePartialItemId = null;
         this.#partialTranscript = "";
         const transcript = event.transcript.trim();
-        if (!transcript) return;
+        if (!transcript || isTranscriptionPromptEcho(transcript, this.#options.wakeWord)) return;
         const speculative = this.#speculativeByItem.get(event.item_id);
         if (speculative) {
           speculative.text = transcript;

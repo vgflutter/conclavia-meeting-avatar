@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { canSpeculateAddressedTurn, canSpeculateTurn, pcm16Rms } from "./meeting-listener.js";
+import {
+  canSpeculateAddressedTurn,
+  canSpeculateTurn,
+  isTranscriptionPromptEcho,
+  pcm16Rms,
+} from "./meeting-listener.js";
 
 await test("measures digital silence as zero", () => {
   assert.equal(pcm16Rms(Buffer.alloc(4_800)), 0);
@@ -33,4 +38,18 @@ await test("speculates only when a useful partial turn addresses Mary", () => {
 await test("recognizes partial turns long enough for speculative processing", () => {
   assert.equal(canSpeculateTurn("E perché no?"), true);
   assert.equal(canSpeculateTurn("Perché?"), false);
+});
+
+await test("filters the transcription prompt when silence echoes it back", () => {
+  assert.equal(
+    isTranscriptionPromptEcho(
+      "Riunione di lavoro in italiano. L'assistente virtuale si chiama Mary.",
+      "Mary",
+    ),
+    true,
+  );
+  assert.equal(
+    isTranscriptionPromptEcho("Mary, quanto fa due più due?", "Mary"),
+    false,
+  );
 });
