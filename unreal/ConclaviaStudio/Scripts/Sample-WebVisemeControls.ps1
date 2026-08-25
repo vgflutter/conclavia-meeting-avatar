@@ -36,11 +36,7 @@ function Wait-RendererReady {
         } catch {
             $health = $null
         }
-        if (
-            $health -and
-            $health.commercialModelReady -eq $true -and
-            $health.commercialControlsBound -eq $true
-        ) {
+        if ($health -and $health.commercialModelReady -eq $true) {
             return $health
         }
         Start-Sleep -Milliseconds 500
