@@ -7,6 +7,7 @@ import type { TranscriptSegment } from "./domain/protocol.js";
 import { runMacosPreflight } from "./preflight/macos.js";
 import { auditWebAvatar, inspectWebAvatarModel } from "./performance/web-avatar-audit.js";
 import { installWebAvatar } from "./performance/web-avatar-installer.js";
+import { writeWebAvatarScaffold } from "./performance/web-avatar-scaffold.js";
 import {
   loadWebAvatarManifest,
   webAvatarModelPath,
@@ -69,6 +70,21 @@ async function main(): Promise<void> {
     const modelPath = process.argv[3]?.trim();
     if (!modelPath) throw new Error("Usage: web-avatar:probe <model.glb>");
     console.log(JSON.stringify(await inspectWebAvatarModel(modelPath), null, 2));
+    return;
+  }
+
+  if (command === "web-avatar:scaffold") {
+    const modelPath = process.argv[3]?.trim();
+    const avatarId = process.argv[4]?.trim();
+    if (!modelPath || !avatarId) {
+      throw new Error("Usage: web-avatar:scaffold <model.glb> <avatar-id>");
+    }
+    const result = await writeWebAvatarScaffold(modelPath, avatarId);
+    console.log(JSON.stringify({
+      created: true,
+      outputPath: result.outputPath,
+      unresolved: result.unresolved,
+    }, null, 2));
     return;
   }
 

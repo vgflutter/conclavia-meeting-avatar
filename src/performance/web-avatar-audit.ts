@@ -63,14 +63,14 @@ export interface WebAvatarModelInventory {
   externalImages: string[];
 }
 
-const requiredVisemes = [
+export const webAvatarVisemeNames = [
   "sil", "p", "t", "S", "T", "f", "k", "i", "r", "s", "u", "@", "a", "e", "E", "o", "O",
 ] as const;
-const requiredMoods = [
+export const webAvatarMoodNames = [
   "neutral", "attentive", "curious", "amused", "confident", "skeptical",
   "concerned", "surprised", "empathetic", "assertive", "frustrated", "reflective",
 ] as const;
-const requiredGestures = [
+export const webAvatarGestureNames = [
   "nod", "tilt", "emphasis", "settle", "raise-hand", "lower-hand", "applause",
 ] as const;
 
@@ -171,16 +171,16 @@ export async function auditWebAvatar(
   const missingMorphTargets = [...requiredMorphs].filter((name) => !morphNames.has(name));
   const missingAnimationClips = [...requiredClips].filter((name) => !clipNames.has(name));
   const missingVisemeMappings = missingNonEmptyMappings(
-    requiredVisemes,
+    webAvatarVisemeNames,
     manifest.morphs.visemes,
     new Set(["sil"]),
   );
   const missingMoodMappings = missingNonEmptyMappings(
-    requiredMoods,
+    webAvatarMoodNames,
     manifest.morphs.moods,
     new Set(["neutral"]),
   );
-  const missingGestureMappings = requiredGestures.filter(
+  const missingGestureMappings = webAvatarGestureNames.filter(
     (gesture) => !manifest.clips.gestures[gesture],
   );
   const insufficientAmbientVariety = [

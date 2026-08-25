@@ -48,6 +48,17 @@ external images, and the exact node, morph-target and animation-clip names.
 Use those names verbatim in the manifest. This step is read-only and does not
 require the companion, Unreal or a GPU.
 
+To create a conservative manifest scaffold beside the GLB, run:
+
+```bash
+npm run studio:web:avatar:scaffold -- /absolute/path/to/export/showcase.glb showcase
+```
+
+The command fills only exact node names and clearly named idle, listening and
+gesture clips. It deliberately leaves viseme and mood weights unresolved for
+review against the exported face rig. It refuses to overwrite an existing
+`manifest.json`; complete the reported fields and run the audit before install.
+
 For a finished DCC export, prefer the atomic installer over manually copying
 the directory:
 
