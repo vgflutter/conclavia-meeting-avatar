@@ -80,6 +80,11 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /Clamp\(Intensity, 0\.0f, 0\.85f\)/);
   assert.match(moduleSource, /TMap<FString, float> ListeningControls/);
   assert.match(moduleSource, /Generator->SetControlValues\(ListeningControls\)/);
+  assert.match(moduleSource, /ListeningPrimingTicksRemaining = 6/);
+  assert.match(moduleSource, /ListeningPrimingTicksRemaining > 2/);
+  assert.match(moduleSource, /bListeningGeneratorVisible/);
+  assert.match(moduleSource, /Node->ResetTime = bListening \? 20\.0f : 0\.28f/);
+  assert.match(moduleSource, /Node->InterpolationSpeed = bListening \? 12\.0f : 45\.0f/);
   assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("mouth"\)/);
   assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("jaw"\)/);
   assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("tongue"\)/);

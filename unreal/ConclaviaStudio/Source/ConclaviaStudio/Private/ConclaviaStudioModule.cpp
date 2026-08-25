@@ -2212,6 +2212,42 @@ private:
         return bBound;
     }
 
+    static int32 ConfigureCommercialBlendNodes(
+        UObject* Container,
+        URealisticMetaHumanLipSyncGenerator* Generator,
+        const bool bListening)
+    {
+        if (!Container || !Generator)
+        {
+            return 0;
+        }
+
+        int32 BoundNodeCount = 0;
+        for (TFieldIterator<FStructProperty> Property(Container->GetClass()); Property; ++Property)
+        {
+            if (!Property->Struct
+                || !Property->Struct->IsChildOf(
+                    FAnimNode_BlendRealisticMetaHumanLipSync::StaticStruct()))
+            {
+                continue;
+            }
+            void* NodeAddress = Property->ContainerPtrToValuePtr<void>(Container);
+            FAnimNode_BlendRealisticMetaHumanLipSync* Node =
+                static_cast<FAnimNode_BlendRealisticMetaHumanLipSync*>(NodeAddress);
+            Node->LipSyncGenerator = Generator;
+            Node->InterpolationSpeed = bListening ? 12.0f : 45.0f;
+            Node->IdleInterpolationSpeed = bListening ? 8.0f : 20.0f;
+            // Listening controls are already speech-filtered below. Hold the
+            // remaining expression for the bounded reaction instead of letting
+            // the plugin reset it every 280 ms as if an utterance had ended.
+            Node->ResetTime = bListening ? 20.0f : 0.28f;
+            Node->bPreserveIdleState = false;
+            Node->bPreserveMouthShape = false;
+            ++BoundNodeCount;
+        }
+        return BoundNodeCount;
+    }
+
     static bool ConfigureCommercialModelRoute(UObject* Container)
     {
         if (!Container)
@@ -2616,6 +2652,7 @@ private:
         if (UAnimInstance* FaceAnim = Face->GetAnimInstance())
         {
             bBound = AssignCommercialGenerator(FaceAnim, Generator);
+            ConfigureCommercialBlendNodes(FaceAnim, Generator, false);
             ConfigureCommercialEyesAimForFace();
         }
         if (ParticipantFaces.IsValidIndex(0))
@@ -2642,6 +2679,7 @@ private:
         if (UAnimInstance* FaceAnim = Face->GetAnimInstance())
         {
             bBound = AssignCommercialGenerator(FaceAnim, Generator);
+            ConfigureCommercialBlendNodes(FaceAnim, Generator, true);
             ConfigureCommercialEyesAimForFace();
         }
         if (ParticipantFaces.IsValidIndex(0))
@@ -2697,7 +2735,9 @@ private:
                 StudioWorld->GetTimerManager().ClearTimer(ListeningModelTimer);
             }
             bListeningModelReady = true;
-            if (bListeningVisualActive && !bCommercialSpeechActive)
+            if (bListeningVisualActive
+                && !bCommercialSpeechActive
+                && ListeningPrimingTicksRemaining <= 0)
             {
                 BindListeningGenerator();
             }
@@ -2879,6 +2919,7 @@ private:
         bListeningModelReady = false;
         bListeningReactionActive = false;
         bListeningVisualActive = false;
+        ListeningPrimingTicksRemaining = 0;
     }
 
     void FinishCommercialSpeech()
@@ -2934,9 +2975,17 @@ private:
             ListeningVisualEndsAt = Now + 0.72;
         }
 
-        TArray<float> RoomTone;
-        RoomTone.SetNumZeroed(640);
-        Generator->ProcessAudioData(MoveTemp(RoomTone), 16000, 1);
+        if (ListeningPrimingTicksRemaining > 2)
+        {
+            TArray<float> RoomTone;
+            RoomTone.SetNumZeroed(640);
+            Generator->ProcessAudioData(MoveTemp(RoomTone), 16000, 1);
+            ++ListeningSolverChunksSubmitted;
+        }
+        if (ListeningPrimingTicksRemaining > 0)
+        {
+            --ListeningPrimingTicksRemaining;
+        }
 
         // The listening model is intentionally full-face because that is the
         // only vendor output that contains emotion. Silence is nevertheless
@@ -2963,12 +3012,15 @@ private:
             }
         }
         Generator->SetControlValues(ListeningControls);
-        ++ListeningSolverChunksSubmitted;
-        BindListeningGenerator();
+        if (ListeningPrimingTicksRemaining <= 0)
+        {
+            BindListeningGenerator();
+        }
 
         if (!bListeningReactionActive && Now >= ListeningVisualEndsAt)
         {
             bListeningVisualActive = false;
+            ListeningPrimingTicksRemaining = 0;
             StudioWorld->GetTimerManager().ClearTimer(ListeningLifeTimer);
             StudioWorld->GetTimerManager().ClearTimer(CommercialFaceTimer);
             BindCommercialGenerator();
@@ -3005,10 +3057,11 @@ private:
         ListeningVisualEndsAt = ListeningReactionExpiresAt + 0.72;
         bListeningReactionActive = true;
         bListeningVisualActive = true;
-        if (bListeningModelReady)
-        {
-            BindListeningGenerator();
-        }
+        // Four silent inference chunks followed by two filter-only ticks keep
+        // asynchronous model output away from the AnimBP until every speech
+        // control has been neutralized. The visible reaction begins after a
+        // natural 240 ms perception beat.
+        ListeningPrimingTicksRemaining = 6;
         StudioWorld->GetTimerManager().SetTimer(
             ListeningLifeTimer,
             FTimerDelegate::CreateRaw(this, &FConclaviaStudioModule::UpdateListeningLife),
@@ -3115,8 +3168,12 @@ private:
 
     void UpdateCommercialFace()
     {
+        const bool bListeningGeneratorVisible =
+            bListeningVisualActive
+            && !bCommercialSpeechActive
+            && ListeningPrimingTicksRemaining <= 0;
         URealisticMetaHumanLipSyncGenerator* Generator =
-            bListeningVisualActive && !bCommercialSpeechActive
+            bListeningGeneratorVisible
                 ? ListeningGenerator.Get()
                 : CommercialGenerator.Get();
         USkeletalMeshComponent* Face = CommercialFace.Get();
@@ -3138,21 +3195,10 @@ private:
         // current generator.
         if (FaceAnim)
         {
-            for (TFieldIterator<FStructProperty> Property(FaceAnim->GetClass()); Property; ++Property)
-            {
-                if (Property->Struct
-                    && Property->Struct->IsChildOf(FAnimNode_BlendRealisticMetaHumanLipSync::StaticStruct()))
-                {
-                    void* NodeAddress = Property->ContainerPtrToValuePtr<void>(FaceAnim);
-                    FAnimNode_BlendRealisticMetaHumanLipSync* Node =
-                        static_cast<FAnimNode_BlendRealisticMetaHumanLipSync*>(NodeAddress);
-                    Node->LipSyncGenerator = Generator;
-                    Node->InterpolationSpeed = 45.0f;
-                    Node->IdleInterpolationSpeed = 20.0f;
-                    Node->ResetTime = 0.28f;
-                    ++LastCommercialBoundNodeCount;
-                }
-            }
+            LastCommercialBoundNodeCount += ConfigureCommercialBlendNodes(
+                FaceAnim,
+                Generator,
+                bListeningGeneratorVisible);
         }
 
         // The configured AnimBP already owns the official
@@ -4819,6 +4865,7 @@ private:
     bool bMetaHumanApplauseExpressionActive = false;
     bool bBodyGestureLowerQueued = false;
     int32 ListeningSolverChunksSubmitted = 0;
+    int32 ListeningPrimingTicksRemaining = 0;
     int32 ActiveFaceIndex = -1;
     bool bLipSyncLab = false;
     bool bMeetingAvatar = false;
