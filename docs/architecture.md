@@ -12,25 +12,46 @@ Conclavia companion :4310
   - transcript and chat adapters
   - OpenAI meeting intelligence
   - dialogue and floor controller
-  - Polly speech synthesis
-  - /api/unreal/* renderer gateway
+  - Polly speech synthesis and speech marks
+  - PerformancePacket producer and event hub
           |
-          v
-private AWS GPU supervisor :8090
-  - process lifecycle and PCM bridge
+          +--> Web Performance Runtime
+          |      - canvas and WebAudio
+          |      - audio-master scheduler
+          |      - local mood, gaze, idle and gesture realization
+          |      - combined MediaStream for a desktop adapter
           |
-          v
-Unreal 5.8 + MetaHuman + Pixel Streaming 2
-          |
-          +--> OBS Virtual Camera --> meeting video
-          +--> BlackHole 2ch ------> meeting microphone
+          +--> private AWS GPU supervisor :8090
+                  |
+                  v
+               Unreal 5.8 + MetaHuman + Pixel Streaming 2
+                         |
+                         +--> OBS Virtual Camera --> meeting video
+                         +--> BlackHole 2ch ------> meeting microphone
 ```
 
-The companion defaults `CONCLAVIA_RENDERER_URL` to its own HTTP origin. This
-keeps one renderer contract for internal calls and allows a separately hosted
-gateway later, without coupling the service to Next.js. `studio:3d:start`
-refreshes the allow-listed client IP, watchdog, public player URL and protected
-supervisor token in the ignored local `.env` file.
+`CONCLAVIA_RENDERER_MODE=unreal` keeps the cinematic production path.
+`CONCLAVIA_RENDERER_MODE=web` starts immediately without EC2 and returns the
+local `/web-output` player. Both modes consume the same semantic meeting
+decisions. The Web runtime receives `conclavia.performance` version 1 packets
+through SSE, while the current Unreal adapter translates that shared plan to
+its established cue and PCM endpoints. Speech uses the WAV asset as the only
+master clock; visemes, sentence moods, gaze and gestures are relative timelines.
+Listening and physical actions use a monotonic local timeline. Interruption is
+an explicit priority-100 event that names the performance to cancel when one is
+active.
+
+The in-memory event hub keeps a bounded replay window and removes audio when no
+retained packet references it. Browser clients connect using the latest known
+sequence, so a refresh cannot replay an answer that participants have already
+heard. The output exposes its canvas video and WebAudio destination as one
+`MediaStream`; a future desktop adapter can register that stream as a native
+virtual camera and microphone without changing meeting intelligence.
+
+The companion defaults `CONCLAVIA_RENDERER_URL` to its own HTTP origin for the
+Unreal gateway. `studio:3d:start` refreshes the allow-listed client IP,
+watchdog, public player URL and protected supervisor token in the ignored local
+`.env` file.
 
 AWS source is deployed only from a clean commit. Unreal/Epic binaries and
 licensed Marketplace content remain external prerequisites; every piece of

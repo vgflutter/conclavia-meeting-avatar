@@ -8,6 +8,11 @@ This first implementation does not create a separate bot identity. The host join
 - the avatar voice through a dedicated virtual audio device;
 - meeting audio through a separate capture device, preventing the avatar from hearing itself.
 
+The renderer is now an adapter rather than part of the meeting intelligence.
+The production Unreal path remains available, while the first Web Performance
+Runtime can run the same meeting, voice, mood, gaze, and gesture control plane
+without starting a cloud GPU.
+
 ![Mary, the Conclavia MetaHuman, participating in Microsoft Teams through OBS Virtual Camera](docs/images/mary-in-microsoft-teams.jpg)
 
 _Mary in the first end-to-end Microsoft Teams test: Conclavia MetaHuman, Pixel Streaming, OBS Virtual Camera, and virtual audio routing._
@@ -53,6 +58,9 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - macOS preflight checks for ffmpeg, OBS Studio, and virtual audio devices.
 - Full browser meeting room for testing spoken turns, microphone transcription, continuous meeting audio, chat, command aliases, participants, hand raising, floor approval, latency, and MetaHuman output without opening Teams or Meet.
 - Live latency breakdown for the LLM, parallel TTS synthesis, Unreal cue/audio handoff, and total response time.
+- Versioned `PerformancePacket` output containing audio, Polly visemes, sentence-level expressions, gaze, gestures, interruption events, and an audio-master clock.
+- Server-Sent Events transport and immutable short-lived WAV assets for renderer-neutral playback.
+- A GPU-independent Web Performance Runtime that exposes a combined canvas and audio `MediaStream` for the future desktop virtual-camera adapter. Its current photographic performer is a synchronization diagnostic, not yet the final Web LOD.
 
 ## Participation model
 
@@ -153,12 +161,46 @@ BlackHole 16ch                                             optional web search
                                                       sentence mood + level
                                                                    │
                                                                    ▼
-BlackHole 2ch ◄── Conclavia TTS ◄── Unreal / MetaHuman ◄────────── cues
-      │                                      │
-      └──► meeting microphone                └──► OBS Virtual Camera ──► meeting
+                                  performance packet
+                          audio + visemes + mood + gaze + gesture
+                                             │
+                         ┌───────────────────┴───────────────────┐
+                         ▼                                       ▼
+               Web Performance Runtime                 Unreal / MetaHuman
+                  canvas + WebAudio                    Pixel Streaming
+                         │                                       │
+                         └──────── virtual media / OBS ──────────┘
+                                             │
+                                             ▼
+                                       Teams / Meet
 ```
 
-The companion and Unreal renderer are separate processes. The renderer can therefore run locally or on a cloud GPU without changing the conferencing integration. The companion owns its `/api/unreal/*` gateway, Polly synthesis and AWS lifecycle directly; the separate Conclavia frontend is not required. Direct answers, silent listening reactions, and autonomous participation decisions intentionally use separate structured-output contracts. Every finalized human turn still reaches the LLM and remains in chronological meeting memory. See the [standalone architecture](docs/architecture.md).
+The companion now owns one engine-neutral performance model. The Web runtime
+consumes version 1 packets directly; the Unreal adapter translates the same
+semantic plan into its existing cue and PCM endpoints. Intelligence, floor
+control, TTS, and semantic performance therefore no longer belong to the GPU
+renderer. The Unreal adapter remains the cinematic path and preserves the
+existing `/api/unreal/*` lifecycle; making it consume the packet envelope
+directly is a compatible future simplification. Direct answers, silent
+listening reactions, and autonomous participation decisions intentionally use
+separate structured-output contracts. Every finalized human turn still reaches
+the LLM and remains in chronological meeting memory. See the
+[standalone architecture](docs/architecture.md).
+
+### Performance packet
+
+`conclavia.performance` version 1 uses audio as the master clock for speech.
+Each packet includes an immutable audio asset reference, timestamped Polly
+visemes, expression and semantic mood tracks, gaze targets, authored gesture
+requests, and explicit start, end, hand, applause, or interruption events.
+Listening and non-speaking gestures use the same timeline with a local clock.
+
+The browser receives packets through `/api/performance/events`, obtains audio
+from `/api/performance/audio/:id.wav`, and schedules every track against the
+Web Audio clock. `/api/performance/status` exposes the protocol version,
+connected consumers, latest sequence, and Web output URL. Event sequence IDs
+support deterministic recovery without replaying old speech after an output
+page refresh.
 
 ### Showcase identity and visual fidelity
 
@@ -209,7 +251,7 @@ The meeting scene owns one immutable 163 mm webcam camera for idle, listening, s
   - BlackHole 16ch for capturing meeting audio;
   - BlackHole 2ch for routing the avatar voice into the meeting microphone;
   - Loopback can be used instead for a more convenient routing UI.
-- AWS IAM Roles Anywhere credentials for the cloud renderer, or a compatible local Unreal supervisor
+- AWS IAM Roles Anywhere credentials only for the cloud Unreal renderer; the Web Performance Runtime does not start EC2
 
 Keeping capture and avatar output on separate paths prevents feedback loops.
 
@@ -222,6 +264,27 @@ npm run dev
 ```
 
 Open [http://127.0.0.1:4310](http://127.0.0.1:4310).
+
+To exercise the GPU-independent runtime, set the renderer mode before starting
+the companion:
+
+```dotenv
+CONCLAVIA_RENDERER_MODE=web
+```
+
+Then use **Start avatar** normally and open
+[http://127.0.0.1:4310/web-output](http://127.0.0.1:4310/web-output). The current
+page proves audio-clock synchronization, real Polly visemes, all semantic mood
+tracks, gaze, gesture events, interruption, SSE recovery, and canvas plus audio
+`MediaStream` generation. Replacing its diagnostic photographic performer with
+an optimized rigged Web LOD is the next asset milestone; the protocol and
+meeting pipeline do not change when that asset arrives.
+
+For a one-command Web runtime run without editing `.env`:
+
+```bash
+npm run studio:web:start
+```
 
 The web application can configure the meeting platform, avatar profile, name/trigger, model, native Italian and English voices, delivery style, API key, purpose, personality, system prompt, web search, autonomous requests to speak, and exceptional-conclusion applause. It also exposes six operational temperament traits: **calmness**, **assertiveness**, **impulsiveness**, **empathy**, **concision**, and **expressiveness**. These values are not cosmetic metadata: they shape response length, tone, listening and speaking mood intensity, and the minimum interval between autonomous requests to speak, while the materiality and confidence safety gates remain mandatory. Saving applies the new configuration without restarting the companion; if the meeting listener was active, it is restarted automatically. Changing the MetaHuman profile switches the warm Unreal performer immediately and does not require a second **Start avatar** action.
 
@@ -262,6 +325,7 @@ CONCLAVIA_DIALOGUE_TIMEOUT_MS=45000
 CONCLAVIA_DIALOGUE_MAX_FOLLOW_UPS=2
 CONCLAVIA_CONFIG_PATH=.conclavia/avatar-config.json
 CONCLAVIA_RENDERER_URL=http://127.0.0.1:4310
+CONCLAVIA_RENDERER_MODE=unreal
 CONCLAVIA_MEETING_AUDIO_DEVICE=BlackHole 16ch
 CONCLAVIA_MEETING_SPEAKER_NAME=Meeting participant
 OPENAI_RESPONSE_MODEL=gpt-5.4-mini
@@ -380,7 +444,9 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 
 ## Roadmap
 
-- Stream TTS generation and playback to reduce time to first audio further.
+- Export and validate the Showcase Web LOD with facial morph targets, a meeting body rig, compressed textures, and authored gesture clips.
+- Package the browser canvas plus WebAudio stream in a desktop virtual-camera and virtual-microphone adapter.
+- Make speech packets progressive so the first audio chunk and its visemes can start before the complete response is synthesized.
 - Move the validated request-to-speak and seated-idle repertoire into a blended Animation Blueprint state machine; keep every body pose asset-driven.
 - Calibrate and package the Teams attributed-caption bridge; keep the isolated Teams Web chat bridge aligned with Teams DOM changes.
 - Keep the isolated Google Meet browser bridge calibrated as Meet's private DOM evolves, and add attributed-caption extraction.

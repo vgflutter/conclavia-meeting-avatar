@@ -43,6 +43,9 @@ async function main(): Promise<void> {
     10,
   );
   const host = process.env.HOST?.trim() || "127.0.0.1";
+  const rendererMode = process.env.CONCLAVIA_RENDERER_MODE?.trim() === "web"
+    ? "web"
+    : "unreal";
   if (!Number.isInteger(port) || port < 1 || port > 65_535) {
     throw new Error("PORT must be an integer between 1 and 65535");
   }
@@ -81,6 +84,7 @@ async function main(): Promise<void> {
       || "Partecipante meeting",
     rendererUrl:
       process.env.CONCLAVIA_RENDERER_URL?.trim() || `http://${host}:${port}`,
+    rendererMode,
   });
 }
 

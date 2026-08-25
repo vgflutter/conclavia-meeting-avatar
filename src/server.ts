@@ -65,6 +65,9 @@ import {
   qualifiesAutonomousIntervention,
 } from "./openai/meeting-intelligence.js";
 import { runMacosPreflight } from "./preflight/macos.js";
+import { PerformanceHub } from "./performance/performance-hub.js";
+import type { PerformancePacket } from "./performance/performance-packet.js";
+import { WebPerformanceRenderer } from "./performance/web-performance-renderer.js";
 import { MeetingListener } from "./teams/meeting-listener.js";
 
 const publicDirectory = join(dirname(fileURLToPath(import.meta.url)), "../public");
@@ -73,9 +76,14 @@ const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
   ["/output", ["output.html", "text/html; charset=utf-8"]],
   ["/output.html", ["output.html", "text/html; charset=utf-8"]],
   ["/output.js", ["output.js", "text/javascript; charset=utf-8"]],
+  ["/web-output", ["web-output.html", "text/html; charset=utf-8"]],
+  ["/web-output.html", ["web-output.html", "text/html; charset=utf-8"]],
+  ["/web-output.js", ["web-output.js", "text/javascript; charset=utf-8"]],
+  ["/web-output.css", ["web-output.css", "text/css; charset=utf-8"]],
   ["/app.js", ["app.js", "text/javascript; charset=utf-8"]],
   ["/styles.css", ["styles.css", "text/css; charset=utf-8"]],
   ["/assets/conclavia-logo.png", ["assets/conclavia-logo.png", "image/png"]],
+  ["/assets/web-avatar.jpg", ["../docs/images/mary-listening-playfulness.jpg", "image/jpeg"]],
 ] as const);
 const maxRetainedSegments = 200;
 const maxSeenChatMessages = 2_000;
@@ -364,6 +372,7 @@ export interface ServerOptions {
   meetingAudioDevice: string;
   meetingSpeakerName: string;
   rendererUrl: string | undefined;
+  rendererMode: "unreal" | "web";
 }
 
 export function startServer(options: ServerOptions): Promise<void> {
@@ -439,7 +448,12 @@ export function startServer(options: ServerOptions): Promise<void> {
       })
     : null;
   let intelligence = createIntelligence(runtimeConfig);
-  const renderer = new ConclaviaRenderer(options.rendererUrl);
+  const performanceHub = new PerformanceHub();
+  const companionBaseUrl = options.rendererUrl?.replace(/\/$/u, "")
+    || `http://${options.host}:${options.port}`;
+  const renderer = options.rendererMode === "web"
+    ? new WebPerformanceRenderer(performanceHub, companionBaseUrl)
+    : new ConclaviaRenderer(options.rendererUrl);
   let rendererArmed = false;
   let rendererStarting = false;
   let rendererDesiredProfile: string | null = null;
@@ -1117,6 +1131,68 @@ export function startServer(options: ServerOptions): Promise<void> {
   ): Promise<void> => {
     try {
       const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
+
+      if (request.method === "GET" && url.pathname === "/api/performance/status") {
+        sendJson(response, 200, {
+          schema: "conclavia.performance",
+          version: 1,
+          rendererMode: options.rendererMode,
+          listeners: performanceHub.listenerCount,
+          latestSequence: performanceHub.latestSequence,
+          outputUrl: `${companionBaseUrl}/web-output`,
+        });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/performance/events") {
+        response.writeHead(200, {
+          "content-type": "text/event-stream; charset=utf-8",
+          "cache-control": "no-cache, no-transform",
+          connection: "keep-alive",
+          "x-accel-buffering": "no",
+        });
+        response.write("retry: 1000\n\n");
+        const lastEventHeader = request.headers["last-event-id"];
+        const afterQuery = url.searchParams.get("after");
+        const lastEventId = Number.parseInt(
+          Array.isArray(lastEventHeader)
+            ? lastEventHeader[0] ?? afterQuery ?? "0"
+            : lastEventHeader ?? afterQuery ?? "0",
+          10,
+        );
+        const writePacket = (packet: PerformancePacket): void => {
+          response.write(`id: ${packet.sequence}\n`);
+          response.write("event: performance\n");
+          response.write(`data: ${JSON.stringify(packet)}\n\n`);
+        };
+        for (const packet of performanceHub.since(
+          Number.isFinite(lastEventId) && lastEventId >= 0 ? lastEventId : 0,
+        )) writePacket(packet);
+        const unsubscribe = performanceHub.subscribe(writePacket);
+        const heartbeat = setInterval(() => response.write(": keep-alive\n\n"), 15_000);
+        heartbeat.unref();
+        request.once("close", () => {
+          clearInterval(heartbeat);
+          unsubscribe();
+        });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname.startsWith("/api/performance/audio/")) {
+        const match = /^\/api\/performance\/audio\/([0-9a-f-]{36})\.wav$/u.exec(url.pathname);
+        const asset = match?.[1] ? performanceHub.audioAsset(match[1]) : null;
+        if (!asset) {
+          sendJson(response, 404, { error: "Performance audio not found" });
+          return;
+        }
+        response.writeHead(200, {
+          "content-type": asset.mimeType,
+          "content-length": asset.bytes.byteLength,
+          "cache-control": "private, max-age=300, immutable",
+        });
+        response.end(Buffer.from(asset.bytes));
+        return;
+      }
 
       if (request.method === "GET" && url.pathname === "/api/health") {
         sendJson(response, 200, {
@@ -1806,7 +1882,9 @@ export function startServer(options: ServerOptions): Promise<void> {
       );
       console.log(
         renderer.configured
-          ? `Conclavia renderer bridge: ${options.rendererUrl}`
+          ? options.rendererMode === "web"
+            ? `Conclavia renderer: Web Performance Runtime (${companionBaseUrl}/web-output)`
+            : `Conclavia renderer bridge: ${options.rendererUrl}`
           : "Conclavia renderer bridge: not configured",
       );
       console.log(

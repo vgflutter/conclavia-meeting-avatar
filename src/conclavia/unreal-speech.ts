@@ -10,6 +10,7 @@ import {
   type EnglishVoiceId,
   type ItalianVoiceId,
 } from "../config/avatar-config.js";
+import type { SpeechMark } from "../performance/performance-packet.js";
 import { getUnrealStudioConfig } from "./unreal-studio.js";
 
 type SupportedVoice = ItalianVoiceId | EnglishVoiceId;
@@ -32,6 +33,7 @@ const speechCache = new Map<string, {
   languageCode: string;
   engine: PollySpeechEngine;
 }>();
+const speechMarksCache = new Map<string, SpeechMark[]>();
 const maxCachedSpeechItems = 16;
 const maxCachedSpeechBytesPerItem = 2 * 1024 * 1024;
 
@@ -83,17 +85,21 @@ function escapeSsml(value: string): string {
     .replaceAll("'", "&apos;");
 }
 
-export async function synthesizeUnrealSpeech(input: {
+interface NormalizedSpeechRequest {
+  text: string;
+  voice: SupportedVoice;
+  languageCode: "it-IT" | "en-US";
+  engine: PollySpeechEngine;
+  ssml: string;
+  cacheKey: string;
+}
+
+function normalizeSpeechRequest(input: {
   text?: unknown;
   voice?: unknown;
   languageCode?: unknown;
   direction?: unknown;
-}): Promise<{
-  audio: Uint8Array;
-  voice: SupportedVoice;
-  languageCode: string;
-  engine: PollySpeechEngine;
-}> {
+}): NormalizedSpeechRequest {
   const text = cleanText(input.text);
   const voice = isSupportedVoice(input.voice) ? input.voice : "Bianca";
   const languageCode = voiceLanguage(voice);
@@ -115,8 +121,57 @@ export async function synthesizeUnrealSpeech(input: {
     : direction.includes("autorevole")
       ? "110%"
       : "112%";
-  const engine = preferredPollyEngine(voice);
-  const cacheKey = JSON.stringify([text, voice, languageCode, direction]);
+  return {
+    text,
+    voice,
+    languageCode,
+    engine: preferredPollyEngine(voice),
+    ssml: `<speak><prosody rate="${rate}">${escapeSsml(text)}</prosody></speak>`,
+    cacheKey: JSON.stringify([text, voice, languageCode, direction]),
+  };
+}
+
+function parseSpeechMarks(value: string): SpeechMark[] {
+  const marks: SpeechMark[] = [];
+  for (const line of value.split(/\r?\n/u)) {
+    if (!line.trim()) continue;
+    try {
+      const candidate = JSON.parse(line) as Record<string, unknown>;
+      const type = candidate.type;
+      if (
+        typeof candidate.time !== "number"
+        || !Number.isFinite(candidate.time)
+        || candidate.time < 0
+        || (type !== "sentence" && type !== "ssml" && type !== "viseme" && type !== "word")
+        || typeof candidate.value !== "string"
+      ) continue;
+      marks.push({
+        time: Math.round(candidate.time),
+        type,
+        value: candidate.value,
+        ...(typeof candidate.start === "number" ? { start: candidate.start } : {}),
+        ...(typeof candidate.end === "number" ? { end: candidate.end } : {}),
+      });
+    } catch {
+      // Ignore a malformed line without losing the audio performance.
+    }
+  }
+  return marks.sort((left, right) => left.time - right.time);
+}
+
+export async function synthesizeUnrealSpeech(input: {
+  text?: unknown;
+  voice?: unknown;
+  languageCode?: unknown;
+  direction?: unknown;
+}): Promise<{
+  audio: Uint8Array;
+  voice: SupportedVoice;
+  languageCode: string;
+  engine: PollySpeechEngine;
+}> {
+  const request = normalizeSpeechRequest(input);
+  const { voice, languageCode, engine, cacheKey } = request;
   const cached = speechCache.get(cacheKey);
   if (cached) {
     speechCache.delete(cacheKey);
@@ -130,7 +185,7 @@ export async function synthesizeUnrealSpeech(input: {
     OutputFormat: "pcm",
     SampleRate: "16000",
     TextType: "ssml",
-    Text: `<speak><prosody rate="${rate}">${escapeSsml(text)}</prosody></speak>`,
+    Text: request.ssml,
   }));
   if (!output.AudioStream) throw new Error("Polly returned no audio");
   const result = {
@@ -148,4 +203,44 @@ export async function synthesizeUnrealSpeech(input: {
     }
   }
   return { ...result, audio: result.audio.slice() };
+}
+
+export async function synthesizePerformanceSpeech(input: {
+  text?: unknown;
+  voice?: unknown;
+  languageCode?: unknown;
+  direction?: unknown;
+}): Promise<{
+  audio: Uint8Array;
+  marks: SpeechMark[];
+  voice: SupportedVoice;
+  languageCode: string;
+  engine: PollySpeechEngine;
+}> {
+  const request = normalizeSpeechRequest(input);
+  const audioPromise = synthesizeUnrealSpeech(input);
+  const cachedMarks = speechMarksCache.get(request.cacheKey);
+  const marksPromise = cachedMarks
+    ? Promise.resolve(cachedMarks.map((mark) => ({ ...mark })))
+    : pollyClient().send(new SynthesizeSpeechCommand({
+        Engine: request.engine,
+        VoiceId: request.voice,
+        LanguageCode: request.languageCode,
+        OutputFormat: "json",
+        TextType: "ssml",
+        Text: request.ssml,
+        SpeechMarkTypes: ["sentence", "word", "viseme"],
+      })).then(async (output) => {
+        if (!output.AudioStream) return [];
+        const marks = parseSpeechMarks(await output.AudioStream.transformToString());
+        speechMarksCache.set(request.cacheKey, marks);
+        while (speechMarksCache.size > maxCachedSpeechItems) {
+          const oldest = speechMarksCache.keys().next().value;
+          if (typeof oldest !== "string") break;
+          speechMarksCache.delete(oldest);
+        }
+        return marks.map((mark) => ({ ...mark }));
+      }).catch(() => [] as SpeechMark[]);
+  const [audio, marks] = await Promise.all([audioPromise, marksPromise]);
+  return { ...audio, marks };
 }

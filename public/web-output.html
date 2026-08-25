@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Conclavia Web Performance Runtime</title>
+    <link rel="stylesheet" href="/web-output.css" />
+  </head>
+  <body>
+    <main id="runtime" data-state="connecting" data-mood="neutral">
+      <canvas id="stage" aria-label="Conclavia Web avatar runtime"></canvas>
+      <div class="runtime-badges" aria-live="polite">
+        <span id="live-badge">CONNESSIONE</span>
+        <span id="action-badge">WEB RUNTIME</span>
+      </div>
+      <section class="runtime-card">
+        <img src="/assets/conclavia-logo.png" alt="Conclavia" />
+        <div>
+          <strong id="avatar-name">Mary</strong>
+          <span id="runtime-status">Performance packet in attesa</span>
+        </div>
+      </section>
+      <aside id="diagnostics">
+        <span id="sequence">packet 0</span>
+        <span id="clock">0 ms</span>
+        <span id="mood">neutral</span>
+        <span id="viseme">viseme -</span>
+      </aside>
+    </main>
+    <script type="module" src="/web-output.js"></script>
+  </body>
+</html>
