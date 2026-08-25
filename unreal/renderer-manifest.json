@@ -67,6 +67,8 @@
     "unreal/ConclaviaStudio/Scripts/ensure_commercial_lipsync_assets.py",
     "unreal/ConclaviaStudio/Scripts/audit_web_facial_api.py",
     "unreal/ConclaviaStudio/Scripts/Audit-WebFacialApi.ps1",
+    "unreal/ConclaviaStudio/Scripts/sample_web_facial_controls.py",
+    "unreal/ConclaviaStudio/Scripts/Sample-WebFacialControls.ps1",
     "unreal/ConclaviaStudio/Scripts/export_web_avatar_bundle.py",
     "unreal/ConclaviaStudio/Scripts/Export-WebAvatarBundle.ps1"
   ]

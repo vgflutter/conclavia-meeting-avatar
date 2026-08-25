@@ -365,3 +365,28 @@ await test("audits the licensed facial generator before authoring Web clips", as
   assert.match(rendererManifest, /audit_web_facial_api\.py/);
   assert.match(rendererManifest, /Audit-WebFacialApi\.ps1/);
 });
+
+await test("samples every licensed mood without coupling it to spoken audio", async () => {
+  const [sampler, wrapper, rendererManifest] = await Promise.all([
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/sample_web_facial_controls.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Sample-WebFacialControls.ps1"),
+      "utf8",
+    ),
+    readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
+  ]);
+  assert.match(sampler, /MOOD_INTENSITIES/);
+  assert.match(sampler, /"HAPPINESS": 0\.38/);
+  assert.match(sampler, /"CONFUSION": 0\.32/);
+  assert.match(sampler, /create_realistic_meta_human_lip_sync_with_mood_generator/);
+  assert.match(sampler, /process_audio_data\(\[0\.0\] \* CHUNK_SAMPLES/);
+  assert.match(sampler, /generator\.is_model_ready\(\)/);
+  assert.match(sampler, /SPEECH_TOKENS/);
+  assert.match(sampler, /UPPER_FACE_TOKENS/);
+  assert.match(sampler, /CONCLAVIA_WEB_FACIAL_CONTROL_SAMPLE_OK/);
+  assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_CONTROL_SAMPLE_OK/);
+  assert.match(rendererManifest, /sample_web_facial_controls\.py/);
+});
