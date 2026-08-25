@@ -67,11 +67,33 @@ FACIAL_MOODS = (
     "frustrated",
     "reflective",
 )
+FACIAL_VISEMES = (
+    ("p", "p", "P"),
+    ("t", "t", "T"),
+    ("S", "sh", "Sh"),
+    ("T", "th", "Th"),
+    ("f", "f", "F"),
+    ("k", "k", "K"),
+    ("i", "i", "I"),
+    ("r", "r", "R"),
+    ("s", "s", "S"),
+    ("u", "u", "U"),
+    ("@", "schwa", "Schwa"),
+    ("a", "a", "A"),
+    ("e", "e-close", "EClose"),
+    ("E", "e-open", "EOpen"),
+    ("o", "o-close", "OClose"),
+    ("O", "o-open", "OOpen"),
+)
 
 
 def facial_clip_name(mood: str) -> str:
     label = "".join(part.capitalize() for part in mood.split("-"))
     return f"AS_WebMood{label}_v1"
+
+
+def viseme_clip_name(label: str) -> str:
+    return f"AS_WebViseme{label}_v1"
 
 
 def log(message: str) -> None:
@@ -152,9 +174,18 @@ def write_bundle_inventory(animation_files: list[str]) -> None:
         "level": LEVEL_PATH,
         "model": "model.glb",
         "animationModels": animation_files
-        + [f"anim-face-{mood}.glb" for mood in FACIAL_MOODS],
+        + [f"anim-face-{mood}.glb" for mood in FACIAL_MOODS]
+        + [f"anim-viseme-{alias}.glb" for _, alias, _ in FACIAL_VISEMES],
         "facialClips": {
-            "visemes": {},
+            "visemes": {
+                viseme: {
+                    "clip": viseme_clip_name(label),
+                    "startSeconds": 0.08,
+                    "endSeconds": 0.22,
+                    "loop": True,
+                }
+                for viseme, _, label in FACIAL_VISEMES
+            },
             "moods": {
                 mood: {
                     "clip": facial_clip_name(mood),

@@ -285,7 +285,7 @@ await test("keeps the licensed markerless bootstrap reproducible and auth epheme
 });
 
 await test("exports a portable Web performer from the authored UE 5.8 meeting assets", async () => {
-  const [project, rendererManifest, exporter, facialBaker, wrapper] = await Promise.all([
+  const [project, rendererManifest, exporter, facialBaker, visemeBaker, wrapper] = await Promise.all([
     readFile(repositoryFile("unreal/ConclaviaStudio/ConclaviaStudio.uproject"), "utf8"),
     readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
     readFile(
@@ -294,6 +294,10 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
     ),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/bake_web_facial_moods.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/bake_web_facial_visemes.py"),
       "utf8",
     ),
     readFile(
@@ -314,6 +318,9 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /FACIAL_MOODS/);
   assert.match(exporter, /anim-face-\{mood\}\.glb/);
   assert.match(exporter, /AS_WebMood\{label\}_v1/);
+  assert.match(exporter, /FACIAL_VISEMES/);
+  assert.match(exporter, /anim-viseme-\{alias\}\.glb/);
+  assert.match(exporter, /AS_WebViseme\{label\}_v1/);
   assert.match(exporter, /"attentive"/);
   assert.match(exporter, /"amused"/);
   assert.match(exporter, /GLTFExporter\.export_to_gltf/);
@@ -331,11 +338,22 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(facialBaker, /anim-face-\{mood\}\.glb/);
   assert.match(facialBaker, /CONCLAVIA_WEB_FACIAL_MOODS: \{message\}/);
   assert.doesNotMatch(facialBaker, /jawopen|tongue|teeth|mouthpress|mouthpucker/iu);
+  assert.match(visemeBaker, /conclavia\.web-visemes/);
+  assert.match(visemeBaker, /SequencerTools\.export_anim_sequence/);
+  assert.match(visemeBaker, /evaluate_all_skeletal_mesh_components/);
+  assert.match(visemeBaker, /close_level_sequence\(\)/);
+  assert.match(visemeBaker, /anim-viseme-\{alias\}\.glb/);
+  assert.match(visemeBaker, /\("S", "sh", "Sh"\)/);
+  assert.match(visemeBaker, /\("T", "th", "Th"\)/);
+  assert.match(visemeBaker, /CONCLAVIA_WEB_FACIAL_VISEMES: \{message\}/);
   assert.match(wrapper, /UnrealEditor-Cmd\.exe/);
   assert.match(wrapper, /Compress-Archive/);
   assert.match(wrapper, /Web avatar export directory must be empty/);
   assert.match(wrapper, /bake_web_facial_moods\.py/);
+  assert.match(wrapper, /bake_web_facial_visemes\.py/);
   assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_MOODS: READY/);
+  assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_VISEMES: READY/);
+  assert.match(wrapper, /selected-viseme-controls\.json/);
   assert.match(wrapper, /completedBeforeShutdown/);
 });
 

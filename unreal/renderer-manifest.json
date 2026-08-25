@@ -16,7 +16,7 @@
     "root": "C:\\ConclaviaMeetingAvatar",
     "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
     "editorTarget": "ConclaviaStudioEditor",
-    "runtimeRevision": "ue58-commercial-lipsync-v28-web-facial-authoring"
+    "runtimeRevision": "ue58-commercial-lipsync-v29-web-viseme-baking"
   },
   "pixelStreamingInfrastructure": {
     "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",
@@ -72,6 +72,7 @@
     "unreal/ConclaviaStudio/Scripts/audit_official_facial_pose_catalog.py",
     "unreal/ConclaviaStudio/Scripts/Audit-OfficialFacialPoseCatalog.ps1",
     "unreal/ConclaviaStudio/Scripts/bake_web_facial_moods.py",
+    "unreal/ConclaviaStudio/Scripts/bake_web_facial_visemes.py",
     "unreal/ConclaviaStudio/Scripts/export_web_avatar_bundle.py",
     "unreal/ConclaviaStudio/Scripts/Export-WebAvatarBundle.ps1"
   ]
