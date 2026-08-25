@@ -316,9 +316,27 @@ npm run studio:web:avatar:scaffold -- /absolute/path/to/export/showcase.glb show
 npm run studio:web:avatar:install -- /absolute/path/to/export/manifest.json
 ```
 
+The checked-in UE 5.8 exporter can instead produce the base MetaHuman and every
+authored meeting animation as one portable bundle on the Windows renderer:
+
+```powershell
+& C:\ConclaviaMeetingAvatar\Scripts\Export-WebAvatarBundle.ps1
+```
+
+After downloading and expanding the resulting ZIP on the Mac, create the draft
+directly from its generated inventory and then complete the reported facial maps:
+
+```bash
+npm run studio:web:avatar:scaffold-bundle -- /absolute/path/to/export/export.json
+npm run studio:web:avatar:install -- /absolute/path/to/export/manifest.json
+```
+
 The read-only probe lists the exact node, morph-target and animation-clip names
 needed by the manifest. The scaffold writes a non-overwriting manifest draft
-beside the GLB and reports every semantic mapping still requiring review.
+beside the GLB and reports every semantic mapping still requiring review. A
+bundle can keep animation sequences in separate GLBs; the browser binds their
+tracks to the resident base skeleton and respects authored ranges for raising,
+holding and lowering the hand without restarting the complete take.
 Installation then audits the source before copying it, never overwrites an
 existing avatar, and exposes the GLB to the browser only after the final
 directory rename has completed. Private character binaries remain under the

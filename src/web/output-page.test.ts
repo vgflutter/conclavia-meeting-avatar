@@ -81,10 +81,17 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(output, /outputMode === "obs" \? "clean" : "console"/);
   assert.match(html, /data-output="console"/);
   assert.match(performer, /new THREE\.AnimationMixer/);
+  assert.match(performer, /addAnimationGltfs/);
+  assert.match(performer, /manifest\.animationModels/);
+  assert.match(performer, /const performer = new ThreeAvatarPerformer/);
+  assert.match(performer, /#enforceClipSegment/);
+  assert.match(performer, /segment\.startSeconds/);
   assert.match(performer, /morphTargetInfluences/);
   assert.match(performer, /fadeIn\(0\.32\)/);
   assert.match(server, /api\/performance\/avatar/);
   assert.match(server, /model\/gltf-binary/);
+  assert.match(server, /animationModels\.map/);
+  assert.match(server, /animationModels\.indexOf\(requestedFilename\)/);
   assert.match(server, /failed its meeting-readiness audit/);
 });
 

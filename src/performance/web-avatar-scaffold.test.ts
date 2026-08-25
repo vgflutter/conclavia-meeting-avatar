@@ -8,6 +8,7 @@ import { auditWebAvatar } from "./web-avatar-audit.js";
 import { parseWebAvatarManifest } from "./web-avatar-manifest.js";
 import {
   scaffoldWebAvatarManifest,
+  writeWebAvatarBundleScaffold,
   writeWebAvatarScaffold,
 } from "./web-avatar-scaffold.js";
 
@@ -95,4 +96,51 @@ await test("refuses an unskinned model", async () => {
     scaffoldWebAvatarManifest(modelPath, "showcase"),
     /must contain a skin/u,
   );
+});
+
+await test("turns the UE 5.8 export inventory into a multi-GLB manifest draft", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "conclavia-export-bundle-"));
+  await writeFile(join(directory, "model.glb"), glb({
+    asset: { version: "2.0" },
+    nodes: [{ name: "Head", mesh: 0, skin: 0 }],
+    meshes: [{ extras: { targetNames: ["jawOpen", "mouthSmileLeft"] } }],
+    skins: [{}],
+  }));
+  await writeFile(join(directory, "anim-idle.glb"), glb({
+    asset: { version: "2.0" },
+    animations: ["Idle_A", "Idle_B", "Listen_A", "Listen_B"].map((name) => ({ name })),
+  }));
+  await writeFile(join(directory, "anim-gesture.glb"), glb({
+    asset: { version: "2.0" },
+    animations: [{ name: "Hand_Raise" }, { name: "Applause" }],
+  }));
+  const inventoryPath = join(directory, "export.json");
+  await writeFile(inventoryPath, JSON.stringify({
+    schema: "conclavia.web-avatar-export",
+    version: 1,
+    id: "showcase",
+    model: "model.glb",
+    animationModels: ["anim-idle.glb", "anim-gesture.glb"],
+    clips: {
+      idle: ["Idle_A", "Idle_B"],
+      listening: ["Listen_A", "Listen_B"],
+      gestures: {
+        "raise-hand": { clip: "Hand_Raise", startSeconds: 1, endSeconds: 2 },
+        "lower-hand": { clip: "Hand_Raise", startSeconds: 3, endSeconds: 4 },
+        applause: { clip: "Applause", startSeconds: 1, endSeconds: 3, loop: true },
+      },
+    },
+  }));
+
+  const result = await writeWebAvatarBundleScaffold(inventoryPath);
+  assert.deepEqual(result.manifest.animationModels, ["anim-idle.glb", "anim-gesture.glb"]);
+  assert.deepEqual(result.manifest.clips.gestures["lower-hand"], {
+    clip: "Hand_Raise",
+    startSeconds: 3,
+    endSeconds: 4,
+  });
+  assert.deepEqual(result.unresolved.ambientClips, []);
+  assert.ok(parseWebAvatarManifest(
+    JSON.parse(await readFile(result.outputPath, "utf8")) as unknown,
+  ));
 });

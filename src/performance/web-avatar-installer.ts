@@ -12,7 +12,10 @@ import {
 import { dirname, join, resolve } from "node:path";
 
 import { auditWebAvatar, type WebAvatarAudit } from "./web-avatar-audit.js";
-import { parseWebAvatarManifest, type WebAvatarManifest } from "./web-avatar-manifest.js";
+import {
+  parseWebAvatarManifest,
+  type WebAvatarManifest,
+} from "./web-avatar-manifest.js";
 
 export interface InstalledWebAvatar {
   manifest: WebAvatarManifest;
@@ -20,6 +23,8 @@ export interface InstalledWebAvatar {
   directory: string;
   modelPath: string;
   modelBytes: number;
+  animationPaths: string[];
+  animationBytes: number;
 }
 
 async function pathExists(path: string): Promise<boolean> {
@@ -47,7 +52,10 @@ export async function installWebAvatar(
   const manifest = parseWebAvatarManifest(rawManifest);
   if (!manifest) throw new Error("Web avatar manifest is invalid");
   const sourceModel = join(dirname(sourceManifest), manifest.model);
-  const audit = await auditWebAvatar(manifest, sourceModel);
+  const sourceAnimations = manifest.animationModels.map(
+    (filename) => join(dirname(sourceManifest), filename),
+  );
+  const audit = await auditWebAvatar(manifest, sourceModel, sourceAnimations);
   if (!audit.valid) {
     throw new Error(`Web avatar failed meeting-readiness audit: ${JSON.stringify(audit)}`);
   }
@@ -64,6 +72,9 @@ export async function installWebAvatar(
   try {
     await mkdir(temporary);
     await copyFile(sourceModel, installedModel);
+    await Promise.all(manifest.animationModels.map((filename, index) =>
+      copyFile(sourceAnimations[index]!, join(temporary, filename))
+    ));
     await writeFile(
       join(temporary, "manifest.json"),
       `${JSON.stringify(manifest, null, 2)}\n`,
@@ -76,11 +87,15 @@ export async function installWebAvatar(
   }
 
   const modelPath = join(destination, manifest.model);
+  const animationPaths = manifest.animationModels.map((filename) => join(destination, filename));
+  const animationMetadata = await Promise.all(animationPaths.map((path) => stat(path)));
   return {
     manifest,
     audit,
     directory: destination,
     modelPath,
     modelBytes: (await stat(modelPath)).size,
+    animationPaths,
+    animationBytes: animationMetadata.reduce((total, metadata) => total + metadata.size, 0),
   };
 }

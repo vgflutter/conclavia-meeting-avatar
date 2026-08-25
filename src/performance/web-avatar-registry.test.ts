@@ -23,6 +23,7 @@ function manifest(): unknown {
     displayName: "Showcase",
     assetVersion: "test-1",
     model: "showcase.glb",
+    animationModels: [],
     framing: { camera: [0, 1, 2], target: [0, 1, 0], fov: 35, scale: 1 },
     nodes: { head: "head" },
     morphs: {
@@ -123,4 +124,52 @@ await test("distinguishes missing and invalid Web avatar manifests", async () =>
   const invalid = await registry.inspect("showcase");
   assert.equal(invalid.installed, true);
   assert.equal(invalid.error, "manifest-invalid");
+});
+
+await test("installs and audits separately exported animation GLBs", async () => {
+  const sourceDirectory = await mkdtemp(join(tmpdir(), "conclavia-avatar-bundle-source-"));
+  const sourceManifest = join(sourceDirectory, "manifest.json");
+  const bundledManifest = manifest() as Record<string, unknown>;
+  bundledManifest.animationModels = ["gestures.glb"];
+  await writeFile(sourceManifest, JSON.stringify(bundledManifest));
+  await writeFile(join(sourceDirectory, "showcase.glb"), glb({
+    asset: { version: "2.0" },
+    nodes: [{ name: "head", mesh: 0, skin: 0 }],
+    meshes: [{ extras: { targetNames: ["mouthClose", "smile"] } }],
+    skins: [{}],
+    animations: ["idle_a", "idle_b", "listen_a", "listen_b"].map((name) => ({ name })),
+    images: [{ bufferView: 2 }],
+  }));
+  await writeFile(join(sourceDirectory, "gestures.glb"), glb({
+    asset: { version: "2.0" },
+    animations: [{ name: "gesture" }],
+  }));
+
+  const destination = await mkdtemp(join(tmpdir(), "conclavia-avatar-bundle-"));
+  const installed = await installWebAvatar(sourceManifest, destination);
+  assert.equal(installed.audit.valid, true);
+  assert.equal(installed.animationPaths.length, 1);
+  assert.ok(installed.animationBytes > 0);
+
+  const registry = new WebAvatarRegistry(destination);
+  const ready = await registry.inspect("showcase");
+  assert.equal(ready.ready, true);
+  assert.equal(ready.audit?.animationAssetCount, 1);
+  assert.equal(ready.animationPaths.length, 1);
+});
+
+await test("reports a declared animation GLB that is not installed", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "conclavia-avatar-registry-"));
+  await mkdir(join(directory, "showcase"));
+  const bundledManifest = manifest() as Record<string, unknown>;
+  bundledManifest.animationModels = ["missing.glb"];
+  await writeFile(
+    join(directory, "showcase", "manifest.json"),
+    JSON.stringify(bundledManifest),
+  );
+  await writeFile(join(directory, "showcase", "showcase.glb"), glb({
+    asset: { version: "2.0" },
+  }));
+  const registry = new WebAvatarRegistry(directory);
+  assert.equal((await registry.inspect("showcase")).error, "animation-missing");
 });

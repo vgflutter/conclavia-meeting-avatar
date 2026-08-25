@@ -10,6 +10,15 @@ export const webAvatarManifestVersion = 1 as const;
 type Vector3Tuple = readonly [number, number, number];
 type MorphWeights = Readonly<Record<string, number>>;
 
+export interface WebAvatarClipSegment {
+  clip: string;
+  startSeconds?: number;
+  endSeconds?: number;
+  loop?: boolean;
+}
+
+export type WebAvatarClipReference = string | WebAvatarClipSegment;
+
 export interface WebAvatarManifest {
   schema: typeof webAvatarManifestSchema;
   version: typeof webAvatarManifestVersion;
@@ -17,6 +26,7 @@ export interface WebAvatarManifest {
   displayName: string;
   assetVersion: string;
   model: string;
+  animationModels: readonly string[];
   framing: {
     camera: Vector3Tuple;
     target: Vector3Tuple;
@@ -35,7 +45,7 @@ export interface WebAvatarManifest {
   clips: {
     idle: readonly string[];
     listening: readonly string[];
-    gestures: Partial<Readonly<Record<PerformanceGesture, string>>>;
+    gestures: Partial<Readonly<Record<PerformanceGesture, WebAvatarClipReference>>>;
   };
   environment: {
     background: string;
@@ -119,6 +129,15 @@ function stringArray(value: unknown, maximum = 12): string[] | null {
   return values.every((item): item is string => item !== null) ? values : null;
 }
 
+function glbFilename(value: unknown): string | null {
+  const filename = cleanText(value, 160);
+  return filename
+    && basename(filename) === filename
+    && filename.toLowerCase().endsWith(".glb")
+    ? filename
+    : null;
+}
+
 function morphWeights(value: unknown): Record<string, number> | null {
   const record = objectRecord(value);
   if (!record || Object.keys(record).length > 24) return null;
@@ -145,6 +164,37 @@ function morphMap(value: unknown, maximum = 64): Record<string, MorphWeights> | 
   return result;
 }
 
+function clipReference(value: unknown): WebAvatarClipReference | null {
+  const direct = cleanText(value, 160);
+  if (direct) return direct;
+  const record = objectRecord(value);
+  if (!record) return null;
+  const clip = cleanText(record.clip, 160);
+  if (!clip) return null;
+  const startSeconds = record.startSeconds === undefined
+    ? undefined
+    : finiteNumber(record.startSeconds, 0, 3_600);
+  const endSeconds = record.endSeconds === undefined
+    ? undefined
+    : finiteNumber(record.endSeconds, 0, 3_600);
+  if (
+    startSeconds === null
+    || endSeconds === null
+    || (startSeconds !== undefined && endSeconds !== undefined && endSeconds <= startSeconds)
+    || (record.loop !== undefined && typeof record.loop !== "boolean")
+  ) return null;
+  return {
+    clip,
+    ...(startSeconds === undefined ? {} : { startSeconds }),
+    ...(endSeconds === undefined ? {} : { endSeconds }),
+    ...(record.loop === undefined ? {} : { loop: record.loop }),
+  };
+}
+
+export function webAvatarClipName(reference: WebAvatarClipReference): string {
+  return typeof reference === "string" ? reference : reference.clip;
+}
+
 export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null {
   const record = objectRecord(value);
   if (
@@ -155,14 +205,20 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
   const id = cleanId(record.id);
   const displayName = cleanText(record.displayName);
   const assetVersion = cleanText(record.assetVersion, 80);
-  const model = cleanText(record.model, 160);
+  const model = glbFilename(record.model);
   if (
     !id
     || !displayName
     || !assetVersion
     || !model
-    || basename(model) !== model
-    || !model.toLowerCase().endsWith(".glb")
+  ) return null;
+  const rawAnimationModels = record.animationModels ?? [];
+  if (!Array.isArray(rawAnimationModels) || rawAnimationModels.length > 16) return null;
+  const animationModels = rawAnimationModels.map(glbFilename);
+  if (
+    !animationModels.every((filename): filename is string => filename !== null)
+    || new Set(animationModels).size !== animationModels.length
+    || animationModels.includes(model)
   ) return null;
 
   const framingRecord = objectRecord(record.framing);
@@ -196,12 +252,12 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
   const listening = stringArray(clipsRecord?.listening);
   const gesturesRecord = objectRecord(clipsRecord?.gestures);
   if (!idle || !listening || !gesturesRecord) return null;
-  const gestures: Partial<Record<PerformanceGesture, string>> = {};
-  for (const [gesture, clip] of Object.entries(gesturesRecord)) {
+  const gestures: Partial<Record<PerformanceGesture, WebAvatarClipReference>> = {};
+  for (const [gesture, rawClip] of Object.entries(gesturesRecord)) {
     if (!performanceGestures.includes(gesture as PerformanceGesture)) return null;
-    const cleanClip = cleanText(clip, 160);
-    if (!cleanClip) return null;
-    gestures[gesture as PerformanceGesture] = cleanClip;
+    const clip = clipReference(rawClip);
+    if (!clip) return null;
+    gestures[gesture as PerformanceGesture] = clip;
   }
 
   const environmentRecord = objectRecord(record.environment);
@@ -222,6 +278,7 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
     displayName,
     assetVersion,
     model,
+    animationModels,
     framing: { camera, target, fov, scale },
     nodes,
     morphs: { visemes, moods },
@@ -252,4 +309,22 @@ export function webAvatarModelPath(
   manifest: WebAvatarManifest,
 ): string {
   return join(resolve(directory), manifest.id, manifest.model);
+}
+
+export function webAvatarAnimationPaths(
+  directory: string,
+  manifest: WebAvatarManifest,
+): string[] {
+  const root = join(resolve(directory), manifest.id);
+  return manifest.animationModels.map((filename) => join(root, filename));
+}
+
+export function webAvatarAssetPaths(
+  directory: string,
+  manifest: WebAvatarManifest,
+): string[] {
+  return [
+    webAvatarModelPath(directory, manifest),
+    ...webAvatarAnimationPaths(directory, manifest),
+  ];
 }

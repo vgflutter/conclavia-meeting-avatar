@@ -23,6 +23,17 @@ function addMorphWeights(target, weights, scale = 1) {
   }
 }
 
+function clipReference(value, defaultLoop = false) {
+  return typeof value === "string"
+    ? { clip: value, startSeconds: 0, endSeconds: null, loop: defaultLoop }
+    : {
+      clip: value?.clip || "",
+      startSeconds: Math.max(0, Number(value?.startSeconds) || 0),
+      endSeconds: Number.isFinite(value?.endSeconds) ? Number(value.endSeconds) : null,
+      loop: typeof value?.loop === "boolean" ? value.loop : defaultLoop,
+    };
+}
+
 class ThreeAvatarPerformer {
   constructor(manifest, gltf) {
     this.manifest = manifest;
@@ -60,9 +71,7 @@ class ThreeAvatarPerformer {
     this.scene.add(this.root);
     this.mixer = new THREE.AnimationMixer(this.root);
     this.clips = new Map();
-    for (const clip of gltf.animations) {
-      this.clips.set(normalizedName(clip.name), clip);
-    }
+    this.#addAnimationClips(gltf.animations);
     this.morphBindings = [];
     this.root.traverse((node) => {
       if (node.isMesh) {
@@ -93,6 +102,15 @@ class ThreeAvatarPerformer {
     this.performanceToken = "";
     this.lastAmbientClip = "";
     this.ambientMode = "";
+    this.currentSegment = null;
+    this.disposed = false;
+  }
+
+  addAnimationGltfs(animationGltfs) {
+    if (this.disposed) return;
+    this.#addAnimationClips(
+      animationGltfs.flatMap((animationGltf) => animationGltf.animations),
+    );
   }
 
   resize(width, height) {
@@ -109,10 +127,12 @@ class ThreeAvatarPerformer {
     this.#applyGaze(state.gaze, deltaSeconds);
     this.#applyAnimation(state);
     this.mixer.update(Math.min(0.1, deltaSeconds));
+    this.#enforceClipSegment();
     this.renderer.render(this.scene, this.camera);
   }
 
   dispose() {
+    this.disposed = true;
     this.mixer.stopAllAction();
     this.mixer.uncacheRoot(this.root);
     this.root.traverse((node) => {
@@ -164,8 +184,10 @@ class ThreeAvatarPerformer {
       : null;
     const token = `${state.performanceId}:${state.gesture}`;
     if (gestureClip && token !== this.performanceToken) {
-      this.performanceToken = token;
-      this.#playClip(gestureClip, loopingGestures.has(state.gesture));
+      this.ambientMode = "";
+      if (this.#playClip(gestureClip, loopingGestures.has(state.gesture))) {
+        this.performanceToken = token;
+      }
       return;
     }
     if (gestureClip) return;
@@ -182,24 +204,36 @@ class ThreeAvatarPerformer {
       const choices = candidates.filter((name) => normalizedName(name) !== this.lastAmbientClip);
       const pool = choices.length ? choices : candidates;
       const next = pool[Math.floor(Math.random() * pool.length)];
-      if (next) {
+      if (next && this.#playClip(next, false)) {
         this.lastAmbientClip = normalizedName(next);
-        this.#playClip(next, false);
       }
     }
   }
 
-  #playClip(name, loop) {
-    const normalized = normalizedName(name);
+  #addAnimationClips(clips) {
+    for (const clip of clips) this.clips.set(normalizedName(clip.name), clip);
+  }
+
+  #playClip(reference, defaultLoop) {
+    const segment = clipReference(reference, defaultLoop);
+    const normalized = normalizedName(segment.clip);
     const clip = this.clips.get(normalized);
-    if (!clip) return;
+    if (!clip) return false;
+    segment.startSeconds = Math.min(segment.startSeconds, clip.duration);
+    segment.endSeconds = segment.endSeconds === null
+      ? null
+      : Math.max(segment.startSeconds, Math.min(segment.endSeconds, clip.duration));
     const previous = this.currentAction;
     const action = this.mixer.clipAction(clip);
     action.reset();
+    action.time = segment.startSeconds;
     action.enabled = true;
     action.setEffectiveWeight(1);
-    action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
-    action.clampWhenFinished = !loop;
+    action.setLoop(
+      segment.loop && segment.endSeconds === null ? THREE.LoopRepeat : THREE.LoopOnce,
+      segment.loop && segment.endSeconds === null ? Infinity : 1,
+    );
+    action.clampWhenFinished = true;
     if (previous === action) action.play();
     else {
       action.fadeIn(0.32).play();
@@ -207,6 +241,23 @@ class ThreeAvatarPerformer {
     }
     this.currentAction = action;
     this.currentClipName = normalized;
+    this.currentSegment = segment;
+    return true;
+  }
+
+  #enforceClipSegment() {
+    const action = this.currentAction;
+    const segment = this.currentSegment;
+    if (!action || !segment || segment.endSeconds === null) return;
+    if (action.time < segment.endSeconds) return;
+    if (segment.loop && segment.endSeconds > segment.startSeconds) {
+      action.time = segment.startSeconds
+        + ((action.time - segment.startSeconds) % (segment.endSeconds - segment.startSeconds));
+      action.paused = false;
+      return;
+    }
+    action.time = segment.endSeconds;
+    action.paused = true;
   }
 }
 
@@ -220,6 +271,13 @@ export async function loadThreeAvatarPerformer(avatarId) {
   if (manifest?.schema !== "conclavia.web-avatar" || manifest?.version !== 1) {
     throw new Error("Avatar manifest non compatibile");
   }
-  const gltf = await new GLTFLoader().loadAsync(manifest.model);
-  return new ThreeAvatarPerformer(manifest, gltf);
+  const loader = new GLTFLoader();
+  const gltf = await loader.loadAsync(manifest.model);
+  const performer = new ThreeAvatarPerformer(manifest, gltf);
+  Promise.all(
+    (manifest.animationModels || []).map((model) => loader.loadAsync(model)),
+  ).then((animationGltfs) => performer.addAnimationGltfs(animationGltfs)).catch((error) => {
+    console.error("Caricamento animazioni Web avatar non riuscito", error);
+  });
+  return performer;
 }

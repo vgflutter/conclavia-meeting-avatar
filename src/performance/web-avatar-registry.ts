@@ -6,6 +6,7 @@ import {
   isWebAvatarId,
   loadWebAvatarManifest,
   type WebAvatarManifest,
+  webAvatarAnimationPaths,
   webAvatarModelPath,
 } from "./web-avatar-manifest.js";
 
@@ -15,8 +16,9 @@ export interface WebAvatarInspection {
   ready: boolean;
   manifest: WebAvatarManifest | null;
   modelPath: string | null;
+  animationPaths: string[];
   audit: WebAvatarAudit | null;
-  error: "manifest-missing" | "manifest-invalid" | "model-missing" | "audit-failed" | null;
+  error: "manifest-missing" | "manifest-invalid" | "model-missing" | "animation-missing" | "audit-failed" | null;
 }
 
 interface CachedInspection {
@@ -36,6 +38,7 @@ function auditIssues(audit: WebAvatarAudit): string[] {
     ...audit.missingGestureMappings.map((value) => `gesture:${value}`),
     ...audit.insufficientAmbientVariety.map((value) => `variety:${value}`),
     ...audit.externalImages.map((value) => `external-image:${value}`),
+    ...audit.invalidAnimationAssets.map((value) => `animation-asset:${value}`),
   ];
 }
 
@@ -93,6 +96,7 @@ export class WebAvatarRegistry {
         ready: false,
         manifest: null,
         modelPath: null,
+        animationPaths: [],
         audit: null,
         error: "manifest-missing",
       };
@@ -109,6 +113,7 @@ export class WebAvatarRegistry {
         ready: false,
         manifest: null,
         modelPath: null,
+        animationPaths: [],
         audit: null,
         error: "manifest-missing",
       };
@@ -121,11 +126,13 @@ export class WebAvatarRegistry {
         ready: false,
         manifest: null,
         modelPath: null,
+        animationPaths: [],
         audit: null,
         error: "manifest-invalid",
       };
     }
     const modelPath = webAvatarModelPath(this.#directory, manifest);
+    const animationPaths = webAvatarAnimationPaths(this.#directory, manifest);
     let modelMetadata;
     try {
       modelMetadata = await stat(modelPath);
@@ -136,28 +143,48 @@ export class WebAvatarRegistry {
         ready: false,
         manifest,
         modelPath,
+        animationPaths,
         audit: null,
         error: "model-missing",
       };
+    }
+    const animationMetadata = [];
+    for (const path of animationPaths) {
+      try {
+        animationMetadata.push(await stat(path));
+      } catch {
+        return {
+          id: avatarId,
+          installed: true,
+          ready: false,
+          manifest,
+          modelPath,
+          animationPaths,
+          audit: null,
+          error: "animation-missing",
+        };
+      }
     }
     const stamp = [
       manifestMetadata.size,
       manifestMetadata.mtimeMs,
       modelMetadata.size,
       modelMetadata.mtimeMs,
+      ...animationMetadata.flatMap((metadata) => [metadata.size, metadata.mtimeMs]),
     ].join(":");
     const cached = this.#cache.get(avatarId);
     if (cached?.stamp === stamp) return cached.inspection;
 
     let inspection: WebAvatarInspection;
     try {
-      const audit = await auditWebAvatar(manifest, modelPath);
+      const audit = await auditWebAvatar(manifest, modelPath, animationPaths);
       inspection = {
         id: avatarId,
         installed: true,
         ready: audit.valid,
         manifest,
         modelPath,
+        animationPaths,
         audit,
         error: audit.valid ? null : "audit-failed",
       };
@@ -168,6 +195,7 @@ export class WebAvatarRegistry {
         ready: false,
         manifest,
         modelPath,
+        animationPaths,
         audit: null,
         error: "audit-failed",
       };

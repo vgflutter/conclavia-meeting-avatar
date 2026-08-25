@@ -45,6 +45,53 @@ await test("accepts a bounded Web avatar manifest", () => {
   assert.equal(manifest?.id, "showcase");
   assert.equal(manifest?.morphs.visemes.p?.mouthClose, 0.8);
   assert.equal(manifest?.clips.gestures["raise-hand"], "raise_hand");
+  assert.deepEqual(manifest?.animationModels, []);
+});
+
+await test("accepts safe external animation GLBs and rejects traversal or duplicates", () => {
+  assert.deepEqual(parseWebAvatarManifest({
+    ...validManifest,
+    animationModels: ["ambient.glb", "gestures.glb"],
+  })?.animationModels, ["ambient.glb", "gestures.glb"]);
+  assert.equal(parseWebAvatarManifest({
+    ...validManifest,
+    animationModels: ["../gesture.glb"],
+  }), null);
+  assert.equal(parseWebAvatarManifest({
+    ...validManifest,
+    animationModels: ["showcase.glb"],
+  }), null);
+  assert.equal(parseWebAvatarManifest({
+    ...validManifest,
+    animationModels: ["gesture.glb", "gesture.glb"],
+  }), null);
+});
+
+await test("accepts bounded authored gesture segments", () => {
+  const parsed = parseWebAvatarManifest({
+    ...validManifest,
+    clips: {
+      ...validManifest.clips,
+      gestures: {
+        ...validManifest.clips.gestures,
+        "raise-hand": { clip: "raise_hand", startSeconds: 1.75, endSeconds: 3.25 },
+        "lower-hand": { clip: "raise_hand", startSeconds: 5.75, endSeconds: 7.5 },
+        applause: { clip: "applause", startSeconds: 3.25, endSeconds: 6.75, loop: true },
+      },
+    },
+  });
+  assert.deepEqual(parsed?.clips.gestures["lower-hand"], {
+    clip: "raise_hand",
+    startSeconds: 5.75,
+    endSeconds: 7.5,
+  });
+  assert.equal(parseWebAvatarManifest({
+    ...validManifest,
+    clips: {
+      ...validManifest.clips,
+      gestures: { "raise-hand": { clip: "raise_hand", startSeconds: 4, endSeconds: 2 } },
+    },
+  }), null);
 });
 
 await test("rejects model traversal and unknown mood or gesture keys", () => {

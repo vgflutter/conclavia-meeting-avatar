@@ -1181,6 +1181,9 @@ export function startServer(options: ServerOptions): Promise<void> {
         sendJson(response, 200, {
           ...inspection.manifest,
           model: `/api/performance/avatar/${inspection.manifest.id}/model.glb`,
+          animationModels: inspection.manifest.animationModels.map((filename) =>
+            `/api/performance/avatar/${inspection.manifest!.id}/assets/${encodeURIComponent(filename)}`
+          ),
         });
         return;
       }
@@ -1210,6 +1213,48 @@ export function startServer(options: ServerOptions): Promise<void> {
           createReadStream(inspection.modelPath).pipe(response);
         } catch {
           sendJson(response, 404, { error: "Web avatar model not found" });
+        }
+        return;
+      }
+
+      const avatarAssetMatch = /^\/api\/performance\/avatar\/([a-z0-9][a-z0-9_-]{0,63})\/assets\/([^/]+)$/u
+        .exec(url.pathname);
+      if (request.method === "GET" && avatarAssetMatch?.[1] && avatarAssetMatch[2]) {
+        const inspection = await webAvatarRegistry.inspect(avatarAssetMatch[1]);
+        if (!inspection.installed) {
+          sendJson(response, 404, { error: "Web avatar asset not installed" });
+          return;
+        }
+        if (!inspection.ready || !inspection.manifest) {
+          sendJson(response, 422, {
+            error: "Web avatar asset failed its meeting-readiness audit",
+            webAvatar: publicWebAvatarStatus(inspection),
+          });
+          return;
+        }
+        let requestedFilename: string;
+        try {
+          requestedFilename = decodeURIComponent(avatarAssetMatch[2]);
+        } catch {
+          sendJson(response, 404, { error: "Web avatar animation not found" });
+          return;
+        }
+        const assetIndex = inspection.manifest.animationModels.indexOf(requestedFilename);
+        const assetPath = inspection.animationPaths[assetIndex];
+        if (assetIndex < 0 || !assetPath) {
+          sendJson(response, 404, { error: "Web avatar animation not found" });
+          return;
+        }
+        try {
+          const metadata = await stat(assetPath);
+          response.writeHead(200, {
+            "content-type": "model/gltf-binary",
+            "content-length": metadata.size,
+            "cache-control": "private, max-age=3600, immutable",
+          });
+          createReadStream(assetPath).pipe(response);
+        } catch {
+          sendJson(response, 404, { error: "Web avatar animation not found" });
         }
         return;
       }

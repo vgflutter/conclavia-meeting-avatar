@@ -5,6 +5,11 @@
   "displayName": "Mary Showcase Web LOD",
   "assetVersion": "2026.08.1",
   "model": "showcase.glb",
+  "animationModels": [
+    "anim-ambient.glb",
+    "anim-hand-raise.glb",
+    "anim-applause.glb"
+  ],
   "framing": {
     "camera": [0, 1.56, 1.18],
     "target": [0, 1.49, 0],
@@ -59,9 +64,22 @@
       "tilt": "Gesture_HeadTilt",
       "emphasis": "Gesture_Emphasis",
       "settle": "Gesture_Settle",
-      "raise-hand": "Gesture_RaiseHand_Seated",
-      "lower-hand": "Gesture_LowerHand_Seated",
-      "applause": "Gesture_Applause_Seated"
+      "raise-hand": {
+        "clip": "Gesture_RaiseHand_Seated",
+        "startSeconds": 1.75,
+        "endSeconds": 3.25
+      },
+      "lower-hand": {
+        "clip": "Gesture_RaiseHand_Seated",
+        "startSeconds": 5.75,
+        "endSeconds": 7.5
+      },
+      "applause": {
+        "clip": "Gesture_Applause_Seated",
+        "startSeconds": 3.25,
+        "endSeconds": 6.75,
+        "loop": true
+      }
     }
   },
   "environment": {

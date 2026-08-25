@@ -29,7 +29,11 @@ defaults to `.conclavia/web-avatars`:
 .conclavia/web-avatars/
   showcase/
     manifest.json
-    showcase.glb
+    model.glb
+    anim-calm-idle.glb
+    anim-attentive-idle.glb
+    anim-hand-raise.glb
+    anim-applause.glb
 ```
 
 Start from [web-avatar-manifest.example.json](web-avatar-manifest.example.json).
@@ -66,15 +70,17 @@ the directory:
 npm run studio:web:avatar:install -- /absolute/path/to/export/manifest.json
 ```
 
-The source GLB must sit beside that manifest. The installer validates the full
-meeting vocabulary first, copies into a private temporary directory and then
-renames it into place. Existing avatar IDs are never overwritten.
+Every source GLB must sit beside that manifest. The installer validates the
+full meeting vocabulary first, copies the complete bundle into a private
+temporary directory and then renames it into place. Existing avatar IDs are
+never overwritten.
 
 The GLB must contain:
 
 - a skinned upper-body character;
 - all morph targets referenced by the viseme and mood maps;
-- every idle, listening and gesture clip named in the manifest;
+- every idle, listening and gesture clip named in the manifest, either in the
+  base model or one of the declared `animationModels`;
 - embedded images and buffers, with no external texture URLs;
 - seated hand-raise, lower-hand and applause clips whose root remains fixed.
 
@@ -82,6 +88,15 @@ Meeting readiness additionally requires mappings for all 17 Polly visemes, all
 12 semantic moods, every supported physical gesture, and at least two distinct
 idle plus two listening clips. Neutral and silence may intentionally map to no
 morph; every other mood and viseme must affect at least one target.
+
+Gesture values may be a clip name or an authored segment with `clip`,
+`startSeconds`, `endSeconds` and `loop`. The production hand-raise take uses one
+segment for raising and holding and a later segment for lowering, so the Web
+runtime never replays the preparation or stands the body up between states.
+
+The base model becomes visible as soon as it loads; the declared animation GLBs
+preload concurrently in the background. A gesture requested during that short
+window remains retryable instead of being discarded.
 
 The runtime applies mood and viseme morphs simultaneously, smooths their
 weights, drives optional head and eye nodes, crossfades authored body clips and
@@ -119,13 +134,40 @@ rendering, one video track, one audio track, JavaScript exceptions and failed
 resources. In clean-output mode it also verifies that badges, identity card and
 diagnostics are hidden.
 
+## Reproducible UE 5.8 export
+
+The Unreal project enables Epic's glTF Exporter and includes one unattended
+bundle command:
+
+```powershell
+& C:\ConclaviaMeetingAvatar\Scripts\Export-WebAvatarBundle.ps1
+```
+
+It loads the isolated `L_MeetingAvatar_v19` map, selects only the actor tagged
+`MeetingAvatarAnchor`, and exports a self-contained base `model.glb` with skin
+weights and morph targets. It exports the four seated ambient sequences, the
+markerless hand-raise and the production seated applause into separate GLBs,
+then writes `export.json` and a ZIP. No podcast scene, Pixel Streaming frame or
+runtime GPU state enters the bundle.
+
+After expanding the ZIP locally:
+
+```bash
+npm run studio:web:avatar:scaffold-bundle -- /absolute/path/export.json
+```
+
+The inventory supplies the exact Unreal clip names and the already reviewed
+gesture windows. The scaffold still leaves viseme and twelve-mood morph weights
+for explicit review against the exported face targets; the readiness audit will
+not serve the avatar until those mappings are complete.
+
 ## Export target
 
 Use the MetaHuman DCC Export package as the character source. Assemble a Web
-LOD with hair cards, a 2K baked face material, upper-body geometry, a full face
-rig and the seated meeting clips. Export one glTF 2.0 binary with morph targets,
-skinning and animation enabled. Keep the model's root motion at zero; framing
-belongs to the manifest camera and must not be baked into individual clips.
+LOD with hair cards, a 2K baked face material, upper-body geometry and a full
+face rig. Keep the base GLB and authored animation GLBs self-contained. Keep the
+model's root motion at zero; framing belongs to the manifest camera and must not
+be baked into individual clips.
 
 This repository does not commit Epic character binaries or private DCC output.
 They remain local assets and can be regenerated from the documented source

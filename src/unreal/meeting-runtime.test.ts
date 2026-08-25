@@ -283,3 +283,35 @@ await test("keeps the licensed markerless bootstrap reproducible and auth epheme
   assert.doesNotMatch(bootstrap, /LauncherClientSecret|refresh_token/);
   assert.match(deployScript, /unreal\/bootstrap/);
 });
+
+await test("exports a portable Web performer from the authored UE 5.8 meeting assets", async () => {
+  const [project, rendererManifest, exporter, wrapper] = await Promise.all([
+    readFile(repositoryFile("unreal/ConclaviaStudio/ConclaviaStudio.uproject"), "utf8"),
+    readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/export_web_avatar_bundle.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Export-WebAvatarBundle.ps1"),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(project, /"Name": "GLTFExporter", "Enabled": true/);
+  assert.match(rendererManifest, /export_web_avatar_bundle\.py/);
+  assert.match(exporter, /\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19/);
+  assert.match(exporter, /MeetingAvatarAnchor/);
+  assert.match(exporter, /export_vertex_skin_weights/);
+  assert.match(exporter, /export_morph_targets/);
+  assert.match(exporter, /export_preview_mesh/);
+  assert.match(exporter, /GLTFExporter\.export_to_gltf/);
+  assert.match(exporter, /AS_MeetingHandRaise_SeatedMarkerless_v1/);
+  assert.match(exporter, /AS_MeetingApplause_SeatedMarkerless_v1/);
+  assert.doesNotMatch(exporter, /AS_MeetingApplause_SeatedContactIK_v3/);
+  assert.match(exporter, /"startSeconds": 5\.75/);
+  assert.match(exporter, /CONCLAVIA_WEB_AVATAR_EXPORT_OK/);
+  assert.match(wrapper, /UnrealEditor-Cmd\.exe/);
+  assert.match(wrapper, /Compress-Archive/);
+  assert.match(wrapper, /Web avatar export directory must be empty/);
+});

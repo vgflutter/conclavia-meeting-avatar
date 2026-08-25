@@ -64,12 +64,15 @@ heard. The output exposes its canvas video and WebAudio destination as one
 `MediaStream`; a future desktop adapter can register that stream as a native
 virtual camera and microphone without changing meeting intelligence.
 
-Web performers are private, self-contained glTF 2.0 binaries installed under
-`.conclavia/web-avatars`. A versioned manifest maps the engine-neutral packet to
-asset-specific morph targets, gaze nodes, idle/listening clips and seated
-gestures. The companion validates the rig, mappings and embedded dependencies
-before the asset is used. This keeps avatar identity and renderer complexity
-out of dialogue, agenda, participation and TTS code.
+Web performers are private, self-contained glTF 2.0 bundles installed under
+`.conclavia/web-avatars`. The base GLB owns the MetaHuman skin, geometry,
+materials and facial morphs; optional animation GLBs carry independently
+exported Unreal sequences. A versioned manifest maps the engine-neutral packet
+to asset-specific morph targets, gaze nodes, idle/listening clips, seated
+gestures and authored clip ranges. The companion validates the complete bundle,
+mappings and embedded dependencies before the asset is used. This keeps avatar
+identity and renderer complexity out of dialogue, agenda, participation and TTS
+code.
 
 Validation is enforced by a metadata-keyed registry rather than trusted as an
 operator convention. A failed or missing audit is visible through renderer and

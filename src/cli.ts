@@ -7,9 +7,13 @@ import type { TranscriptSegment } from "./domain/protocol.js";
 import { runMacosPreflight } from "./preflight/macos.js";
 import { auditWebAvatar, inspectWebAvatarModel } from "./performance/web-avatar-audit.js";
 import { installWebAvatar } from "./performance/web-avatar-installer.js";
-import { writeWebAvatarScaffold } from "./performance/web-avatar-scaffold.js";
+import {
+  writeWebAvatarBundleScaffold,
+  writeWebAvatarScaffold,
+} from "./performance/web-avatar-scaffold.js";
 import {
   loadWebAvatarManifest,
+  webAvatarAnimationPaths,
   webAvatarModelPath,
 } from "./performance/web-avatar-manifest.js";
 import { startServer } from "./server.js";
@@ -42,7 +46,11 @@ async function main(): Promise<void> {
       || ".conclavia/web-avatars";
     const manifest = await loadWebAvatarManifest(directory, avatarId);
     if (!manifest) throw new Error(`Web avatar manifest not found or invalid: ${avatarId}`);
-    const audit = await auditWebAvatar(manifest, webAvatarModelPath(directory, manifest));
+    const audit = await auditWebAvatar(
+      manifest,
+      webAvatarModelPath(directory, manifest),
+      webAvatarAnimationPaths(directory, manifest),
+    );
     console.log(JSON.stringify(audit, null, 2));
     if (!audit.valid) process.exitCode = 1;
     return;
@@ -61,6 +69,7 @@ async function main(): Promise<void> {
       assetVersion: installed.manifest.assetVersion,
       directory: installed.directory,
       modelBytes: installed.modelBytes,
+      animationBytes: installed.animationBytes,
       audit: installed.audit,
     }, null, 2));
     return;
@@ -83,6 +92,21 @@ async function main(): Promise<void> {
     console.log(JSON.stringify({
       created: true,
       outputPath: result.outputPath,
+      unresolved: result.unresolved,
+    }, null, 2));
+    return;
+  }
+
+  if (command === "web-avatar:scaffold-bundle") {
+    const exportInventoryPath = process.argv[3]?.trim();
+    if (!exportInventoryPath) {
+      throw new Error("Usage: web-avatar:scaffold-bundle <export.json>");
+    }
+    const result = await writeWebAvatarBundleScaffold(exportInventoryPath);
+    console.log(JSON.stringify({
+      created: true,
+      outputPath: result.outputPath,
+      animationModels: result.manifest.animationModels,
       unresolved: result.unresolved,
     }, null, 2));
     return;

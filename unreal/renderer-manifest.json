@@ -8,6 +8,7 @@
       "MetaHuman Character",
       "MetaHuman SDK",
       "Pixel Streaming 2",
+      "glTF Exporter",
       "Python Editor Script Plugin"
     ]
   },
@@ -63,6 +64,8 @@
     "unreal/ConclaviaStudio/Scripts/Build-MarkerlessApplause.ps1",
     "unreal/ConclaviaStudio/Scripts/refine_applause_hand_contact.py",
     "unreal/ConclaviaStudio/Scripts/Capture-ApplauseSequence.cjs",
-    "unreal/ConclaviaStudio/Scripts/ensure_commercial_lipsync_assets.py"
+    "unreal/ConclaviaStudio/Scripts/ensure_commercial_lipsync_assets.py",
+    "unreal/ConclaviaStudio/Scripts/export_web_avatar_bundle.py",
+    "unreal/ConclaviaStudio/Scripts/Export-WebAvatarBundle.ps1"
   ]
 }

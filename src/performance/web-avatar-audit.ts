@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
 
-import type { WebAvatarManifest } from "./web-avatar-manifest.js";
+import {
+  webAvatarClipName,
+  type WebAvatarManifest,
+} from "./web-avatar-manifest.js";
 
 interface GltfNode {
   name?: string;
@@ -38,6 +42,7 @@ export interface WebAvatarAudit {
   nodeCount: number;
   morphTargetCount: number;
   animationCount: number;
+  animationAssetCount: number;
   missingNodes: string[];
   missingMorphTargets: string[];
   missingAnimationClips: string[];
@@ -46,6 +51,7 @@ export interface WebAvatarAudit {
   missingGestureMappings: string[];
   insufficientAmbientVariety: string[];
   externalImages: string[];
+  invalidAnimationAssets: string[];
 }
 
 export interface WebAvatarModelInventory {
@@ -151,11 +157,21 @@ export async function inspectWebAvatarModel(modelPath: string): Promise<WebAvata
 export async function auditWebAvatar(
   manifest: WebAvatarManifest,
   modelPath: string,
+  animationModelPaths: readonly string[] = [],
 ): Promise<WebAvatarAudit> {
   const inventory = await inspectWebAvatarModel(modelPath);
+  const animationInventories = await Promise.all(
+    animationModelPaths.map(async (path) => ({
+      path,
+      inventory: await inspectWebAvatarModel(path),
+    })),
+  );
   const nodeNames = new Set(inventory.nodeNames);
   const morphNames = new Set(inventory.morphTargetNames);
-  const clipNames = new Set(inventory.animationClipNames);
+  const clipNames = new Set([
+    ...inventory.animationClipNames,
+    ...animationInventories.flatMap(({ inventory: asset }) => asset.animationClipNames),
+  ]);
   const requiredNodes = Object.values(manifest.nodes);
   const requiredMorphs = new Set([
     ...Object.values(manifest.morphs.visemes).flatMap((weights) => Object.keys(weights)),
@@ -164,9 +180,20 @@ export async function auditWebAvatar(
   const requiredClips = new Set([
     ...manifest.clips.idle,
     ...manifest.clips.listening,
-    ...Object.values(manifest.clips.gestures),
+    ...Object.values(manifest.clips.gestures).map(webAvatarClipName),
   ]);
-  const externalImages = inventory.externalImages;
+  const externalImages = sortedUnique([
+    ...inventory.externalImages,
+    ...animationInventories.flatMap(({ inventory: asset }) => asset.externalImages),
+  ]);
+  const invalidAnimationAssets = animationInventories.flatMap(({ path, inventory: asset }) => {
+    const issues = [
+      ...(asset.gltfVersion === "2.0" ? [] : ["gltf-version"]),
+      ...(asset.animationCount > 0 ? [] : ["animations"]),
+      ...(asset.externalImages.length === 0 ? [] : ["external-images"]),
+    ];
+    return issues.map((issue) => `${basename(path)}:${issue}`);
+  });
   const missingNodes = requiredNodes.filter((name) => !nodeNames.has(name));
   const missingMorphTargets = [...requiredMorphs].filter((name) => !morphNames.has(name));
   const missingAnimationClips = [...requiredClips].filter((name) => !clipNames.has(name));
@@ -198,12 +225,14 @@ export async function auditWebAvatar(
       && missingMoodMappings.length === 0
       && missingGestureMappings.length === 0
       && insufficientAmbientVariety.length === 0
-      && externalImages.length === 0,
+      && externalImages.length === 0
+      && invalidAnimationAssets.length === 0,
     gltfVersion: inventory.gltfVersion,
     skinned,
     nodeCount: inventory.nodeCount,
     morphTargetCount: morphNames.size,
-    animationCount: inventory.animationCount,
+    animationCount: clipNames.size,
+    animationAssetCount: animationInventories.length,
     missingNodes,
     missingMorphTargets,
     missingAnimationClips,
@@ -212,5 +241,6 @@ export async function auditWebAvatar(
     missingGestureMappings,
     insufficientAmbientVariety,
     externalImages,
+    invalidAnimationAssets,
   };
 }

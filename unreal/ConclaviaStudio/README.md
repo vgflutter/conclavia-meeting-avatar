@@ -351,6 +351,23 @@ temporary path on the Windows renderer and run the matching builder:
   -Force
 ```
 
+### Portable Web performer export
+
+The same reviewed meeting actor and seated Animation Sequences can be baked
+into an engine-neutral Web bundle without recording Pixel Streaming frames:
+
+```powershell
+& C:\ConclaviaMeetingAvatar\Scripts\Export-WebAvatarBundle.ps1
+```
+
+The unattended UE 5.8 job exports only the actor tagged
+`MeetingAvatarAnchor`. `model.glb` contains the skinned performer and facial
+morph targets; separate self-contained GLBs contain the four ambient variants,
+markerless hand raise and production seated applause. `export.json` carries the
+reviewed raise, hold, lower and applause time windows. The script refuses a
+non-empty destination and writes a timestamped ZIP, so an earlier export is
+never silently replaced.
+
 The pipeline ingests the mono video through Capture Manager and solves body
 motion locally. UE 5.8 exposes the resulting 342-track MetaHuman transforms
 directly on the performance. The builder validates arm movement, uses the
