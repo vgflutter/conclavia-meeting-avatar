@@ -67,7 +67,7 @@ def gltf_options() -> unreal.GLTFExportOptions:
     options = unreal.GLTFExportOptions()
     for name, value in {
         "export_vertex_skin_weights": True,
-        "export_morph_targets": True,
+        "export_morph_targets": False,
         # The resident model already owns geometry, materials and textures.
         # Animation GLBs only need skeleton nodes and baked tracks; including
         # the preview mesh duplicated ~765 MB for every facial performance.

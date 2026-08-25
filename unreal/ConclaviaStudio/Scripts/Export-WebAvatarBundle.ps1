@@ -10,13 +10,16 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path $ProjectPath -Parent
 $editor = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 $script = Join-Path $projectRoot "Scripts\export_web_avatar_bundle.py"
+$facialScript = Join-Path $projectRoot "Scripts\bake_web_facial_probe.py"
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $OutputDirectory = Join-Path $projectRoot "Saved\WebAvatarExport\$AvatarId-$stamp"
 }
 $log = Join-Path $projectRoot "Saved\Logs\WebAvatarExport-$stamp.log"
+$facialLog = Join-Path $projectRoot "Saved\Logs\WebAvatarFacialExport-$stamp.log"
+$facialOutput = Join-Path $OutputDirectory "anim-face-amused.glb"
 
-foreach ($requiredPath in @($ProjectPath, $editor, $script)) {
+foreach ($requiredPath in @($ProjectPath, $editor, $script, $facialScript)) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
         throw "Required Web avatar export input is unavailable: $requiredPath"
     }
@@ -31,6 +34,7 @@ if (Test-Path -LiteralPath $OutputDirectory) {
 
 $previousExportDirectory = $env:CONCLAVIA_WEB_AVATAR_EXPORT_DIR
 $previousAvatarId = $env:CONCLAVIA_WEB_AVATAR_ID
+$previousFacialOutput = $env:CONCLAVIA_WEB_FACIAL_PROBE_OUTPUT
 try {
     $env:CONCLAVIA_WEB_AVATAR_EXPORT_DIR = $OutputDirectory
     $env:CONCLAVIA_WEB_AVATAR_ID = $AvatarId
@@ -45,14 +49,31 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "Web avatar export failed with exit code $LASTEXITCODE. See $log"
     }
+    $env:CONCLAVIA_WEB_FACIAL_PROBE_OUTPUT = $facialOutput
+    & $editor `
+        $ProjectPath `
+        "-ExecutePythonScript=$($facialScript.Replace('\', '/'))" `
+        -unattended `
+        -nop4 `
+        -RenderOffscreen `
+        -NoSound `
+        "-abslog=$facialLog"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Web facial export failed with exit code $LASTEXITCODE. See $facialLog"
+    }
 } finally {
     $env:CONCLAVIA_WEB_AVATAR_EXPORT_DIR = $previousExportDirectory
     $env:CONCLAVIA_WEB_AVATAR_ID = $previousAvatarId
+    $env:CONCLAVIA_WEB_FACIAL_PROBE_OUTPUT = $previousFacialOutput
 }
 
 $success = Select-String -LiteralPath $log -Pattern "CONCLAVIA_WEB_AVATAR_EXPORT_OK" -Quiet
 if (-not $success) {
     throw "Web avatar export exited without the success marker. See $log"
+}
+$facialSuccess = Select-String -LiteralPath $facialLog -Pattern "CONCLAVIA_WEB_FACIAL_PROBE_OK" -Quiet
+if (-not $facialSuccess -or -not (Test-Path -LiteralPath $facialOutput)) {
+    throw "Web facial export exited without the success marker. See $facialLog"
 }
 $zipPath = "$OutputDirectory.zip"
 Compress-Archive -Path (Join-Path $OutputDirectory "*") -DestinationPath $zipPath

@@ -307,6 +307,9 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /"export_morph_targets": False/);
   assert.match(exporter, /export_preview_mesh/);
   assert.match(exporter, /configure_options\(preview_mesh=False\)/);
+  assert.match(exporter, /anim-face-amused\.glb/);
+  assert.match(exporter, /AS_WebFacialPositiveProbe_v1/);
+  assert.match(exporter, /"amused"/);
   assert.match(exporter, /GLTFExporter\.export_to_gltf/);
   assert.match(exporter, /AS_MeetingHandRaise_SeatedMarkerless_v1/);
   assert.match(exporter, /AS_MeetingApplause_SeatedMarkerless_v1/);
@@ -334,6 +337,7 @@ await test("bakes curve-driven facial performance on the staged MetaHuman identi
   assert.match(baker, /evaluate_all_skeletal_mesh_components/);
   assert.match(baker, /Facial bake produced no bone transforms/);
   assert.match(baker, /"export_preview_mesh": False/);
+  assert.match(baker, /"export_morph_targets": False/);
   assert.match(baker, /GLTFExporter\.export_to_gltf/);
   assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_PROBE_OK/);
 });

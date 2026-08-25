@@ -1,6 +1,7 @@
-"""Export the meeting MetaHuman and authored body performances as Web GLBs.
+"""Export the meeting MetaHuman and authored performances as Web GLBs.
 
-The base scene owns geometry, skin weights, materials and facial morph targets.
+The base scene owns geometry, skin weights and materials. Identity-baked facial
+performances and body Animation Sequences live in separate animation-only GLBs.
 Body Animation Sequences are intentionally exported into separate GLBs: this
 keeps the Web performance contract independent from Pixel Streaming and lets
 the browser bind every authored clip to the one resident MetaHuman skeleton.
@@ -53,6 +54,8 @@ ANIMATION_EXPORTS = (
         "anim-applause.glb",
     ),
 )
+FACIAL_ANIMATION_FILE = "anim-face-amused.glb"
+FACIAL_ANIMATION_CLIP = "AS_WebFacialPositiveProbe_v1"
 
 
 def log(message: str) -> None:
@@ -132,7 +135,20 @@ def write_bundle_inventory(animation_files: list[str]) -> None:
         "id": PROFILE_ID,
         "level": LEVEL_PATH,
         "model": "model.glb",
-        "animationModels": animation_files,
+        "animationModels": animation_files + [FACIAL_ANIMATION_FILE],
+        "facialClips": {
+            "visemes": {},
+            "moods": {
+                # Hold the gentle plateau of the authored expression instead
+                # of looping its ease-in/ease-out transition.
+                "amused": {
+                    "clip": FACIAL_ANIMATION_CLIP,
+                    "startSeconds": 0.68,
+                    "endSeconds": 1.72,
+                    "loop": True,
+                }
+            },
+        },
         "clips": {
             "idle": [
                 "AS_MeetingCalmIdle_v1",
