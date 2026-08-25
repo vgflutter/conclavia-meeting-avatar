@@ -898,6 +898,18 @@ public:
             FHttpPath(TEXT("/avatar")),
             EHttpServerRequestVerbs::VERB_POST,
             FHttpRequestHandler::CreateRaw(this, &FConclaviaStudioModule::HandleAvatar));
+        FacialControlsReadRoute = Router->BindRoute(
+            FHttpPath(TEXT("/authoring/facial-controls")),
+            EHttpServerRequestVerbs::VERB_GET,
+            FHttpRequestHandler::CreateRaw(
+                this,
+                &FConclaviaStudioModule::HandleFacialControlsRead));
+        FacialControlsWriteRoute = Router->BindRoute(
+            FHttpPath(TEXT("/authoring/facial-controls")),
+            EHttpServerRequestVerbs::VERB_POST,
+            FHttpRequestHandler::CreateRaw(
+                this,
+                &FConclaviaStudioModule::HandleFacialControlsWrite));
 
         HttpServer.StartAllListeners();
         UE_LOG(
@@ -928,6 +940,7 @@ public:
             StudioWorld->GetTimerManager().ClearTimer(BodyGestureTimer);
             StudioWorld->GetTimerManager().ClearTimer(BodyIdleVariationTimer);
             StudioWorld->GetTimerManager().ClearTimer(ApplauseExpressionTimer);
+            StudioWorld->GetTimerManager().ClearTimer(AuthoringSilenceTimer);
         }
         bMetaHumanApplauseExpressionActive = false;
         ResetCommercialLipSync();
@@ -944,6 +957,8 @@ public:
             Router->UnbindRoute(PcmRoute);
             Router->UnbindRoute(SpeechRoute);
             Router->UnbindRoute(AvatarRoute);
+            Router->UnbindRoute(FacialControlsReadRoute);
+            Router->UnbindRoute(FacialControlsWriteRoute);
         }
         if (PcmSource.IsValid())
         {
@@ -3158,6 +3173,30 @@ private:
         ++CommercialSolverChunksSubmitted;
     }
 
+    void FeedAuthoringSilence()
+    {
+        URealisticMetaHumanLipSyncGenerator* Generator = CommercialGenerator.Get();
+        if (!StudioWorld.IsValid()
+            || !Generator
+            || !bCommercialModelReady
+            || AuthoringSilenceChunksRemaining <= 0)
+        {
+            if (StudioWorld.IsValid())
+            {
+                StudioWorld->GetTimerManager().ClearTimer(AuthoringSilenceTimer);
+            }
+            return;
+        }
+        TArray<float> Silence;
+        Silence.SetNumZeroed(640);
+        Generator->ProcessAudioData(MoveTemp(Silence), 16000, 1);
+        --AuthoringSilenceChunksRemaining;
+        if (AuthoringSilenceChunksRemaining <= 0)
+        {
+            StudioWorld->GetTimerManager().ClearTimer(AuthoringSilenceTimer);
+        }
+    }
+
     void BeginCommercialAudioPlayback()
     {
         if (bCommercialSpeechActive && SpeechComponent.IsValid())
@@ -4256,7 +4295,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v27-gesture-safe-framing")
+            ? TEXT("ue58-commercial-lipsync-v28-web-facial-authoring")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -4370,6 +4409,144 @@ private:
                 ? TEXT("ue58-metahuman-curve-only-positive-expression")
                 : TEXT("awaiting-curve-only-positive-expression"));
         OnComplete(ConclaviaStudio::JsonResponse(Body));
+        return true;
+    }
+
+    bool HandleFacialControlsRead(
+        const FHttpServerRequest&,
+        const FHttpResultCallback& OnComplete) const
+    {
+        URealisticMetaHumanLipSyncGenerator* Generator = CommercialGenerator.Get();
+        if (!bLipSyncLab || !Generator || !bCommercialModelReady)
+        {
+            OnComplete(ConclaviaStudio::JsonResponse(
+                TEXT("{\"ok\":false,\"error\":\"facial_model_not_ready\"}"),
+                EHttpServerResponseCodes::ServiceUnavail));
+            return true;
+        }
+
+        const TMap<FString, float> Values = Generator->GetControlValues();
+        const TSharedRef<FJsonObject> Controls = MakeShared<FJsonObject>();
+        float MaxSpeech = 0.0f;
+        float MaxUpperFace = 0.0f;
+        for (const TPair<FString, float>& Control : Values)
+        {
+            Controls->SetNumberField(Control.Key, Control.Value);
+            const FString Name = Control.Key.ToLower();
+            const bool bSpeech =
+                Name.Contains(TEXT("mouth"))
+                || Name.Contains(TEXT("jaw"))
+                || Name.Contains(TEXT("tongue"))
+                || Name.Contains(TEXT("teeth"))
+                || Name.Contains(TEXT("neck"))
+                || Name.Contains(TEXT("throat"));
+            const bool bUpperFace =
+                Name.Contains(TEXT("brow"))
+                || Name.Contains(TEXT("eye"))
+                || Name.Contains(TEXT("cheek"))
+                || Name.Contains(TEXT("nose"));
+            if (bSpeech)
+            {
+                MaxSpeech = FMath::Max(MaxSpeech, FMath::Abs(Control.Value));
+            }
+            if (bUpperFace)
+            {
+                MaxUpperFace = FMath::Max(MaxUpperFace, FMath::Abs(Control.Value));
+            }
+        }
+
+        const TSharedRef<FJsonObject> Payload = MakeShared<FJsonObject>();
+        Payload->SetBoolField(TEXT("ok"), true);
+        Payload->SetStringField(TEXT("mood"), ActiveMoodName);
+        Payload->SetNumberField(TEXT("intensity"), ActiveMoodIntensity);
+        Payload->SetNumberField(TEXT("controlCount"), Values.Num());
+        Payload->SetNumberField(TEXT("maxSpeech"), MaxSpeech);
+        Payload->SetNumberField(TEXT("maxUpperFace"), MaxUpperFace);
+        Payload->SetNumberField(
+            TEXT("silenceChunksRemaining"),
+            AuthoringSilenceChunksRemaining);
+        Payload->SetObjectField(TEXT("controls"), Controls);
+        FString Body;
+        const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Body);
+        FJsonSerializer::Serialize(Payload, Writer);
+        OnComplete(ConclaviaStudio::JsonResponse(Body));
+        return true;
+    }
+
+    bool HandleFacialControlsWrite(
+        const FHttpServerRequest& Request,
+        const FHttpResultCallback& OnComplete)
+    {
+        if (!bLipSyncLab || !bCommercialModelReady || bCommercialSpeechActive)
+        {
+            OnComplete(ConclaviaStudio::JsonResponse(
+                TEXT("{\"ok\":false,\"error\":\"facial_authoring_unavailable\"}"),
+                EHttpServerResponseCodes::ServiceUnavail));
+            return true;
+        }
+        const FUTF8ToTCHAR Converter(
+            reinterpret_cast<const ANSICHAR*>(Request.Body.GetData()),
+            Request.Body.Num());
+        const FString Body(Converter.Length(), Converter.Get());
+        TSharedPtr<FJsonObject> Json;
+        const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Body);
+        FString MoodName;
+        double Intensity = 0.0;
+        double SilenceChunks = 8.0;
+        if (!FJsonSerializer::Deserialize(Reader, Json)
+            || !Json.IsValid()
+            || !Json->TryGetStringField(TEXT("mood"), MoodName)
+            || !Json->TryGetNumberField(TEXT("intensity"), Intensity))
+        {
+            OnComplete(ConclaviaStudio::JsonResponse(
+                TEXT("{\"ok\":false,\"error\":\"invalid_facial_authoring_request\"}"),
+                EHttpServerResponseCodes::BadRequest));
+            return true;
+        }
+        Json->TryGetNumberField(TEXT("silenceChunks"), SilenceChunks);
+        ERealisticMetaHumanLipSyncMood Mood;
+        if (!PerformanceMoodFromName(MoodName, Mood))
+        {
+            OnComplete(ConclaviaStudio::JsonResponse(
+                TEXT("{\"ok\":false,\"error\":\"unsupported_mood\"}"),
+                EHttpServerResponseCodes::BadRequest));
+            return true;
+        }
+
+        const FString AuthoringMoodName = MoodName.ToLower();
+        const float AuthoringIntensity = FMath::Clamp(
+            static_cast<float>(Intensity), 0.0f, 0.85f);
+        const int32 ChunkCount = FMath::Clamp(
+            FMath::RoundToInt(SilenceChunks), 1, 24);
+        AsyncTask(ENamedThreads::GameThread, [
+            this,
+            Mood,
+            AuthoringMoodName,
+            AuthoringIntensity,
+            ChunkCount]()
+        {
+            if (!StudioWorld.IsValid() || !CommercialGenerator.IsValid())
+            {
+                return;
+            }
+            StudioWorld->GetTimerManager().ClearTimer(AuthoringSilenceTimer);
+            SetCommercialMood(Mood, AuthoringMoodName, AuthoringIntensity);
+            ActiveSemanticMoodName = AuthoringMoodName;
+            AuthoringSilenceChunksRemaining = ChunkCount;
+            StudioWorld->GetTimerManager().SetTimer(
+                AuthoringSilenceTimer,
+                FTimerDelegate::CreateRaw(
+                    this,
+                    &FConclaviaStudioModule::FeedAuthoringSilence),
+                0.04f,
+                true,
+                0.0f);
+        });
+        OnComplete(ConclaviaStudio::JsonResponse(FString::Printf(
+            TEXT("{\"ok\":true,\"accepted\":true,\"mood\":\"%s\",\"intensity\":%.3f,\"silenceChunks\":%d}"),
+            *AuthoringMoodName.ReplaceCharWithEscapedChar(),
+            AuthoringIntensity,
+            ChunkCount)));
         return true;
     }
 
@@ -4754,6 +4931,8 @@ private:
     FHttpRouteHandle PcmRoute;
     FHttpRouteHandle SpeechRoute;
     FHttpRouteHandle AvatarRoute;
+    FHttpRouteHandle FacialControlsReadRoute;
+    FHttpRouteHandle FacialControlsWriteRoute;
     FDelegateHandle WorldInitializationHandle;
     TWeakObjectPtr<UWorld> StudioWorld;
     TMap<FName, TWeakObjectPtr<ACameraActor>> Cameras;
@@ -4775,6 +4954,7 @@ private:
     FTimerHandle BodyGestureTimer;
     FTimerHandle BodyIdleVariationTimer;
     FTimerHandle ApplauseExpressionTimer;
+    FTimerHandle AuthoringSilenceTimer;
     TArray<FParticipantFaceState> ParticipantFaces;
     ILiveLinkClient* LiveLinkClient = nullptr;
     TSharedPtr<FConclaviaPcmLiveLinkSource> PcmSource;
@@ -4866,6 +5046,7 @@ private:
     bool bBodyGestureLowerQueued = false;
     int32 ListeningSolverChunksSubmitted = 0;
     int32 ListeningPrimingTicksRemaining = 0;
+    int32 AuthoringSilenceChunksRemaining = 0;
     int32 ActiveFaceIndex = -1;
     bool bLipSyncLab = false;
     bool bMeetingAvatar = false;

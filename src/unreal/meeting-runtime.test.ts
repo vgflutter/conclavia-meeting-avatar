@@ -114,7 +114,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /ConfigureShowcaseSkinDetail/);
   assert.match(moduleSource, /Micro Skin Normal Strength[\s\S]*1\.22f/);
   assert.match(moduleSource, /Roughness Adjust[\s\S]*1\.16f/);
-  assert.match(moduleSource, /ue58-commercial-lipsync-v27-gesture-safe-framing/);
+  assert.match(moduleSource, /ue58-commercial-lipsync-v28-web-facial-authoring/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
   assert.match(supervisor, /performanceSemanticMood/);
@@ -367,9 +367,11 @@ await test("audits the licensed facial generator before authoring Web clips", as
 });
 
 await test("samples every licensed mood without coupling it to spoken audio", async () => {
-  const [sampler, wrapper, rendererManifest] = await Promise.all([
+  const [moduleSource, wrapper, rendererManifest] = await Promise.all([
     readFile(
-      repositoryFile("unreal/ConclaviaStudio/Scripts/sample_web_facial_controls.py"),
+      repositoryFile(
+        "unreal/ConclaviaStudio/Source/ConclaviaStudio/Private/ConclaviaStudioModule.cpp",
+      ),
       "utf8",
     ),
     readFile(
@@ -378,15 +380,19 @@ await test("samples every licensed mood without coupling it to spoken audio", as
     ),
     readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
   ]);
-  assert.match(sampler, /MOOD_INTENSITIES/);
-  assert.match(sampler, /"HAPPINESS": 0\.38/);
-  assert.match(sampler, /"CONFUSION": 0\.32/);
-  assert.match(sampler, /create_realistic_meta_human_lip_sync_with_mood_generator/);
-  assert.match(sampler, /process_audio_data\(\[0\.0\] \* CHUNK_SAMPLES/);
-  assert.match(sampler, /generator\.is_model_ready\(\)/);
-  assert.match(sampler, /SPEECH_TOKENS/);
-  assert.match(sampler, /UPPER_FACE_TOKENS/);
-  assert.match(sampler, /CONCLAVIA_WEB_FACIAL_CONTROL_SAMPLE_OK/);
-  assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_CONTROL_SAMPLE_OK/);
-  assert.match(rendererManifest, /sample_web_facial_controls\.py/);
+  assert.match(moduleSource, /\/authoring\/facial-controls/);
+  assert.match(moduleSource, /HandleFacialControlsRead/);
+  assert.match(moduleSource, /HandleFacialControlsWrite/);
+  assert.match(moduleSource, /FeedAuthoringSilence/);
+  assert.match(moduleSource, /Silence\.SetNumZeroed\(640\)/);
+  assert.match(moduleSource, /Generator->ProcessAudioData\(MoveTemp\(Silence\), 16000, 1\)/);
+  assert.match(moduleSource, /Payload->SetObjectField\(TEXT\("controls"\), Controls\)/);
+  assert.match(wrapper, /happiness = 0\.38/);
+  assert.match(wrapper, /confusion = 0\.32/);
+  assert.match(wrapper, /commercialModelReady -eq \$true/);
+  assert.match(wrapper, /silenceChunks = 8/);
+  assert.match(wrapper, /Start-Sleep -Milliseconds 520/);
+  assert.match(wrapper, /authoring\/facial-controls/);
+  assert.match(rendererManifest, /Sample-WebFacialControls\.ps1/);
+  assert.doesNotMatch(rendererManifest, /sample_web_facial_controls\.py/);
 });
