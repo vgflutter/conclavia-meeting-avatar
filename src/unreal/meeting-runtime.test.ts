@@ -402,6 +402,27 @@ await test("audits the licensed facial generator before authoring Web clips", as
   assert.match(rendererManifest, /Audit-WebFacialApi\.ps1/);
 });
 
+await test("catalogs authored MetaHuman body motion before selecting Web microgestures", async () => {
+  const [catalog, rendererManifest] = await Promise.all([
+    readFile(
+      repositoryFile(
+        "unreal/ConclaviaStudio/Scripts/audit_official_body_animation_catalog.py",
+      ),
+      "utf8",
+    ),
+    readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
+  ]);
+  assert.match(catalog, /TemplateAnimations/);
+  assert.match(catalog, /"nod"/);
+  assert.match(catalog, /"tilt"/);
+  assert.match(catalog, /"emphasis"/);
+  assert.match(catalog, /"settle"/);
+  assert.match(catalog, /AnimSequence/);
+  assert.match(catalog, /CONCLAVIA_WEB_BODY_CATALOG: \{message\}/);
+  assert.doesNotMatch(catalog, /add_bone_track|add_bone_transform_curve/iu);
+  assert.match(rendererManifest, /audit_official_body_animation_catalog\.py/);
+});
+
 await test("samples every licensed mood and case-sensitive viseme", async () => {
   const [moduleSource, wrapper, visemeWrapper, rendererManifest] = await Promise.all([
     readFile(
