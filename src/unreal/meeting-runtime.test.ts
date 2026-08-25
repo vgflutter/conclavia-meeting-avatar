@@ -403,7 +403,7 @@ await test("audits the licensed facial generator before authoring Web clips", as
 });
 
 await test("catalogs authored MetaHuman body motion before selecting Web microgestures", async () => {
-  const [catalog, probe, rendererManifest] = await Promise.all([
+  const [catalog, probe, builder, wrapper, exporter, deployScript, rendererManifest] = await Promise.all([
     readFile(
       repositoryFile(
         "unreal/ConclaviaStudio/Scripts/audit_official_body_animation_catalog.py",
@@ -416,6 +416,25 @@ await test("catalogs authored MetaHuman body motion before selecting Web microge
       ),
       "utf8",
     ),
+    readFile(
+      repositoryFile(
+        "unreal/ConclaviaStudio/Scripts/build_web_authored_microgestures.py",
+      ),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile(
+        "unreal/ConclaviaStudio/Scripts/Build-WebAuthoredMicrogestures.ps1",
+      ),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile(
+        "unreal/ConclaviaStudio/Scripts/export_web_avatar_bundle.py",
+      ),
+      "utf8",
+    ),
+    readFile(repositoryFile("scripts/deploy-3d-source.sh"), "utf8"),
     readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
   ]);
   assert.match(catalog, /TemplateAnimations/);
@@ -432,6 +451,30 @@ await test("catalogs authored MetaHuman body motion before selecting Web microge
   assert.match(probe, /GLTFExporter\.export_to_gltf/);
   assert.match(probe, /CONCLAVIA_WEB_BODY_PROBE: READY/);
   assert.match(rendererManifest, /export_official_body_motion_probe\.py/);
+  assert.match(builder, /BodyROM\/mhc_body_rom_body/);
+  assert.match(builder, /AS_MeetingCalmIdle_v1/);
+  assert.match(builder, /AS_MeetingNod_Authored_v1/);
+  assert.match(builder, /AS_MeetingTilt_Authored_v1/);
+  assert.match(builder, /AS_MeetingEmphasis_Authored_v1/);
+  assert.match(builder, /AS_MeetingSettle_Authored_v1/);
+  assert.match(builder, /source_bases\[bone\]\.inversed\(\) \* authored\.rotation/);
+  assert.match(builder, /anchors\[bone\]\.rotation \* restrained_delta/);
+  assert.match(builder, /smooth_edge_envelope\(phase\)/);
+  assert.match(builder, /FORBIDDEN_BONE_PREFIXES/);
+  assert.doesNotMatch(builder, /add_bone_track\(["'](?:root|pelvis|thigh|calf|foot)/iu);
+  assert.match(wrapper, /build_seated_idle\.py/);
+  assert.match(wrapper, /build_meeting_attentive_idle\.py/);
+  assert.match(wrapper, /build_web_authored_microgestures\.py/);
+  assert.match(wrapper, /CONCLAVIA_WEB_MICROGESTURES: READY/);
+  assert.match(exporter, /anim-nod\.glb/);
+  assert.match(exporter, /anim-tilt\.glb/);
+  assert.match(exporter, /anim-emphasis\.glb/);
+  assert.match(exporter, /anim-settle\.glb/);
+  assert.match(exporter, /"nod": "AS_MeetingNod_Authored_v1"/);
+  assert.match(exporter, /"settle": "AS_MeetingSettle_Authored_v1"/);
+  assert.match(rendererManifest, /build_web_authored_microgestures\.py/);
+  assert.match(rendererManifest, /Build-WebAuthoredMicrogestures\.ps1/);
+  assert.match(deployScript, /Build-WebAuthoredMicrogestures\.ps1/);
 });
 
 await test("samples every licensed mood and case-sensitive viseme", async () => {

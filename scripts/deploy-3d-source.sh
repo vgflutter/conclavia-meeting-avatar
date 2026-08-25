@@ -98,6 +98,8 @@ const commands = [
   'if ($LASTEXITCODE -ne 0) { throw "Showcase Cine MetaHuman build failed." }',
   '& (Join-Path $root "Scripts\\Build-MeetingPositiveExpression.ps1")',
   'if ($LASTEXITCODE -ne 0) { throw "Meeting positive expression build failed." }',
+  '& (Join-Path $root "Scripts\\Build-WebAuthoredMicrogestures.ps1")',
+  'if ($LASTEXITCODE -ne 0) { throw "Portable authored microgesture build failed." }',
   'Copy-Item (Join-Path $incoming "Saved\\source-revision.json") (Join-Path $root "Saved\\source-revision.json") -Force',
   '$taskAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\\ConclaviaMeetingAvatar\\Scripts\\Start-StudioSupervisor.ps1"',
   '$taskPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest',

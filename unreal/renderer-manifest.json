@@ -16,7 +16,7 @@
     "root": "C:\\ConclaviaMeetingAvatar",
     "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
     "editorTarget": "ConclaviaStudioEditor",
-    "runtimeRevision": "ue58-commercial-lipsync-v29-web-viseme-baking"
+    "runtimeRevision": "ue58-commercial-lipsync-v30-portable-authored-motion"
   },
   "pixelStreamingInfrastructure": {
     "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",
@@ -45,6 +45,10 @@
     "/Game/Conclavia/Meeting/Animations/AS_MeetingEngagedIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingReflectiveIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingPositiveExpression_CurveOnly_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingNod_Authored_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingTilt_Authored_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingEmphasis_Authored_v1",
+    "/Game/Conclavia/Meeting/Animations/AS_MeetingSettle_Authored_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedContactIK_v3",
@@ -73,6 +77,8 @@
     "unreal/ConclaviaStudio/Scripts/Audit-OfficialFacialPoseCatalog.ps1",
     "unreal/ConclaviaStudio/Scripts/audit_official_body_animation_catalog.py",
     "unreal/ConclaviaStudio/Scripts/export_official_body_motion_probe.py",
+    "unreal/ConclaviaStudio/Scripts/build_web_authored_microgestures.py",
+    "unreal/ConclaviaStudio/Scripts/Build-WebAuthoredMicrogestures.ps1",
     "unreal/ConclaviaStudio/Scripts/bake_web_facial_moods.py",
     "unreal/ConclaviaStudio/Scripts/bake_web_facial_visemes.py",
     "unreal/ConclaviaStudio/Scripts/export_web_avatar_bundle.py",

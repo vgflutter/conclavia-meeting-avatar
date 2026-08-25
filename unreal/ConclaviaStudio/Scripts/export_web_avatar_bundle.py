@@ -53,6 +53,22 @@ ANIMATION_EXPORTS = (
         "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1",
         "anim-applause.glb",
     ),
+    (
+        "/Game/Conclavia/Meeting/Animations/AS_MeetingNod_Authored_v1",
+        "anim-nod.glb",
+    ),
+    (
+        "/Game/Conclavia/Meeting/Animations/AS_MeetingTilt_Authored_v1",
+        "anim-tilt.glb",
+    ),
+    (
+        "/Game/Conclavia/Meeting/Animations/AS_MeetingEmphasis_Authored_v1",
+        "anim-emphasis.glb",
+    ),
+    (
+        "/Game/Conclavia/Meeting/Animations/AS_MeetingSettle_Authored_v1",
+        "anim-settle.glb",
+    ),
 )
 FACIAL_MOODS = (
     "attentive",
@@ -206,6 +222,10 @@ def write_bundle_inventory(animation_files: list[str]) -> None:
                 "AS_MeetingReflectiveIdle_v1",
             ],
             "gestures": {
+                "nod": "AS_MeetingNod_Authored_v1",
+                "tilt": "AS_MeetingTilt_Authored_v1",
+                "emphasis": "AS_MeetingEmphasis_Authored_v1",
+                "settle": "AS_MeetingSettle_Authored_v1",
                 "raise-hand": {
                     "clip": "AS_MeetingHandRaise_SeatedMarkerless_v1",
                     "startSeconds": 1.75,
