@@ -341,3 +341,27 @@ await test("bakes curve-driven facial performance on the staged MetaHuman identi
   assert.match(baker, /GLTFExporter\.export_to_gltf/);
   assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_PROBE_OK/);
 });
+
+await test("audits the licensed facial generator before authoring Web clips", async () => {
+  const [audit, wrapper, rendererManifest] = await Promise.all([
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/audit_web_facial_api.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Audit-WebFacialApi.ps1"),
+      "utf8",
+    ),
+    readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
+  ]);
+  assert.match(audit, /RealisticMetaHumanLipSyncMoodConfig/);
+  assert.match(audit, /create_realistic_meta_human_lip_sync_with_mood_generator/);
+  assert.match(audit, /get_control_values/);
+  assert.match(audit, /process_audio_data/);
+  assert.match(audit, /CONCLAVIA_WEB_FACIAL_API_AUDIT_OK/);
+  assert.doesNotMatch(audit, /process_audio_data\s*\(/);
+  assert.match(wrapper, /UnrealEditor-Cmd\.exe/);
+  assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_API_AUDIT_OK/);
+  assert.match(rendererManifest, /audit_web_facial_api\.py/);
+  assert.match(rendererManifest, /Audit-WebFacialApi\.ps1/);
+});
