@@ -221,8 +221,10 @@ diagnostic mode. The complete asset contract, local directory layout and
 validation command are documented in the [Web avatar asset pipeline](docs/web-avatar-runtime.md).
 
 The accepted UE 5.8 Showcase bundle contains 37 independent animation assets:
-four non-repeating seated ambient clips, seven physical gestures, eleven
-non-neutral facial moods, and sixteen case-sensitive Polly visemes. `neutral`
+four non-repeating seated ambient clips, six physical-gesture assets, eleven
+non-neutral facial moods, and sixteen case-sensitive Polly visemes. Those six
+body assets provide seven semantic gesture mappings because `raise-hand` and
+`lower-hand` are separate authored ranges of the same seated take. `neutral`
 and `sil` intentionally use the resident rest pose. The four portable
 microgestures (`nod`, `tilt`, `emphasis`, and `settle`) are restrained excerpts
 of Epic's authored BodyROM composed on the common seated anchor. Their exported
