@@ -48,6 +48,32 @@ export function maxOutputTokensForLane(lane: ParticipationLane): number {
   return 400;
 }
 
+const directWebSearchSignals = [
+  /https?:\/\//iu,
+  /\b(?:cerca|cercami|controlla|verifica|verificami|trova|consulta|guarda)\b.{0,48}\b(?:online|internet|web|font[ei]|sito|documentazione)\b/iu,
+  /\b(?:search|check|verify|find|look up|browse)\b.{0,48}\b(?:online|internet|web|sources?|website|documentation)\b/iu,
+  /\b(?:oggi|adesso|attualmente|al momento|in questo momento|recente|recenti|ultima|ultime|ultimo|ultimi|in tempo reale|live)\b/iu,
+  /\b(?:today|now|currently|at the moment|latest|recent|real[ -]?time|live)\b/iu,
+  /\b(?:notizi[ae]|news|meteo|previsioni|weather|prezzo|prezzi|price|pricing|quotazione|borsa|stock|cambio|exchange rate|classifica|standings|risultato|score|calendario|schedule|orari|opening hours|disponibilit[aà]|availability)\b/iu,
+  /\b(?:presidente|primo ministro|premier|ministro|governo|sindaco|amministratore delegato|chief executive|ceo|president|prime minister|mayor)\b/iu,
+  /\b(?:versione corrente|ultima versione|nuova release|latest version|latest release|changelog|aggiornamento disponibile|available update)\b/iu,
+];
+
+/**
+ * Keep ordinary direct turns on the lowest-latency path. Web search remains
+ * available for explicit browsing requests and facts that are likely to have
+ * changed, while observer autonomy may still verify material corrections.
+ */
+export function shouldOfferWebSearch(
+  enabled: boolean,
+  lane: ParticipationLane,
+  latestText: string,
+): boolean {
+  if (!enabled || lane === "observer-listening") return false;
+  if (lane === "observer-autonomy") return true;
+  return directWebSearchSignals.some((signal) => signal.test(latestText));
+}
+
 export interface ParsedMaryTurn {
   action: ParticipationAction;
   reason: string;
@@ -281,14 +307,38 @@ export function parseMaryReply(value: string): AvatarSpeechSentence[] {
   return parseMaryTurn(value, "direct").sentences;
 }
 
+export interface MeetingContextBudget {
+  maximumCharacters: number;
+  maximumSegments: number;
+}
+
+const extendedContextSignals =
+  /\b(?:riassum\w*|summary|summari[sz]e|recap|finora|so far|intera riunione|whole meeting|scaletta|agenda|verbale|minutes)\b/iu;
+
+export function meetingContextBudget(
+  lane: ParticipationLane,
+  latestText: string,
+): MeetingContextBudget {
+  if (lane === "observer-listening") {
+    return { maximumCharacters: 1_800, maximumSegments: 12 };
+  }
+  if (lane === "observer-autonomy") {
+    return { maximumCharacters: 8_000, maximumSegments: 48 };
+  }
+  if (extendedContextSignals.test(latestText)) {
+    return { maximumCharacters: 14_000, maximumSegments: 80 };
+  }
+  return { maximumCharacters: 6_000, maximumSegments: 36 };
+}
+
 function transcriptForModel(
   history: readonly TranscriptSegment[],
   latestSegmentId: string,
+  budget: MeetingContextBudget,
 ): string {
-  const maximumContextCharacters = 14_000;
   const lines = history
     .filter((segment) => segment.id !== latestSegmentId)
-    .slice(-80)
+    .slice(-budget.maximumSegments)
     .map((segment) => {
       const source = segment.source === "chat"
         ? `CHAT ${segment.platform ?? "generic"}`
@@ -302,7 +352,10 @@ function transcriptForModel(
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index];
     if (!line) continue;
-    if (selected.length > 0 && characterCount + line.length > maximumContextCharacters) {
+    if (
+      selected.length > 0 &&
+      characterCount + line.length > budget.maximumCharacters
+    ) {
       break;
     }
     selected.push(line);
@@ -483,10 +536,15 @@ export class MeetingIntelligence {
   ): Promise<MaryTurnDecision> {
     const controller = this.#requestController();
     const lane = participationLane(mode, allowAutonomousIntervention);
-    const webSearchAvailable = this.#options.webSearchEnabled && lane !== "observer-listening";
+    const webSearchAvailable = shouldOfferWebSearch(
+      this.#options.webSearchEnabled,
+      lane,
+      latestSegment.text,
+    );
     const promptCacheKey = [
       "conclavia",
       lane,
+      webSearchAvailable ? "web" : "fast",
       this.#options.avatarName.toLocaleLowerCase("it-IT").replace(/[^\p{L}\p{N}]+/gu, "-"),
     ].join(":").slice(0, 64);
     let response;
@@ -520,7 +578,11 @@ export class MeetingIntelligence {
         instructions: this.#instructions(lane, webSearchAvailable, responseChannel),
         input: [
           "CONTESTO RECENTE DELLA RIUNIONE:",
-          transcriptForModel(history, latestSegment.id),
+          transcriptForModel(
+            history,
+            latestSegment.id,
+            meetingContextBudget(lane, latestSegment.text),
+          ),
           "",
           `ULTIMO INTERVENTO (speaker: ${latestSegment.speakerName}):`,
           latestSegment.text,

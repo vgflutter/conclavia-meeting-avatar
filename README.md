@@ -31,7 +31,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - Continuous meeting audio capture from BlackHole 16ch using ffmpeg, client-side turn detection, and low-latency OpenAI transcription.
 - Canonical speaker-attributed caption ingestion for safe natural dialogue in multi-participant Teams, Meet, and generic meetings.
 - Persistent meeting memory: every final utterance is retained and evaluated by the LLM, including turns that do not address the avatar.
-- Low-latency participation lanes: direct questions use a compact response contract, ordinary listening turns use a minimal mood-only contract, and only genuine autonomous-intervention candidates pay for the full decision schema.
+- Low-latency participation lanes: direct questions use a compact response contract, ordinary listening turns use a minimal mood-only contract, and only genuine autonomous-intervention candidates pay for the full decision schema. Each lane also receives a bounded recent-context window, while explicit summaries retain the extended meeting window.
 - Platform-neutral chat ingestion for Teams, Google Meet browser bridges, and generic adapters, merged chronologically with voice memory.
 - Configurable chat commands for semantic gesture requests, voice interventions, chat replies, and meeting summaries.
 - Chat message idempotency and avatar self-message filtering to prevent duplicate actions and response loops.
@@ -43,7 +43,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - `request-to-speak` autonomy: the avatar may prepare a useful contribution and visibly request the floor, but it cannot speak until a participant grants permission.
 - Positive applause performance: every manual, chat-triggered, or autonomous applause is hard-bound to an `amused` semantic mood, the conservative expression calibration validated in the UE 5.6 prototype, and the captured two-hand performance.
 - Floor approval from the web console or by saying phrases such as `Mary, go ahead` or `Go ahead, Mary`.
-- Optional live web search for direct questions that require current or external information.
+- Optional live web search for direct questions that require current or external information. Explicit browsing requests and time-sensitive facts enter the grounded-search path; ordinary questions stay on the Fast processing path without paying tool-planning latency.
 - Configurable OpenAI response model, API key, purpose, free-form personality, structured temperament, and system prompt.
 - Timestamped meeting agendas loaded from chat, with reliable one-minute warnings, scheduled topic transitions, and end-of-meeting reminders for both Teams and Google Meet.
 - Structured LLM output with one mood and one intensity level for every sentence.

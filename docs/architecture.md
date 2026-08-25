@@ -42,6 +42,14 @@ Listening and physical actions use a monotonic local timeline. Interruption is
 an explicit priority-100 event that names the performance to cancel when one is
 active.
 
+The meeting-intelligence path is also lane-aware. Direct questions, silent
+listening reactions, and autonomous participation decisions use separate
+strict schemas and context budgets. The OpenAI request uses no reasoning,
+low verbosity, prompt-cache routing and Fast processing. Web search is attached
+only to explicit browsing requests, time-sensitive direct questions, or a
+material autonomous verification; it is not offered to ordinary conversational
+turns. Summary and agenda requests retain the larger meeting-history window.
+
 Speech delivery is progressive at sentence boundaries. All sentence TTS work
 starts in parallel, but the first completed sentence is published immediately
 instead of waiting for the slowest one. Ordered packets share a delivery ID;

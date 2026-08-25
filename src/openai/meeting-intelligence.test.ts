@@ -4,11 +4,13 @@ import test from "node:test";
 import {
   hasSufficientAutonomousApplauseContext,
   maxOutputTokensForLane,
+  meetingContextBudget,
   parseMaryReply,
   parseMaryTurn,
   participationLane,
   qualifiesAutonomousApplause,
   qualifiesAutonomousIntervention,
+  shouldOfferWebSearch,
 } from "./meeting-intelligence.js";
 
 await test("uses a compact LLM lane when Mary only needs to react while listening", () => {
@@ -21,6 +23,49 @@ await test("uses a compact LLM lane when Mary only needs to react while listenin
   assert.ok(
     maxOutputTokensForLane("direct") < maxOutputTokensForLane("observer-autonomy"),
   );
+});
+
+await test("keeps ordinary direct questions off the web-search planning path", () => {
+  assert.equal(shouldOfferWebSearch(true, "direct", "Mary, quanto fa due più due?"), false);
+  assert.equal(
+    shouldOfferWebSearch(true, "direct", "Mary, spiegami perché una coda riduce la latenza."),
+    false,
+  );
+  assert.equal(shouldOfferWebSearch(false, "direct", "Mary, cerca online le ultime notizie."), false);
+});
+
+await test("offers web search for explicit or time-sensitive direct questions", () => {
+  assert.equal(
+    shouldOfferWebSearch(true, "direct", "Mary, cerca online la documentazione aggiornata."),
+    true,
+  );
+  assert.equal(
+    shouldOfferWebSearch(true, "direct", "Mary, chi è attualmente il presidente?"),
+    true,
+  );
+  assert.equal(
+    shouldOfferWebSearch(true, "direct", "Mary, qual è il prezzo di questa azione oggi?"),
+    true,
+  );
+  assert.equal(shouldOfferWebSearch(true, "direct", "Read https://example.com/report"), true);
+});
+
+await test("preserves web verification for material autonomous decisions", () => {
+  assert.equal(shouldOfferWebSearch(true, "observer-autonomy", "Questo dato è sbagliato."), true);
+  assert.equal(shouldOfferWebSearch(true, "observer-listening", "Ultime notizie."), false);
+});
+
+await test("uses lane-aware meeting context without weakening summaries", () => {
+  const listening = meetingContextBudget("observer-listening", "Continuiamo.");
+  const direct = meetingContextBudget("direct", "Mary, cosa suggerisci?");
+  const autonomy = meetingContextBudget("observer-autonomy", "Questo dato cambia la decisione.");
+  const summary = meetingContextBudget("direct", "Mary, riassumi l'intera riunione in chat.");
+
+  assert.ok(listening.maximumCharacters < direct.maximumCharacters);
+  assert.ok(listening.maximumSegments < direct.maximumSegments);
+  assert.ok(direct.maximumCharacters < autonomy.maximumCharacters);
+  assert.ok(direct.maximumSegments < autonomy.maximumSegments);
+  assert.deepEqual(summary, { maximumCharacters: 14_000, maximumSegments: 80 });
 });
 
 await test("parses sentence-level moods from Mary JSON", () => {
