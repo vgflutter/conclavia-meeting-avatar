@@ -19,6 +19,12 @@ export interface WebAvatarClipSegment {
 
 export type WebAvatarClipReference = string | WebAvatarClipSegment;
 
+export interface WebAvatarAppearance {
+  sourceIdentity: string;
+  hairGeometry: "cards" | "mesh" | "missing";
+  visualReview: "pending" | "approved";
+}
+
 export interface WebAvatarManifest {
   schema: typeof webAvatarManifestSchema;
   version: typeof webAvatarManifestVersion;
@@ -27,11 +33,13 @@ export interface WebAvatarManifest {
   assetVersion: string;
   model: string;
   animationModels: readonly string[];
+  appearance?: WebAvatarAppearance;
   framing: {
     camera: Vector3Tuple;
     target: Vector3Tuple;
     fov: number;
     scale: number;
+    rotationDegrees?: Vector3Tuple;
   };
   nodes: {
     head?: string;
@@ -122,6 +130,14 @@ function finiteNumber(
 function vector3(value: unknown): Vector3Tuple | null {
   if (!Array.isArray(value) || value.length !== 3) return null;
   const values = value.map((item) => finiteNumber(item, -100_000, 100_000));
+  return values.every((item): item is number => item !== null)
+    ? [values[0]!, values[1]!, values[2]!] as const
+    : null;
+}
+
+function rotationVector(value: unknown): Vector3Tuple | null {
+  if (!Array.isArray(value) || value.length !== 3) return null;
+  const values = value.map((item) => finiteNumber(item, -360, 360));
   return values.every((item): item is number => item !== null)
     ? [values[0]!, values[1]!, values[2]!] as const
     : null;
@@ -250,7 +266,16 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
   const target = vector3(framingRecord?.target);
   const fov = finiteNumber(framingRecord?.fov, 15, 90);
   const scale = finiteNumber(framingRecord?.scale, 0.001, 1_000);
-  if (!camera || !target || fov === null || scale === null) return null;
+  const rotationDegrees = framingRecord?.rotationDegrees === undefined
+    ? undefined
+    : rotationVector(framingRecord.rotationDegrees);
+  if (
+    !camera
+    || !target
+    || fov === null
+    || scale === null
+    || rotationDegrees === null
+  ) return null;
 
   const nodesRecord = objectRecord(record.nodes) ?? {};
   const nodes: WebAvatarManifest["nodes"] = {};
@@ -308,6 +333,25 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
     || fillLightIntensity === null
   ) return null;
 
+  const parsedAppearanceRecord = record.appearance === undefined
+    ? undefined
+    : objectRecord(record.appearance);
+  if (record.appearance !== undefined && !parsedAppearanceRecord) return null;
+  const appearanceRecord = parsedAppearanceRecord ?? undefined;
+  const sourceIdentity = appearanceRecord === undefined
+    ? undefined
+    : cleanText(appearanceRecord.sourceIdentity, 160);
+  const hairGeometry = appearanceRecord?.hairGeometry;
+  const visualReview = appearanceRecord?.visualReview;
+  if (
+    appearanceRecord !== undefined
+    && (
+      !sourceIdentity
+      || !["cards", "mesh", "missing"].includes(String(hairGeometry))
+      || !["pending", "approved"].includes(String(visualReview))
+    )
+  ) return null;
+
   return {
     schema: webAvatarManifestSchema,
     version: webAvatarManifestVersion,
@@ -316,7 +360,22 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
     assetVersion,
     model,
     animationModels,
-    framing: { camera, target, fov, scale },
+    ...(appearanceRecord && sourceIdentity
+      ? {
+        appearance: {
+          sourceIdentity,
+          hairGeometry: hairGeometry as WebAvatarAppearance["hairGeometry"],
+          visualReview: visualReview as WebAvatarAppearance["visualReview"],
+        },
+      }
+      : {}),
+    framing: {
+      camera,
+      target,
+      fov,
+      scale,
+      ...(rotationDegrees ? { rotationDegrees } : {}),
+    },
     nodes,
     morphs: { visemes, moods },
     facialClips: { visemes: facialVisemes, moods: facialMoods },

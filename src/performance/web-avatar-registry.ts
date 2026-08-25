@@ -39,6 +39,7 @@ function auditIssues(audit: WebAvatarAudit): string[] {
     ...audit.insufficientAmbientVariety.map((value) => `variety:${value}`),
     ...audit.externalImages.map((value) => `external-image:${value}`),
     ...audit.invalidAnimationAssets.map((value) => `animation-asset:${value}`),
+    ...audit.appearanceIssues.map((value) => `appearance:${value}`),
   ];
 }
 

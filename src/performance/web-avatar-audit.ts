@@ -52,6 +52,7 @@ export interface WebAvatarAudit {
   insufficientAmbientVariety: string[];
   externalImages: string[];
   invalidAnimationAssets: string[];
+  appearanceIssues: string[];
 }
 
 export interface WebAvatarModelInventory {
@@ -220,6 +221,20 @@ export async function auditWebAvatar(
     ...(new Set(manifest.clips.idle).size >= 2 ? [] : ["idle"]),
     ...(new Set(manifest.clips.listening).size >= 2 ? [] : ["listening"]),
   ];
+  const appearanceIssues = [
+    ...(manifest.appearance ? [] : ["appearance-metadata-missing"]),
+    ...(manifest.id !== "showcase"
+      || manifest.appearance?.sourceIdentity.toLowerCase().includes("showcase")
+      ? []
+      : ["source-identity-unverified"]),
+    ...(manifest.appearance?.hairGeometry === "cards"
+      || manifest.appearance?.hairGeometry === "mesh"
+      ? []
+      : ["hair-geometry-missing"]),
+    ...(manifest.appearance?.visualReview === "approved"
+      ? []
+      : ["visual-review-pending"]),
+  ];
   const skinned = inventory.skinned;
   return {
     valid: inventory.gltfVersion === "2.0"
@@ -232,7 +247,8 @@ export async function auditWebAvatar(
       && missingGestureMappings.length === 0
       && insufficientAmbientVariety.length === 0
       && externalImages.length === 0
-      && invalidAnimationAssets.length === 0,
+      && invalidAnimationAssets.length === 0
+      && appearanceIssues.length === 0,
     gltfVersion: inventory.gltfVersion,
     skinned,
     nodeCount: inventory.nodeCount,
@@ -248,5 +264,6 @@ export async function auditWebAvatar(
     insufficientAmbientVariety,
     externalImages,
     invalidAnimationAssets,
+    appearanceIssues,
   };
 }

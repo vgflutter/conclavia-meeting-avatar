@@ -68,6 +68,14 @@ class ThreeAvatarPerformer {
 
     this.root = gltf.scene;
     this.root.scale.setScalar(manifest.framing.scale);
+    const [rotationX = 0, rotationY = 0, rotationZ = 0] =
+      manifest.framing.rotationDegrees || [0, 0, 0];
+    this.root.rotation.set(
+      THREE.MathUtils.degToRad(rotationX),
+      THREE.MathUtils.degToRad(rotationY),
+      THREE.MathUtils.degToRad(rotationZ),
+      "YXZ",
+    );
     this.scene.add(this.root);
     this.mixer = new THREE.AnimationMixer(this.root);
     this.clips = new Map();

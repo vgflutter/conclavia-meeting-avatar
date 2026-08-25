@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { spawn } = require("node:child_process");
-const { mkdtemp, rm } = require("node:fs/promises");
+const { mkdtemp, rm, writeFile } = require("node:fs/promises");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 const WebSocket = require("ws");
@@ -15,6 +15,7 @@ const debuggingPort = Number.parseInt(
   10,
 );
 const expectsCleanOutput = new URL(runtimeUrl).searchParams.get("conclaviaOutput") === "obs";
+const screenshotPath = process.env.CONCLAVIA_WEB_RUNTIME_SCREENSHOT || "";
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -148,6 +149,14 @@ async function main() {
       returnByValue: true,
       awaitPromise: true,
     });
+    if (screenshotPath) {
+      const screenshot = await command("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true,
+        captureBeyondViewport: false,
+      });
+      await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
+    }
     socket.close();
     const result = evaluation.result.value;
     const failures = [];
@@ -174,6 +183,7 @@ async function main() {
       ...result,
       failedResources,
       chromeWarnings: chromeErrors.length,
+      ...(screenshotPath ? { screenshotPath } : {}),
     }, null, 2));
   } finally {
     chrome.kill("SIGTERM");

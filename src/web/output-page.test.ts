@@ -91,6 +91,8 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /this\.#applyGaze\(state\.gaze, deltaSeconds\);/);
   assert.match(performer, /segment\.startSeconds/);
   assert.match(performer, /morphTargetInfluences/);
+  assert.match(performer, /manifest\.framing\.rotationDegrees/);
+  assert.match(performer, /THREE\.MathUtils\.degToRad/);
   assert.match(performer, /fadeIn\(0\.32\)/);
   assert.match(server, /api\/performance\/avatar/);
   assert.match(server, /model\/gltf-binary/);

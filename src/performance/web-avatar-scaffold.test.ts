@@ -139,6 +139,11 @@ await test("turns the UE 5.8 export inventory into a multi-GLB manifest draft", 
     assetVersion: "ue58-v30",
     model: "model.glb",
     animationModels: ["anim-idle.glb", "anim-gesture.glb"],
+    appearance: {
+      sourceIdentity: "MHC_Showcase",
+      hairGeometry: "missing",
+      visualReview: "pending",
+    },
     clips: {
       idle: ["Idle_A", "Idle_B"],
       listening: ["Listen_A", "Listen_B"],
@@ -154,6 +159,11 @@ await test("turns the UE 5.8 export inventory into a multi-GLB manifest draft", 
   assert.deepEqual(result.manifest.animationModels, ["anim-idle.glb", "anim-gesture.glb"]);
   assert.equal(result.manifest.displayName, "Showcase Web MetaHuman");
   assert.equal(result.manifest.assetVersion, "ue58-v30");
+  assert.deepEqual(result.manifest.appearance, {
+    sourceIdentity: "MHC_Showcase",
+    hairGeometry: "missing",
+    visualReview: "pending",
+  });
   assert.deepEqual(result.manifest.clips.gestures["lower-hand"], {
     clip: "Hand_Raise",
     startSeconds: 3,

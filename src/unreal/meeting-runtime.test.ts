@@ -285,11 +285,23 @@ await test("keeps the licensed markerless bootstrap reproducible and auth epheme
 });
 
 await test("exports a portable Web performer from the authored UE 5.8 meeting assets", async () => {
-  const [project, rendererManifest, exporter, facialBaker, visemeBaker, wrapper] = await Promise.all([
+  const [
+    project,
+    rendererManifest,
+    exporter,
+    showcaseResolver,
+    facialBaker,
+    visemeBaker,
+    wrapper,
+  ] = await Promise.all([
     readFile(repositoryFile("unreal/ConclaviaStudio/ConclaviaStudio.uproject"), "utf8"),
     readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/export_web_avatar_bundle.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/web_showcase_actor.py"),
       "utf8",
     ),
     readFile(
@@ -309,7 +321,10 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(project, /"Name": "GLTFExporter", "Enabled": true/);
   assert.match(rendererManifest, /export_web_avatar_bundle\.py/);
   assert.match(exporter, /\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19/);
-  assert.match(exporter, /MeetingAvatarAnchor/);
+  assert.match(exporter, /ensure_showcase_export_actor/);
+  assert.match(showcaseResolver, /MeetingAvatarAnchor/);
+  assert.match(showcaseResolver, /BP_MHC_Showcase\.BP_MHC_Showcase_C/);
+  assert.match(showcaseResolver, /refusing a bald Web export/);
   assert.match(exporter, /export_vertex_skin_weights/);
   assert.match(exporter, /export_morph_targets/);
   assert.match(exporter, /"export_morph_targets": False/);
@@ -330,6 +345,8 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /"startSeconds": 5\.75/);
   assert.match(exporter, /CONCLAVIA_WEB_AVATAR_EXPORT_OK/);
   assert.match(exporter, /"assetVersion": ASSET_VERSION/);
+  assert.match(exporter, /"hairGeometry": "missing"/);
+  assert.match(exporter, /"visualReview": "pending"/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
   assert.match(facialBaker, /SequencerTools\.export_anim_sequence/);
   assert.match(facialBaker, /evaluate_all_skeletal_mesh_components/);
@@ -356,6 +373,51 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_VISEMES: READY/);
   assert.match(wrapper, /selected-viseme-controls\.json/);
   assert.match(wrapper, /completedBeforeShutdown/);
+});
+
+await test("builds and audits a separate hair-card Showcase assembly for Web", async () => {
+  const [builder, wrapper, audit, auditWrapper, deployScript, rendererManifest] =
+    await Promise.all([
+      readFile(
+        repositoryFile(
+          "unreal/ConclaviaStudio/Scripts/build_showcase_web_avatar.py",
+        ),
+        "utf8",
+      ),
+      readFile(
+        repositoryFile(
+          "unreal/ConclaviaStudio/Scripts/Build-ShowcaseWebAvatar.ps1",
+        ),
+        "utf8",
+      ),
+      readFile(
+        repositoryFile(
+          "unreal/ConclaviaStudio/Scripts/inspect_showcase_web_hair.py",
+        ),
+        "utf8",
+      ),
+      readFile(
+        repositoryFile(
+          "unreal/ConclaviaStudio/Scripts/Audit-ShowcaseWebHair.ps1",
+        ),
+        "utf8",
+      ),
+      readFile(repositoryFile("scripts/deploy-3d-source.sh"), "utf8"),
+      readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
+    ]);
+
+  assert.match(builder, /MetaHumanDefaultPipelineType\.OPTIMIZED/);
+  assert.match(builder, /MetaHumanQualityLevel\.LOW/);
+  assert.match(builder, /MHC_Showcase_WebLow/);
+  assert.doesNotMatch(builder, /delete_asset\(CHARACTER_PATH\)/);
+  assert.match(wrapper, /CONCLAVIA_SHOWCASE_WEB_BUILD: READY/);
+  assert.match(audit, /get_hair_groups_cards/);
+  assert.match(audit, /get_hair_groups_meshes/);
+  assert.match(audit, /exportableHairMeshes/);
+  assert.match(auditWrapper, /CONCLAVIA_SHOWCASE_HAIR_AUDIT_OK/);
+  assert.match(deployScript, /Build-ShowcaseWebAvatar\.ps1/);
+  assert.match(rendererManifest, /build_showcase_web_avatar\.py/);
+  assert.match(rendererManifest, /inspect_showcase_web_hair\.py/);
 });
 
 await test("bakes curve-driven facial performance on the staged MetaHuman identity", async () => {

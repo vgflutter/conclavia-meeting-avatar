@@ -23,6 +23,11 @@ const manifest: WebAvatarManifest = {
   assetVersion: "1",
   model: "test.glb",
   animationModels: [],
+  appearance: {
+    sourceIdentity: "Test",
+    hairGeometry: "cards",
+    visualReview: "approved",
+  },
   framing: { camera: [0, 1, 2], target: [0, 1, 0], fov: 35, scale: 1 },
   nodes: { head: "head" },
   morphs: {
@@ -232,4 +237,37 @@ await test("rejects a rig without the complete meeting-performance vocabulary", 
   assert.ok(result.missingMoodMappings.includes("attentive"));
   assert.ok(result.missingGestureMappings.includes("applause"));
   assert.deepEqual(result.insufficientAmbientVariety, ["idle", "listening"]);
+});
+
+await test("fails closed until Showcase hair and the visual review are verified", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "conclavia-glb-appearance-"));
+  const path = join(directory, "test.glb");
+  await writeFile(path, glb({
+    asset: { version: "2.0" },
+    nodes: [{ name: "head", mesh: 0, skin: 0 }],
+    meshes: [{ extras: { targetNames: ["mouthClose", "smile"] } }],
+    skins: [{}],
+    animations: [
+      { name: "idle_a" },
+      { name: "idle_b" },
+      { name: "listen_a" },
+      { name: "listen_b" },
+      { name: "raise_hand" },
+    ],
+    images: [{ bufferView: 2 }],
+  }));
+  const result = await auditWebAvatar({
+    ...manifest,
+    id: "showcase",
+    appearance: {
+      sourceIdentity: "MHC_Showcase",
+      hairGeometry: "missing",
+      visualReview: "pending",
+    },
+  }, path);
+  assert.equal(result.valid, false);
+  assert.deepEqual(result.appearanceIssues, [
+    "hair-geometry-missing",
+    "visual-review-pending",
+  ]);
 });

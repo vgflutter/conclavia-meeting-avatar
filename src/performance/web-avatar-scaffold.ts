@@ -36,6 +36,8 @@ export interface WebAvatarScaffoldOptions {
   facialClips?: WebAvatarManifest["facialClips"];
   displayName?: string;
   assetVersion?: string;
+  rotationDegrees?: readonly [number, number, number];
+  appearance?: WebAvatarManifest["appearance"];
 }
 
 function normalized(name: string): string {
@@ -210,7 +212,14 @@ export async function scaffoldWebAvatarManifest(
     assetVersion: options.assetVersion ?? "draft-1",
     model: basename(modelPath),
     animationModels: animationModelPaths.map((path) => basename(path)),
-    framing: { camera: [0, 1.56, 1.18], target: [0, 1.49, 0], fov: 34, scale: 1 },
+    ...(options.appearance ? { appearance: options.appearance } : {}),
+    framing: {
+      camera: [0, 1.56, 1.18],
+      target: [0, 1.49, 0],
+      fov: 34,
+      scale: 1,
+      ...(options.rotationDegrees ? { rotationDegrees: options.rotationDegrees } : {}),
+    },
     nodes,
     morphs: {
       visemes: emptyMorphMap(webAvatarVisemeNames),
@@ -289,7 +298,16 @@ export async function writeWebAvatarBundleScaffold(
     assetVersion,
     model: record.model,
     animationModels: record.animationModels,
-    framing: { camera: [0, 1.56, 1.18], target: [0, 1.49, 0], fov: 34, scale: 1 },
+    ...(record.appearance === undefined ? {} : { appearance: record.appearance }),
+    framing: {
+      camera: [0, 1.56, 1.18],
+      target: [0, 1.49, 0],
+      fov: 34,
+      scale: 1,
+      ...(record.rotationDegrees === undefined
+        ? {}
+        : { rotationDegrees: record.rotationDegrees }),
+    },
     nodes: {},
     morphs: { visemes: {}, moods: {} },
     facialClips: record.facialClips ?? { visemes: {}, moods: {} },
@@ -306,6 +324,10 @@ export async function writeWebAvatarBundleScaffold(
       facialClips: candidate.facialClips,
       displayName: candidate.displayName,
       assetVersion: candidate.assetVersion,
+      ...(candidate.framing.rotationDegrees
+        ? { rotationDegrees: candidate.framing.rotationDegrees }
+        : {}),
+      ...(candidate.appearance ? { appearance: candidate.appearance } : {}),
     },
   );
 }

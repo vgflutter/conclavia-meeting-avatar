@@ -17,11 +17,17 @@ const validManifest = {
   displayName: "Mary Showcase",
   assetVersion: "2026.08.1",
   model: "showcase.glb",
+  appearance: {
+    sourceIdentity: "MHC_Showcase",
+    hairGeometry: "cards",
+    visualReview: "approved",
+  },
   framing: {
     camera: [0, 1.58, 1.25],
     target: [0, 1.5, 0],
     fov: 36,
     scale: 1,
+    rotationDegrees: [0, 90, 0],
   },
   nodes: { head: "head", leftEye: "eye_l", rightEye: "eye_r" },
   morphs: {
@@ -47,6 +53,14 @@ await test("accepts a bounded Web avatar manifest", () => {
   assert.equal(manifest?.clips.gestures["raise-hand"], "raise_hand");
   assert.deepEqual(manifest?.animationModels, []);
   assert.deepEqual(manifest?.facialClips, { visemes: {}, moods: {} });
+  assert.deepEqual(manifest?.framing.rotationDegrees, [0, 90, 0]);
+});
+
+await test("rejects an unsafe asset-space rotation", () => {
+  assert.equal(parseWebAvatarManifest({
+    ...validManifest,
+    framing: { ...validManifest.framing, rotationDegrees: [0, 720, 0] },
+  }), null);
 });
 
 await test("accepts bounded skeletal facial clips and rejects unknown mood keys", () => {

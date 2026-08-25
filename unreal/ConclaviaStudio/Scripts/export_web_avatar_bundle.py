@@ -12,8 +12,16 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sys
 
 import unreal
+
+
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+if str(SCRIPT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIRECTORY))
+
+from web_showcase_actor import ShowcaseActorGraph, ensure_showcase_export_actor
 
 
 LEVEL_PATH = os.environ.get(
@@ -169,21 +177,10 @@ def export_object(
     log(f"ASSET file={path.name} bytes={path.stat().st_size} result={result}")
 
 
-def meeting_anchor() -> unreal.Actor:
-    actors = unreal.get_editor_subsystem(
-        unreal.EditorActorSubsystem
-    ).get_all_level_actors()
-    anchors = [
-        actor
-        for actor in actors
-        if "MeetingAvatarAnchor" in {str(tag) for tag in actor.tags}
-    ]
-    if len(anchors) != 1:
-        raise RuntimeError(f"Expected one MeetingAvatarAnchor, found {len(anchors)}")
-    return anchors[0]
-
-
-def write_bundle_inventory(animation_files: list[str]) -> None:
+def write_bundle_inventory(
+    animation_files: list[str],
+    graph: ShowcaseActorGraph,
+) -> None:
     payload = {
         "schema": "conclavia.web-avatar-export",
         "version": 1,
@@ -192,6 +189,21 @@ def write_bundle_inventory(animation_files: list[str]) -> None:
         "assetVersion": ASSET_VERSION,
         "level": LEVEL_PATH,
         "model": "model.glb",
+        "appearance": {
+            "sourceIdentity": "MHC_Showcase",
+            "sourceActorClass": graph.actor.get_class().get_path_name(),
+            "faceMesh": graph.face_mesh_path,
+            "bodyMesh": graph.body_mesh_path,
+            "groomAssets": list(graph.groom_asset_paths),
+            # The stock glTF exporter ignores Groom Components. A later
+            # hair-card/mesh pass must change these gates before publication.
+            "hairGeometry": "missing",
+            "visualReview": "pending",
+        },
+        # UE's glTF scene keeps the meeting anchor facing Unreal +X. Three.js
+        # cameras conventionally look down -Z, so the portable renderer must
+        # apply this explicit asset-space correction instead of guessing.
+        "rotationDegrees": [0, 90, 0],
         "animationModels": animation_files
         + [f"anim-face-{mood}.glb" for mood in FACIAL_MOODS]
         + [f"anim-viseme-{alias}.glb" for _, alias, _ in FACIAL_VISEMES],
@@ -258,13 +270,13 @@ def main() -> None:
     OUTPUT_DIRECTORY.mkdir(parents=True, exist_ok=True)
     if not unreal.EditorLoadingAndSavingUtils.load_map(LEVEL_PATH):
         raise RuntimeError(f"Could not load meeting level: {LEVEL_PATH}")
-    anchor = meeting_anchor()
+    graph = ensure_showcase_export_actor()
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     export_object(
         world,
         OUTPUT_DIRECTORY / "model.glb",
         configure_options(preview_mesh=False),
-        {anchor},
+        {graph.actor},
     )
 
     animation_files: list[str] = []
@@ -281,7 +293,7 @@ def main() -> None:
         )
         animation_files.append(filename)
 
-    write_bundle_inventory(animation_files)
+    write_bundle_inventory(animation_files, graph)
     log(
         f"CONCLAVIA_WEB_AVATAR_EXPORT_OK directory={OUTPUT_DIRECTORY} "
         f"animations={len(animation_files)}"

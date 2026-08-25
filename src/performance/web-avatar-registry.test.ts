@@ -24,6 +24,11 @@ function manifest(): unknown {
     assetVersion: "test-1",
     model: "showcase.glb",
     animationModels: [],
+    appearance: {
+      sourceIdentity: "MHC_Showcase",
+      hairGeometry: "cards",
+      visualReview: "approved",
+    },
     framing: { camera: [0, 1, 2], target: [0, 1, 0], fov: 35, scale: 1 },
     nodes: { head: "head" },
     morphs: {

@@ -14,8 +14,16 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+import sys
 
 import unreal
+
+
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+if str(SCRIPT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIRECTORY))
+
+from web_showcase_actor import ensure_showcase_export_actor
 
 
 LEVEL_PATH = "/Game/Conclavia/Meeting/L_MeetingAvatar_v19"
@@ -168,19 +176,8 @@ def recreate_asset(path: str, name: str, asset_class: type, factory: object):
 
 
 def meeting_face() -> tuple[unreal.Actor, unreal.SkeletalMeshComponent]:
-    actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()
-    anchors = [
-        actor
-        for actor in actors
-        if "MeetingAvatarAnchor" in {str(tag) for tag in actor.tags}
-    ]
-    if len(anchors) != 1:
-        raise RuntimeError(f"Expected one MeetingAvatarAnchor, found {len(anchors)}")
-    components = anchors[0].get_components_by_class(unreal.SkeletalMeshComponent)
-    faces = [component for component in components if component.get_name() == "Face"]
-    if len(faces) != 1:
-        raise RuntimeError(f"Expected one Showcase Face component, found {len(faces)}")
-    return anchors[0], faces[0]
+    graph = ensure_showcase_export_actor()
+    return graph.actor, graph.face
 
 
 def gltf_options() -> unreal.GLTFExportOptions:

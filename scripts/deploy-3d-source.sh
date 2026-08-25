@@ -96,6 +96,8 @@ const commands = [
   'if ($LASTEXITCODE -ne 0) { throw "Unreal build failed with exit code $LASTEXITCODE." }',
   '& (Join-Path $root "Scripts\\Build-ShowcaseAvatar.ps1")',
   'if ($LASTEXITCODE -ne 0) { throw "Showcase Cine MetaHuman build failed." }',
+  '& (Join-Path $root "Scripts\\Build-ShowcaseWebAvatar.ps1")',
+  'if ($LASTEXITCODE -ne 0) { throw "Showcase Web MetaHuman build failed." }',
   '& (Join-Path $root "Scripts\\Build-MeetingPositiveExpression.ps1")',
   'if ($LASTEXITCODE -ne 0) { throw "Meeting positive expression build failed." }',
   '& (Join-Path $root "Scripts\\Build-WebAuthoredMicrogestures.ps1")',
