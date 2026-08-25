@@ -12,6 +12,7 @@ import {
 import {
   isWebAvatarId,
   parseWebAvatarManifest,
+  type WebAvatarClipReference,
   webAvatarManifestSchema,
   webAvatarManifestVersion,
   type WebAvatarManifest,
@@ -60,10 +61,39 @@ function firstMatchingClip(
   return matchingClips(inventory, patterns)[0];
 }
 
+function resolvedClipName(
+  inventory: WebAvatarModelInventory,
+  requestedName: string,
+): string | undefined {
+  const requested = normalized(requestedName);
+  const exact = inventory.animationClipNames.find((name) => normalized(name) === requested);
+  if (exact) return exact;
+  const numbered = inventory.animationClipNames.filter((name) => {
+    const candidate = normalized(name);
+    return candidate.startsWith(requested)
+      && /^\d+$/u.test(candidate.slice(requested.length));
+  });
+  return numbered.length === 1 ? numbered[0] : undefined;
+}
+
+function resolvedClipReference(
+  inventory: WebAvatarModelInventory,
+  reference: WebAvatarClipReference,
+): WebAvatarClipReference | undefined {
+  const requestedName = typeof reference === "string" ? reference : reference.clip;
+  const clip = resolvedClipName(inventory, requestedName);
+  if (!clip) return undefined;
+  return typeof reference === "string" ? clip : { ...reference, clip };
+}
+
 function inferredNodes(inventory: WebAvatarModelInventory): WebAvatarManifest["nodes"] {
   const head = exactName(inventory.nodeNames, ["head", "headjoint", "headbone"]);
-  const leftEye = exactName(inventory.nodeNames, ["eye_l", "eyel", "lefteye", "eyeleft"]);
-  const rightEye = exactName(inventory.nodeNames, ["eye_r", "eyer", "righteye", "eyeright"]);
+  const leftEye = exactName(inventory.nodeNames, [
+    "eye_l", "eyel", "lefteye", "eyeleft", "FACIAL_L_Eye",
+  ]);
+  const rightEye = exactName(inventory.nodeNames, [
+    "eye_r", "eyer", "righteye", "eyeright", "FACIAL_R_Eye",
+  ]);
   return {
     ...(head ? { head } : {}),
     ...(leftEye ? { leftEye } : {}),
@@ -136,13 +166,24 @@ export async function scaffoldWebAvatarManifest(
 
   const nodes = inferredNodes(inventory);
   const idle = options.clips?.idle
-    ? [...options.clips.idle]
+    ? options.clips.idle.flatMap((reference) => {
+      const clip = resolvedClipName(inventory, reference);
+      return clip ? [clip] : [];
+    })
     : matchingClips(inventory, [/idle/u]).slice(0, 12);
   const listening = options.clips?.listening
-    ? [...options.clips.listening]
+    ? options.clips.listening.flatMap((reference) => {
+      const clip = resolvedClipName(inventory, reference);
+      return clip ? [clip] : [];
+    })
     : matchingClips(inventory, [/listen/u]).slice(0, 12);
   const gestures = options.clips?.gestures
-    ? { ...options.clips.gestures }
+    ? Object.fromEntries(
+      Object.entries(options.clips.gestures).flatMap(([gesture, reference]) => {
+        const resolved = resolvedClipReference(inventory, reference);
+        return resolved ? [[gesture, resolved]] : [];
+      }),
+    )
     : inferredGestures(inventory);
   const manifest: WebAvatarManifest = {
     schema: webAvatarManifestSchema,

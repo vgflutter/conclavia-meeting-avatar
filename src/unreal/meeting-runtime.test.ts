@@ -315,3 +315,22 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(wrapper, /Compress-Archive/);
   assert.match(wrapper, /Web avatar export directory must be empty/);
 });
+
+await test("bakes curve-driven facial performance on the staged MetaHuman identity", async () => {
+  const [baker, wrapper] = await Promise.all([
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/bake_web_facial_probe.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Export-WebFacialProbe.ps1"),
+      "utf8",
+    ),
+  ]);
+  assert.match(baker, /AS_MeetingPositiveExpression_CurveOnly_v1/);
+  assert.match(baker, /SequencerTools\.export_anim_sequence/);
+  assert.match(baker, /evaluate_all_skeletal_mesh_components/);
+  assert.match(baker, /Facial bake produced no bone transforms/);
+  assert.match(baker, /GLTFExporter\.export_to_gltf/);
+  assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_PROBE_OK/);
+});

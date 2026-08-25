@@ -144,3 +144,65 @@ await test("turns the UE 5.8 export inventory into a multi-GLB manifest draft", 
     JSON.parse(await readFile(result.outputPath, "utf8")) as unknown,
   ));
 });
+
+await test("resolves UE glTF numeric clip suffixes without losing authored segments", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "conclavia-export-bundle-"));
+  await writeFile(join(directory, "model.glb"), glb({
+    asset: { version: "2.0" },
+    nodes: [
+      { name: "head", mesh: 0, skin: 0 },
+      { name: "FACIAL_L_Eye" },
+      { name: "FACIAL_R_Eye" },
+    ],
+    meshes: [{}],
+    skins: [{}],
+  }));
+  await writeFile(join(directory, "animations.glb"), glb({
+    asset: { version: "2.0" },
+    animations: [
+      { name: "AS_MeetingCalmIdle_v1_0" },
+      { name: "AS_MeetingEngagedIdle_v1_0" },
+      { name: "AS_MeetingAttentiveIdle_v1_0" },
+      { name: "AS_MeetingReflectiveIdle_v1_0" },
+      { name: "AS_MeetingHandRaise_SeatedMarkerless_v1_0" },
+      { name: "AS_MeetingApplause_SeatedMarkerless_v1_0" },
+    ],
+  }));
+  const result = await scaffoldWebAvatarManifest(join(directory, "model.glb"), "showcase", {
+    animationModelPaths: [join(directory, "animations.glb")],
+    clips: {
+      idle: ["AS_MeetingCalmIdle_v1", "AS_MeetingEngagedIdle_v1"],
+      listening: ["AS_MeetingAttentiveIdle_v1", "AS_MeetingReflectiveIdle_v1"],
+      gestures: {
+        "raise-hand": {
+          clip: "AS_MeetingHandRaise_SeatedMarkerless_v1",
+          startSeconds: 1.75,
+          endSeconds: 3.25,
+        },
+        applause: {
+          clip: "AS_MeetingApplause_SeatedMarkerless_v1",
+          startSeconds: 3.25,
+          endSeconds: 6.75,
+          loop: true,
+        },
+      },
+    },
+  });
+  assert.deepEqual(result.manifest.nodes, {
+    head: "head",
+    leftEye: "FACIAL_L_Eye",
+    rightEye: "FACIAL_R_Eye",
+  });
+  assert.deepEqual(result.manifest.clips.idle, [
+    "AS_MeetingCalmIdle_v1_0",
+    "AS_MeetingEngagedIdle_v1_0",
+  ]);
+  assert.deepEqual(result.manifest.clips.gestures.applause, {
+    clip: "AS_MeetingApplause_SeatedMarkerless_v1_0",
+    startSeconds: 3.25,
+    endSeconds: 6.75,
+    loop: true,
+  });
+  assert.deepEqual(result.unresolved.nodes, []);
+  assert.deepEqual(result.unresolved.ambientClips, []);
+});
