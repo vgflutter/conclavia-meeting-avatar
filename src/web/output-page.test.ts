@@ -71,6 +71,8 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(html, /\/vendor\/three\/build\/three\.module\.js/);
   assert.match(output, /loadThreeAvatarPerformer/);
   assert.match(output, /Fallback fotografico/);
+  assert.match(output, /speechExpressionReleased/);
+  assert.match(output, /if \(!avatarPerformer\)/);
   assert.match(output, /outputMode === "obs" \? "clean" : "console"/);
   assert.match(html, /data-output="console"/);
   assert.match(performer, /new THREE\.AnimationMixer/);

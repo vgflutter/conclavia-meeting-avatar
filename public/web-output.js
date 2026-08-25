@@ -116,8 +116,15 @@ function updatePerformanceState(elapsed) {
     && elapsed < activePacket.clock.durationMs;
   if (!running) {
     currentViseme = "-";
+    currentGaze = "camera";
     currentGesture = handRaised ? "raise-hand" : "none";
-    if (activePacket.kind === "listening" || activePacket.kind === "gesture") {
+    const speechExpressionReleased = activePacket.kind === "speech"
+      && elapsed >= activePacket.clock.durationMs + 900;
+    if (
+      activePacket.kind === "listening"
+      || activePacket.kind === "gesture"
+      || speechExpressionReleased
+    ) {
       currentMood = "neutral";
       currentMoodLevel = 0;
     }
@@ -201,10 +208,12 @@ function drawFrame(now) {
     context.drawImage(image, rect.x, rect.y, rect.width, rect.height);
     context.restore();
   }
-  const tint = moodTints[currentMood] || moodTints.neutral;
-  const alpha = Math.min(0.16, 0.035 + currentMoodLevel * 0.09);
-  context.fillStyle = `rgba(${tint[0]}, ${tint[1]}, ${tint[2]}, ${alpha})`;
-  context.fillRect(0, 0, width, height);
+  if (!avatarPerformer) {
+    const tint = moodTints[currentMood] || moodTints.neutral;
+    const alpha = Math.min(0.16, 0.035 + currentMoodLevel * 0.09);
+    context.fillStyle = `rgba(${tint[0]}, ${tint[1]}, ${tint[2]}, ${alpha})`;
+    context.fillRect(0, 0, width, height);
+  }
 
   if (handRaised || applause) {
     actionBadge.textContent = handRaised ? "CHIEDE PAROLA" : "APPLAUSO";
