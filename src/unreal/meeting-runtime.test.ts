@@ -331,6 +331,7 @@ await test("bakes curve-driven facial performance on the staged MetaHuman identi
   assert.match(baker, /SequencerTools\.export_anim_sequence/);
   assert.match(baker, /evaluate_all_skeletal_mesh_components/);
   assert.match(baker, /Facial bake produced no bone transforms/);
+  assert.match(baker, /"export_preview_mesh": False/);
   assert.match(baker, /GLTFExporter\.export_to_gltf/);
   assert.match(wrapper, /CONCLAVIA_WEB_FACIAL_PROBE_OK/);
 });
