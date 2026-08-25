@@ -14,6 +14,7 @@ import {
 import { CollectiveFarewellTracker } from "./core/collective-farewell.js";
 import { ListeningReactionStabilizer } from "./core/listening-reaction.js";
 import { DialogueLease } from "./core/dialogue-lease.js";
+import { immediateResponseFor } from "./core/immediate-response.js";
 import { chatResponseChannel, matchChatCommand } from "./core/chat-commands.js";
 import { formatAgendaOffset, MeetingAgendaManager } from "./core/meeting-agenda.js";
 import { OutboundChatQueue } from "./core/outbound-chat-queue.js";
@@ -398,6 +399,32 @@ export function startServer(options: ServerOptions): Promise<void> {
     meetingSpeakerName: options.meetingSpeakerName,
   });
   let runtimeConfig = configStore.current;
+  const prewarmImmediateSpeech = (config: AvatarConfig): void => {
+    if (!options.rendererUrl) return;
+    const directions = {
+      natural: "naturale, presente",
+      lively: "vivace, rapida, reattiva e naturale",
+      authoritative: "autorevole, chiara e misurata",
+    } as const;
+    for (const text of [
+      "Sì, ti ascolto.",
+      "Sì, ti sento.",
+      "Sì, sono qui e sono pronta.",
+      "Ciao! Sono qui.",
+    ]) {
+      void synthesizeUnrealSpeech({
+        text,
+        voice: config.italianVoice,
+        languageCode: "it-IT",
+        direction: directions[config.voiceStyle],
+      }).catch((error: unknown) => {
+        console.warn(
+          "Conclavia immediate speech warm-up skipped:",
+          error instanceof Error ? error.message : error,
+        );
+      });
+    }
+  };
   const createIntelligence = (config: AvatarConfig) => config.apiKey
     ? new MeetingIntelligence({
         apiKey: config.apiKey,
@@ -680,10 +707,27 @@ export function startServer(options: ServerOptions): Promise<void> {
 
       if (direct && currentRequest) pendingRequest = null;
 
+      const immediateCue = direct
+        ? immediateResponseFor(segment, runtimeConfig.name)
+        : null;
+
+      if (immediateCue) {
+        llmMs = 0;
+        decision = { ...decision, activated: true, cue: immediateCue };
+        if (responseChannel === "voice" && participantKey) {
+          dialogueLease.open(participantKey, segment.speakerName);
+        }
+        retainAvatarCue(
+          immediateCue,
+          responseChannel === "chat" ? "chat" : "speech",
+          segment,
+        );
+      }
+
       // Every finalized participant turn reaches the meeting intelligence.
       // Small turns still inform Mary's listening reaction, but cannot trigger
       // an autonomous request to speak unless they pass the stricter gate.
-      if (decision.ingested && intelligence) {
+      if (!immediateCue && decision.ingested && intelligence) {
         try {
           const llmStartedAt = performance.now();
           const turn = await intelligence.evaluateTurn(
@@ -1217,6 +1261,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         intelligence?.abortPending();
         await listener?.stop();
         runtimeConfig = nextConfig;
+        prewarmImmediateSpeech(runtimeConfig);
         intelligence = createIntelligence(runtimeConfig);
         listener = createListener();
         pendingRequest = null;
@@ -1666,6 +1711,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           return;
         }
 
+        const transcriptionStartedAt = performance.now();
         let text: string;
         try {
           text = await intelligence.transcribe({
@@ -1697,8 +1743,16 @@ export function startServer(options: ServerOptions): Promise<void> {
           platform: "generic",
           meetingId: "test-room",
         };
+        const transcriptionMs = Math.round(performance.now() - transcriptionStartedAt);
+        const turn = await processSegment(segment);
         sendJson(response, 200, {
-          ...(await processSegment(segment)),
+          ...turn,
+          latency: {
+            ...turn.latency,
+            transcriptionMs,
+            responseMs: turn.latency.totalMs,
+            totalMs: transcriptionMs + turn.latency.totalMs,
+          },
           transcription: {
             provider: "openai",
             model: intelligence.transcriptionModel,
@@ -1760,6 +1814,7 @@ export function startServer(options: ServerOptions): Promise<void> {
           ? `Meeting listener: ready (${runtimeConfig.meetingAudioDevice} -> ${options.realtimeTranscriptionModel})`
           : "Meeting listener: not configured",
       );
+      prewarmImmediateSpeech(runtimeConfig);
       resolve();
     });
   });

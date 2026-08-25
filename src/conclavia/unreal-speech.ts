@@ -26,6 +26,14 @@ const neuralVoices = new Set<SupportedVoice>([
 ]);
 
 const pollyClients = new Map<string, PollyClient>();
+const speechCache = new Map<string, {
+  audio: Uint8Array;
+  voice: SupportedVoice;
+  languageCode: string;
+  engine: PollySpeechEngine;
+}>();
+const maxCachedSpeechItems = 16;
+const maxCachedSpeechBytesPerItem = 2 * 1024 * 1024;
 
 function pollyClient(): PollyClient {
   const config = getUnrealStudioConfig();
@@ -108,6 +116,13 @@ export async function synthesizeUnrealSpeech(input: {
       ? "110%"
       : "112%";
   const engine = preferredPollyEngine(voice);
+  const cacheKey = JSON.stringify([text, voice, languageCode, direction]);
+  const cached = speechCache.get(cacheKey);
+  if (cached) {
+    speechCache.delete(cacheKey);
+    speechCache.set(cacheKey, cached);
+    return { ...cached, audio: cached.audio.slice() };
+  }
   const output = await pollyClient().send(new SynthesizeSpeechCommand({
     Engine: engine,
     VoiceId: voice,
@@ -118,10 +133,19 @@ export async function synthesizeUnrealSpeech(input: {
     Text: `<speak><prosody rate="${rate}">${escapeSsml(text)}</prosody></speak>`,
   }));
   if (!output.AudioStream) throw new Error("Polly returned no audio");
-  return {
+  const result = {
     audio: Uint8Array.from(await output.AudioStream.transformToByteArray()),
     voice,
     languageCode,
     engine,
   };
+  if (result.audio.byteLength <= maxCachedSpeechBytesPerItem) {
+    speechCache.set(cacheKey, result);
+    while (speechCache.size > maxCachedSpeechItems) {
+      const oldest = speechCache.keys().next().value;
+      if (typeof oldest !== "string") break;
+      speechCache.delete(oldest);
+    }
+  }
+  return { ...result, audio: result.audio.slice() };
 }

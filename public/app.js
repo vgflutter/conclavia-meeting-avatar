@@ -101,6 +101,10 @@ let currentSidePanel = "transcript";
 let mediaRecorder = null;
 let mediaStream = null;
 let audioChunks = [];
+let liveRecognition = null;
+let liveTranscript = "";
+let liveRecognitionFinished = Promise.resolve();
+let finishLiveRecognition = null;
 let lastListenerSegmentId = null;
 let stageModeTimer = null;
 let meetingStartedAt = Date.now();
@@ -497,6 +501,8 @@ function renderTurn(result) {
     setDecision(`${avatarName} ha riconosciuto la chiusura del meeting e saluta il gruppo.`, "responding");
   } else if (result.decision?.activated && result.decision.cue?.provider === "openai") {
     setDecision(`${avatarName} ha letto la conversazione e sta rispondendo${result.usedWebSearch ? " con ricerca web" : ""}.`, "responding");
+  } else if (result.decision?.activated && result.decision.cue?.provider === "system") {
+    setDecision(`${avatarName} risponde subito, senza attendere il modello.`, "responding");
   } else if (result.decision?.activated) {
     setDecision(`${avatarName} è stata chiamata, ma usa la risposta diagnostica: configura OpenAI per la risposta reale.`, "responding");
   } else if (result.decision?.reason === "autonomous-request") {
@@ -511,6 +517,7 @@ function renderTurn(result) {
   if (result.warning) elements.decisionStatus.textContent += ` ${result.warning}`;
 
   const llm = result.latency?.llmMs == null ? "—" : `${result.latency.llmMs} ms`;
+  const transcription = result.latency?.transcriptionMs;
   const renderer = result.latency?.rendererMs == null ? "—" : `${result.latency.rendererMs} ms`;
   const total = result.latency?.totalMs == null ? "—" : `${result.latency.totalMs} ms`;
   const synthesis = result.renderer?.delivery?.synthesisMs;
@@ -518,6 +525,7 @@ function renderTurn(result) {
     ? result.renderer.delivery.cueMs + result.renderer.delivery.playbackMs
     : null;
   elements.latencySummary.textContent = [
+    transcription == null ? null : `STT ${transcription} ms`,
     `LLM ${llm}`,
     synthesis == null ? null : `TTS ${synthesis} ms`,
     handoff == null ? `Avatar ${renderer}` : `Handoff ${handoff} ms`,
@@ -1133,6 +1141,67 @@ function releaseMicrophone() {
   mediaStream = null;
 }
 
+function startLiveBrowserTranscription() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  liveRecognition = null;
+  liveTranscript = "";
+  finishLiveRecognition = null;
+  liveRecognitionFinished = Promise.resolve();
+  if (!SpeechRecognition) return false;
+
+  const recognition = new SpeechRecognition();
+  liveRecognition = recognition;
+  recognition.lang = "it-IT";
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+  liveRecognitionFinished = new Promise((resolve) => {
+    finishLiveRecognition = resolve;
+  });
+  recognition.addEventListener("result", (event) => {
+    liveTranscript = Array.from(event.results)
+      .map((result) => result[0]?.transcript || "")
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (liveTranscript) {
+      elements.recordingStatus.textContent = `Ascolto live: “${liveTranscript}”`;
+    }
+  });
+  recognition.addEventListener("error", () => {
+    // MediaRecorder remains active and the OpenAI batch endpoint is the safe fallback.
+  });
+  recognition.addEventListener("end", () => {
+    finishLiveRecognition?.();
+    finishLiveRecognition = null;
+  }, { once: true });
+  try {
+    recognition.start();
+    return true;
+  } catch {
+    liveRecognition = null;
+    finishLiveRecognition?.();
+    finishLiveRecognition = null;
+    return false;
+  }
+}
+
+async function stopLiveBrowserTranscription() {
+  const recognition = liveRecognition;
+  if (!recognition) return "";
+  try {
+    recognition.stop();
+  } catch {
+    // It may already have ended after producing a final transcript.
+  }
+  await Promise.race([
+    liveRecognitionFinished,
+    new Promise((resolve) => window.setTimeout(resolve, 700)),
+  ]);
+  liveRecognition = null;
+  return liveTranscript.trim();
+}
+
 elements.recordButton.addEventListener("click", async () => {
   const speakerName = elements.speakerName.value.trim();
   if (!speakerName) {
@@ -1144,23 +1213,39 @@ elements.recordButton.addEventListener("click", async () => {
   audioChunks = [];
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const liveTranscriptionAvailable = startLiveBrowserTranscription();
     const mimeType = preferredAudioMimeType();
     mediaRecorder = new MediaRecorder(mediaStream, mimeType ? { mimeType } : undefined);
     mediaRecorder.addEventListener("dataavailable", (event) => {
       if (event.data.size > 0) audioChunks.push(event.data);
     });
     mediaRecorder.addEventListener("stop", async () => {
+      const recognitionWaitStartedAt = performance.now();
       const recordedMimeType = mediaRecorder.mimeType || audioChunks[0]?.type || "audio/webm";
       const audio = new Blob(audioChunks, { type: recordedMimeType });
       releaseMicrophone();
       elements.stopButton.disabled = true;
       elements.recordingStatus.textContent = "Trascrizione e analisi in corso…";
       try {
-        const result = await requestJson(`/api/transcribe?speakerName=${encodeURIComponent(speakerName)}`, {
-          method: "POST",
-          headers: { "content-type": recordedMimeType },
-          body: audio,
-        });
+        const recognizedText = await stopLiveBrowserTranscription();
+        const recognitionWaitMs = Math.round(performance.now() - recognitionWaitStartedAt);
+        const result = recognizedText
+          ? await sendVoiceMessage(recognizedText)
+          : await requestJson(`/api/transcribe?speakerName=${encodeURIComponent(speakerName)}`, {
+              method: "POST",
+              headers: { "content-type": recordedMimeType },
+              body: audio,
+            });
+        if (recognizedText && result.latency) {
+          const responseMs = result.latency.totalMs;
+          result.latency = {
+            ...result.latency,
+            transcriptionMs: recognitionWaitMs,
+            responseMs,
+            totalMs: recognitionWaitMs + responseMs,
+          };
+          result.transcription = { provider: "chrome-live", model: "SpeechRecognition" };
+        }
         renderTurn(result);
         elements.recordingStatus.textContent = `Trascritto: “${result.segment.text}”`;
         await refreshContext();
@@ -1174,8 +1259,11 @@ elements.recordButton.addEventListener("click", async () => {
     }, { once: true });
     mediaRecorder.start();
     elements.stopButton.disabled = false;
-    elements.recordingStatus.textContent = "Registrazione attiva: parla, poi premi Stop e invia.";
+    elements.recordingStatus.textContent = liveTranscriptionAvailable
+      ? "Trascrizione live attiva: parla, poi premi Stop e invia."
+      : "Registrazione attiva: parla, poi premi Stop e invia.";
   } catch (error) {
+    await stopLiveBrowserTranscription();
     releaseMicrophone();
     elements.recordButton.disabled = false;
     elements.recordingStatus.textContent = `Microfono non disponibile: ${error.message}`;
