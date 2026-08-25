@@ -233,7 +233,11 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
     || !model
   ) return null;
   const rawAnimationModels = record.animationModels ?? [];
-  if (!Array.isArray(rawAnimationModels) || rawAnimationModels.length > 16) return null;
+  // A production bundle keeps body, gesture, mood and viseme performances in
+  // separate small GLBs. The previous limit of 16 rejected the first complete
+  // 12-mood bundle before visemes were even added; 64 remains a strict bound
+  // while allowing the full performance vocabulary.
+  if (!Array.isArray(rawAnimationModels) || rawAnimationModels.length > 64) return null;
   const animationModels = rawAnimationModels.map(glbFilename);
   if (
     !animationModels.every((filename): filename is string => filename !== null)

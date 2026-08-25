@@ -88,6 +88,14 @@ await test("accepts safe external animation GLBs and rejects traversal or duplic
     ...validManifest,
     animationModels: ["gesture.glb", "gesture.glb"],
   }), null);
+  assert.equal(parseWebAvatarManifest({
+    ...validManifest,
+    animationModels: Array.from({ length: 65 }, (_, index) => `clip-${index}.glb`),
+  }), null);
+  assert.equal(parseWebAvatarManifest({
+    ...validManifest,
+    animationModels: Array.from({ length: 17 }, (_, index) => `clip-${index}.glb`),
+  })?.animationModels.length, 17);
 });
 
 await test("accepts bounded authored gesture segments", () => {
