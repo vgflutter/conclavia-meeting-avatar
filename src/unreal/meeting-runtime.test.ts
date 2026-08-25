@@ -304,6 +304,7 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /MeetingAvatarAnchor/);
   assert.match(exporter, /export_vertex_skin_weights/);
   assert.match(exporter, /export_morph_targets/);
+  assert.match(exporter, /"export_morph_targets": False/);
   assert.match(exporter, /export_preview_mesh/);
   assert.match(exporter, /configure_options\(preview_mesh=False\)/);
   assert.match(exporter, /GLTFExporter\.export_to_gltf/);

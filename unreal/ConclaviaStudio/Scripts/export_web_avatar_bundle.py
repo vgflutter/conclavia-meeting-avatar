@@ -63,7 +63,10 @@ def configure_options(*, preview_mesh: bool) -> unreal.GLTFExportOptions:
     options = unreal.GLTFExportOptions()
     required = {
         "export_vertex_skin_weights": True,
-        "export_morph_targets": True,
+        # MetaHuman's 858 identity/corrective targets add ~742 MB to this
+        # Showcase export. Web facial performances are baked to the identity's
+        # 875-bone Face rig, so the neutral mesh does not need those deltas.
+        "export_morph_targets": False,
         "export_preview_mesh": preview_mesh,
         "make_skinned_meshes_root": True,
     }
