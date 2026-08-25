@@ -139,6 +139,7 @@ foreach ($entry in $visemes) {
 }
 
 Wait-SpeechIdle | Out-Null
+Wait-RendererReady | Out-Null
 $neutral = @{ mood = "neutral"; intensity = 0.0; silenceChunks = 4 } |
     ConvertTo-Json -Compress
 Invoke-RestMethod `
