@@ -29,7 +29,10 @@ LEVEL_PATH = os.environ.get(
     "/Game/Conclavia/Meeting/L_MeetingAvatar_v19",
 )
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
-ASSET_VERSION = os.environ.get("CONCLAVIA_WEB_AVATAR_ASSET_VERSION", "ue58-v30")
+ASSET_VERSION = os.environ.get(
+    "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
+    "ue58-v31-web-hair",
+)
 OUTPUT_DIRECTORY = Path(
     os.environ.get(
         "CONCLAVIA_WEB_AVATAR_EXPORT_DIR",
@@ -195,9 +198,11 @@ def write_bundle_inventory(
             "faceMesh": graph.face_mesh_path,
             "bodyMesh": graph.body_mesh_path,
             "groomAssets": list(graph.groom_asset_paths),
-            # The stock glTF exporter ignores Groom Components. A later
-            # hair-card/mesh pass must change these gates before publication.
-            "hairGeometry": "missing",
+            "webHairMeshes": list(graph.hair_mesh_paths),
+            # The stock glTF exporter ignores Groom Components. Showcase's
+            # dedicated Optimized/Low assembly supplies an ordinary helmet
+            # mesh that is exported with the Cine face and body instead.
+            "hairGeometry": "mesh",
             "visualReview": "pending",
         },
         # UE's glTF scene keeps the meeting anchor facing Unreal +X. Three.js
@@ -276,7 +281,7 @@ def main() -> None:
         world,
         OUTPUT_DIRECTORY / "model.glb",
         configure_options(preview_mesh=False),
-        {graph.actor},
+        {graph.actor, *graph.hair_actors},
     )
 
     animation_files: list[str] = []

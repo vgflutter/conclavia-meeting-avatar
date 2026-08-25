@@ -22,6 +22,11 @@ SHOWCASE_CLASS_PATH = (
     "BP_MHC_Showcase.BP_MHC_Showcase_C"
 )
 SHOWCASE_ASSET_FRAGMENT = "/MHC_Showcase/"
+WEB_HAIR_MESH_PATH = (
+    "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebLow/"
+    "MHC_Showcase_WebLow/Grooms/Hair_S_UpdoBraids_Helmet_LOD5."
+    "Hair_S_UpdoBraids_Helmet_LOD5"
+)
 
 
 @dataclass(frozen=True)
@@ -32,6 +37,8 @@ class ShowcaseActorGraph:
     face_mesh_path: str
     body_mesh_path: str
     groom_asset_paths: tuple[str, ...]
+    hair_actors: tuple[unreal.StaticMeshActor, ...]
+    hair_mesh_paths: tuple[str, ...]
 
 
 def _log(message: str) -> None:
@@ -101,6 +108,47 @@ def _spawn_showcase(anchor: unreal.Actor) -> unreal.Actor:
     return actor
 
 
+def _spawn_web_hair(
+    actor: unreal.Actor,
+    body: unreal.SkeletalMeshComponent,
+) -> tuple[unreal.StaticMeshActor, ...]:
+    mesh = unreal.load_asset(WEB_HAIR_MESH_PATH)
+    if not isinstance(mesh, unreal.StaticMesh):
+        raise RuntimeError(
+            "Showcase Web hair mesh is unavailable. Build the Web Low assembly first: "
+            f"{WEB_HAIR_MESH_PATH}"
+        )
+    subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    hair_actor = subsystem.spawn_actor_from_class(
+        unreal.StaticMeshActor,
+        actor.get_actor_location(),
+        actor.get_actor_rotation(),
+    )
+    if not isinstance(hair_actor, unreal.StaticMeshActor):
+        raise RuntimeError("Could not spawn the Showcase Web hair actor")
+    hair_actor.set_actor_label("WEB_ShowcaseHair_LOD5")
+    hair_actor.tags = [unreal.Name(WEB_EXPORT_TAG)]
+    hair_actor.set_actor_scale3d(actor.get_actor_scale3d())
+    component = hair_actor.get_component_by_class(unreal.StaticMeshComponent)
+    if not isinstance(component, unreal.StaticMeshComponent):
+        raise RuntimeError("Showcase Web hair actor has no Static Mesh component")
+    component.set_static_mesh(mesh)
+    component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    component.set_visibility(True, True)
+    component.set_hidden_in_game(False, True)
+    # Keep the authored world alignment and parent the rigid helmet to the
+    # MetaHuman head bone. The glTF hierarchy can then carry it with authored
+    # head motion instead of leaving the hair behind in world space.
+    hair_actor.attach_to_component(
+        body,
+        unreal.Name("head"),
+        unreal.AttachmentRule.KEEP_WORLD,
+        unreal.AttachmentRule.KEEP_WORLD,
+        unreal.AttachmentRule.KEEP_WORLD,
+    )
+    return (hair_actor,)
+
+
 def ensure_showcase_export_actor() -> ShowcaseActorGraph:
     """Spawn and validate the exact Showcase graph used by Web authoring."""
 
@@ -125,13 +173,24 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
     if not groom_paths:
         raise RuntimeError("Showcase has no Groom components; refusing a bald Web export")
 
+    hair_actors = _spawn_web_hair(actor, body)
+    hair_mesh_paths = tuple(
+        component.get_editor_property("static_mesh").get_path_name()
+        for hair_actor in hair_actors
+        for component in hair_actor.get_components_by_class(unreal.StaticMeshComponent)
+        if component.get_editor_property("static_mesh") is not None
+    )
+    if not hair_mesh_paths:
+        raise RuntimeError("Showcase Web hair actor has no exportable mesh")
+
     for component in actor.get_components_by_class(unreal.SceneComponent):
         component.set_visibility(True, True)
         component.set_hidden_in_game(False, True)
     _log(
         "READY "
         f"class={actor.get_class().get_path_name()} "
-        f"face={face_mesh_path} body={body_mesh_path} grooms={len(groom_paths)}"
+        f"face={face_mesh_path} body={body_mesh_path} grooms={len(groom_paths)} "
+        f"webHair={','.join(hair_mesh_paths)}"
     )
     return ShowcaseActorGraph(
         actor=actor,
@@ -140,5 +199,6 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
         face_mesh_path=face_mesh_path,
         body_mesh_path=body_mesh_path,
         groom_asset_paths=tuple(sorted(groom_paths)),
+        hair_actors=hair_actors,
+        hair_mesh_paths=hair_mesh_paths,
     )
-
