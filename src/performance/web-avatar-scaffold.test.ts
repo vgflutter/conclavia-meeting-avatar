@@ -98,6 +98,22 @@ await test("refuses an unskinned model", async () => {
   );
 });
 
+await test("refuses unsafe scaffold metadata", async () => {
+  const modelPath = await riggedModel();
+  await assert.rejects(
+    scaffoldWebAvatarManifest(modelPath, "showcase", {
+      displayName: "x".repeat(121),
+    }),
+    /metadata is invalid/u,
+  );
+  await assert.rejects(
+    scaffoldWebAvatarManifest(modelPath, "showcase", {
+      assetVersion: "x".repeat(81),
+    }),
+    /metadata is invalid/u,
+  );
+});
+
 await test("turns the UE 5.8 export inventory into a multi-GLB manifest draft", async () => {
   const directory = await mkdtemp(join(tmpdir(), "conclavia-export-bundle-"));
   await writeFile(join(directory, "model.glb"), glb({
@@ -119,6 +135,8 @@ await test("turns the UE 5.8 export inventory into a multi-GLB manifest draft", 
     schema: "conclavia.web-avatar-export",
     version: 1,
     id: "showcase",
+    displayName: "Showcase Web MetaHuman",
+    assetVersion: "ue58-v30",
     model: "model.glb",
     animationModels: ["anim-idle.glb", "anim-gesture.glb"],
     clips: {
@@ -134,6 +152,8 @@ await test("turns the UE 5.8 export inventory into a multi-GLB manifest draft", 
 
   const result = await writeWebAvatarBundleScaffold(inventoryPath);
   assert.deepEqual(result.manifest.animationModels, ["anim-idle.glb", "anim-gesture.glb"]);
+  assert.equal(result.manifest.displayName, "Showcase Web MetaHuman");
+  assert.equal(result.manifest.assetVersion, "ue58-v30");
   assert.deepEqual(result.manifest.clips.gestures["lower-hand"], {
     clip: "Hand_Raise",
     startSeconds: 3,

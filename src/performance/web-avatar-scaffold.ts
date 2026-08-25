@@ -34,6 +34,8 @@ export interface WebAvatarScaffoldOptions {
   animationModelPaths?: readonly string[];
   clips?: WebAvatarManifest["clips"];
   facialClips?: WebAvatarManifest["facialClips"];
+  displayName?: string;
+  assetVersion?: string;
 }
 
 function normalized(name: string): string {
@@ -200,12 +202,12 @@ export async function scaffoldWebAvatarManifest(
       }),
     ),
   };
-  const manifest: WebAvatarManifest = {
+  const manifestCandidate: WebAvatarManifest = {
     schema: webAvatarManifestSchema,
     version: webAvatarManifestVersion,
     id: avatarId,
-    displayName: `${avatarId} Web Avatar`,
-    assetVersion: "draft-1",
+    displayName: options.displayName ?? `${avatarId} Web Avatar`,
+    assetVersion: options.assetVersion ?? "draft-1",
     model: basename(modelPath),
     animationModels: animationModelPaths.map((path) => basename(path)),
     framing: { camera: [0, 1.56, 1.18], target: [0, 1.49, 0], fov: 34, scale: 1 },
@@ -218,6 +220,10 @@ export async function scaffoldWebAvatarManifest(
     clips: { idle, listening, gestures },
     environment: { background: "#123b35", keyLightIntensity: 2.4, fillLightIntensity: 1.1 },
   };
+  const manifest = parseWebAvatarManifest(manifestCandidate);
+  if (!manifest) {
+    throw new Error("Web avatar scaffold metadata is invalid");
+  }
   return {
     manifest,
     outputPath: join(dirname(modelPath), "manifest.json"),
@@ -269,12 +275,18 @@ export async function writeWebAvatarBundleScaffold(
     || !Array.isArray(record.animationModels)
   ) throw new Error("Web avatar export inventory is invalid");
   const directory = dirname(inventoryPath);
+  const displayName = typeof record.displayName === "string"
+    ? record.displayName
+    : `${record.id} Web Avatar`;
+  const assetVersion = typeof record.assetVersion === "string"
+    ? record.assetVersion
+    : "draft-1";
   const candidate = parseWebAvatarManifest({
     schema: webAvatarManifestSchema,
     version: webAvatarManifestVersion,
     id: record.id,
-    displayName: `${record.id} Web Avatar`,
-    assetVersion: "draft-1",
+    displayName,
+    assetVersion,
     model: record.model,
     animationModels: record.animationModels,
     framing: { camera: [0, 1.56, 1.18], target: [0, 1.49, 0], fov: 34, scale: 1 },
@@ -292,6 +304,8 @@ export async function writeWebAvatarBundleScaffold(
       animationModelPaths: candidate.animationModels.map((filename) => join(directory, filename)),
       clips: candidate.clips,
       facialClips: candidate.facialClips,
+      displayName: candidate.displayName,
+      assetVersion: candidate.assetVersion,
     },
   );
 }

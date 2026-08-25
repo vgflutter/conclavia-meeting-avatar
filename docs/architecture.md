@@ -19,7 +19,7 @@ Conclavia companion :4310
           |      - Three.js GLB performer or explicit photo fallback
           |      - canvas and WebAudio
           |      - audio-master scheduler
-          |      - morph moods + visemes, gaze and authored body clips
+          |      - baked facial moods + visemes, gaze and authored body clips
           |      - combined MediaStream for a desktop adapter
           |
           +--> private AWS GPU supervisor :8090
@@ -66,13 +66,15 @@ virtual camera and microphone without changing meeting intelligence.
 
 Web performers are private, self-contained glTF 2.0 bundles installed under
 `.conclavia/web-avatars`. The base GLB owns the MetaHuman skin, geometry,
-materials and facial morphs; optional animation GLBs carry independently
-exported Unreal sequences. A versioned manifest maps the engine-neutral packet
-to asset-specific morph targets, gaze nodes, idle/listening clips, seated
-gestures and authored clip ranges. The companion validates the complete bundle,
-mappings and embedded dependencies before the asset is used. This keeps avatar
-identity and renderer complexity out of dialogue, agenda, participation and TTS
-code.
+and materials; separate animation GLBs carry independently exported Unreal
+sequences. Facial mood and case-sensitive viseme clips are evaluated and baked
+on the target MetaHuman identity during authoring, so the browser does not need
+the licensed Unreal plugin or a GPU. A versioned manifest maps the
+engine-neutral packet to those skeletal facial clips, optional morph targets,
+gaze nodes, idle/listening clips, seated gestures and authored clip ranges. The
+companion validates the complete bundle, mappings and embedded dependencies
+before the asset is used. This keeps avatar identity and renderer complexity
+out of dialogue, agenda, participation and TTS code.
 
 Validation is enforced by a metadata-keyed registry rather than trusted as an
 operator convention. A failed or missing audit is visible through renderer and

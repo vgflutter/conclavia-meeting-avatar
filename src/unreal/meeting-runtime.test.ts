@@ -329,6 +329,7 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.doesNotMatch(exporter, /AS_MeetingApplause_SeatedContactIK_v3/);
   assert.match(exporter, /"startSeconds": 5\.75/);
   assert.match(exporter, /CONCLAVIA_WEB_AVATAR_EXPORT_OK/);
+  assert.match(exporter, /"assetVersion": ASSET_VERSION/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
   assert.match(facialBaker, /SequencerTools\.export_anim_sequence/);
   assert.match(facialBaker, /evaluate_all_skeletal_mesh_components/);

@@ -211,11 +211,31 @@ intervention replaces that queue, while an interrupt cancels both playback and
 all not-yet-published synthesis results.
 
 When a compatible glTF performer is installed, the Web runtime renders it with
-Three.js, applies viseme and mood morph targets together, drives optional head
-and eye nodes, and crossfades authored idle, listening and physical-gesture
-clips. Without that asset it remains in the explicit photographic diagnostic
-mode. The complete asset contract, local directory layout and validation
-command are documented in the [Web avatar asset pipeline](docs/web-avatar-runtime.md).
+Three.js, layers identity-baked skeletal viseme and mood clips, drives optional
+head and eye nodes, and crossfades authored idle, listening and physical-gesture
+clips. Morph targets remain supported for ordinary glTF characters, but the
+MetaHuman export does not require them: Unreal evaluates the licensed facial
+controls on Showcase and bakes the resulting identity-specific skeleton before
+export. Without a valid performer the page remains in the explicit photographic
+diagnostic mode. The complete asset contract, local directory layout and
+validation command are documented in the [Web avatar asset pipeline](docs/web-avatar-runtime.md).
+
+The accepted UE 5.8 Showcase bundle contains 37 independent animation assets:
+four non-repeating seated ambient clips, seven physical gestures, eleven
+non-neutral facial moods, and sixteen case-sensitive Polly visemes. `neutral`
+and `sil` intentionally use the resident rest pose. The four portable
+microgestures (`nod`, `tilt`, `emphasis`, and `settle`) are restrained excerpts
+of Epic's authored BodyROM composed on the common seated anchor. Their exported
+curves animate only upper-body bones, contain no root, pelvis, or leg motion,
+and return exactly to the anchor at both boundaries. The complete local bundle
+audit is mandatory before the performer can be served.
+
+This makes the performance packet the stable product boundary: meeting logic
+publishes audio, timed visemes, sentence moods, gaze, gestures, interruption,
+and listening reactions; the active renderer decides whether to reconstruct
+that performance locally in the browser or render a Premium Unreal stream.
+Ordinary meetings therefore do not require one continuously running cloud GPU
+per avatar.
 
 ### Showcase identity and visual fidelity
 
@@ -323,8 +343,10 @@ authored meeting animation as one portable bundle on the Windows renderer:
 & C:\ConclaviaMeetingAvatar\Scripts\Export-WebAvatarBundle.ps1
 ```
 
-After downloading and expanding the resulting ZIP on the Mac, create the draft
-directly from its generated inventory and then complete the reported facial maps:
+After downloading and expanding the resulting ZIP on the Mac, create the
+manifest directly from its generated inventory. The UE bundle already contains
+the identity-baked facial and body mappings, so a current export should report
+no unresolved fields:
 
 ```bash
 npm run studio:web:avatar:scaffold-bundle -- /absolute/path/to/export/export.json
@@ -333,7 +355,9 @@ npm run studio:web:avatar:install -- /absolute/path/to/export/manifest.json
 
 The read-only probe lists the exact node, morph-target and animation-clip names
 needed by the manifest. The scaffold writes a non-overwriting manifest draft
-beside the GLB and reports every semantic mapping still requiring review. A
+beside the GLB and reports every semantic mapping still requiring review. The
+current UE export resolves all 17 Polly states (sixteen baked visemes plus
+silence), all twelve moods, all seven gestures, and the ambient repertoire. A
 bundle can keep animation sequences in separate GLBs; the browser binds their
 tracks to the resident base skeleton and respects authored ranges for raising,
 holding and lowering the hand without restarting the complete take.
@@ -511,8 +535,8 @@ Inform every participant before capturing or processing meeting audio. Transcrip
 
 ## Roadmap
 
-- Export and validate the Showcase Web LOD with facial morph targets, a meeting body rig, compressed textures, and authored gesture clips.
-- Package the browser canvas plus WebAudio stream in a desktop virtual-camera and virtual-microphone adapter.
+- Package the validated browser canvas plus WebAudio stream in a desktop virtual-camera and virtual-microphone adapter.
+- Reduce the current private 111 MB Cine-derived authoring bundle into a separately licensed delivery LOD with hair cards and compressed meeting textures.
 - Move the validated request-to-speak and seated-idle repertoire into a blended Animation Blueprint state machine; keep every body pose asset-driven.
 - Calibrate and package the Teams attributed-caption bridge; keep the isolated Teams Web chat bridge aligned with Teams DOM changes.
 - Keep the isolated Google Meet browser bridge calibrated as Meet's private DOM evolves, and add attributed-caption extraction.

@@ -21,6 +21,7 @@ LEVEL_PATH = os.environ.get(
     "/Game/Conclavia/Meeting/L_MeetingAvatar_v19",
 )
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
+ASSET_VERSION = os.environ.get("CONCLAVIA_WEB_AVATAR_ASSET_VERSION", "ue58-v30")
 OUTPUT_DIRECTORY = Path(
     os.environ.get(
         "CONCLAVIA_WEB_AVATAR_EXPORT_DIR",
@@ -187,6 +188,8 @@ def write_bundle_inventory(animation_files: list[str]) -> None:
         "schema": "conclavia.web-avatar-export",
         "version": 1,
         "id": PROFILE_ID,
+        "displayName": "Showcase Web MetaHuman",
+        "assetVersion": ASSET_VERSION,
         "level": LEVEL_PATH,
         "model": "model.glb",
         "animationModels": animation_files

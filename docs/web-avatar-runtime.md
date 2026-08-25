@@ -32,8 +32,16 @@ defaults to `.conclavia/web-avatars`:
     model.glb
     anim-calm-idle.glb
     anim-attentive-idle.glb
+    anim-nod.glb
+    anim-tilt.glb
+    anim-emphasis.glb
+    anim-settle.glb
     anim-hand-raise.glb
     anim-applause.glb
+    anim-face-attentive.glb
+    ...
+    anim-viseme-a.glb
+    ...
 ```
 
 Start from [web-avatar-manifest.example.json](web-avatar-manifest.example.json).
@@ -58,10 +66,13 @@ To create a conservative manifest scaffold beside the GLB, run:
 npm run studio:web:avatar:scaffold -- /absolute/path/to/export/showcase.glb showcase
 ```
 
-The command fills only exact node names and clearly named idle, listening and
-gesture clips. It deliberately leaves viseme and mood weights unresolved for
-review against the exported face rig. It refuses to overwrite an existing
-`manifest.json`; complete the reported fields and run the audit before install.
+For a generic DCC model, the command fills only exact node names and clearly
+named idle, listening and gesture clips. It deliberately leaves ambiguous
+viseme and mood weights unresolved for review against the exported face rig.
+The UE bundle scaffold is stronger: its generated inventory carries the exact
+identity-baked facial clips and authored gesture ranges, so the current export
+resolves the complete meeting vocabulary automatically. Neither command
+overwrites an existing `manifest.json`.
 
 For a finished DCC export, prefer the atomic installer over manually copying
 the directory:
@@ -78,7 +89,8 @@ never overwritten.
 The GLB must contain:
 
 - a skinned upper-body character;
-- all morph targets referenced by the viseme and mood maps;
+- every morph target referenced by a morph map, or identity-baked skeletal
+  facial clips for the same viseme and mood;
 - every idle, listening and gesture clip named in the manifest, either in the
   base model or one of the declared `animationModels`;
 - embedded images and buffers, with no external texture URLs;
@@ -87,7 +99,8 @@ The GLB must contain:
 Meeting readiness additionally requires mappings for all 17 Polly visemes, all
 12 semantic moods, every supported physical gesture, and at least two distinct
 idle plus two listening clips. Neutral and silence may intentionally map to no
-morph; every other mood and viseme must affect at least one target.
+morph or clip; every other mood and viseme must affect at least one morph target
+or a declared facial clip.
 
 Gesture values may be a clip name or an authored segment with `clip`,
 `startSeconds`, `endSeconds` and `loop`. The production hand-raise take uses one
@@ -98,9 +111,9 @@ The base model becomes visible as soon as it loads; the declared animation GLBs
 preload concurrently in the background. A gesture requested during that short
 window remains retryable instead of being discarded.
 
-The runtime applies mood and viseme morphs simultaneously, smooths their
-weights, drives optional head and eye nodes, crossfades authored body clips and
-varies the listening/idle repertoire instead of repeating one short loop.
+The runtime layers mood and viseme morphs or identity-baked skeletal clips,
+drives optional head and eye nodes, crossfades authored body clips and varies
+the listening/idle repertoire instead of repeating one short loop.
 For multi-sentence speech, each sentence arrives as an ordered chunk in one
 delivery. The first chunk starts as soon as its audio and speech marks are
 ready; subsequent chunks remain queued against the WebAudio master clock and
@@ -145,10 +158,12 @@ bundle command:
 
 It loads the isolated `L_MeetingAvatar_v19` map, selects only the actor tagged
 `MeetingAvatarAnchor`, and exports a self-contained base `model.glb` with skin
-weights and morph targets. It exports the four seated ambient sequences, the
-markerless hand-raise and the production seated applause into separate GLBs,
-then writes `export.json` and a ZIP. No podcast scene, Pixel Streaming frame or
-runtime GPU state enters the bundle.
+weights. It exports the four seated ambient sequences; authored `nod`, `tilt`,
+`emphasis`, and `settle` BodyROM excerpts; the markerless hand-raise; and the
+production seated applause into separate GLBs. It then evaluates eleven
+non-neutral moods and sixteen case-sensitive visemes on the Showcase identity,
+exports each baked face skeleton, and writes `export.json` plus a ZIP. No
+podcast scene, Pixel Streaming frame, or runtime GPU state enters the bundle.
 
 After expanding the ZIP locally:
 
@@ -156,10 +171,10 @@ After expanding the ZIP locally:
 npm run studio:web:avatar:scaffold-bundle -- /absolute/path/export.json
 ```
 
-The inventory supplies the exact Unreal clip names and the already reviewed
-gesture windows. The scaffold still leaves viseme and twelve-mood morph weights
-for explicit review against the exported face targets; the readiness audit will
-not serve the avatar until those mappings are complete.
+The inventory supplies the exact Unreal clip names, reviewed gesture windows,
+facial-clip mappings, display name, and asset version. A current Showcase
+bundle should scaffold with zero unresolved nodes, visemes, moods, gestures, or
+ambient clips; the readiness audit refuses to serve any incomplete bundle.
 
 ## Export target
 
