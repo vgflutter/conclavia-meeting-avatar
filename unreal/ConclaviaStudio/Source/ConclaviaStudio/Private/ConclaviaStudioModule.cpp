@@ -2937,6 +2937,32 @@ private:
         TArray<float> RoomTone;
         RoomTone.SetNumZeroed(640);
         Generator->ProcessAudioData(MoveTemp(RoomTone), 16000, 1);
+
+        // The listening model is intentionally full-face because that is the
+        // only vendor output that contains emotion. Silence is nevertheless
+        // still interpreted by the lip-sync model as speech posture and can
+        // briefly drive lips, jaw, tongue, teeth and throat. That reads as a
+        // grimace (or as Mary trying to speak) while somebody else has the
+        // floor. Keep the vendor-authored eyes, brows, cheeks and nose, but
+        // explicitly neutralize speech anatomy before the official AnimBP node
+        // consumes this listening frame. Spoken cues continue to use the
+        // untouched full-face generator.
+        TMap<FString, float> ListeningControls = Generator->GetControlValues();
+        for (TPair<FString, float>& Control : ListeningControls)
+        {
+            const bool bSpeechAnatomy =
+                Control.Key.Contains(TEXT("mouth"), ESearchCase::IgnoreCase)
+                || Control.Key.Contains(TEXT("jaw"), ESearchCase::IgnoreCase)
+                || Control.Key.Contains(TEXT("tongue"), ESearchCase::IgnoreCase)
+                || Control.Key.Contains(TEXT("teeth"), ESearchCase::IgnoreCase)
+                || Control.Key.Contains(TEXT("neck"), ESearchCase::IgnoreCase)
+                || Control.Key.Contains(TEXT("throat"), ESearchCase::IgnoreCase);
+            if (bSpeechAnatomy)
+            {
+                Control.Value = 0.0f;
+            }
+        }
+        Generator->SetControlValues(ListeningControls);
         ++ListeningSolverChunksSubmitted;
         BindListeningGenerator();
 

@@ -36,15 +36,27 @@ export function isAddressedToAvatar(text: string, wakeWord: string): boolean {
   const value = text.trim();
   if (!value) return false;
   const escapedWakeWord = escapeRegExp(wakeWord);
+
+  // People rarely start a meeting turn with the bare wake word. Accept a
+  // short greeting or attention marker immediately before the avatar name,
+  // while keeping third-person mentions such as "Ciao a tutti, Mary arriva
+  // dopo" outside the activation path.
+  const naturalAddress = value.replace(
+    new RegExp(
+      `^(?:(?:ciao|buongiorno|buonasera|salve|ehi|hey|scusa|scusami|senti)[\\s,.:;!?-]+)(?=(?:@\\s*)?${escapedWakeWord}(?:$|[\\s,.:;!?-]))`,
+      "iu",
+    ),
+    "",
+  );
   const atStart = new RegExp(
     `^(?<mention>@\\s*)?${escapedWakeWord}(?<separator>[\\s,.:;!?-]*)(?<remainder>.*)$`,
     "iu",
-  ).exec(value);
+  ).exec(naturalAddress);
   if (atStart?.groups) {
     const separator = atStart.groups.separator ?? "";
     const remainder = atStart.groups.remainder?.trim() ?? "";
     const explicitPunctuation = /[,.:;!?-]/u.test(separator);
-    const directQuestion = value.endsWith("?") ||
+    const directQuestion = naturalAddress.endsWith("?") ||
       isDialogueFollowUpCandidate(remainder) ||
       /^(?:(?:sei|hai|sai|vuoi|devi|pensi|credi|ricordi|ritieni|puoi|potresti|riesci)(?=$|[\s,.:;!?-])|(?:mi|ci)\s+(?:ascolti|senti|aiuti|rispondi|segui|capisci|spieghi|dici)(?=$|[\s,.:;!?-])|ciao|buongiorno|buonasera|salve|ehi|hey)(?=$|[\s,.:;!?-])/iu
         .test(remainder);

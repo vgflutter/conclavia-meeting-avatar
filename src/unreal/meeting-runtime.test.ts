@@ -78,6 +78,13 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.doesNotMatch(moduleSource, /CAM_Meeting_Applause/);
   assert.doesNotMatch(moduleSource, /CAM_Meeting_Gesture/);
   assert.match(moduleSource, /Clamp\(Intensity, 0\.0f, 0\.85f\)/);
+  assert.match(moduleSource, /TMap<FString, float> ListeningControls/);
+  assert.match(moduleSource, /Generator->SetControlValues\(ListeningControls\)/);
+  assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("mouth"\)/);
+  assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("jaw"\)/);
+  assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("tongue"\)/);
+  assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("teeth"\)/);
+  assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("neck"\)/);
   assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
   assert.match(startScript, /L_MeetingAvatar_v19/);
   assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19$/mu);

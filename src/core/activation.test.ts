@@ -88,7 +88,22 @@ await test("distinguishes addressing Mary from talking about Mary", () => {
   assert.equal(isAddressedToAvatar("Mary mi ascolti", "Mary"), true);
   assert.equal(isAddressedToAvatar("Mary mi senti", "Mary"), true);
   assert.equal(isAddressedToAvatar("Mary buongiorno", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Ciao Mary, come stai oggi?", "Mary"), true);
+  assert.equal(
+    isAddressedToAvatar(
+      "Ciao Mary, possiamo parlare del rapporto di avanzamento per il progetto Alpha?",
+      "Mary",
+    ),
+    true,
+  );
+  assert.equal(isAddressedToAvatar("Scusa, Mary, mi ascolti?", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Ehi Mary, puoi aiutarci?", "Mary"), true);
   assert.equal(isAddressedToAvatar("Che cosa suggerisci, Mary?", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Ciao a tutti, sono Mary.", "Mary"), false);
+  assert.equal(
+    isAddressedToAvatar("Buongiorno a tutti, Mary ci raggiunge più tardi.", "Mary"),
+    false,
+  );
   assert.equal(isAddressedToAvatar("Mary ha già risposto a questa domanda.", "Mary"), false);
   assert.equal(
     decideActivation(segment({ text: "Mary ha già risposto a questa domanda." }), "Mary")
