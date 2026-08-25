@@ -83,11 +83,13 @@ export const webAvatarGestureNames = [
 function missingNonEmptyMappings(
   required: readonly string[],
   mappings: Readonly<Record<string, Readonly<Record<string, number>> | undefined>>,
+  clipMappings: Readonly<Record<string, unknown>>,
   emptyAllowed: ReadonlySet<string> = new Set(),
 ): string[] {
   return required.filter((name) => {
     const mapping = mappings[name];
-    return !mapping || (!emptyAllowed.has(name) && Object.keys(mapping).length === 0);
+    return !clipMappings[name]
+      && (!mapping || (!emptyAllowed.has(name) && Object.keys(mapping).length === 0));
   });
 }
 
@@ -181,6 +183,8 @@ export async function auditWebAvatar(
     ...manifest.clips.idle,
     ...manifest.clips.listening,
     ...Object.values(manifest.clips.gestures).map(webAvatarClipName),
+    ...Object.values(manifest.facialClips.visemes).map(webAvatarClipName),
+    ...Object.values(manifest.facialClips.moods).map(webAvatarClipName),
   ]);
   const externalImages = sortedUnique([
     ...inventory.externalImages,
@@ -200,11 +204,13 @@ export async function auditWebAvatar(
   const missingVisemeMappings = missingNonEmptyMappings(
     webAvatarVisemeNames,
     manifest.morphs.visemes,
+    manifest.facialClips.visemes,
     new Set(["sil"]),
   );
   const missingMoodMappings = missingNonEmptyMappings(
     webAvatarMoodNames,
     manifest.morphs.moods,
+    manifest.facialClips.moods,
     new Set(["neutral"]),
   );
   const missingGestureMappings = webAvatarGestureNames.filter(

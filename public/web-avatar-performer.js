@@ -103,6 +103,10 @@ class ThreeAvatarPerformer {
     this.lastAmbientClip = "";
     this.ambientMode = "";
     this.currentSegment = null;
+    this.facialLayers = {
+      mood: { action: null, token: "", segment: null },
+      viseme: { action: null, token: "", segment: null },
+    };
     this.disposed = false;
   }
 
@@ -124,10 +128,14 @@ class ThreeAvatarPerformer {
 
   update(state, deltaSeconds) {
     this.#applyMorphs(state, deltaSeconds);
-    this.#applyGaze(state.gaze, deltaSeconds);
     this.#applyAnimation(state);
+    this.#applyFacialAnimation(state);
     this.mixer.update(Math.min(0.1, deltaSeconds));
-    this.#enforceClipSegment();
+    this.#enforceClipSegments();
+    // Body and facial clips own the base pose. Gaze is a subtle additive
+    // correction and must run after the mixer or the next animation tick would
+    // overwrite it completely.
+    this.#applyGaze(state.gaze, deltaSeconds);
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -210,21 +218,75 @@ class ThreeAvatarPerformer {
     }
   }
 
+  #applyFacialAnimation(state) {
+    const facialClips = this.manifest.facialClips || { moods: {}, visemes: {} };
+    const moodReference = facialClips.moods?.[state.mood] || null;
+    this.#syncFacialLayer(
+      "mood",
+      moodReference ? `mood:${state.mood}` : "",
+      moodReference,
+      boundedWeight(state.moodLevel),
+      0.14,
+    );
+    const visemeReference = state.speaking
+      ? facialClips.visemes?.[state.viseme] || null
+      : null;
+    this.#syncFacialLayer(
+      "viseme",
+      visemeReference ? `viseme:${state.viseme}` : "",
+      visemeReference,
+      visemeReference ? 1 : 0,
+      0.045,
+    );
+  }
+
+  #syncFacialLayer(layerName, token, reference, weight, fadeSeconds) {
+    const layer = this.facialLayers[layerName];
+    if (!reference || weight <= 0.001) {
+      if (layer.action) layer.action.fadeOut(fadeSeconds);
+      layer.action = null;
+      layer.token = "";
+      layer.segment = null;
+      return;
+    }
+    if (layer.token === token && layer.action) {
+      layer.action.enabled = true;
+      layer.action.setEffectiveWeight(weight);
+      return;
+    }
+    const prepared = this.#prepareClip(reference, true);
+    if (!prepared) return;
+    const previous = layer.action;
+    const { action, segment } = prepared;
+    action.reset();
+    action.time = segment.startSeconds;
+    action.enabled = true;
+    action.paused = false;
+    action.setEffectiveWeight(weight);
+    action.setLoop(
+      segment.loop && segment.endSeconds === null ? THREE.LoopRepeat : THREE.LoopOnce,
+      segment.loop && segment.endSeconds === null ? Infinity : 1,
+    );
+    action.clampWhenFinished = true;
+    if (previous === action) action.play();
+    else {
+      action.fadeIn(fadeSeconds).play();
+      previous?.fadeOut(fadeSeconds);
+    }
+    layer.action = action;
+    layer.token = token;
+    layer.segment = segment;
+  }
+
   #addAnimationClips(clips) {
     for (const clip of clips) this.clips.set(normalizedName(clip.name), clip);
   }
 
   #playClip(reference, defaultLoop) {
-    const segment = clipReference(reference, defaultLoop);
-    const normalized = normalizedName(segment.clip);
-    const clip = this.clips.get(normalized);
-    if (!clip) return false;
-    segment.startSeconds = Math.min(segment.startSeconds, clip.duration);
-    segment.endSeconds = segment.endSeconds === null
-      ? null
-      : Math.max(segment.startSeconds, Math.min(segment.endSeconds, clip.duration));
+    const prepared = this.#prepareClip(reference, defaultLoop);
+    if (!prepared) return false;
+    const { action, segment, normalized } = prepared;
     const previous = this.currentAction;
-    const action = this.mixer.clipAction(clip);
     action.reset();
     action.time = segment.startSeconds;
     action.enabled = true;
@@ -245,9 +307,26 @@ class ThreeAvatarPerformer {
     return true;
   }
 
-  #enforceClipSegment() {
-    const action = this.currentAction;
-    const segment = this.currentSegment;
+  #prepareClip(reference, defaultLoop) {
+    const segment = clipReference(reference, defaultLoop);
+    const normalized = normalizedName(segment.clip);
+    const clip = this.clips.get(normalized);
+    if (!clip) return null;
+    segment.startSeconds = Math.min(segment.startSeconds, clip.duration);
+    segment.endSeconds = segment.endSeconds === null
+      ? null
+      : Math.max(segment.startSeconds, Math.min(segment.endSeconds, clip.duration));
+    return { action: this.mixer.clipAction(clip), segment, normalized };
+  }
+
+  #enforceClipSegments() {
+    this.#enforceActionSegment(this.currentAction, this.currentSegment);
+    for (const layer of Object.values(this.facialLayers)) {
+      this.#enforceActionSegment(layer.action, layer.segment);
+    }
+  }
+
+  #enforceActionSegment(action, segment) {
     if (!action || !segment || segment.endSeconds === null) return;
     if (action.time < segment.endSeconds) return;
     if (segment.loop && segment.endSeconds > segment.startSeconds) {

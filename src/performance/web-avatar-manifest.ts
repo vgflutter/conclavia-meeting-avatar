@@ -42,6 +42,10 @@ export interface WebAvatarManifest {
     visemes: Readonly<Record<string, MorphWeights>>;
     moods: Partial<Readonly<Record<AvatarMood, MorphWeights>>>;
   };
+  facialClips: {
+    visemes: Readonly<Record<string, WebAvatarClipReference>>;
+    moods: Partial<Readonly<Record<AvatarMood, WebAvatarClipReference>>>;
+  };
   clips: {
     idle: readonly string[];
     listening: readonly string[];
@@ -191,6 +195,22 @@ function clipReference(value: unknown): WebAvatarClipReference | null {
   };
 }
 
+function clipMap(
+  value: unknown,
+  maximum = 64,
+): Record<string, WebAvatarClipReference> | null {
+  const record = objectRecord(value);
+  if (!record || Object.keys(record).length > maximum) return null;
+  const result: Record<string, WebAvatarClipReference> = {};
+  for (const [name, rawReference] of Object.entries(record)) {
+    const cleanName = cleanText(name, 80);
+    const reference = clipReference(rawReference);
+    if (!cleanName || !reference) return null;
+    result[cleanName] = reference;
+  }
+  return result;
+}
+
 export function webAvatarClipName(reference: WebAvatarClipReference): string {
   return typeof reference === "string" ? reference : reference.clip;
 }
@@ -247,6 +267,19 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
     moods[mood as AvatarMood] = weights;
   }
 
+  const facialClipsRecord = record.facialClips === undefined
+    ? {}
+    : objectRecord(record.facialClips);
+  if (!facialClipsRecord) return null;
+  const facialVisemes = clipMap(facialClipsRecord.visemes ?? {});
+  const rawFacialMoods = clipMap(facialClipsRecord.moods ?? {}, avatarMoods.length);
+  if (!facialVisemes || !rawFacialMoods) return null;
+  const facialMoods: Partial<Record<AvatarMood, WebAvatarClipReference>> = {};
+  for (const [mood, reference] of Object.entries(rawFacialMoods)) {
+    if (!avatarMoods.includes(mood as AvatarMood)) return null;
+    facialMoods[mood as AvatarMood] = reference;
+  }
+
   const clipsRecord = objectRecord(record.clips);
   const idle = stringArray(clipsRecord?.idle);
   const listening = stringArray(clipsRecord?.listening);
@@ -282,6 +315,7 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
     framing: { camera, target, fov, scale },
     nodes,
     morphs: { visemes, moods },
+    facialClips: { visemes: facialVisemes, moods: facialMoods },
     clips: { idle, listening, gestures },
     environment: { background, keyLightIntensity, fillLightIntensity },
   };

@@ -33,6 +33,7 @@ const manifest: WebAvatarManifest = {
       moods.map((mood) => [mood, mood === "neutral" ? {} : { smile: 0.5 }]),
     ),
   },
+  facialClips: { visemes: {}, moods: {} },
   clips: {
     idle: ["idle_a", "idle_b"],
     listening: ["listen_a", "listen_b"],
@@ -131,6 +132,53 @@ await test("unions clips from separately exported Unreal animation GLBs", async 
   assert.equal(result.animationAssetCount, 2);
   assert.deepEqual(result.missingAnimationClips, []);
   assert.deepEqual(result.invalidAnimationAssets, []);
+});
+
+await test("accepts identity-baked skeletal facial clips instead of morph targets", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "conclavia-glb-face-bundle-"));
+  const modelPath = join(directory, "test.glb");
+  const animationPath = join(directory, "face.glb");
+  await writeFile(modelPath, glb({
+    asset: { version: "2.0" },
+    nodes: [{ name: "head", mesh: 0, skin: 0 }],
+    meshes: [{}],
+    skins: [{}],
+    animations: [
+      { name: "idle_a" }, { name: "idle_b" },
+      { name: "listen_a" }, { name: "listen_b" },
+      { name: "raise_hand" },
+    ],
+    images: [{ bufferView: 2 }],
+  }));
+  await writeFile(animationPath, glb({
+    asset: { version: "2.0" },
+    nodes: [{ name: "FACIAL_C_Jaw" }],
+    animations: [{ name: "face_pose" }],
+  }));
+  const facialManifest: WebAvatarManifest = {
+    ...manifest,
+    animationModels: ["face.glb"],
+    morphs: { visemes: { sil: {} }, moods: { neutral: {} } },
+    facialClips: {
+      visemes: Object.fromEntries(
+        visemes.filter((name) => name !== "sil").map((name) => [name, "face_pose"]),
+      ),
+      moods: Object.fromEntries(
+        moods.filter((name) => name !== "neutral").map((name) => [name, {
+          clip: "face_pose",
+          startSeconds: 0.2,
+          endSeconds: 0.8,
+          loop: true,
+        }]),
+      ),
+    },
+  };
+  const result = await auditWebAvatar(facialManifest, modelPath, [animationPath]);
+  assert.equal(result.valid, true);
+  assert.equal(result.morphTargetCount, 0);
+  assert.deepEqual(result.missingVisemeMappings, []);
+  assert.deepEqual(result.missingMoodMappings, []);
+  assert.deepEqual(result.missingAnimationClips, []);
 });
 
 await test("reports missing rig channels and external texture dependencies", async () => {

@@ -33,6 +33,7 @@ export interface WebAvatarScaffold {
 export interface WebAvatarScaffoldOptions {
   animationModelPaths?: readonly string[];
   clips?: WebAvatarManifest["clips"];
+  facialClips?: WebAvatarManifest["facialClips"];
 }
 
 function normalized(name: string): string {
@@ -185,6 +186,20 @@ export async function scaffoldWebAvatarManifest(
       }),
     )
     : inferredGestures(inventory);
+  const facialClips: WebAvatarManifest["facialClips"] = {
+    visemes: Object.fromEntries(
+      Object.entries(options.facialClips?.visemes ?? {}).flatMap(([viseme, reference]) => {
+        const resolved = resolvedClipReference(inventory, reference);
+        return resolved ? [[viseme, resolved]] : [];
+      }),
+    ),
+    moods: Object.fromEntries(
+      Object.entries(options.facialClips?.moods ?? {}).flatMap(([mood, reference]) => {
+        const resolved = resolvedClipReference(inventory, reference);
+        return resolved ? [[mood, resolved]] : [];
+      }),
+    ),
+  };
   const manifest: WebAvatarManifest = {
     schema: webAvatarManifestSchema,
     version: webAvatarManifestVersion,
@@ -199,6 +214,7 @@ export async function scaffoldWebAvatarManifest(
       visemes: emptyMorphMap(webAvatarVisemeNames),
       moods: emptyMorphMap(webAvatarMoodNames),
     },
+    facialClips,
     clips: { idle, listening, gestures },
     environment: { background: "#123b35", keyLightIntensity: 2.4, fillLightIntensity: 1.1 },
   };
@@ -207,8 +223,12 @@ export async function scaffoldWebAvatarManifest(
     outputPath: join(dirname(modelPath), "manifest.json"),
     unresolved: {
       nodes: ["head", "leftEye", "rightEye"].filter((role) => !(role in nodes)),
-      visemes: webAvatarVisemeNames.filter((name) => name !== "sil"),
-      moods: webAvatarMoodNames.filter((name) => name !== "neutral"),
+      visemes: webAvatarVisemeNames.filter(
+        (name) => name !== "sil" && !manifest.facialClips.visemes[name],
+      ),
+      moods: webAvatarMoodNames.filter(
+        (name) => name !== "neutral" && !manifest.facialClips.moods[name],
+      ),
       gestures: webAvatarGestureNames.filter((gesture) => !gestures[gesture]),
       ambientClips: [
         ...(idle.length >= 2 ? [] : ["idle"]),
@@ -260,6 +280,7 @@ export async function writeWebAvatarBundleScaffold(
     framing: { camera: [0, 1.56, 1.18], target: [0, 1.49, 0], fov: 34, scale: 1 },
     nodes: {},
     morphs: { visemes: {}, moods: {} },
+    facialClips: record.facialClips ?? { visemes: {}, moods: {} },
     clips: record.clips,
     environment: { background: "#123b35", keyLightIntensity: 2.4, fillLightIntensity: 1.1 },
   });
@@ -270,6 +291,7 @@ export async function writeWebAvatarBundleScaffold(
     {
       animationModelPaths: candidate.animationModels.map((filename) => join(directory, filename)),
       clips: candidate.clips,
+      facialClips: candidate.facialClips,
     },
   );
 }

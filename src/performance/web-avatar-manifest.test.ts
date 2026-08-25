@@ -46,6 +46,29 @@ await test("accepts a bounded Web avatar manifest", () => {
   assert.equal(manifest?.morphs.visemes.p?.mouthClose, 0.8);
   assert.equal(manifest?.clips.gestures["raise-hand"], "raise_hand");
   assert.deepEqual(manifest?.animationModels, []);
+  assert.deepEqual(manifest?.facialClips, { visemes: {}, moods: {} });
+});
+
+await test("accepts bounded skeletal facial clips and rejects unknown mood keys", () => {
+  const parsed = parseWebAvatarManifest({
+    ...validManifest,
+    animationModels: ["face.glb"],
+    facialClips: {
+      visemes: { p: "face_p", a: { clip: "face_a", startSeconds: 0.2, endSeconds: 0.8 } },
+      moods: { amused: { clip: "face_smile", startSeconds: 0.6, endSeconds: 1.7, loop: true } },
+    },
+  });
+  assert.equal(parsed?.facialClips.visemes.p, "face_p");
+  assert.deepEqual(parsed?.facialClips.moods.amused, {
+    clip: "face_smile",
+    startSeconds: 0.6,
+    endSeconds: 1.7,
+    loop: true,
+  });
+  assert.equal(parseWebAvatarManifest({
+    ...validManifest,
+    facialClips: { visemes: {}, moods: { impossible: "face_smile" } },
+  }), null);
 });
 
 await test("accepts safe external animation GLBs and rejects traversal or duplicates", () => {

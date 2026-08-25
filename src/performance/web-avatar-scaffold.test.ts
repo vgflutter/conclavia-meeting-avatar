@@ -166,6 +166,7 @@ await test("resolves UE glTF numeric clip suffixes without losing authored segme
       { name: "AS_MeetingReflectiveIdle_v1_0" },
       { name: "AS_MeetingHandRaise_SeatedMarkerless_v1_0" },
       { name: "AS_MeetingApplause_SeatedMarkerless_v1_0" },
+      { name: "AS_WebFacialPositiveProbe_v1_0" },
     ],
   }));
   const result = await scaffoldWebAvatarManifest(join(directory, "model.glb"), "showcase", {
@@ -187,6 +188,17 @@ await test("resolves UE glTF numeric clip suffixes without losing authored segme
         },
       },
     },
+    facialClips: {
+      visemes: { p: "AS_WebFacialPositiveProbe_v1" },
+      moods: {
+        amused: {
+          clip: "AS_WebFacialPositiveProbe_v1",
+          startSeconds: 0.68,
+          endSeconds: 1.72,
+          loop: true,
+        },
+      },
+    },
   });
   assert.deepEqual(result.manifest.nodes, {
     head: "head",
@@ -203,6 +215,18 @@ await test("resolves UE glTF numeric clip suffixes without losing authored segme
     endSeconds: 6.75,
     loop: true,
   });
+  assert.equal(
+    result.manifest.facialClips.visemes.p,
+    "AS_WebFacialPositiveProbe_v1_0",
+  );
+  assert.deepEqual(result.manifest.facialClips.moods.amused, {
+    clip: "AS_WebFacialPositiveProbe_v1_0",
+    startSeconds: 0.68,
+    endSeconds: 1.72,
+    loop: true,
+  });
+  assert.ok(!result.unresolved.visemes.includes("p"));
+  assert.ok(!result.unresolved.moods.includes("amused"));
   assert.deepEqual(result.unresolved.nodes, []);
   assert.deepEqual(result.unresolved.ambientClips, []);
 });
