@@ -56,6 +56,12 @@ gestures. The companion validates the rig, mappings and embedded dependencies
 before the asset is used. This keeps avatar identity and renderer complexity
 out of dialogue, agenda, participation and TTS code.
 
+Validation is enforced by a metadata-keyed registry rather than trusted as an
+operator convention. A failed or missing audit is visible through renderer and
+performance status, the GLB endpoints refuse the asset, and the browser uses its
+explicit fallback. This prevents a partial upload or stale DCC export from
+silently reaching OBS during a meeting.
+
 The companion defaults `CONCLAVIA_RENDERER_URL` to its own HTTP origin for the
 Unreal gateway. `studio:3d:start` refreshes the allow-listed client IP,
 watchdog, public player URL and protected supervisor token in the ignored local

@@ -82,6 +82,10 @@ function cleanId(value: unknown): string | null {
   return /^[a-z0-9][a-z0-9_-]{0,63}$/u.test(result) ? result : null;
 }
 
+export function isWebAvatarId(value: string): boolean {
+  return cleanId(value) === value;
+}
+
 function cleanText(value: unknown, maxLength = 120): string | null {
   if (typeof value !== "string") return null;
   const result = value.trim();

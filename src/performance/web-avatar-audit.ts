@@ -146,7 +146,8 @@ export async function auditWebAvatar(
   const skinned = Boolean(document.skins?.length)
     || (document.nodes ?? []).some((node) => node.skin !== undefined);
   return {
-    valid: skinned
+    valid: document.asset?.version === "2.0"
+      && skinned
       && missingNodes.length === 0
       && missingMorphTargets.length === 0
       && missingAnimationClips.length === 0

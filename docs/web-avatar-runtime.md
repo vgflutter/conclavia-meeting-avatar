@@ -37,6 +37,17 @@ The `id` must match the directory and the configured avatar profile. The model
 filename must be local to that directory. The server never exposes arbitrary
 paths.
 
+For a finished DCC export, prefer the atomic installer over manually copying
+the directory:
+
+```bash
+npm run studio:web:avatar:install -- /absolute/path/to/export/manifest.json
+```
+
+The source GLB must sit beside that manifest. The installer validates the full
+meeting vocabulary first, copies into a private temporary directory and then
+renames it into place. Existing avatar IDs are never overwritten.
+
 The GLB must contain:
 
 - a skinned upper-body character;
@@ -64,7 +75,10 @@ npm run studio:web:avatar:audit -- showcase
 
 The command rejects a non-GLB file, an unskinned performer, missing nodes,
 missing morph targets, missing animation clips and external image dependencies.
-Only an audit with `"valid": true` should be used in a meeting.
+The companion performs the same cached audit before serving either the manifest
+or model; an incomplete asset receives HTTP 422 and automatically falls back to
+the photograph instead of entering a meeting. File size and modification time
+invalidate the audit cache. Only an audit with `"valid": true` is served.
 
 With the companion running, execute both presentation modes in Google Chrome:
 

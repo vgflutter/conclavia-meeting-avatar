@@ -911,7 +911,7 @@ function renderRendererStatus(status) {
   const reachable = status.serverStatus !== "unreachable";
   const starting = rendererActionInProgress || status.starting === true;
   const isWebRuntime = Boolean(status.webAvatar);
-  const webFallback = isWebRuntime && !status.webAvatar.installed;
+  const webFallback = isWebRuntime && !status.webAvatar.ready;
   elements.rendererStartButton.disabled = rendererActionInProgress || !status.configured || !reachable || status.armed;
   elements.rendererStopButton.disabled = rendererActionInProgress || (!status.armed && !starting);
   elements.meetingAvatarSwitchButton.disabled = starting;
@@ -967,7 +967,9 @@ function renderRendererStatus(status) {
       : `Avatar: ${status.avatarProfile ?? activeAvatarProfile ?? "pronto"}`;
     if (webFallback) elements.rendererPill.className = "status-pill warning";
     elements.rendererStatus.textContent = webFallback
-      ? `Il Web LOD ${status.webAvatar.id} non è installato: il controllo funziona, ma il video usa il fallback fotografico.`
+      ? status.webAvatar.installed
+        ? `Il Web LOD ${status.webAvatar.id} è presente ma non supera l’audit (${(status.webAvatar.issues || []).slice(0, 4).join(", ") || status.webAvatar.error}). Il video usa il fallback fotografico.`
+        : `Il Web LOD ${status.webAvatar.id} non è installato: il controllo funziona, ma il video usa il fallback fotografico.`
       : isWebRuntime
       ? `Web avatar 3D pronto${status.webAvatar.assetVersion ? ` · asset ${status.webAvatar.assetVersion}` : ""}: la prossima risposta di ${avatarName} andrà in onda.`
       : `MetaHuman pronto: la prossima risposta di ${avatarName} andrà in onda.`;

@@ -300,6 +300,17 @@ Validate an installed Web LOD before using it:
 npm run studio:web:avatar:audit -- showcase
 ```
 
+Install a newly exported performer atomically from its source manifest:
+
+```bash
+npm run studio:web:avatar:install -- /absolute/path/to/export/manifest.json
+```
+
+Installation audits the source before copying it, never overwrites an existing
+avatar, and exposes the GLB to the browser only after the final directory rename
+has completed. Private character binaries remain under the ignored
+`.conclavia/web-avatars` directory.
+
 With the companion running, verify both presentation modes in Google Chrome:
 
 ```bash

@@ -29,6 +29,7 @@ await test("keeps the OBS output free of meeting-console overlays", async () => 
   assert.match(managementScript, /frame\.dataset\.stream !== streamId/);
   assert.match(managementScript, /status\.streamId \|\| ""/);
   assert.match(managementScript, /fallback fotografico/);
+  assert.match(managementScript, /non supera l’audit/);
   assert.match(managementScript, /Web avatar 3D pronto/);
 });
 
@@ -80,6 +81,7 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /fadeIn\(0\.32\)/);
   assert.match(server, /api\/performance\/avatar/);
   assert.match(server, /model\/gltf-binary/);
+  assert.match(server, /failed its meeting-readiness audit/);
 });
 
 await test("removes all Web runtime overlays from the OBS feed", async () => {

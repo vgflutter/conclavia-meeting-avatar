@@ -69,9 +69,9 @@ import { PerformanceHub } from "./performance/performance-hub.js";
 import type { PerformancePacket } from "./performance/performance-packet.js";
 import { WebPerformanceRenderer } from "./performance/web-performance-renderer.js";
 import {
-  loadWebAvatarManifest,
-  webAvatarModelPath,
-} from "./performance/web-avatar-manifest.js";
+  publicWebAvatarStatus,
+  WebAvatarRegistry,
+} from "./performance/web-avatar-registry.js";
 import { MeetingListener } from "./teams/meeting-listener.js";
 
 const publicDirectory = join(dirname(fileURLToPath(import.meta.url)), "../public");
@@ -420,6 +420,7 @@ export function startServer(options: ServerOptions): Promise<void> {
     meetingSpeakerName: options.meetingSpeakerName,
   });
   let runtimeConfig = configStore.current;
+  const webAvatarRegistry = new WebAvatarRegistry(options.webAvatarDirectory);
   const prewarmImmediateSpeech = (config: AvatarConfig): void => {
     if (!options.rendererUrl) return;
     const directions = {
@@ -1145,8 +1146,8 @@ export function startServer(options: ServerOptions): Promise<void> {
       const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
 
       if (request.method === "GET" && url.pathname === "/api/performance/status") {
-        const webAvatar = options.rendererMode === "web"
-          ? await loadWebAvatarManifest(options.webAvatarDirectory, runtimeConfig.avatarProfile)
+        const webAvatarInspection = options.rendererMode === "web"
+          ? await webAvatarRegistry.inspect(runtimeConfig.avatarProfile)
           : null;
         sendJson(response, 200, {
           schema: "conclavia.performance",
@@ -1155,12 +1156,9 @@ export function startServer(options: ServerOptions): Promise<void> {
           listeners: performanceHub.listenerCount,
           latestSequence: performanceHub.latestSequence,
           outputUrl: `${companionBaseUrl}/web-output`,
-          webAvatar: {
-            id: runtimeConfig.avatarProfile,
-            installed: Boolean(webAvatar),
-            assetVersion: webAvatar?.assetVersion ?? null,
-            performer: webAvatar ? "three" : "photo-fallback",
-          },
+          webAvatar: webAvatarInspection
+            ? publicWebAvatarStatus(webAvatarInspection)
+            : null,
         });
         return;
       }
@@ -1168,17 +1166,21 @@ export function startServer(options: ServerOptions): Promise<void> {
       const avatarManifestMatch = /^\/api\/performance\/avatar\/([a-z0-9][a-z0-9_-]{0,63})$/u
         .exec(url.pathname);
       if (request.method === "GET" && avatarManifestMatch?.[1]) {
-        const manifest = await loadWebAvatarManifest(
-          options.webAvatarDirectory,
-          avatarManifestMatch[1],
-        );
-        if (!manifest) {
+        const inspection = await webAvatarRegistry.inspect(avatarManifestMatch[1]);
+        if (!inspection.installed) {
           sendJson(response, 404, { error: "Web avatar asset not installed" });
           return;
         }
+        if (!inspection.ready || !inspection.manifest) {
+          sendJson(response, 422, {
+            error: "Web avatar asset failed its meeting-readiness audit",
+            webAvatar: publicWebAvatarStatus(inspection),
+          });
+          return;
+        }
         sendJson(response, 200, {
-          ...manifest,
-          model: `/api/performance/avatar/${manifest.id}/model.glb`,
+          ...inspection.manifest,
+          model: `/api/performance/avatar/${inspection.manifest.id}/model.glb`,
         });
         return;
       }
@@ -1186,23 +1188,26 @@ export function startServer(options: ServerOptions): Promise<void> {
       const avatarModelMatch = /^\/api\/performance\/avatar\/([a-z0-9][a-z0-9_-]{0,63})\/model\.glb$/u
         .exec(url.pathname);
       if (request.method === "GET" && avatarModelMatch?.[1]) {
-        const manifest = await loadWebAvatarManifest(
-          options.webAvatarDirectory,
-          avatarModelMatch[1],
-        );
-        if (!manifest) {
+        const inspection = await webAvatarRegistry.inspect(avatarModelMatch[1]);
+        if (!inspection.installed) {
           sendJson(response, 404, { error: "Web avatar asset not installed" });
           return;
         }
-        const path = webAvatarModelPath(options.webAvatarDirectory, manifest);
+        if (!inspection.ready || !inspection.modelPath) {
+          sendJson(response, 422, {
+            error: "Web avatar asset failed its meeting-readiness audit",
+            webAvatar: publicWebAvatarStatus(inspection),
+          });
+          return;
+        }
         try {
-          const metadata = await stat(path);
+          const metadata = await stat(inspection.modelPath);
           response.writeHead(200, {
             "content-type": "model/gltf-binary",
             "content-length": metadata.size,
             "cache-control": "private, max-age=3600, immutable",
           });
-          createReadStream(path).pipe(response);
+          createReadStream(inspection.modelPath).pipe(response);
         } catch {
           sendJson(response, 404, { error: "Web avatar model not found" });
         }
@@ -1624,8 +1629,8 @@ export function startServer(options: ServerOptions): Promise<void> {
 
       if (request.method === "GET" && url.pathname === "/api/renderer/status") {
         const status = await renderer.status();
-        const webAvatar = options.rendererMode === "web"
-          ? await loadWebAvatarManifest(options.webAvatarDirectory, runtimeConfig.avatarProfile)
+        const webAvatarInspection = options.rendererMode === "web"
+          ? await webAvatarRegistry.inspect(runtimeConfig.avatarProfile)
           : null;
         if (status.playerUrl) rendererPlayerUrl = status.playerUrl;
         reconcileRendererStatus(status);
@@ -1636,13 +1641,8 @@ export function startServer(options: ServerOptions): Promise<void> {
           targetAvatarProfile: rendererTargetProfile ?? rendererDesiredProfile,
           lastError: rendererStartError,
           playerUrl: rendererPlayerUrl ?? status.playerUrl ?? null,
-          webAvatar: options.rendererMode === "web"
-            ? {
-                id: runtimeConfig.avatarProfile,
-                installed: Boolean(webAvatar),
-                assetVersion: webAvatar?.assetVersion ?? null,
-                performer: webAvatar ? "three" : "photo-fallback",
-              }
+          webAvatar: webAvatarInspection
+            ? publicWebAvatarStatus(webAvatarInspection)
             : null,
         });
         return;

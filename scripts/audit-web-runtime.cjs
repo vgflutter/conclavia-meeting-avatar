@@ -121,9 +121,11 @@ async function main() {
     await command("Page.reload", { ignoreCache: true });
     await delay(4_000);
     const evaluation = await command("Runtime.evaluate", {
-      expression: `(() => {
+      expression: `(async () => {
         const runtime = document.querySelector('#runtime');
         const canvas = document.querySelector('#stage');
+        const performanceStatus = await fetch('/api/performance/status', { cache: 'no-store' })
+          .then((response) => response.json());
         return {
           state: runtime?.dataset.state || null,
           performer: runtime?.dataset.performer || null,
@@ -135,6 +137,8 @@ async function main() {
           videoTracks: window.conclaviaPerformanceStream?.getVideoTracks().length || 0,
           audioTracks: window.conclaviaPerformanceStream?.getAudioTracks().length || 0,
           runtimeStatus: document.querySelector('#runtime-status')?.textContent || null,
+          avatarReady: performanceStatus.webAvatar?.ready ?? null,
+          avatarAuditError: performanceStatus.webAvatar?.error ?? null,
           overlaysHidden: ['.runtime-badges', '.runtime-card', '#diagnostics'].every((selector) => {
             const element = document.querySelector(selector);
             return element && getComputedStyle(element).display === 'none';
@@ -142,6 +146,7 @@ async function main() {
         };
       })()`,
       returnByValue: true,
+      awaitPromise: true,
     });
     socket.close();
     const result = evaluation.result.value;
@@ -149,6 +154,9 @@ async function main() {
     if (result.state !== "live") failures.push(`state=${result.state}`);
     if (!new Set(["photo", "three"]).has(result.performer)) {
       failures.push(`performer=${result.performer}`);
+    }
+    if (result.performer === "three" && result.avatarReady !== true) {
+      failures.push(`3D performer was served without readiness: ${result.avatarAuditError}`);
     }
     if (result.canvasWidth < 2 || result.canvasHeight < 2) failures.push("canvas not rendered");
     if (expectsCleanOutput && (result.output !== "clean" || !result.overlaysHidden)) {

@@ -6,6 +6,7 @@ import { decideActivation } from "./core/activation.js";
 import type { TranscriptSegment } from "./domain/protocol.js";
 import { runMacosPreflight } from "./preflight/macos.js";
 import { auditWebAvatar } from "./performance/web-avatar-audit.js";
+import { installWebAvatar } from "./performance/web-avatar-installer.js";
 import {
   loadWebAvatarManifest,
   webAvatarModelPath,
@@ -43,6 +44,24 @@ async function main(): Promise<void> {
     const audit = await auditWebAvatar(manifest, webAvatarModelPath(directory, manifest));
     console.log(JSON.stringify(audit, null, 2));
     if (!audit.valid) process.exitCode = 1;
+    return;
+  }
+
+  if (command === "web-avatar:install") {
+    const manifestPath = process.argv[3]?.trim();
+    if (!manifestPath) throw new Error("Usage: web-avatar:install <manifest.json>");
+    const directory = process.env.CONCLAVIA_WEB_AVATAR_DIRECTORY?.trim()
+      || ".conclavia/web-avatars";
+    const installed = await installWebAvatar(manifestPath, directory);
+    console.log(JSON.stringify({
+      installed: true,
+      id: installed.manifest.id,
+      displayName: installed.manifest.displayName,
+      assetVersion: installed.manifest.assetVersion,
+      directory: installed.directory,
+      modelBytes: installed.modelBytes,
+      audit: installed.audit,
+    }, null, 2));
     return;
   }
 
