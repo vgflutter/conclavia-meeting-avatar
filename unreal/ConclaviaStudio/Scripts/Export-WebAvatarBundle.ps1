@@ -10,14 +10,13 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path $ProjectPath -Parent
 $editor = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 $script = Join-Path $projectRoot "Scripts\export_web_avatar_bundle.py"
-$facialScript = Join-Path $projectRoot "Scripts\bake_web_facial_probe.py"
+$facialScript = Join-Path $projectRoot "Scripts\bake_web_facial_moods.py"
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $OutputDirectory = Join-Path $projectRoot "Saved\WebAvatarExport\$AvatarId-$stamp"
 }
 $log = Join-Path $projectRoot "Saved\Logs\WebAvatarExport-$stamp.log"
 $facialLog = Join-Path $projectRoot "Saved\Logs\WebAvatarFacialExport-$stamp.log"
-$facialOutput = Join-Path $OutputDirectory "anim-face-amused.glb"
 
 foreach ($requiredPath in @($ProjectPath, $editor, $script, $facialScript)) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
@@ -34,7 +33,7 @@ if (Test-Path -LiteralPath $OutputDirectory) {
 
 $previousExportDirectory = $env:CONCLAVIA_WEB_AVATAR_EXPORT_DIR
 $previousAvatarId = $env:CONCLAVIA_WEB_AVATAR_ID
-$previousFacialOutput = $env:CONCLAVIA_WEB_FACIAL_PROBE_OUTPUT
+$previousFacialOutput = $env:CONCLAVIA_WEB_FACIAL_MOODS_OUTPUT_DIR
 try {
     $env:CONCLAVIA_WEB_AVATAR_EXPORT_DIR = $OutputDirectory
     $env:CONCLAVIA_WEB_AVATAR_ID = $AvatarId
@@ -49,7 +48,7 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "Web avatar export failed with exit code $LASTEXITCODE. See $log"
     }
-    $env:CONCLAVIA_WEB_FACIAL_PROBE_OUTPUT = $facialOutput
+    $env:CONCLAVIA_WEB_FACIAL_MOODS_OUTPUT_DIR = $OutputDirectory
     & $editor `
         $ProjectPath `
         "-ExecutePythonScript=$($facialScript.Replace('\', '/'))" `
@@ -64,15 +63,16 @@ try {
 } finally {
     $env:CONCLAVIA_WEB_AVATAR_EXPORT_DIR = $previousExportDirectory
     $env:CONCLAVIA_WEB_AVATAR_ID = $previousAvatarId
-    $env:CONCLAVIA_WEB_FACIAL_PROBE_OUTPUT = $previousFacialOutput
+    $env:CONCLAVIA_WEB_FACIAL_MOODS_OUTPUT_DIR = $previousFacialOutput
 }
 
 $success = Select-String -LiteralPath $log -Pattern "CONCLAVIA_WEB_AVATAR_EXPORT_OK" -Quiet
 if (-not $success) {
     throw "Web avatar export exited without the success marker. See $log"
 }
-$facialSuccess = Select-String -LiteralPath $facialLog -Pattern "CONCLAVIA_WEB_FACIAL_PROBE_OK" -Quiet
-if (-not $facialSuccess -or -not (Test-Path -LiteralPath $facialOutput)) {
+$facialSuccess = Select-String -LiteralPath $facialLog -Pattern "CONCLAVIA_WEB_FACIAL_MOODS: READY" -Quiet
+$facialReport = Join-Path $OutputDirectory "facial-moods.json"
+if (-not $facialSuccess -or -not (Test-Path -LiteralPath $facialReport)) {
     throw "Web facial export exited without the success marker. See $facialLog"
 }
 $zipPath = "$OutputDirectory.zip"

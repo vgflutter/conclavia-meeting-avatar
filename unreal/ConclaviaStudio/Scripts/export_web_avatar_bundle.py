@@ -54,8 +54,24 @@ ANIMATION_EXPORTS = (
         "anim-applause.glb",
     ),
 )
-FACIAL_ANIMATION_FILE = "anim-face-amused.glb"
-FACIAL_ANIMATION_CLIP = "AS_WebFacialPositiveProbe_v1"
+FACIAL_MOODS = (
+    "attentive",
+    "curious",
+    "amused",
+    "confident",
+    "skeptical",
+    "concerned",
+    "surprised",
+    "empathetic",
+    "assertive",
+    "frustrated",
+    "reflective",
+)
+
+
+def facial_clip_name(mood: str) -> str:
+    label = "".join(part.capitalize() for part in mood.split("-"))
+    return f"AS_WebMood{label}_v1"
 
 
 def log(message: str) -> None:
@@ -135,18 +151,18 @@ def write_bundle_inventory(animation_files: list[str]) -> None:
         "id": PROFILE_ID,
         "level": LEVEL_PATH,
         "model": "model.glb",
-        "animationModels": animation_files + [FACIAL_ANIMATION_FILE],
+        "animationModels": animation_files
+        + [f"anim-face-{mood}.glb" for mood in FACIAL_MOODS],
         "facialClips": {
             "visemes": {},
             "moods": {
-                # Hold the gentle plateau of the authored expression instead
-                # of looping its ease-in/ease-out transition.
-                "amused": {
-                    "clip": FACIAL_ANIMATION_CLIP,
+                mood: {
+                    "clip": facial_clip_name(mood),
                     "startSeconds": 0.68,
                     "endSeconds": 1.72,
                     "loop": True,
                 }
+                for mood in FACIAL_MOODS
             },
         },
         "clips": {
