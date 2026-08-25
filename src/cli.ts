@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { decideActivation } from "./core/activation.js";
 import type { TranscriptSegment } from "./domain/protocol.js";
 import { runMacosPreflight } from "./preflight/macos.js";
-import { auditWebAvatar } from "./performance/web-avatar-audit.js";
+import { auditWebAvatar, inspectWebAvatarModel } from "./performance/web-avatar-audit.js";
 import { installWebAvatar } from "./performance/web-avatar-installer.js";
 import {
   loadWebAvatarManifest,
@@ -62,6 +62,13 @@ async function main(): Promise<void> {
       modelBytes: installed.modelBytes,
       audit: installed.audit,
     }, null, 2));
+    return;
+  }
+
+  if (command === "web-avatar:probe") {
+    const modelPath = process.argv[3]?.trim();
+    if (!modelPath) throw new Error("Usage: web-avatar:probe <model.glb>");
+    console.log(JSON.stringify(await inspectWebAvatarModel(modelPath), null, 2));
     return;
   }
 

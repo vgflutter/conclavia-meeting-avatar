@@ -303,13 +303,15 @@ npm run studio:web:avatar:audit -- showcase
 Install a newly exported performer atomically from its source manifest:
 
 ```bash
+npm run studio:web:avatar:probe -- /absolute/path/to/export/showcase.glb
 npm run studio:web:avatar:install -- /absolute/path/to/export/manifest.json
 ```
 
-Installation audits the source before copying it, never overwrites an existing
-avatar, and exposes the GLB to the browser only after the final directory rename
-has completed. Private character binaries remain under the ignored
-`.conclavia/web-avatars` directory.
+The read-only probe lists the exact node, morph-target and animation-clip names
+needed by the manifest. Installation then audits the source before copying it,
+never overwrites an existing avatar, and exposes the GLB to the browser only
+after the final directory rename has completed. Private character binaries
+remain under the ignored `.conclavia/web-avatars` directory.
 
 With the companion running, verify both presentation modes in Google Chrome:
 

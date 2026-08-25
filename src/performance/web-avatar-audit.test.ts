@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 
 import type { WebAvatarManifest } from "./web-avatar-manifest.js";
-import { auditWebAvatar } from "./web-avatar-audit.js";
+import { auditWebAvatar, inspectWebAvatarModel } from "./web-avatar-audit.js";
 
 const visemes = [
   "sil", "p", "t", "S", "T", "f", "k", "i", "r", "s", "u", "@", "a", "e", "E", "o", "O",
@@ -84,6 +84,20 @@ await test("audits a self-contained rigged Web avatar", async () => {
   assert.equal(result.valid, true);
   assert.equal(result.skinned, true);
   assert.equal(result.morphTargetCount, 2);
+  assert.deepEqual(await inspectWebAvatarModel(path), {
+    gltfVersion: "2.0",
+    skinned: true,
+    nodeCount: 1,
+    meshCount: 1,
+    skinCount: 1,
+    imageCount: 1,
+    embeddedImageCount: 1,
+    animationCount: 5,
+    nodeNames: ["head"],
+    morphTargetNames: ["mouthClose", "smile"],
+    animationClipNames: ["idle_a", "idle_b", "listen_a", "listen_b", "raise_hand"],
+    externalImages: [],
+  });
 });
 
 await test("reports missing rig channels and external texture dependencies", async () => {
@@ -107,6 +121,9 @@ await test("reports missing rig channels and external texture dependencies", asy
     "raise_hand",
   ]);
   assert.deepEqual(result.externalImages, ["skin.png"]);
+  const inventory = await inspectWebAvatarModel(path);
+  assert.equal(inventory.embeddedImageCount, 0);
+  assert.deepEqual(inventory.externalImages, ["skin.png"]);
 });
 
 await test("rejects a rig without the complete meeting-performance vocabulary", async () => {

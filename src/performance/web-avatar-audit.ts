@@ -48,6 +48,21 @@ export interface WebAvatarAudit {
   externalImages: string[];
 }
 
+export interface WebAvatarModelInventory {
+  gltfVersion: string | null;
+  skinned: boolean;
+  nodeCount: number;
+  meshCount: number;
+  skinCount: number;
+  imageCount: number;
+  embeddedImageCount: number;
+  animationCount: number;
+  nodeNames: string[];
+  morphTargetNames: string[];
+  animationClipNames: string[];
+  externalImages: string[];
+}
+
 const requiredVisemes = [
   "sil", "p", "t", "S", "T", "f", "k", "i", "r", "s", "u", "@", "a", "e", "E", "o", "O",
 ] as const;
@@ -94,22 +109,53 @@ function parseGlbJson(bytes: Uint8Array): GltfDocument {
   throw new Error("GLB JSON chunk not found");
 }
 
+function sortedUnique(values: readonly string[]): string[] {
+  return [...new Set(values)].sort((left, right) => left.localeCompare(right));
+}
+
+export async function inspectWebAvatarModel(modelPath: string): Promise<WebAvatarModelInventory> {
+  const document = parseGlbJson(await readFile(modelPath));
+  const images = document.images ?? [];
+  const externalImages = images
+    .map((image) => image.uri)
+    .filter((uri): uri is string => typeof uri === "string" && !uri.startsWith("data:"));
+  return {
+    gltfVersion: document.asset?.version ?? null,
+    skinned: Boolean(document.skins?.length)
+      || (document.nodes ?? []).some((node) => node.skin !== undefined),
+    nodeCount: document.nodes?.length ?? 0,
+    meshCount: document.meshes?.length ?? 0,
+    skinCount: document.skins?.length ?? 0,
+    imageCount: images.length,
+    embeddedImageCount: images.filter(
+      (image) => image.bufferView !== undefined || image.uri?.startsWith("data:"),
+    ).length,
+    animationCount: document.animations?.length ?? 0,
+    nodeNames: sortedUnique(
+      (document.nodes ?? [])
+        .map((node) => node.name)
+        .filter((name): name is string => Boolean(name)),
+    ),
+    morphTargetNames: sortedUnique(
+      (document.meshes ?? []).flatMap((mesh) => mesh.extras?.targetNames ?? []),
+    ),
+    animationClipNames: sortedUnique(
+      (document.animations ?? [])
+        .map((animation) => animation.name)
+        .filter((name): name is string => Boolean(name)),
+    ),
+    externalImages: sortedUnique(externalImages),
+  };
+}
+
 export async function auditWebAvatar(
   manifest: WebAvatarManifest,
   modelPath: string,
 ): Promise<WebAvatarAudit> {
-  const document = parseGlbJson(await readFile(modelPath));
-  const nodeNames = new Set(
-    (document.nodes ?? []).map((node) => node.name).filter((name): name is string => Boolean(name)),
-  );
-  const morphNames = new Set(
-    (document.meshes ?? []).flatMap((mesh) => mesh.extras?.targetNames ?? []),
-  );
-  const clipNames = new Set(
-    (document.animations ?? [])
-      .map((animation) => animation.name)
-      .filter((name): name is string => Boolean(name)),
-  );
+  const inventory = await inspectWebAvatarModel(modelPath);
+  const nodeNames = new Set(inventory.nodeNames);
+  const morphNames = new Set(inventory.morphTargetNames);
+  const clipNames = new Set(inventory.animationClipNames);
   const requiredNodes = Object.values(manifest.nodes);
   const requiredMorphs = new Set([
     ...Object.values(manifest.morphs.visemes).flatMap((weights) => Object.keys(weights)),
@@ -120,9 +166,7 @@ export async function auditWebAvatar(
     ...manifest.clips.listening,
     ...Object.values(manifest.clips.gestures),
   ]);
-  const externalImages = (document.images ?? [])
-    .map((image) => image.uri)
-    .filter((uri): uri is string => typeof uri === "string" && !uri.startsWith("data:"));
+  const externalImages = inventory.externalImages;
   const missingNodes = requiredNodes.filter((name) => !nodeNames.has(name));
   const missingMorphTargets = [...requiredMorphs].filter((name) => !morphNames.has(name));
   const missingAnimationClips = [...requiredClips].filter((name) => !clipNames.has(name));
@@ -143,10 +187,9 @@ export async function auditWebAvatar(
     ...(new Set(manifest.clips.idle).size >= 2 ? [] : ["idle"]),
     ...(new Set(manifest.clips.listening).size >= 2 ? [] : ["listening"]),
   ];
-  const skinned = Boolean(document.skins?.length)
-    || (document.nodes ?? []).some((node) => node.skin !== undefined);
+  const skinned = inventory.skinned;
   return {
-    valid: document.asset?.version === "2.0"
+    valid: inventory.gltfVersion === "2.0"
       && skinned
       && missingNodes.length === 0
       && missingMorphTargets.length === 0
@@ -156,11 +199,11 @@ export async function auditWebAvatar(
       && missingGestureMappings.length === 0
       && insufficientAmbientVariety.length === 0
       && externalImages.length === 0,
-    gltfVersion: document.asset?.version ?? null,
+    gltfVersion: inventory.gltfVersion,
     skinned,
-    nodeCount: document.nodes?.length ?? 0,
+    nodeCount: inventory.nodeCount,
     morphTargetCount: morphNames.size,
-    animationCount: document.animations?.length ?? 0,
+    animationCount: inventory.animationCount,
     missingNodes,
     missingMorphTargets,
     missingAnimationClips,

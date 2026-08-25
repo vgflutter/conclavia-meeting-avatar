@@ -37,6 +37,17 @@ The `id` must match the directory and the configured avatar profile. The model
 filename must be local to that directory. The server never exposes arbitrary
 paths.
 
+Before writing the mappings, inspect the exported binary directly:
+
+```bash
+npm run studio:web:avatar:probe -- /absolute/path/to/export/showcase.glb
+```
+
+The probe prints the glTF version, rig and geometry counts, embedded versus
+external images, and the exact node, morph-target and animation-clip names.
+Use those names verbatim in the manifest. This step is read-only and does not
+require the companion, Unreal or a GPU.
+
 For a finished DCC export, prefer the atomic installer over manually copying
 the directory:
 
