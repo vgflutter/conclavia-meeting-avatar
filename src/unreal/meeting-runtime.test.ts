@@ -403,10 +403,16 @@ await test("audits the licensed facial generator before authoring Web clips", as
 });
 
 await test("catalogs authored MetaHuman body motion before selecting Web microgestures", async () => {
-  const [catalog, rendererManifest] = await Promise.all([
+  const [catalog, probe, rendererManifest] = await Promise.all([
     readFile(
       repositoryFile(
         "unreal/ConclaviaStudio/Scripts/audit_official_body_animation_catalog.py",
+      ),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile(
+        "unreal/ConclaviaStudio/Scripts/export_official_body_motion_probe.py",
       ),
       "utf8",
     ),
@@ -421,6 +427,11 @@ await test("catalogs authored MetaHuman body motion before selecting Web microge
   assert.match(catalog, /CONCLAVIA_WEB_BODY_CATALOG: \{message\}/);
   assert.doesNotMatch(catalog, /add_bone_track|add_bone_transform_curve/iu);
   assert.match(rendererManifest, /audit_official_body_animation_catalog\.py/);
+  assert.match(probe, /BodyROM\/mhc_body_rom_body/);
+  assert.match(probe, /export_preview_mesh/);
+  assert.match(probe, /GLTFExporter\.export_to_gltf/);
+  assert.match(probe, /CONCLAVIA_WEB_BODY_PROBE: READY/);
+  assert.match(rendererManifest, /export_official_body_motion_probe\.py/);
 });
 
 await test("samples every licensed mood and case-sensitive viseme", async () => {

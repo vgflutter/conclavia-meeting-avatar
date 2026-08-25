@@ -72,6 +72,7 @@
     "unreal/ConclaviaStudio/Scripts/audit_official_facial_pose_catalog.py",
     "unreal/ConclaviaStudio/Scripts/Audit-OfficialFacialPoseCatalog.ps1",
     "unreal/ConclaviaStudio/Scripts/audit_official_body_animation_catalog.py",
+    "unreal/ConclaviaStudio/Scripts/export_official_body_motion_probe.py",
     "unreal/ConclaviaStudio/Scripts/bake_web_facial_moods.py",
     "unreal/ConclaviaStudio/Scripts/bake_web_facial_visemes.py",
     "unreal/ConclaviaStudio/Scripts/export_web_avatar_bundle.py",
