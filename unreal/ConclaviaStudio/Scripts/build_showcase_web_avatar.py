@@ -1,9 +1,11 @@
-"""Assemble a browser-oriented copy of Showcase without touching Cine.
+"""Assemble a browser-oriented close-up copy of Showcase without touching Cine.
 
 The meeting renderer keeps using the Cinematic Showcase assembly.  This build
-is a separate Optimized/Low representation whose hair is authored as cards,
-which can be inspected and converted into ordinary glTF geometry.  Reusing the
-same MetaHuman Character asset preserves Showcase's identity and wardrobe.
+is a separate Optimized/High representation whose hair is authored as cards,
+which can be inspected and converted into ordinary glTF geometry. High is
+required because this avatar is framed like a webcam participant, not a crowd
+character. Reusing the same MetaHuman Character asset preserves Showcase's
+identity and wardrobe.
 """
 
 from __future__ import annotations
@@ -12,9 +14,9 @@ import unreal
 
 
 CHARACTER_PATH = "/Game/Conclavia/Meeting/Characters/MHC_Showcase"
-BUILD_ROOT = "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebLow"
+BUILD_ROOT = "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebHigh"
 COMMON_ROOT = "/Game/Conclavia/Meeting/WebMetaHumans/Common"
-OUTPUT_NAME = "MHC_Showcase_WebLow"
+OUTPUT_NAME = "MHC_Showcase_WebHigh"
 
 
 def log(message: str) -> None:
@@ -38,7 +40,7 @@ def assembled_blueprint() -> str | None:
 def build() -> None:
     existing = assembled_blueprint()
     if existing is not None:
-        log(f"READY reused=true quality=Low blueprint={existing}")
+        log(f"READY reused=true quality=High blueprint={existing}")
         return
 
     character = unreal.load_asset(CHARACTER_PATH)
@@ -56,12 +58,12 @@ def build() -> None:
             raise RuntimeError("Showcase is not ready for an Optimized assembly")
         params = unreal.MetaHumanCharacterEditorBuildParameters()
         params.pipeline_type = unreal.MetaHumanDefaultPipelineType.OPTIMIZED
-        params.pipeline_quality = unreal.MetaHumanQualityLevel.LOW
+        params.pipeline_quality = unreal.MetaHumanQualityLevel.HIGH
         params.absolute_build_path = BUILD_ROOT
         params.common_folder_path = COMMON_ROOT
         params.name_override = OUTPUT_NAME
         params.enable_wardrobe_item_validation = True
-        log("ASSEMBLY_START pipeline=Optimized quality=Low hair=cards")
+        log("ASSEMBLY_START pipeline=Optimized quality=High hair=cards")
         subsystem.build_meta_human(character=character, params=params)
     finally:
         if subsystem.is_object_added_for_editing(character=character):
@@ -75,7 +77,7 @@ def build() -> None:
     blueprint = assembled_blueprint()
     if blueprint is None:
         raise RuntimeError("Optimized Showcase assembly produced no Blueprint")
-    log(f"READY reused=false quality=Low blueprint={blueprint}")
+    log(f"READY reused=false quality=High blueprint={blueprint}")
 
 
 if __name__ == "__main__":

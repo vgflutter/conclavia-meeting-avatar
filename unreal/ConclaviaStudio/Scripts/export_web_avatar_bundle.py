@@ -22,6 +22,7 @@ if str(SCRIPT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIRECTORY))
 
 from web_showcase_actor import ShowcaseActorGraph, ensure_showcase_export_actor
+from repair_showcase_glb import repair_showcase_face_materials
 
 
 LEVEL_PATH = os.environ.get(
@@ -31,7 +32,7 @@ LEVEL_PATH = os.environ.get(
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
 ASSET_VERSION = os.environ.get(
     "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
-    "ue58-v32-optimized",
+    "ue58-v33-optimized",
 )
 OUTPUT_DIRECTORY = Path(
     os.environ.get(
@@ -277,12 +278,15 @@ def main() -> None:
         raise RuntimeError(f"Could not load meeting level: {LEVEL_PATH}")
     graph = ensure_showcase_export_actor()
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+    model_path = OUTPUT_DIRECTORY / "model.glb"
     export_object(
         world,
-        OUTPUT_DIRECTORY / "model.glb",
+        model_path,
         configure_options(preview_mesh=False),
         {graph.actor, *graph.hair_actors},
     )
+    repaired_materials = repair_showcase_face_materials(model_path)
+    log(f"FACE_MATERIALS_REPAIRED order={','.join(repaired_materials)}")
 
     animation_files: list[str] = []
     for asset_path, filename in ANIMATION_EXPORTS:

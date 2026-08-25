@@ -36,6 +36,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/GLTFLoader.js";
 const params = new URLSearchParams(location.search);
 const rotation = Number(params.get("rotation") || 0);
+const unlit = params.get("unlit") === "1";
 const renderer = new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 renderer.setSize(innerWidth, innerHeight);
@@ -61,8 +62,15 @@ new GLTFLoader().load("/model.glb",({scene:root})=>{
   const distance = Math.max(size.y * 0.64, size.x * 1.15);
   camera.position.set(target.x, target.y + size.y * 0.025, target.z + distance);
   camera.lookAt(target);
-  root.traverse((node)=>{if(node.isMesh){node.material.side=THREE.FrontSide;node.material.needsUpdate=true;}});
-  document.querySelector("#status").textContent = "rotation="+rotation+" bbox="+size.toArray().map(v=>v.toFixed(2)).join("×");
+  root.traverse((node)=>{if(node.isMesh){
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    const reviewed = materials.map((material)=>unlit
+      ? new THREE.MeshBasicMaterial({map:material.map,color:material.color,side:THREE.FrontSide})
+      : material);
+    for(const material of reviewed){material.side=THREE.FrontSide;material.needsUpdate=true;}
+    node.material=Array.isArray(node.material)?reviewed:reviewed[0];
+  }});
+  document.querySelector("#status").textContent = "rotation="+rotation+" unlit="+unlit+" bbox="+size.toArray().map(v=>v.toFixed(2)).join("×");
   document.body.dataset.ready="true";
   renderer.render(scene,camera);
 },undefined,(error)=>{document.querySelector("#status").textContent=String(error);});
@@ -170,7 +178,7 @@ server.listen(0, "127.0.0.1", async () => {
     for (const rotation of [0, 90, -90, 180]) {
       const suffix = String(rotation).replace("-", "minus-");
       await runChrome(
-        `http://127.0.0.1:${port}/?rotation=${rotation}`,
+        `http://127.0.0.1:${port}/?rotation=${rotation}&unlit=${process.env.CONCLAVIA_WEB_AVATAR_REVIEW_UNLIT === "1" ? "1" : "0"}`,
         join(outputDirectory, `rotation-${suffix}.png`),
         9430 + index,
       );

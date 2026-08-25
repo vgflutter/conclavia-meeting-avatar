@@ -13,7 +13,7 @@ $artifactRoot = Join-Path $projectRoot "Saved\ShowcaseWebAvatar"
 $stdout = Join-Path $artifactRoot "build.stdout.log"
 $stderr = Join-Path $artifactRoot "build.stderr.log"
 $statusPath = Join-Path $artifactRoot "status.json"
-$blueprint = Join-Path $projectRoot "Content\Conclavia\Meeting\WebMetaHumans\MHC_Showcase_WebLow\MHC_Showcase_WebLow\BP_MHC_Showcase_WebLow.uasset"
+$blueprint = Join-Path $projectRoot "Content\Conclavia\Meeting\WebMetaHumans\MHC_Showcase_WebHigh\MHC_Showcase_WebHigh\BP_MHC_Showcase_WebHigh.uasset"
 
 foreach ($requiredPath in @($editor, $ProjectPath, $buildScript)) {
     if (-not (Test-Path $requiredPath)) {
@@ -22,7 +22,7 @@ foreach ($requiredPath in @($editor, $ProjectPath, $buildScript)) {
 }
 
 if (Test-Path $blueprint) {
-    @{ state = "ready"; reused = $true; pipeline = "Optimized"; quality = "Low"; hair = "cards" } |
+    @{ state = "ready"; reused = $true; pipeline = "Optimized"; quality = "High"; hair = "cards" } |
         ConvertTo-Json
     exit 0
 }
@@ -72,9 +72,9 @@ try {
         startedAt = $startedAt.ToUniversalTime().ToString("o")
         completedAt = (Get-Date).ToUniversalTime().ToString("o")
         identity = "MHC_Showcase"
-        outputIdentity = "MHC_Showcase_WebLow"
+        outputIdentity = "MHC_Showcase_WebHigh"
         pipeline = "Optimized"
-        quality = "Low"
+        quality = "High"
         hair = "cards"
         unrealLog = $latestLog.FullName
     }

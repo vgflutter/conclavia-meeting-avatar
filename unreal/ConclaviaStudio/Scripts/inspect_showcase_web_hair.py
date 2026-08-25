@@ -14,6 +14,7 @@ LEVEL_PATH = "/Game/Conclavia/Meeting/L_MeetingAvatar_v19"
 ASSEMBLY_ROOTS = {
     "cine": "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase",
     "webLow": "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebLow",
+    "webHigh": "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebHigh",
 }
 OUTPUT_PATH = Path(
     os.environ.get(

@@ -410,8 +410,8 @@ await test("builds and audits a separate hair-card Showcase assembly for Web", a
     ]);
 
   assert.match(builder, /MetaHumanDefaultPipelineType\.OPTIMIZED/);
-  assert.match(builder, /MetaHumanQualityLevel\.LOW/);
-  assert.match(builder, /MHC_Showcase_WebLow/);
+  assert.match(builder, /MetaHumanQualityLevel\.HIGH/);
+  assert.match(builder, /MHC_Showcase_WebHigh/);
   assert.doesNotMatch(builder, /delete_asset\(CHARACTER_PATH\)/);
   assert.match(wrapper, /CONCLAVIA_SHOWCASE_WEB_BUILD: READY/);
   assert.match(audit, /get_editor_property\("hair_groups_cards"\)/);

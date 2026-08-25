@@ -135,6 +135,7 @@ def _spawn_web_hair(
     if not isinstance(component, unreal.StaticMeshComponent):
         raise RuntimeError("Showcase Web hair actor has no Static Mesh component")
     component.set_static_mesh(mesh)
+    component.set_mobility(unreal.ComponentMobility.MOVABLE)
     component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
     component.set_visibility(True, True)
     component.set_hidden_in_game(False, True)
