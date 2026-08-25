@@ -411,8 +411,8 @@ await test("builds and audits a separate hair-card Showcase assembly for Web", a
   assert.match(builder, /MHC_Showcase_WebLow/);
   assert.doesNotMatch(builder, /delete_asset\(CHARACTER_PATH\)/);
   assert.match(wrapper, /CONCLAVIA_SHOWCASE_WEB_BUILD: READY/);
-  assert.match(audit, /get_hair_groups_cards/);
-  assert.match(audit, /get_hair_groups_meshes/);
+  assert.match(audit, /get_editor_property\("hair_groups_cards"\)/);
+  assert.match(audit, /get_editor_property\("hair_groups_meshes"\)/);
   assert.match(audit, /exportableHairMeshes/);
   assert.match(auditWrapper, /CONCLAVIA_SHOWCASE_HAIR_AUDIT_OK/);
   assert.match(deployScript, /Build-ShowcaseWebAvatar\.ps1/);

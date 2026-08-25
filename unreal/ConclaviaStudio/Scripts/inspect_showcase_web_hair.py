@@ -55,6 +55,11 @@ def find_blueprint_class(root: str) -> tuple[str, type]:
             include_folder=False,
         ):
             package_path = object_path.split(".", 1)[0]
+            # MetaHuman roots contain many materials, meshes and animation
+            # assets. Calling load_blueprint_class on each one is noisy and
+            # can hide the useful Python failure in thousands of log lines.
+            if not package_path.rsplit("/", 1)[-1].startswith("BP_MHC_Showcase"):
+                continue
             blueprint_class = unreal.EditorAssetLibrary.load_blueprint_class(package_path)
             if blueprint_class is not None:
                 candidates.append((package_path, blueprint_class))
@@ -111,8 +116,11 @@ def inspect_assembly(label: str, root: str, offset: float) -> dict[str, Any]:
         groom = component.get_editor_property("groom_asset")
         if groom is None:
             continue
-        cards = groom.get_hair_groups_cards()
-        meshes = groom.get_hair_groups_meshes()
+        # UE 5.8 declares Blueprint getters for these arrays but does not
+        # generate their Python methods. The reflected editor properties are
+        # available and return the same source-description structs.
+        cards = groom.get_editor_property("hair_groups_cards")
+        meshes = groom.get_editor_property("hair_groups_meshes")
         grooms.append(
             {
                 **component_inventory(component),
