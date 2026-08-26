@@ -7,7 +7,7 @@ that replacement, so selecting the tagged level actor silently exported the
 old Elena identity. Exporting the Cine assembly is also invalid for browsers:
 its face relies on Unreal-only MetaHuman materials and loses geometry when the
 stock glTF exporter flattens it.  This module therefore spawns the separately
-assembled Optimized/Low Showcase and fails closed on any identity mismatch.
+assembled Optimized/High Showcase and fails closed on any identity mismatch.
 """
 
 from __future__ import annotations
@@ -20,14 +20,21 @@ import unreal
 MEETING_ANCHOR_TAG = "MeetingAvatarAnchor"
 WEB_EXPORT_TAG = "ConclaviaWebShowcase"
 SHOWCASE_CLASS_PATH = (
-    "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebLow/"
-    "MHC_Showcase_WebLow/BP_MHC_Showcase_WebLow.BP_MHC_Showcase_WebLow_C"
+    "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebHigh/"
+    "MHC_Showcase_WebHigh/BP_MHC_Showcase_WebHigh.BP_MHC_Showcase_WebHigh_C"
 )
-SHOWCASE_ASSET_FRAGMENT = "/MHC_Showcase_WebLow/"
-WEB_HAIR_MESH_PATH = (
-    "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebLow/"
-    "MHC_Showcase_WebLow/Grooms/Hair_S_UpdoBraids_Helmet_LOD5."
-    "Hair_S_UpdoBraids_Helmet_LOD5"
+SHOWCASE_ASSET_FRAGMENT = "/MHC_Showcase_WebHigh/"
+WEB_HAIR_MESH_PATHS = (
+    (
+        "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebHigh/"
+        "MHC_Showcase_WebHigh/Grooms/Hair_S_UpdoBraids_CardsMesh_Group0_LOD1."
+        "Hair_S_UpdoBraids_CardsMesh_Group0_LOD1"
+    ),
+    (
+        "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebHigh/"
+        "MHC_Showcase_WebHigh/Grooms/Hair_S_UpdoBraids_CardsMesh_Group1_LOD1."
+        "Hair_S_UpdoBraids_CardsMesh_Group1_LOD1"
+    ),
 )
 
 
@@ -114,42 +121,44 @@ def _spawn_web_hair(
     actor: unreal.Actor,
     body: unreal.SkeletalMeshComponent,
 ) -> tuple[unreal.StaticMeshActor, ...]:
-    mesh = unreal.load_asset(WEB_HAIR_MESH_PATH)
-    if not isinstance(mesh, unreal.StaticMesh):
-        raise RuntimeError(
-            "Showcase Web hair mesh is unavailable. Build the Web Low assembly first: "
-            f"{WEB_HAIR_MESH_PATH}"
-        )
     subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    hair_actor = subsystem.spawn_actor_from_class(
-        unreal.StaticMeshActor,
-        actor.get_actor_location(),
-        actor.get_actor_rotation(),
-    )
-    if not isinstance(hair_actor, unreal.StaticMeshActor):
-        raise RuntimeError("Could not spawn the Showcase Web hair actor")
-    hair_actor.set_actor_label("WEB_ShowcaseHair_LOD5")
-    hair_actor.tags = [unreal.Name(WEB_EXPORT_TAG)]
-    hair_actor.set_actor_scale3d(actor.get_actor_scale3d())
-    component = hair_actor.get_component_by_class(unreal.StaticMeshComponent)
-    if not isinstance(component, unreal.StaticMeshComponent):
-        raise RuntimeError("Showcase Web hair actor has no Static Mesh component")
-    component.set_static_mesh(mesh)
-    component.set_mobility(unreal.ComponentMobility.MOVABLE)
-    component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
-    component.set_visibility(True, True)
-    component.set_hidden_in_game(False, True)
-    # Keep the authored world alignment and parent the rigid helmet to the
-    # MetaHuman head bone. The glTF hierarchy can then carry it with authored
-    # head motion instead of leaving the hair behind in world space.
-    hair_actor.attach_to_component(
-        body,
-        unreal.Name("head"),
-        unreal.AttachmentRule.KEEP_WORLD,
-        unreal.AttachmentRule.KEEP_WORLD,
-        unreal.AttachmentRule.KEEP_WORLD,
-    )
-    return (hair_actor,)
+    hair_actors: list[unreal.StaticMeshActor] = []
+    for group, mesh_path in enumerate(WEB_HAIR_MESH_PATHS):
+        mesh = unreal.load_asset(mesh_path)
+        if not isinstance(mesh, unreal.StaticMesh):
+            raise RuntimeError(
+                "Showcase Web hair cards are unavailable. Build the Web High assembly "
+                f"first: {mesh_path}"
+            )
+        hair_actor = subsystem.spawn_actor_from_class(
+            unreal.StaticMeshActor,
+            actor.get_actor_location(),
+            actor.get_actor_rotation(),
+        )
+        if not isinstance(hair_actor, unreal.StaticMeshActor):
+            raise RuntimeError("Could not spawn a Showcase Web hair-cards actor")
+        hair_actor.set_actor_label(f"WEB_ShowcaseHairCards_Group{group}_LOD1")
+        hair_actor.tags = [unreal.Name(WEB_EXPORT_TAG)]
+        hair_actor.set_actor_scale3d(actor.get_actor_scale3d())
+        component = hair_actor.get_component_by_class(unreal.StaticMeshComponent)
+        if not isinstance(component, unreal.StaticMeshComponent):
+            raise RuntimeError("Showcase Web hair actor has no Static Mesh component")
+        component.set_static_mesh(mesh)
+        component.set_mobility(unreal.ComponentMobility.MOVABLE)
+        component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        component.set_visibility(True, True)
+        component.set_hidden_in_game(False, True)
+        # Keep the authored world alignment and parent the rigid card groups to
+        # the MetaHuman head bone so every performance carries the hair.
+        hair_actor.attach_to_component(
+            body,
+            unreal.Name("head"),
+            unreal.AttachmentRule.KEEP_WORLD,
+            unreal.AttachmentRule.KEEP_WORLD,
+            unreal.AttachmentRule.KEEP_WORLD,
+        )
+        hair_actors.append(hair_actor)
+    return tuple(hair_actors)
 
 
 def ensure_showcase_export_actor() -> ShowcaseActorGraph:

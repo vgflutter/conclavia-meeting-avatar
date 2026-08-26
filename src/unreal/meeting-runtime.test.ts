@@ -323,8 +323,8 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19/);
   assert.match(exporter, /ensure_showcase_export_actor/);
   assert.match(showcaseResolver, /MeetingAvatarAnchor/);
-  assert.match(showcaseResolver, /BP_MHC_Showcase_WebLow\.BP_MHC_Showcase_WebLow_C/);
-  assert.match(showcaseResolver, /Optimized\/Low Showcase/);
+  assert.match(showcaseResolver, /BP_MHC_Showcase_WebHigh\.BP_MHC_Showcase_WebHigh_C/);
+  assert.match(showcaseResolver, /Optimized\/High Showcase/);
   assert.match(showcaseResolver, /refusing a bald Web export/);
   assert.match(exporter, /export_vertex_skin_weights/);
   assert.match(exporter, /export_morph_targets/);
@@ -346,9 +346,10 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /"startSeconds": 5\.75/);
   assert.match(exporter, /CONCLAVIA_WEB_AVATAR_EXPORT_OK/);
   assert.match(exporter, /"assetVersion": ASSET_VERSION/);
-  assert.match(exporter, /"hairGeometry": "mesh"/);
+  assert.match(exporter, /"hairGeometry": "cards"/);
   assert.match(exporter, /"visualReview": "pending"/);
-  assert.match(showcaseResolver, /Hair_S_UpdoBraids_Helmet_LOD5/);
+  assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group0_LOD1/);
+  assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group1_LOD1/);
   assert.match(showcaseResolver, /AttachmentRule\.KEEP_WORLD/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
   assert.match(facialBaker, /SequencerTools\.export_anim_sequence/);
