@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v19"
+STAGE_REVISION = "v20"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
 MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4.0
@@ -298,12 +298,14 @@ def build() -> None:
     # composed inside this fixed portrait, just as it would be for a real Teams
     # or Meet participant.
     webcam_position = unreal.Vector(-360.0, 0.0, 185.0)
-    webcam_target = unreal.Vector(0.0, 0.0, 165.0)
-    # Move fifteen percent closer optically without moving the camera or its
-    # target.  At 163 mm this remains marginally wider than the rejected 168 mm
-    # crop, preserving the authored applause and request-to-speak gestures
-    # while giving the face more presence in a meeting tile.
-    webcam_focal_length = 163.0
+    # Aim five centimetres below v19's optical centre. The face consequently
+    # sits in the upper third like a real webcam participant, while the lower
+    # half of the frame remains available to both authored hand performances.
+    webcam_target = unreal.Vector(0.0, 0.0, 160.0)
+    # An eight-percent optical push-in is the maximum crop that keeps the held
+    # request-to-speak palm inside the 16:9 safe frame. Do not implement
+    # gesture-specific camera cuts: every performance must share this camera.
+    webcam_focal_length = 176.0
     add_camera(
         "CAM_Meeting_Portrait",
         webcam_position,
@@ -339,7 +341,7 @@ def build() -> None:
         unreal.Vector(320.0, -250.0, 390.0),
         webcam_target,
         unreal.LinearColor(1.0, 0.58, 0.38, 1.0),
-        30.0,
+        18.0,
         400.0,
         220.0,
     )

@@ -48,7 +48,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(engineConfig, /^MeetingHandRaiseEndTimeSeconds=7\.50$/mu);
   assert.match(
     engineConfig,
-    /^MeetingApplauseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingApplause_SeatedMarkerless_v1\.AS_MeetingApplause_SeatedMarkerless_v1$/mu,
+    /^MeetingApplauseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingApplause_SeatedContactIK_v3\.AS_MeetingApplause_SeatedContactIK_v3$/mu,
   );
   assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=3\.25$/mu);
   assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=6\.75$/mu);
@@ -91,18 +91,18 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("teeth"\)/);
   assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("neck"\)/);
   assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
-  assert.match(startScript, /L_MeetingAvatar_v19/);
-  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19$/mu);
-  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19$/mu);
-  assert.match(stageBuilder, /^STAGE_REVISION = "v19"$/mu);
+  assert.match(startScript, /L_MeetingAvatar_v20/);
+  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v20$/mu);
+  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v20$/mu);
+  assert.match(stageBuilder, /^STAGE_REVISION = "v20"$/mu);
   assert.doesNotMatch(stageBuilder, /CAM_Meeting_Applause/);
   assert.doesNotMatch(stageBuilder, /CAM_Meeting_Gesture/);
   assert.match(stageBuilder, /^CONTENT_ROOT = "\/Game\/Conclavia\/Meeting"$/mu);
   assert.match(stageBuilder, /^LEVEL_PATH = f"\{CONTENT_ROOT\}\/L_MeetingAvatar_\{STAGE_REVISION\}"$/mu);
   assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
-  assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 165\.0\)/);
+  assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 160\.0\)/);
   assert.match(stageBuilder, /^MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4\.0$/mu);
-  assert.match(stageBuilder, /webcam_focal_length = 163\.0/);
+  assert.match(stageBuilder, /webcam_focal_length = 176\.0/);
   assert.match(stageBuilder, /unreal\.Vector\(-300\.0, -335\.0, 335\.0\)/);
   assert.match(stageBuilder, /\n\s{8}132\.0,\n/);
   assert.match(stageBuilder, /sky_component\.set_editor_property\("intensity", 0\.035\)/);
@@ -112,7 +112,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(startScript, /r\.SSS\.SampleSet 2/);
   assert.match(startScript, /r\.Tonemapper\.Sharpen 0\.22/);
   assert.match(startScript, /\[string\]\$QualityPreset = "super"/);
-  assert.match(startScript, /\$screenPercentage = if \(\$QualityPreset -eq "super"\) \{ 115 \}/);
+  assert.match(startScript, /\$screenPercentage = if \(\$QualityPreset -eq "super"\) \{ 125 \}/);
   assert.match(startScript, /\$tsrHistoryPercentage = if \(\$QualityPreset -eq "super"\) \{ 200 \}/);
   assert.match(startScript, /\$hairVisibilitySamples = if \(\$QualityPreset -eq "super"\) \{ 4 \}/);
   assert.match(startScript, /\$encoderMinQuality = if \(\$QualityPreset -eq "super"\) \{ 68 \}/);
