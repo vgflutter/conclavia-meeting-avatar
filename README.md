@@ -191,7 +191,7 @@ the LLM and remains in chronological meeting memory. See the
 
 The production meeting launcher selects the **Super** Unreal quality preset.
 It keeps the 1920x1080/30 meeting output required by OBS and conferencing
-clients, renders the scene internally at 115%, stores TSR history at 200%,
+clients, renders the scene internally at 110%, stores TSR history at 200%,
 uses four hair-visibility samples, and bounds H.264 compression at quality 68.
 This retains the Cine MetaHuman's LOD0 skin and Groom strands while avoiding a
 larger transport resolution that Teams or Meet would immediately downscale.
