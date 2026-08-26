@@ -74,6 +74,7 @@
     "unreal/ConclaviaStudio/Scripts/Build-MarkerlessApplause.ps1",
     "unreal/ConclaviaStudio/Scripts/refine_applause_hand_contact.py",
     "unreal/ConclaviaStudio/Scripts/Capture-ApplauseSequence.cjs",
+    "unreal/ConclaviaStudio/Scripts/Audit-TwelveMoods.cjs",
     "unreal/ConclaviaStudio/Scripts/ensure_commercial_lipsync_assets.py",
     "unreal/ConclaviaStudio/Scripts/audit_web_facial_api.py",
     "unreal/ConclaviaStudio/Scripts/Audit-WebFacialApi.ps1",

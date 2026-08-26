@@ -486,6 +486,25 @@ The deterministic direct-PCM gate remains useful for low-level diagnostics:
 & C:\ConclaviaMeetingAvatar\Scripts\Test-DirectPcmSubject.ps1
 ```
 
+The production acceptance suite also sends the same real PCM utterance through
+all twelve semantic moods. It requires every cue and audio request to be
+accepted, the intended semantic mood to reach the render clock, non-zero mouth
+motion for every sentence, and a distinct upper-face response. One peak 1080p
+frame per mood is retained for visual review:
+
+```powershell
+node C:\ConclaviaMeetingAvatar\Scripts\Audit-TwelveMoods.cjs `
+  http://127.0.0.1:8080/conclavia.html `
+  http://127.0.0.1:8081 `
+  C:\ConclaviaMeetingAvatar\Saved\semantic-short.pcm `
+  C:\ConclaviaMeetingAvatar\Saved\TwelveMoodAudit
+```
+
+`Audit-ContinuousAnimation.cjs` validates the clean decoded stream at the
+production 30 fps target. Recording the browser itself is intentionally kept
+outside that gate because software test-video encoding can consume enough GPU
+and CPU time to distort the stream it is measuring.
+
 For the current web path, the stronger acceptance test is an alternating Aera /
 Ada sequence that verifies active-face changes and non-zero mouth and upper-face
 controls after every utterance.

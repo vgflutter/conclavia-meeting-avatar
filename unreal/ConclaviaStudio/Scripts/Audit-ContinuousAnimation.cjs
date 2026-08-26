@@ -142,17 +142,30 @@ function percentile(values, quantile) {
     const duration = frames.length > 1
       ? frames.at(-1).mediaTime - frames[0].mediaTime
       : 0;
+    const decodedFps = duration > 0 ? (frames.length - 1) / duration : 0;
+    const intervalP95Ms = percentile(frameIntervals, 0.95);
+    const intervalMaxMs = Math.max(0, ...frameIntervals);
+    const hardGapCount = frameIntervals.filter((value) => value >= 80).length;
+    // The production meeting profile intentionally targets 30 fps: this leaves
+    // the GPU budget to 125% TSR, strand hair and the cinematic MetaHuman LOD.
+    // A healthy 30 fps WebRTC stream occasionally presents two decoded frames
+    // about 50-66 ms apart, so a 50 ms p95 gate incorrectly rejects a clean
+    // stream. Reject actual stalls and sub-realtime delivery instead.
     const report = {
-      ok: frames.length >= 180 && percentile(frameIntervals, 0.95) <= 50,
+      ok: frames.length >= 250
+        && decodedFps >= 28
+        && intervalP95Ms <= 67
+        && intervalMaxMs < 80
+        && hardGapCount === 0,
       decodedFrameCount: frames.length,
-      decodedFps: duration > 0 ? (frames.length - 1) / duration : 0,
+      decodedFps,
       intervalMedianMs: percentile(frameIntervals, 0.5),
-      intervalP95Ms: percentile(frameIntervals, 0.95),
-      intervalMaxMs: Math.max(0, ...frameIntervals),
+      intervalP95Ms,
+      intervalMaxMs,
       visualDeltaMedian: percentile(visualDeltas, 0.5),
       visualDeltaP95: percentile(visualDeltas, 0.95),
       visualDeltaMax: Math.max(0, ...visualDeltas),
-      hardGapCount: frameIntervals.filter((value) => value >= 80).length,
+      hardGapCount,
       frames
     };
     await page.screenshot({
