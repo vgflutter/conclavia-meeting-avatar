@@ -455,6 +455,11 @@ OpenAI is configured. The command does not report the studio as ready until the
 avatar is actually live. Stop both the companion and GPU billing with
 `npm run studio:3d:stop`.
 
+If the local companion is restarted while the Unreal process is still healthy,
+it automatically re-arms the matching live MetaHuman before the next meeting
+turn. This recovery is deliberately one-way: probing a stopped renderer never
+powers on the AWS GPU, and an explicit **Stop avatar** remains authoritative.
+
 On macOS the companion is launched as a detached child of this interactive
 command, rather than as a LaunchAgent. This keeps BlackHole capture inside the
 Terminal or IDE microphone-permission context; moving it to `launchd` can yield

@@ -20,6 +20,7 @@ import { formatAgendaOffset, MeetingAgendaManager } from "./core/meeting-agenda.
 import { OutboundChatQueue } from "./core/outbound-chat-queue.js";
 import { dialogueParticipantKey } from "./core/participant-identity.js";
 import { ConclaviaRenderer } from "./conclavia/renderer.js";
+import { rendererRecoveryAction } from "./conclavia/renderer-recovery.js";
 import { synthesizeUnrealSpeech } from "./conclavia/unreal-speech.js";
 import {
   isUnrealAvatarId,
@@ -470,6 +471,8 @@ export function startServer(options: ServerOptions): Promise<void> {
     : new ConclaviaRenderer(options.rendererUrl);
   let rendererArmed = false;
   let rendererStarting = false;
+  let rendererAutoRecoveryEnabled = true;
+  let rendererRecoveryInFlight = false;
   let rendererDesiredProfile: string | null = null;
   let rendererTargetProfile: string | null = null;
   let rendererStartBeganAt = 0;
@@ -504,6 +507,7 @@ export function startServer(options: ServerOptions): Promise<void> {
   const beginRendererStart = (avatarProfile: string): boolean => {
     if (rendererStarting && rendererTargetProfile === avatarProfile) return false;
 
+    rendererAutoRecoveryEnabled = true;
     const generation = ++rendererStartGeneration;
     renderer.abortPending();
     rendererArmed = false;
@@ -557,6 +561,40 @@ export function startServer(options: ServerOptions): Promise<void> {
       (status.serverStatus === "stopping" || status.serverStatus === "stopped")
     ) {
       rendererArmed = false;
+    }
+  };
+
+  const recoverRunningRenderer = async (): Promise<
+    Awaited<ReturnType<ConclaviaRenderer["status"]>> | null
+  > => {
+    if (rendererRecoveryInFlight) return null;
+    rendererRecoveryInFlight = true;
+    try {
+      const status = await renderer.status();
+      if (status.playerUrl) rendererPlayerUrl = status.playerUrl;
+      reconcileRendererStatus(status);
+      const action = rendererRecoveryAction({
+        enabled: rendererAutoRecoveryEnabled,
+        configured: renderer.configured,
+        armed: rendererArmed,
+        starting: rendererStarting,
+        avatarProfile: runtimeConfig.avatarProfile,
+      }, status);
+      if (action === "arm") {
+        rendererDesiredProfile = runtimeConfig.avatarProfile;
+        markRendererReady(status.playerUrl);
+      } else if (action === "restart") {
+        beginRendererStart(runtimeConfig.avatarProfile);
+      }
+      return status;
+    } catch (error: unknown) {
+      console.warn(
+        "Conclavia renderer recovery skipped:",
+        error instanceof Error ? error.message : error,
+      );
+      return null;
+    } finally {
+      rendererRecoveryInFlight = false;
     }
   };
 
@@ -1674,7 +1712,8 @@ export function startServer(options: ServerOptions): Promise<void> {
       }
 
       if (request.method === "GET" && url.pathname === "/api/renderer/status") {
-        const status = await renderer.status();
+        const recoveredStatus = await recoverRunningRenderer();
+        const status = recoveredStatus ?? await renderer.status();
         const webAvatarInspection = options.rendererMode === "web"
           ? await webAvatarRegistry.inspect(runtimeConfig.avatarProfile)
           : null;
@@ -1742,6 +1781,7 @@ export function startServer(options: ServerOptions): Promise<void> {
       }
 
       if (request.method === "DELETE" && url.pathname === "/api/renderer/session") {
+        rendererAutoRecoveryEnabled = false;
         rendererStartGeneration += 1;
         rendererStarting = false;
         rendererDesiredProfile = null;
@@ -2015,6 +2055,10 @@ export function startServer(options: ServerOptions): Promise<void> {
           : "Meeting listener: not configured",
       );
       prewarmImmediateSpeech(runtimeConfig);
+      // Reconnect to an Unreal session that survived a local companion
+      // restart. This probes only; it never powers on a stopped GPU.
+      const recoveryTimer = setTimeout(() => void recoverRunningRenderer(), 250);
+      recoveryTimer.unref();
       resolve();
     });
   });
