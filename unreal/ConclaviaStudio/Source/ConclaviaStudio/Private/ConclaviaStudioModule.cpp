@@ -4304,7 +4304,7 @@ private:
                 BodyPelvisWorld = ActiveBody->GetSocketLocation(TEXT("pelvis"));
                 BodyLeftHandWorld = ActiveBody->GetSocketLocation(TEXT("hand_l"));
                 BodyRightHandWorld = ActiveBody->GetSocketLocation(TEXT("hand_r"));
-                if (StudioWorld)
+                if (StudioWorld.IsValid())
                 {
                     if (APlayerController* Controller =
                             StudioWorld->GetFirstPlayerController())
