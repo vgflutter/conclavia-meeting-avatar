@@ -15,10 +15,10 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v22"
+STAGE_REVISION = "v23"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
-MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 7.0
+MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 9.0
 
 CUBE = "/Engine/BasicShapes/Cube.Cube"
 
