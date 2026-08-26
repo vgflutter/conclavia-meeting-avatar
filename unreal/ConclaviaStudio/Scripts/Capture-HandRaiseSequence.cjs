@@ -156,7 +156,7 @@ async function captureAfter(video, startedAt, targetMs, filename) {
     const raisedHandScreenY = heldPoseSamples.map(
       (sample) => sample.bodyRightHandScreen?.[1]
     );
-    if (raisedHandScreenX.some((value) => !Number.isFinite(value) || value < 0.055 || value > 0.945)
+    if (raisedHandScreenX.some((value) => !Number.isFinite(value) || value < 0.10 || value > 0.90)
         || raisedHandScreenY.some((value) => !Number.isFinite(value) || value < 0.08 || value > 0.92)) {
       throw new Error(
         `Raised hand left the meeting safe area: ${JSON.stringify({

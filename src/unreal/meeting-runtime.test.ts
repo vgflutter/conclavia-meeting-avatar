@@ -260,10 +260,10 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseContactScript, /restore_seated_body/);
   assert.match(applauseContactScript, /STABLE_SEATED_BONES/);
   assert.match(applauseContactScript, /Restore markerless seated body after hand IK/);
-  assert.match(solverHandBuilder, /side_x \* 20\.0/);
-  assert.match(solverHandBuilder, /side_y \* 20\.0/);
+  assert.match(solverHandBuilder, /side_x \* 16\.0/);
+  assert.match(solverHandBuilder, /side_y \* 16\.0/);
   assert.match(handCaptureScript, /bodyRightHandScreen/);
-  assert.match(handCaptureScript, /value < 0\.055/);
+  assert.match(handCaptureScript, /value < 0\.10/);
   assert.match(rendererManifest, /AS_MeetingApplause_SeatedContactIK_v3/);
   assert.match(applauseCaptureScript, /applauseGestureReady/);
   assert.match(applauseCaptureScript, /bodyGesturePhase === "applauding"/);
