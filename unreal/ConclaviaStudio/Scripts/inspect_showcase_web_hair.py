@@ -97,6 +97,12 @@ def component_inventory(component: unreal.SceneComponent) -> dict[str, Any]:
         "relativeLocation": vector(relative_location),
         "relativeRotation": rotator(relative_rotation),
         "relativeScale": vector(relative_scale),
+        "materials": [
+            asset_path(component.get_material(index))
+            for index in range(component.get_num_materials())
+        ]
+        if isinstance(component, unreal.MeshComponent)
+        else [],
     }
     if isinstance(component, unreal.SkeletalMeshComponent):
         payload["skeletalMesh"] = asset_path(component.get_skeletal_mesh_asset())

@@ -59,7 +59,9 @@ new GLTFLoader().load("/model.glb",({scene:root})=>{
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
   const target = new THREE.Vector3(center.x, box.min.y + size.y * 0.81, center.z);
-  const distance = Math.max(size.y * 0.64, size.x * 1.15);
+  // Review the same head-and-shoulders framing used by a meeting camera.
+  // Full-body fitting can hide facial/material defects behind a valid T-pose.
+  const distance = size.y * 0.54;
   camera.position.set(target.x, target.y + size.y * 0.025, target.z + distance);
   camera.lookAt(target);
   root.traverse((node)=>{if(node.isMesh){

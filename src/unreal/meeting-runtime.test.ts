@@ -292,6 +292,7 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
     showcaseResolver,
     facialBaker,
     visemeBaker,
+    showcaseRepair,
     wrapper,
   ] = await Promise.all([
     readFile(repositoryFile("unreal/ConclaviaStudio/ConclaviaStudio.uproject"), "utf8"),
@@ -310,6 +311,10 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
     ),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/bake_web_facial_visemes.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/repair_showcase_glb.py"),
       "utf8",
     ),
     readFile(
@@ -352,6 +357,8 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group0_LOD1/);
   assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group1_LOD1/);
   assert.match(showcaseResolver, /AttachmentRule\.KEEP_WORLD/);
+  assert.match(showcaseRepair, /_compact_skin_influences/);
+  assert.match(showcaseRepair, /extra_sets/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
   assert.match(facialBaker, /SequencerTools\.export_anim_sequence/);
   assert.match(facialBaker, /evaluate_all_skeletal_mesh_components/);
