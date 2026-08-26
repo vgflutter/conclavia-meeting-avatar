@@ -57,6 +57,7 @@ async function cue(testCase) {
       expectedDurationMs: 6_000,
       performanceBeats: [{
         atMs: 0,
+        semanticMood: testCase.mood,
         mood: testCase.mood,
         intensity: testCase.intensity,
         focus: "camera",

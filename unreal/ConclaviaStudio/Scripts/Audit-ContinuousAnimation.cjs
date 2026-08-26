@@ -147,7 +147,7 @@ function percentile(values, quantile) {
     const intervalMaxMs = Math.max(0, ...frameIntervals);
     const hardGapCount = frameIntervals.filter((value) => value >= 80).length;
     // The production meeting profile intentionally targets 30 fps: this leaves
-    // the GPU budget to 125% TSR, strand hair and the cinematic MetaHuman LOD.
+    // the GPU budget to 115% TSR, strand hair and the cinematic MetaHuman LOD.
     // A healthy 30 fps WebRTC stream occasionally presents two decoded frames
     // about 50-66 ms apart, so a 50 ms p95 gate incorrectly rejects a clean
     // stream. Reject actual stalls and sub-realtime delivery instead.
