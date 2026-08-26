@@ -2829,7 +2829,12 @@ private:
         // phonemes and expression in one solve, avoiding a second procedural
         // layer fighting the lips, brows and cheeks.
         FRealisticMetaHumanLipSyncMoodConfig Config;
-        Config.IntraOpThreads = 4;
+        // On the 8-vCPU production host, four ONNX workers contend with the
+        // game, render and Pixel Streaming threads and cause a repeatable
+        // 80-100 ms video hitch while speech is being solved. Two workers keep
+        // the 40 ms audio cadence in realtime and leave the frame pipeline
+        // enough CPU headroom to remain continuous.
+        Config.IntraOpThreads = 2;
         Config.InterOpThreads = 1;
         Config.LookaheadMs = 40;
         Config.OutputType = ERealisticMetaHumanLipSyncOutputType::FullFace;
@@ -4337,7 +4342,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v28-web-facial-authoring")
+            ? TEXT("ue58-commercial-lipsync-v29-smooth-speech")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
