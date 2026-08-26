@@ -58,7 +58,7 @@ function portableMaterials(node) {
 }
 
 function enableExtendedSkinning(material, influenceSets) {
-  if (influenceSets < 2) return;
+  if (influenceSets < 1) return;
   const additionalSets = Array.from(
     { length: Math.min(3, influenceSets) - 1 },
     (_, index) => index + 1,
@@ -180,20 +180,38 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
   const cardSurface = name.includes("hair_cards")
     || /^WEB_Showcase(?:Hair|Eyebrows)Cards_/u.test(node.name);
   if (cardSurface) {
-    // Unreal's baked cards atlas quantizes the authored threshold at the edge
-    // of the mask. A low deterministic cutoff preserves the fine strands; a
-    // higher runtime override makes the hairstyle disappear entirely.
-    material.alphaTest = 0.05;
-    material.alphaHash = true;
+    // The HQ GLB embeds Epic's native Groom Cards Attribute atlas. Coverage is
+    // stored in red rather than alpha, so retain only that data channel and
+    // let the material's authored constant color drive the shaded strands.
+    // This avoids both the opaque polygon ribbons produced by glTF's Simple
+    // material bake and the bald result produced by testing its flat alpha.
+    material.alphaTest = 0.065;
+    material.alphaHash = false;
     material.alphaToCoverage = true;
     material.transparent = false;
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
-    material.envMapIntensity = 0.44;
+    material.envMapIntensity = 0.52;
     material.metalness = 0;
-    material.roughness = Math.max(0.5, material.roughness || 0);
-    if (material.map) material.color = new THREE.Color(0xffffff);
-    if ("specularIntensity" in material) material.specularIntensity = 0.3;
+    material.roughness = Math.max(0.56, material.roughness || 0);
+    if (material.map) {
+      material.map.colorSpace = THREE.NoColorSpace;
+      const previousCompile = material.onBeforeCompile?.bind(material);
+      const previousCacheKey = material.customProgramCacheKey?.bind(material);
+      material.onBeforeCompile = (shader, activeRenderer) => {
+        previousCompile?.(shader, activeRenderer);
+        shader.fragmentShader = shader.fragmentShader.replace(
+          "#include <map_fragment>",
+          `vec4 conclaviaGroomAttributes = texture2D(map, vMapUv);
+          diffuseColor.a *= conclaviaGroomAttributes.r;`,
+        );
+      };
+      material.customProgramCacheKey = () => [
+        previousCacheKey?.() || "",
+        "conclavia-native-groom-coverage-red-v1",
+      ].join(":");
+    }
+    if ("specularIntensity" in material) material.specularIntensity = 0.28;
   }
   if (name.includes("face_skin_baked_lod1") && material.map) {
     // Keep the high-frequency identity texture and normal response visible.
@@ -245,6 +263,9 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.envMapIntensity = 0.5;
     material.metalness = 0;
     material.roughness = THREE.MathUtils.clamp(material.roughness || 0.54, 0.5, 0.64);
+    // Native body sections retain their original tangent frames, so their 2K
+    // normal atlas is valid again and restores the subtle skin breakup that
+    // was lost by the old merged-body workaround.
     if (material.normalScale) material.normalScale.set(0.92, 0.92);
   } else if (name.includes("bodyshapea_shirt") || name.includes("shirt")) {
     // Cloth should read as soft fabric, not as a glossy white polygon shell.
@@ -325,12 +346,21 @@ function portableRigNodes(root) {
     if (!node.isSkinnedMesh || !node.skeleton?.bones?.length) return;
     const boneNames = new Set(node.skeleton.bones.map((bone) => normalizedNodeName(bone.name)));
     const facial = boneNames.has("facialcfacialroot") || boneNames.has("facialroot");
+    const bodySurface = portableMaterials(node).some((material) => (
+      String(material.name || "").toLowerCase().includes("body_baked")
+    ));
     // The face component contains a duplicate of the complete MetaHuman body
     // chain. Drive both copies from the same body clip so head, hair and neck
     // remain welded to the garment skeleton throughout ambient motion.
     if (boneNames.has("upperarml") && boneNames.has("pelvis")) {
       body.push(...node.skeleton.bones);
-      if (!facial) bodyTranslations.push(...node.skeleton.bones);
+      // Translation and scale tracks contain MetaHuman muscle/corrective
+      // offsets authored for the naked body skeleton. The wardrobe owns an
+      // equivalent but independently bound skeleton: replaying those absolute
+      // offsets on it tears the shirt apart during hand raise and applause.
+      // Rotations still target every skeleton above; positional correctives
+      // deliberately target only the native body surface.
+      if (!facial && bodySurface) bodyTranslations.push(...node.skeleton.bones);
     }
     if (facial) face.push(...node.skeleton.bones);
   });
@@ -965,10 +995,23 @@ export async function loadThreeAvatarPerformer(avatarId) {
     throw new Error("Avatar manifest non compatibile");
   }
   const loader = new GLTFLoader();
-  const [gltf, ...animationGltfs] = await Promise.all([
-    loader.loadAsync(manifest.model),
-    ...(manifest.animationModels || []).map((model) => loader.loadAsync(model)),
-  ]);
+  // GLTFLoader normalizes only the first four weights on every SkinnedMesh.
+  // That is correct for classic glTF, but corrupts UE 5.8's valid JOINTS_1/2
+  // extension data: on a twelve-influence garment the first group can carry
+  // only a few percent of the total weight. Preserve the quantized source
+  // values here; enableExtendedSkinning normalizes all available groups as one.
+  const normalizeSkinWeights = THREE.SkinnedMesh.prototype.normalizeSkinWeights;
+  THREE.SkinnedMesh.prototype.normalizeSkinWeights = function preserveExtendedWeights() {};
+  let gltfs;
+  try {
+    gltfs = await Promise.all([
+      loader.loadAsync(manifest.model),
+      ...(manifest.animationModels || []).map((model) => loader.loadAsync(model)),
+    ]);
+  } finally {
+    THREE.SkinnedMesh.prototype.normalizeSkinWeights = normalizeSkinWeights;
+  }
+  const [gltf, ...animationGltfs] = gltfs;
   const performer = new ThreeAvatarPerformer(manifest, gltf);
   performer.addAnimationGltfs(animationGltfs);
   return performer;

@@ -22,6 +22,7 @@ if str(SCRIPT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIRECTORY))
 
 from web_showcase_actor import ShowcaseActorGraph, ensure_showcase_export_actor
+from export_showcase_hair_atlases import export_atlases
 from repair_showcase_glb import repair_showcase_face_materials
 
 
@@ -32,7 +33,7 @@ LEVEL_PATH = os.environ.get(
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
 ASSET_VERSION = os.environ.get(
     "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
-    "ue58-v45-showcase-cinecards-matched-hq",
+    "ue58-v47-source-wardrobe-weights-hq",
 )
 MATERIAL_BAKE_SIZE = 2048
 OUTPUT_DIRECTORY = Path(
@@ -197,68 +198,50 @@ def export_object(
     log(f"ASSET file={path.name} bytes={path.stat().st_size} result={result}")
 
 
-def merged_body_actor(graph: ShowcaseActorGraph) -> unreal.SkeletalMeshActor:
-    """Bake body and outfit into one ordinary Web-compatible skeletal mesh.
+def wardrobe_skin_weights(
+    graph: ShowcaseActorGraph,
+) -> list[list[tuple[str, float]]]:
+    """Read the wardrobe's authoritative editor skin before glTF flattens it."""
 
-    Epic documents Mesh Clothing as unsupported by the glTF exporter. The
-    Optimized MetaHuman therefore looks correct in reference pose but its
-    separate outfit skin tears during large arm gestures in a browser. A
-    Skeletal Mesh Merge turns the modular body/outfit graph into one standard
-    skin before glTF export, which preserves its authored materials while
-    removing the unsupported runtime clothing dependency.
-    """
-
-    body_mesh = graph.body.get_skeletal_mesh_asset()
-    outfit_meshes = [component.get_skeletal_mesh_asset() for component in graph.outfits]
-    if not isinstance(body_mesh, unreal.SkeletalMesh) or not all(
-        isinstance(mesh, unreal.SkeletalMesh) for mesh in outfit_meshes
-    ):
-        raise RuntimeError("Showcase body/outfit graph is not mergeable")
-    skeleton = body_mesh.get_editor_property("skeleton")
-    params = unreal.SkeletalMeshMergeParams()
-    params.set_editor_property("meshes_to_merge", [body_mesh, *outfit_meshes])
-    params.set_editor_property("needs_cpu_access", False)
-    params.set_editor_property("strip_top_lods", 0)
-    params.set_editor_property("skeleton", skeleton)
-    params.set_editor_property("skeleton_before", True)
-    merged_mesh = unreal.SkeletalMergingLibrary.merge_meshes(params)
-    if not isinstance(merged_mesh, unreal.SkeletalMesh):
-        raise RuntimeError("Skeletal Mesh Merge did not produce a Showcase mesh")
-
-    subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    actor = subsystem.spawn_actor_from_class(
-        unreal.SkeletalMeshActor,
-        graph.actor.get_actor_location(),
-        graph.actor.get_actor_rotation(),
-    )
-    if not isinstance(actor, unreal.SkeletalMeshActor):
-        raise RuntimeError("Could not spawn merged Showcase export actor")
-    actor.set_actor_label("WEB_ShowcaseMergedBodyOutfit")
-    actor.tags = [unreal.Name("ConclaviaWebShowcase")]
-    actor.set_actor_scale3d(graph.actor.get_actor_scale3d())
-    actor.set_actor_hidden_in_game(False)
-    component = actor.skeletal_mesh_component
-    component.set_skinned_asset_and_update(merged_mesh, True)
-    component.set_visibility(True, True)
-    component.set_hidden_in_game(False, True)
-    component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
-
-    # Keep the face on the authoritative assembly, but exclude the original
-    # modular body and outfit components from this export.
-    # The MetaHuman Face and its hair-card attachments are children of the
-    # body component. Propagating this visibility change would silently remove
-    # every high-fidelity facial surface from the selected-actor export.
-    graph.body.set_visibility(False, False)
-    graph.body.set_hidden_in_game(True, False)
-    for outfit in graph.outfits:
-        outfit.set_visibility(False, False)
-        outfit.set_hidden_in_game(True, False)
+    if len(graph.outfits) != 1:
+        raise RuntimeError(
+            f"Expected one Showcase wardrobe component, found {len(graph.outfits)}"
+        )
+    mesh = graph.outfits[0].get_skeletal_mesh_asset()
+    if not isinstance(mesh, unreal.SkeletalMesh):
+        raise RuntimeError("Showcase wardrobe component has no Skeletal Mesh")
+    modifier = unreal.SkinWeightModifier()
+    if not modifier.set_skeletal_mesh(mesh):
+        raise RuntimeError(f"Could not inspect Showcase wardrobe skin: {mesh.get_path_name()}")
+    vertex_count = int(modifier.get_num_vertices())
+    if vertex_count <= 0:
+        raise RuntimeError("Showcase wardrobe skin has no vertices")
+    result: list[list[tuple[str, float]]] = []
+    maximum_influences = 0
+    for vertex_index in range(vertex_count):
+        weights = modifier.get_vertex_weights(vertex_index)
+        influences = sorted(
+            (
+                (str(bone_name), float(weight))
+                for bone_name, weight in weights.items()
+                if float(weight) > 0
+            ),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        total = sum(weight for _, weight in influences)
+        if not influences or not 0.98 <= total <= 1.02 or len(influences) > 12:
+            raise RuntimeError(
+                "Invalid Showcase wardrobe source weights: "
+                f"vertex={vertex_index} count={len(influences)} total={total:.6f}"
+            )
+        maximum_influences = max(maximum_influences, len(influences))
+        result.append(influences)
     log(
-        "MERGED_BODY_OUTFIT "
-        f"sources={1 + len(outfit_meshes)} "
-        f"materials={len(merged_mesh.get_editor_property('materials'))}"
+        "WARDROBE_SOURCE_SKIN "
+        f"vertices={vertex_count} maximumInfluences={maximum_influences}"
     )
-    return actor
+    return result
 
 
 def write_bundle_inventory(
@@ -279,7 +262,12 @@ def write_bundle_inventory(
             "faceMesh": graph.face_mesh_path,
             "bodyMesh": graph.body_mesh_path,
             "outfitMeshes": list(graph.outfit_mesh_paths),
-            "bodyOutfitMerge": "SkeletalMergingLibrary",
+            # Keep the authored MetaHuman body and wardrobe sections independent.
+            # Skeletal Mesh Merge preserves vertices but changes the material/UV
+            # section relationship used by MI_Body_Baked, producing grey atlas
+            # islands on exposed arms. The browser now consumes all 12 skin
+            # influences, so the original garment no longer needs that workaround.
+            "bodyOutfitMerge": "source-skin-weight-modifier-extended",
             "groomAssets": list(graph.groom_asset_paths),
             "webHairMeshes": list(graph.hair_mesh_paths),
             # The stock glTF exporter ignores Groom Components. The portable
@@ -366,19 +354,25 @@ def main() -> None:
     if not unreal.EditorLoadingAndSavingUtils.load_map(LEVEL_PATH):
         raise RuntimeError(f"Could not load meeting level: {LEVEL_PATH}")
     graph = ensure_showcase_export_actor()
-    merged_actor = merged_body_actor(graph)
+    source_wardrobe_weights = wardrobe_skin_weights(graph)
+    hair_atlases = export_atlases(OUTPUT_DIRECTORY)
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     model_path = OUTPUT_DIRECTORY / "model.glb"
     export_object(
         world,
         model_path,
         configure_options(preview_mesh=False),
-        {graph.actor, merged_actor, *graph.hair_actors},
+        {graph.actor, *graph.hair_actors},
     )
     if os.environ.get("CONCLAVIA_WEB_AVATAR_SKIP_FACE_REPAIR") == "1":
         log("FACE_MATERIALS_REPAIR_SKIPPED diagnostic=true")
     else:
-        repaired_materials = repair_showcase_face_materials(model_path)
+        repaired_materials = repair_showcase_face_materials(
+            model_path,
+            OUTPUT_DIRECTORY / "hair-cards-attribute.png",
+            OUTPUT_DIRECTORY / "eyebrows-cards-attribute.png",
+            source_wardrobe_weights,
+        )
         log(f"FACE_MATERIALS_REPAIRED order={','.join(repaired_materials)}")
 
     animation_files: list[str] = []
@@ -398,7 +392,7 @@ def main() -> None:
     write_bundle_inventory(animation_files, graph)
     log(
         f"CONCLAVIA_WEB_AVATAR_EXPORT_OK directory={OUTPUT_DIRECTORY} "
-        f"animations={len(animation_files)}"
+        f"animations={len(animation_files)} hairAtlases={','.join(hair_atlases)}"
     )
 
 

@@ -91,9 +91,12 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /addAnimationGltfs/);
   assert.match(performer, /manifest\.animationModels/);
   assert.match(performer, /const performer = new ThreeAvatarPerformer/);
-  assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = await Promise\.all/);
-  assert.match(performer, /material\.alphaTest = 0\.05/);
+  assert.match(performer, /gltfs = await Promise\.all/);
+  assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = gltfs/);
+  assert.match(performer, /material\.alphaTest = 0\.065/);
+  assert.match(performer, /conclaviaGroomAttributes\.r/);
   assert.match(performer, /enableExtendedSkinning/);
+  assert.match(performer, /preserveExtendedWeights/);
   assert.match(performer, /attribute vec4 joints_\$\{setIndex\}/);
   assert.match(performer, /getBoneMatrix\(joints_\$\{setIndex\}/);
   assert.match(performer, /conclavia-skin-influences/);

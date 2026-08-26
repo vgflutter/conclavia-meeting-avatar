@@ -396,10 +396,11 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(rendererManifest, /export_web_avatar_bundle\.py/);
   assert.match(exporter, /\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19/);
   assert.match(exporter, /ensure_showcase_export_actor/);
-  assert.match(exporter, /SkeletalMergingLibrary\.merge_meshes/);
-  assert.match(exporter, /graph\.body\.set_visibility\(False, False\)/);
-  assert.match(exporter, /graph\.body\.set_hidden_in_game\(True, False\)/);
-  assert.match(exporter, /merged_body_actor/);
+  assert.doesNotMatch(exporter, /SkeletalMergingLibrary\.merge_meshes/);
+  assert.match(exporter, /source-skin-weight-modifier-extended/);
+  assert.match(exporter, /unreal\.SkinWeightModifier\(\)/);
+  assert.match(exporter, /wardrobe_skin_weights\(graph\)/);
+  assert.match(exporter, /\{graph\.actor, \*graph\.hair_actors\}/);
   assert.match(exporter, /bodyOutfitMerge/);
   assert.match(showcaseResolver, /MeetingAvatarAnchor/);
   assert.match(showcaseResolver, /BP_MHC_Showcase_WebHigh\.BP_MHC_Showcase_WebHigh_C/);
@@ -448,7 +449,10 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(showcaseRepair, /WEIGHTS_\{set_index\}/);
   assert.doesNotMatch(showcaseRepair, /_compact_skin_influences\(document, chunks\)/);
   assert.match(showcaseRepair, /_repair_hair_cards_materials/);
-  assert.match(showcaseRepair, /material\["alphaCutoff"\] = 0\.05/);
+  assert.match(showcaseRepair, /_repair_wardrobe_skin_weights/);
+  assert.match(showcaseRepair, /source-skin-weight-modifier-v1/);
+  assert.match(showcaseRepair, /conclaviaCoverageChannel/);
+  assert.match(showcaseRepair, /material\["alphaCutoff"\] = 0\.065/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
   assert.match(facialBaker, /bake_face_animation/);
   assert.match(faceControlRigBaker, /Face_ControlBoard_CtrlRig/);
