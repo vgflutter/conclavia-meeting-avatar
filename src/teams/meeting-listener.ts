@@ -217,6 +217,7 @@ export function ignoredTranscriptionReason(
   const knownSilenceHallucinations = new Set([
     "apa",
     "cau",
+    "dziekuje",
     "iya iya",
     "sampai jumpa",
   ]);

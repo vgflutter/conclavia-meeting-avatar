@@ -28,6 +28,11 @@ await test("accepts a natural greeting before the avatar name", () => {
       ?.sentences[0]?.text,
     "Sì, ti sento.",
   );
+  assert.equal(
+    immediateResponseFor(segment("Ciao ciao Mary"), "Mary")
+      ?.sentences[0]?.text,
+    "Ciao! Sono qui.",
+  );
 });
 
 await test("answers presence and greeting checks locally", () => {

@@ -9,7 +9,7 @@ function escapeRegExp(value: string): string {
 function addressedRemainder(text: string, avatarName: string): string | null {
   const escapedName = escapeRegExp(avatarName);
   const match = new RegExp(
-    `^(?:(?:ciao|buongiorno|buonasera|salve|ehi|hey|scusa|scusami|senti)[\\s,.:;!?-]+)?(?:@\\s*)?${escapedName}(?:$|[\\s,.:;!?-]+)(?<remainder>.*)$`,
+    `^(?:(?:(?:ciao|buongiorno|buonasera|salve|ehi|hey|scusa|scusami|senti)[\\s,.:;!?-]+){1,3})?(?:@\\s*)?${escapedName}(?:$|[\\s,.:;!?-]+)(?<remainder>.*)$`,
     "iu",
   ).exec(text.trim());
   return match?.groups?.remainder?.trim() ?? (match ? "" : null);
@@ -46,7 +46,7 @@ export function immediateResponseFor(
     text = "Sì, ti sento.";
   } else if (/^(?:ci sei|sei (?:qui|lì|li|pronta|attiva|collegata|online))$/u.test(intent)) {
     text = "Sì, sono qui e sono pronta.";
-  } else if (/^(?:ciao|buongiorno|buonasera|salve|ehi|hey)?$/u.test(intent)) {
+  } else if (/^(?:(?:ciao|buongiorno|buonasera|salve|ehi|hey)(?:\s+|$)){0,3}$/u.test(intent)) {
     text = "Ciao! Sono qui.";
   }
 

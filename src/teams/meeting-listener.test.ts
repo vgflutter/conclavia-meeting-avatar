@@ -155,7 +155,7 @@ await test("filters the transcription prompt when silence echoes it back", () =>
 });
 
 await test("filters recurring silent-buffer hallucinations without losing short invocations", () => {
-  for (const hallucination of ["이", "어", "Apa?", "Čau", "Iya iya", "Sampai jumpa"]) {
+  for (const hallucination of ["이", "어", "當場", "Apa?", "Čau", "Dziękuję", "Iya iya", "Sampai jumpa"]) {
     assert.equal(ignoredTranscriptionReason(hallucination, "Mary"), "noise", hallucination);
   }
   assert.equal(ignoredTranscriptionReason("Mary?", "Mary"), null);
