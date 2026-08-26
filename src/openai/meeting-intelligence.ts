@@ -48,30 +48,21 @@ export function maxOutputTokensForLane(lane: ParticipationLane): number {
   return 400;
 }
 
-const directWebSearchSignals = [
-  /https?:\/\//iu,
-  /\b(?:cerca|cercami|controlla|verifica|verificami|trova|consulta|guarda)\b.{0,48}\b(?:online|internet|web|font[ei]|sito|documentazione)\b/iu,
-  /\b(?:search|check|verify|find|look up|browse)\b.{0,48}\b(?:online|internet|web|sources?|website|documentation)\b/iu,
-  /\b(?:oggi|adesso|attualmente|al momento|in questo momento|recente|recenti|ultima|ultime|ultimo|ultimi|in tempo reale|live)\b/iu,
-  /\b(?:today|now|currently|at the moment|latest|recent|real[ -]?time|live)\b/iu,
-  /\b(?:notizi[ae]|news|meteo|previsioni|weather|prezzo|prezzi|price|pricing|quotazione|borsa|stock|cambio|exchange rate|classifica|standings|risultato|score|calendario|schedule|orari|opening hours|disponibilit[aà]|availability)\b/iu,
-  /\b(?:presidente|primo ministro|premier|ministro|governo|sindaco|amministratore delegato|chief executive|ceo|president|prime minister|mayor)\b/iu,
-  /\b(?:versione corrente|ultima versione|nuova release|latest version|latest release|changelog|aggiornamento disponibile|available update)\b/iu,
-];
-
 /**
- * Keep ordinary direct turns on the lowest-latency path. Web search remains
- * available for explicit browsing requests and facts that are likely to have
- * changed, while observer autonomy may still verify material corrections.
+ * Every direct turn may use web search with tool_choice=auto. This keeps Mary
+ * from claiming that she lacks external data merely because a question did
+ * not contain a brittle keyword such as "online". The model still skips the
+ * tool for self-contained questions. Listening-only reactions stay on the
+ * lowest-latency path; autonomous corrections may verify material claims.
  */
 export function shouldOfferWebSearch(
   enabled: boolean,
   lane: ParticipationLane,
   latestText: string,
 ): boolean {
+  void latestText;
   if (!enabled || lane === "observer-listening") return false;
-  if (lane === "observer-autonomy") return true;
-  return directWebSearchSignals.some((signal) => signal.test(latestText));
+  return lane === "direct" || lane === "observer-autonomy";
 }
 
 export interface ParsedMaryTurn {
@@ -129,13 +120,33 @@ export function qualifiesAutonomousIntervention(
 ): decision is typeof decision & {
   interventionType: Exclude<AutonomousInterventionType, "none">;
 } {
-  return (
-    decision.interventionType === "factual-correction" ||
-    decision.interventionType === "critical-omission" ||
-    decision.interventionType === "material-addition"
-  ) &&
-    decision.importance >= 4 &&
-    decision.confidence >= 4;
+  if (decision.interventionType === "factual-correction") {
+    return decision.importance >= 4 && decision.confidence >= 4;
+  }
+  // Omissions and additions are more subjective than a verifiable false
+  // statement. Require maximum materiality so ordinary opinions, optional
+  // context and "nice to know" details do not make Mary raise her hand.
+  if (decision.interventionType === "critical-omission") {
+    return decision.importance === 5 && decision.confidence >= 4;
+  }
+  if (decision.interventionType === "material-addition") {
+    return decision.importance === 5 && decision.confidence === 5;
+  }
+  return false;
+}
+
+export function canOpenAutonomousRequest(
+  decision: Pick<ParsedMaryTurn, "interventionType" | "importance" | "confidence">,
+  cooldownElapsed: boolean,
+): decision is typeof decision & {
+  interventionType: Exclude<AutonomousInterventionType, "none">;
+} {
+  if (!qualifiesAutonomousIntervention(decision)) return false;
+  if (cooldownElapsed) return true;
+  // Cooldown suppresses repeated optional participation, but must not blind
+  // Mary to a new, certain and maximally important factual contradiction.
+  return decision.interventionType === "factual-correction" &&
+    decision.importance === 5 && decision.confidence === 5;
 }
 
 export function qualifiesAutonomousApplause(
@@ -690,9 +701,12 @@ export class MeetingIntelligence {
 
     return [
       ...identity,
-      "Non puoi parlare autonomamente. Usa request-to-speak solo per una correzione fattuale che cambia la conclusione, un rischio o vincolo decisivo omesso, oppure un'aggiunta indispensabile a una decisione importante.",
+      "Non puoi parlare autonomamente. Usa request-to-speak solo per una correzione fattuale oggettivamente verificabile, un rischio o vincolo decisivo omesso, oppure un'aggiunta indispensabile a una decisione importante.",
+      "Una relazione numerica o logica inequivocabilmente falsa dichiarata come premessa (per esempio un calcolo aritmetico errato) merita factual-correction con importance almeno 4 e confidence 5: potrebbe invalidare ciò che segue anche se la frase è breve.",
+      "Non chiedere la parola per opinioni, preferenze, previsioni, giudizi di valore, semplificazioni retoriche, differenze terminologiche o dettagli veri ma irrilevanti. Non correggere un probabile refuso o rumore di trascrizione: considera tutto il contesto e, se la frase resta ambigua, usa silence.",
       "L'irruenza regola quanto rapidamente cogli un'occasione valida, ma non abbassa mai le soglie di importanza e confidenza e non autorizza interventi marginali.",
-      "Usa rispettivamente interventionType factual-correction, critical-omission o material-addition. importance e confidence devono essere almeno 4; nel dubbio usa silence.",
+      "Usa factual-correction solo per un fatto falso: importance e confidence almeno 4. Per critical-omission serve importance 5 e confidence almeno 4. Per material-addition servono importance 5 e confidence 5. Nel dubbio usa silence.",
+      "Se chiedi la parola, prepara in sentences la correzione precisa e autosufficiente che pronuncerai quando ti verrà concesso il turno; cita in modo conciso l'affermazione problematica e spiega cosa non va.",
       "Usa action=applaud e interventionType=meaningful-conclusion soltanto quando l'ultimo intervento conclude davvero un ragionamento complesso, risolve un problema difficile, raggiunge un traguardo importante o formula un'intuizione eccezionale che in una riunione reale meriterebbe un applauso.",
       "Per applaud servono importance=5 e confidence almeno 4. Non applaudire una semplice informazione interessante, un accordo, una battuta, un aggiornamento ordinario, una frase incompleta, una tua stessa risposta o una conclusione negativa o delicata. Nel dubbio usa silence.",
       "Non ripetere punti già espressi, non anticipare frasi incomplete e non intervenire per confermare, riassumere l'ovvio o correggere dettagli marginali.",

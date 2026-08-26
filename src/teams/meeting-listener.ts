@@ -17,8 +17,12 @@ import {
 
 const pcmChunkBytes = 4_800; // 100 ms of mono PCM16 at 24 kHz.
 const connectionTimeoutMs = 15_000;
-const clientVadSpeechThreshold = 0.0025;
-const clientVadHoldThreshold = 0.0005;
+// BlackHole is a digital meeting bus: values below roughly -44 dBFS are usually
+// codec residue, notifications or routing noise rather than a remote speaker.
+// Keeping this above the previous -52 dBFS floor prevents tiny artifacts from
+// opening a transcription turn and being hallucinated as speech.
+const clientVadSpeechThreshold = 0.006;
+const clientVadHoldThreshold = 0.0015;
 const clientVadSilenceChunks = 9; // 900 ms keeps natural pauses inside one utterance.
 const clientVadPrerollChunks = 4; // Preserve 400 ms before the first detected syllable.
 const clientVadMaxTurnChunks = 120; // Never leave a noisy meeting turn open beyond 12 seconds.
@@ -64,6 +68,98 @@ export function canSpeculateTurn(text: string): boolean {
   return text.trim().split(/\s+/u).filter(Boolean).length >= 3;
 }
 
+export function isMeetingSpeechRms(rms: number): boolean {
+  return Number.isFinite(rms) && rms >= clientVadSpeechThreshold;
+}
+
+export function meetingTranscriptionPrompt(wakeWord: string): string {
+  const assistantName = wakeWord.trim() || "Mary";
+  return [
+    "Riunione di lavoro reale, prevalentemente in italiano, con possibili termini tecnici in inglese.",
+    "Trascrivi fedelmente ciò che viene pronunciato, senza completare frasi, aggiungere parole o correggere affermazioni fattualmente errate.",
+    "Conserva esattamente numeri, operatori e negazioni.",
+    'Nelle espressioni aritmetiche separa le parole: per esempio “tre più tre fa nove”, non “tre più tre fan nove”.',
+    `Il nome esatto dell'assistente virtuale è ${assistantName}.`,
+    "Possibili termini: Conclavia, MetaHuman, Microsoft Teams, Google Meet, AWS, Unreal Engine, OpenAI.",
+  ].join(" ");
+}
+
+export function meetingTranscriptionKeywords(wakeWord: string): string[] {
+  return [
+    wakeWord.trim() || "Mary",
+    "Conclavia",
+    "MetaHuman",
+    "Microsoft Teams",
+    "Google Meet",
+    "AWS",
+    "Unreal Engine",
+    "OpenAI",
+  ];
+}
+
+export function realtimeTranscriptionGuidance(
+  model: string,
+  wakeWord: string,
+): Record<string, unknown> {
+  const prompt = meetingTranscriptionPrompt(wakeWord);
+  if (model === "gpt-live-transcribe") {
+    return {
+      model,
+      languages: ["it", "en"],
+      prompt,
+      keywords: meetingTranscriptionKeywords(wakeWord),
+      // The official guidance recommends medium as the balanced
+      // latency/accuracy point. `minimal` was too eager for meeting speech.
+      delay: "medium",
+    };
+  }
+  if (model === "gpt-transcribe") {
+    return {
+      model,
+      languages: ["it", "en"],
+      prompt,
+      keywords: meetingTranscriptionKeywords(wakeWord),
+    };
+  }
+  return {
+    model,
+    language: "it",
+    prompt,
+  };
+}
+
+export function fileTranscriptionGuidance(
+  model: string,
+  wakeWord: string,
+): Record<string, unknown> {
+  const prompt = meetingTranscriptionPrompt(wakeWord);
+  if (model === "gpt-transcribe") {
+    return {
+      languages: ["it", "en"],
+      prompt,
+      keywords: meetingTranscriptionKeywords(wakeWord),
+    };
+  }
+  return { language: "it", prompt };
+}
+
+export function meetingAudioFilter(audioDevice: string): string {
+  const mono = "pan=mono|c0=c0";
+  if (/blackhole|loopback/iu.test(audioDevice)) {
+    // The virtual device already contains a post-processed conferencing mix.
+    // Use a deliberately mild FFT denoiser: a strong microphone denoiser here
+    // would process the signal twice and erase quiet consonants.
+    return `${mono},highpass=f=65,lowpass=f=10500,afftdn=nr=6:nf=-55:tn=1:gs=5`;
+  }
+  return `${mono},highpass=f=80,lowpass=f=10000,afftdn=nr=10:nf=-50:tn=1:gs=8`;
+}
+
+export function realtimeNoiseReduction(audioDevice: string): { type: "far_field" } | undefined {
+  // BlackHole and Loopback are clean digital buses, not microphones. Avoid
+  // applying the Realtime microphone denoiser on top of the conferencing DSP.
+  return /blackhole|loopback/iu.test(audioDevice) ? undefined : { type: "far_field" };
+}
+
 function normalizedTranscript(value: string): string {
   return value
     .toLocaleLowerCase("it-IT")
@@ -77,13 +173,56 @@ function normalizedTranscript(value: string): string {
 export function isTranscriptionPromptEcho(text: string, wakeWord: string): boolean {
   const normalized = normalizedTranscript(text);
   const name = normalizedTranscript(wakeWord);
+  const configuredPrompt = normalizedTranscript(meetingTranscriptionPrompt(wakeWord));
   const promptEchoes = [
     `riunione di lavoro in italiano l assistente virtuale si chiama ${name}`,
     `riunione di lavoro l assistente virtuale si chiama ${name}`,
     `riunione di lavoro in italiano il nome dell assistente virtuale e ${name}`,
     `riunione di lavoro il nome dell assistente virtuale e ${name}`,
   ];
-  return promptEchoes.includes(normalized);
+  if (promptEchoes.includes(normalized) || normalized === configuredPrompt) return true;
+
+  // Transcription models can occasionally emit only one sentence of their
+  // context prompt when the committed buffer contains digital silence.
+  const distinctivePromptFragments = [
+    "riunione di lavoro reale prevalentemente in italiano",
+    "trascrivi fedelmente cio che viene pronunciato senza completare frasi",
+    `il nome esatto dell assistente virtuale e ${name}`,
+    "possibili termini conclavia metahuman microsoft teams google meet",
+  ];
+  return distinctivePromptFragments.some((fragment) => normalized.includes(fragment));
+}
+
+export type IgnoredTranscriptionReason = "empty" | "prompt-echo" | "noise";
+
+export function ignoredTranscriptionReason(
+  text: string,
+  wakeWord: string,
+): IgnoredTranscriptionReason | null {
+  const trimmed = text.trim();
+  if (!trimmed) return "empty";
+  if (isTranscriptionPromptEcho(trimmed, wakeWord)) return "prompt-echo";
+
+  // A short wake-word utterance is still a valid invocation and must win over
+  // every noise heuristic below.
+  if (isAddressedToAvatar(trimmed, wakeWord)) return null;
+
+  const normalized = normalizedTranscript(trimmed);
+  const hasExpectedAlphabet = /\p{Script=Latin}/u.test(trimmed);
+  if (!hasExpectedAlphabet) return "noise";
+
+  // These are recurring no-speech completions observed on silent BlackHole
+  // buffers. Keep the list narrow so real Italian or English meeting speech is
+  // not discarded by an unreliable home-grown language detector.
+  const knownSilenceHallucinations = new Set([
+    "apa",
+    "cau",
+    "iya iya",
+    "sampai jumpa",
+  ]);
+  if (knownSilenceHallucinations.has(normalized)) return "noise";
+  if (normalized.length <= 1) return "noise";
+  return null;
 }
 
 export type MeetingListenerPhase = "stopped" | "starting" | "running" | "stopping" | "error";
@@ -109,7 +248,7 @@ export interface MeetingListenerStatus {
   lastRealtimeEvent: string | null;
   lastRawTranscript: string | null;
   ignoredTranscriptionTurns: number;
-  lastIgnoredTranscriptReason: "empty" | "prompt-echo" | null;
+  lastIgnoredTranscriptReason: IgnoredTranscriptionReason | null;
   completedTurns: number;
   lastSegment: TranscriptSegment | null;
   lastResult: unknown;
@@ -166,7 +305,7 @@ export class MeetingListener {
   #lastRealtimeEvent: string | null = null;
   #lastRawTranscript: string | null = null;
   #ignoredTranscriptionTurns = 0;
-  #lastIgnoredTranscriptReason: "empty" | "prompt-echo" | null = null;
+  #lastIgnoredTranscriptReason: IgnoredTranscriptionReason | null = null;
   #completedTurns = 0;
   #lastSegment: TranscriptSegment | null = null;
   #lastResult: unknown = null;
@@ -290,14 +429,10 @@ export class MeetingListener {
         this.#partialTranscript = "";
         const transcript = event.transcript.trim();
         this.#lastRawTranscript = transcript;
-        if (!transcript) {
+        const ignoredReason = ignoredTranscriptionReason(transcript, this.#options.wakeWord);
+        if (ignoredReason) {
           this.#ignoredTranscriptionTurns += 1;
-          this.#lastIgnoredTranscriptReason = "empty";
-          return;
-        }
-        if (isTranscriptionPromptEcho(transcript, this.#options.wakeWord)) {
-          this.#ignoredTranscriptionTurns += 1;
-          this.#lastIgnoredTranscriptReason = "prompt-echo";
+          this.#lastIgnoredTranscriptReason = ignoredReason;
           return;
         }
         this.#lastIgnoredTranscriptReason = null;
@@ -328,9 +463,6 @@ export class MeetingListener {
       );
 
       const updated = realtime.emitted("session.updated");
-      const supportsLiveHints = ["gpt-live-transcribe", "gpt-transcribe"].includes(
-        this.#options.transcriptionModel,
-      );
       this.#manualTurnDetection = [
         "gpt-live-transcribe",
         "gpt-transcribe",
@@ -341,6 +473,7 @@ export class MeetingListener {
       this.#localFileTranscription = ["gpt-transcribe", "gpt-4o-mini-transcribe"].includes(
         this.#options.transcriptionModel,
       );
+      const inputNoiseReduction = realtimeNoiseReduction(this.#options.audioDevice);
       realtime.send({
         type: "session.update",
         session: {
@@ -348,27 +481,13 @@ export class MeetingListener {
           audio: {
             input: {
               format: { type: "audio/pcm", rate: 24_000 },
-              transcription: supportsLiveHints
-                ? this.#options.transcriptionModel === "gpt-live-transcribe"
-                  ? {
-                    model: this.#options.transcriptionModel,
-                    languages: ["it", "en"],
-                    prompt: `Riunione di lavoro. L'assistente virtuale si chiama ${this.#options.wakeWord}.`,
-                    keywords: [
-                      this.#options.wakeWord,
-                      "Conclavia",
-                      "MetaHuman",
-                      "Microsoft Teams",
-                      "Google Meet",
-                    ],
-                    delay: "minimal" as const,
-                  }
-                  : { model: this.#options.transcriptionModel }
-                : {
-                    model: this.#options.transcriptionModel,
-                    language: "it",
-                    prompt: `Riunione di lavoro in italiano. L'assistente virtuale si chiama ${this.#options.wakeWord}.`,
-                  },
+              ...(inputNoiseReduction
+                ? { noise_reduction: inputNoiseReduction }
+                : {}),
+              transcription: realtimeTranscriptionGuidance(
+                this.#options.transcriptionModel,
+                this.#options.wakeWord,
+              ),
               turn_detection: this.#manualTurnDetection ? null : {
                 type: "server_vad",
                 create_response: false,
@@ -395,7 +514,7 @@ export class MeetingListener {
           "-i",
           `:${device.index}`,
           "-af",
-          "pan=mono|c0=c0",
+          meetingAudioFilter(device.name),
           "-ar",
           "24000",
           "-c:a",
@@ -476,7 +595,7 @@ export class MeetingListener {
       const pcm = this.#pendingAudio.subarray(0, pcmChunkBytes);
       this.#pendingAudio = this.#pendingAudio.subarray(pcmChunkBytes);
       this.#audioRms = pcm16Rms(pcm);
-      if (this.#audioRms >= clientVadSpeechThreshold) this.#audibleAudioChunks += 1;
+      if (isMeetingSpeechRms(this.#audioRms)) this.#audibleAudioChunks += 1;
       if (this.#manualTurnDetection) {
         this.#appendManualAudio(pcm, this.#audioRms, realtime);
       } else {
@@ -487,7 +606,7 @@ export class MeetingListener {
 
   #appendManualAudio(pcm: Buffer, rms: number, realtime: OpenAIRealtimeWS): void {
     if (!this.#clientVadSpeechSeen) {
-      if (rms < clientVadSpeechThreshold) {
+      if (!isMeetingSpeechRms(rms)) {
         this.#clientVadPreroll.push(Buffer.from(pcm));
         if (this.#clientVadPreroll.length > clientVadPrerollChunks) {
           this.#clientVadPreroll.shift();
@@ -572,19 +691,18 @@ export class MeetingListener {
         const transcription = await this.#openai.audio.transcriptions.create({
           file,
           model: this.#options.transcriptionModel,
-          language: "it",
           response_format: "json",
+          ...fileTranscriptionGuidance(
+            this.#options.transcriptionModel,
+            this.#options.wakeWord,
+          ),
         });
         const transcript = transcription.text.trim();
         this.#lastRawTranscript = transcript;
-        if (!transcript) {
+        const ignoredReason = ignoredTranscriptionReason(transcript, this.#options.wakeWord);
+        if (ignoredReason) {
           this.#ignoredTranscriptionTurns += 1;
-          this.#lastIgnoredTranscriptReason = "empty";
-          return;
-        }
-        if (isTranscriptionPromptEcho(transcript, this.#options.wakeWord)) {
-          this.#ignoredTranscriptionTurns += 1;
-          this.#lastIgnoredTranscriptReason = "prompt-echo";
+          this.#lastIgnoredTranscriptReason = ignoredReason;
           return;
         }
         this.#lastIgnoredTranscriptReason = null;

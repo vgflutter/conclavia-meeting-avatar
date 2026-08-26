@@ -4,9 +4,16 @@ import test from "node:test";
 import {
   canSpeculateAddressedTurn,
   canSpeculateTurn,
+  fileTranscriptionGuidance,
+  ignoredTranscriptionReason,
   isTranscriptionPromptEcho,
+  isMeetingSpeechRms,
+  meetingAudioFilter,
+  meetingTranscriptionPrompt,
   pcm16MonoToWav,
   pcm16Rms,
+  realtimeNoiseReduction,
+  realtimeTranscriptionGuidance,
 } from "./meeting-listener.js";
 
 await test("measures digital silence as zero", () => {
@@ -38,6 +45,69 @@ await test("does not mistake a low-level PCM16 signal for speech", () => {
     pcm.writeInt16LE(offset % 4 === 0 ? 100 : -100, offset);
   }
   assert.ok(pcm16Rms(pcm) < 0.006);
+  assert.equal(isMeetingSpeechRms(pcm16Rms(pcm)), false);
+});
+
+await test("requires a finite -44 dBFS signal before opening a meeting turn", () => {
+  assert.equal(isMeetingSpeechRms(0.0059), false);
+  assert.equal(isMeetingSpeechRms(0.006), true);
+  assert.equal(isMeetingSpeechRms(Number.NaN), false);
+});
+
+await test("guides Italian meeting transcription without correcting factual mistakes", () => {
+  const prompt = meetingTranscriptionPrompt("Mary");
+  assert.match(prompt, /prevalentemente in italiano/iu);
+  assert.match(prompt, /senza .*correggere affermazioni fattualmente errate/iu);
+  assert.match(prompt, /tre più tre fa nove/iu);
+  assert.match(prompt, /non .*fan nove/iu);
+  assert.match(prompt, /nome esatto .* Mary/iu);
+});
+
+await test("uses high-accuracy multilingual hints for gpt-transcribe", () => {
+  assert.deepEqual(realtimeTranscriptionGuidance("gpt-transcribe", "Mary"), {
+    model: "gpt-transcribe",
+    languages: ["it", "en"],
+    prompt: meetingTranscriptionPrompt("Mary"),
+    keywords: [
+      "Mary",
+      "Conclavia",
+      "MetaHuman",
+      "Microsoft Teams",
+      "Google Meet",
+      "AWS",
+      "Unreal Engine",
+      "OpenAI",
+    ],
+  });
+  assert.deepEqual(fileTranscriptionGuidance("gpt-transcribe", "Mary"), {
+    languages: ["it", "en"],
+    prompt: meetingTranscriptionPrompt("Mary"),
+    keywords: [
+      "Mary",
+      "Conclavia",
+      "MetaHuman",
+      "Microsoft Teams",
+      "Google Meet",
+      "AWS",
+      "Unreal Engine",
+      "OpenAI",
+    ],
+  });
+});
+
+await test("uses medium delay for balanced live-transcription accuracy", () => {
+  const guidance = realtimeTranscriptionGuidance("gpt-live-transcribe", "Mary");
+  assert.equal(guidance.delay, "medium");
+  assert.deepEqual(guidance.languages, ["it", "en"]);
+});
+
+await test("does not double-denoise a BlackHole virtual meeting bus", () => {
+  assert.equal(realtimeNoiseReduction("BlackHole 16ch"), undefined);
+  assert.deepEqual(realtimeNoiseReduction("MacBook Pro Microphone"), { type: "far_field" });
+  const filter = meetingAudioFilter("BlackHole 16ch");
+  assert.match(filter, /pan=mono/iu);
+  assert.match(filter, /highpass=f=65/iu);
+  assert.match(filter, /afftdn=nr=6/iu);
 });
 
 await test("speculates only when a useful partial turn addresses Mary", () => {
@@ -71,4 +141,26 @@ await test("filters the transcription prompt when silence echoes it back", () =>
     isTranscriptionPromptEcho("Mary, quanto fa due più due?", "Mary"),
     false,
   );
+  assert.equal(
+    isTranscriptionPromptEcho(meetingTranscriptionPrompt("Mary"), "Mary"),
+    true,
+  );
+  assert.equal(
+    isTranscriptionPromptEcho(
+      "Trascrivi fedelmente ciò che viene pronunciato, senza completare frasi.",
+      "Mary",
+    ),
+    true,
+  );
+});
+
+await test("filters recurring silent-buffer hallucinations without losing short invocations", () => {
+  for (const hallucination of ["이", "어", "Apa?", "Čau", "Iya iya", "Sampai jumpa"]) {
+    assert.equal(ignoredTranscriptionReason(hallucination, "Mary"), "noise", hallucination);
+  }
+  assert.equal(ignoredTranscriptionReason("Mary?", "Mary"), null);
+  assert.equal(ignoredTranscriptionReason("Ehi Mary", "Mary"), null);
+  assert.equal(ignoredTranscriptionReason("Sì", "Mary"), null);
+  assert.equal(ignoredTranscriptionReason("No", "Mary"), null);
+  assert.equal(ignoredTranscriptionReason("Tre più tre fa nove", "Mary"), null);
 });

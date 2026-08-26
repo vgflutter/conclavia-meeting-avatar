@@ -150,6 +150,9 @@ await test("uses any exact avatar-name mention as the explicit wake trigger", ()
 await test("recognizes explicit dialogue dismissal phrases", () => {
   assert.equal(isDialogueDismissal("Grazie Mary, basta così.", "Mary"), true);
   assert.equal(isDialogueDismissal("Mary, puoi smettere di rispondere.", "Mary"), true);
+  assert.equal(isDialogueDismissal("Mary, abbassa la mano.", "Mary"), true);
+  assert.equal(isDialogueDismissal("Mary, ritira la richiesta.", "Mary"), true);
+  assert.equal(isDialogueDismissal("Mary, lower your hand.", "Mary"), true);
   assert.equal(isDialogueDismissal("Thank you Mary.", "Mary"), true);
   assert.equal(isDialogueDismissal("Grazie per il contributo.", "Mary"), false);
 });
@@ -163,5 +166,7 @@ await test("recognizes an explicit grant after a request to speak", () => {
 
 await test("only sends substantial meeting turns to the autonomy evaluator", () => {
   assert.equal(isAutonomyCandidate("Sì, ok."), false);
+  assert.equal(isAutonomyCandidate("Tre più tre fa nove."), true);
+  assert.equal(isAutonomyCandidate("Secondo me tre più tre fa nove."), true);
   assert.equal(isAutonomyCandidate("Il dato trimestrale è cambiato rispetto alla previsione."), true);
 });

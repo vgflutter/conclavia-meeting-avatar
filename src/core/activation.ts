@@ -96,7 +96,7 @@ export function isDialogueDismissal(text: string, wakeWord: string): boolean {
   const escapedWakeWord = escapeRegExp(wakeWord);
   const wakeWordPattern = `\\b${escapedWakeWord}\\b`;
   const dismissalPattern =
-    "(?:grazie|thanks?|thank\\s+you|basta(?:\\s+così)?|fermati|stop|smett(?:i|ere)(?:\\s+di\\s+(?:rispondere|intervenire))?|non\\s+(?:rispondere|intervenire)|do\\s+not\\s+(?:answer|speak|intervene)|torna\\s+in\\s+ascolto)";
+    "(?:grazie|thanks?|thank\\s+you|basta(?:\\s+così)?|fermati|stop|abbassa\\s+la\\s+mano|ritira\\s+(?:la\\s+)?richiesta|lower\\s+(?:your|the)\\s+hand|smett(?:i|ere)(?:\\s+di\\s+(?:rispondere|intervenire))?|non\\s+(?:rispondere|intervenire)|do\\s+not\\s+(?:answer|speak|intervene)|torna\\s+in\\s+ascolto)";
   return new RegExp(
     `(?:${wakeWordPattern}[\\s,.:;!?-]*(?:puoi\\s+)?${dismissalPattern}|${dismissalPattern}[\\s,.:;!?-]*${wakeWordPattern})`,
     "i",
@@ -115,8 +115,12 @@ export function isFloorGrant(text: string, wakeWord: string): boolean {
 }
 
 export function isAutonomyCandidate(text: string): boolean {
-  const words = text.trim().split(/\s+/u).filter(Boolean);
-  if (words.length < 5 || text.trim().length < 24) return false;
+  const value = text.trim();
+  const words = value.split(/\s+/u).filter(Boolean);
+  // Short, complete factual claims can still contain a decisive contradiction
+  // ("tre più tre fa nove"). The LLM remains the semantic/materiality gate;
+  // this inexpensive pre-filter should reject fragments, not hide claims.
+  if (words.length < 4 || value.length < 16) return false;
   return !/^(?:s[ìi]|no|ok(?:ay)?|ecco|allora|bene|capito|perfetto|grazie)[\s,.:;!?-]*$/iu
-    .test(text.trim());
+    .test(value);
 }

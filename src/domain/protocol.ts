@@ -138,10 +138,17 @@ export interface AvatarInterventionRequest {
   id: string;
   kind: "request-to-speak";
   speakerName: string;
+  objection: {
+    sourceSegmentId: string;
+    speakerName: string;
+    statement: string;
+    capturedAt: string;
+  };
   reason: string;
   interventionType: Exclude<AutonomousInterventionType, "none">;
   importance: AvatarMoodLevel;
   confidence: AvatarMoodLevel;
+  draft: AvatarSpeechSentence[];
   proposedCue: AvatarSpeechCue;
   createdAt: string;
   expiresAt: string;
@@ -157,6 +164,7 @@ export interface ActivationDecision {
     | "autonomous-request"
     | "autonomous-applause"
     | "collective-farewell"
+    | "audio-echo"
     | "not-final"
     | "not-addressed";
   cue?: AvatarSpeechCue;

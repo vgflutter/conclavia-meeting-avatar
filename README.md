@@ -43,7 +43,7 @@ _Both frames were captured from the live UE 5.8 Pixel Streaming renderer at 1920
 - `request-to-speak` autonomy: the avatar may prepare a useful contribution and visibly request the floor, but it cannot speak until a participant grants permission.
 - Positive applause performance: every manual, chat-triggered, or autonomous applause is hard-bound to an `amused` semantic mood, the conservative expression calibration validated in the UE 5.6 prototype, and the captured two-hand performance.
 - Floor approval from the web console or by saying phrases such as `Mary, go ahead` or `Go ahead, Mary`.
-- Optional live web search for direct questions that require current or external information. Explicit browsing requests and time-sensitive facts enter the grounded-search path; ordinary questions stay on the Fast processing path without paying tool-planning latency.
+- Optional live web search is available to every direct question with automatic tool choice, so niche or current questions are not blocked by brittle keyword detection. Listening-only reactions stay on the fast path, while autonomous corrections may verify material claims before requesting the floor.
 - Configurable OpenAI response model, API key, purpose, free-form personality, structured temperament, and system prompt.
 - Timestamped meeting agendas loaded from chat, with reliable one-minute warnings, scheduled topic transitions, and end-of-meeting reminders for both Teams and Google Meet.
 - Structured LLM output with one mood and one intensity level for every sentence.
@@ -435,7 +435,7 @@ CONCLAVIA_MEETING_AUDIO_DEVICE=BlackHole 16ch
 CONCLAVIA_MEETING_SPEAKER_NAME=Meeting participant
 OPENAI_RESPONSE_MODEL=gpt-5.4-mini
 OPENAI_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
-OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
+OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-transcribe
 ```
 
 The chat enable switch and command aliases are stored in the local avatar configuration and edited from the web application.

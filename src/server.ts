@@ -15,6 +15,11 @@ import { CollectiveFarewellTracker } from "./core/collective-farewell.js";
 import { ListeningReactionStabilizer } from "./core/listening-reaction.js";
 import { DialogueLease } from "./core/dialogue-lease.js";
 import { immediateResponseFor } from "./core/immediate-response.js";
+import { isLikelyAvatarSpeechEcho } from "./core/transcript-echo.js";
+import {
+  createInterventionRequest,
+  grantedInterventionCue,
+} from "./core/intervention-request.js";
 import { chatResponseChannel, matchChatCommand } from "./core/chat-commands.js";
 import { formatAgendaOffset, MeetingAgendaManager } from "./core/meeting-agenda.js";
 import { OutboundChatQueue } from "./core/outbound-chat-queue.js";
@@ -60,10 +65,10 @@ import type {
 } from "./domain/protocol.js";
 import { chatPlatforms } from "./domain/protocol.js";
 import {
+  canOpenAutonomousRequest,
   hasSufficientAutonomousApplauseContext,
   MeetingIntelligence,
   qualifiesAutonomousApplause,
-  qualifiesAutonomousIntervention,
 } from "./openai/meeting-intelligence.js";
 import { runMacosPreflight } from "./preflight/macos.js";
 import { PerformanceHub } from "./performance/performance-hub.js";
@@ -677,6 +682,31 @@ export function startServer(options: ServerOptions): Promise<void> {
     let llmMs: number | null = null;
     let rendererMs: number | null = null;
     let usedWebSearch = false;
+    if (isLikelyAvatarSpeechEcho(segment, transcriptHistory, runtimeConfig.name)) {
+      return {
+        segment,
+        llmContext: contextSnapshot(),
+        decision: {
+          ingested: false,
+          activated: false,
+          reason: "audio-echo" as const,
+        },
+        renderer: {
+          armed: rendererArmed,
+          playerUrl: rendererPlayerUrl ?? null,
+          delivery: null,
+        },
+        physicalAction: null,
+        latency: {
+          llmMs: null,
+          rendererMs: null,
+          totalMs: Math.round(performance.now() - startedAt),
+        },
+        usedWebSearch: false,
+        warning: null,
+        responseChannel,
+      };
+    }
     const participantKey = dialogueParticipantKey(segment);
     let decision: ActivationDecision = decideActivation(
       segment,
@@ -742,27 +772,44 @@ export function startServer(options: ServerOptions): Promise<void> {
           // The verbal command still closes the local state if Unreal is unavailable.
         }
       }
-    } else if (currentRequest && isFloorGrant(segment.text, runtimeConfig.name)) {
+    } else if (
+      currentRequest &&
+      (isFloorGrant(segment.text, runtimeConfig.name) || decision.activated)
+    ) {
+      // Any explicit invocation while Mary's hand is raised grants the one
+      // prepared intervention. Reuse the stored objection draft instead of
+      // asking the model to answer only the generic "Mary, go ahead" turn.
+      const grantedCue = grantedInterventionCue(currentRequest, segment);
       pendingRequest = null;
       avatarHandRaised = false;
       decision = {
         ingested: true,
         activated: true,
         reason: "conversation-follow-up",
-        cue: currentRequest.proposedCue,
+        cue: grantedCue,
       };
       if (participantKey) dialogueLease.open(participantKey, segment.speakerName);
       else dialogueLease.close();
-      retainAvatarCue(currentRequest.proposedCue);
+      retainAvatarCue(grantedCue, responseChannel === "chat" ? "chat" : "speech", segment);
+      if (rendererArmed) {
+        try {
+          const rendererStartedAt = performance.now();
+          await renderer.settleRequest(runtimeConfig.name);
+          rendererMs = Math.round(performance.now() - rendererStartedAt);
+        } catch (error: unknown) {
+          console.error("Conclavia granted intervention lower-hand cue failed:", error);
+        }
+      }
     } else {
       const direct = decision.activated;
-      const allowAutonomousRequest =
+      const evaluateAutonomousRequest =
         !direct &&
         !currentRequest &&
         runtimeConfig.requestToSpeakEnabled &&
-        Date.now() - lastAutonomousRequestAt >=
-          autonomousInterventionCooldownMs(runtimeConfig.characterTraits) &&
         isAutonomyCandidate(segment.text);
+      const autonomousRequestCooldownElapsed =
+        Date.now() - lastAutonomousRequestAt >=
+          autonomousInterventionCooldownMs(runtimeConfig.characterTraits);
       const allowAutonomousApplause =
         !direct &&
         !currentRequest &&
@@ -801,12 +848,12 @@ export function startServer(options: ServerOptions): Promise<void> {
             segment,
             direct ? "direct" : "observer",
             responseChannel,
-            allowAutonomousRequest || allowAutonomousApplause,
+            evaluateAutonomousRequest || allowAutonomousApplause,
           );
           llmMs = Math.round(performance.now() - llmStartedAt);
           usedWebSearch = turn.usedWebSearch;
-          const qualifiedAutonomousRequest = allowAutonomousRequest &&
-            qualifiesAutonomousIntervention(turn);
+          const qualifiedAutonomousRequest = evaluateAutonomousRequest &&
+            canOpenAutonomousRequest(turn, autonomousRequestCooldownElapsed);
           const qualifiedAutonomousApplause = allowAutonomousApplause &&
             qualifiesAutonomousApplause(turn) &&
             hasSufficientAutonomousApplauseContext(
@@ -886,18 +933,17 @@ export function startServer(options: ServerOptions): Promise<void> {
             qualifiedAutonomousRequest
           ) {
             const createdAt = new Date();
-            const request: AvatarInterventionRequest = {
-              id: randomUUID(),
-              kind: "request-to-speak",
-              speakerName: runtimeConfig.name,
+            const request = createInterventionRequest({
+              avatarName: runtimeConfig.name,
+              segment,
               reason: turn.reason,
               interventionType: turn.interventionType,
               importance: turn.importance,
               confidence: turn.confidence,
               proposedCue: turn.cue,
-              createdAt: createdAt.toISOString(),
-              expiresAt: new Date(createdAt.getTime() + interventionRequestTtlMs).toISOString(),
-            };
+              ttlMs: interventionRequestTtlMs,
+              now: createdAt,
+            });
             pendingRequest = request;
             lastAutonomousRequestAt = createdAt.getTime();
             avatarHandRaised = true;
@@ -1547,11 +1593,13 @@ export function startServer(options: ServerOptions): Promise<void> {
         // dialogue with an unknown participant. A verbal grant is attributed
         // to its actual speaker and opens the short lease above.
         dialogueLease.close();
-        retainAvatarCue(intervention.proposedCue);
+        const grantedCue = grantedInterventionCue(intervention);
+        retainAvatarCue(grantedCue);
         let delivery: Awaited<ReturnType<ConclaviaRenderer["deliver"]>> | null = null;
         if (rendererArmed) {
           try {
-            delivery = await renderer.deliver(intervention.proposedCue, {
+            await renderer.settleRequest(runtimeConfig.name);
+            delivery = await renderer.deliver(grantedCue, {
               voiceStyle: runtimeConfig.voiceStyle,
               italianVoice: runtimeConfig.italianVoice,
               englishVoice: runtimeConfig.englishVoice,
@@ -1560,14 +1608,14 @@ export function startServer(options: ServerOptions): Promise<void> {
             console.error("Granted intervention delivery failed:", error);
             sendJson(response, 502, {
               error: error instanceof Error ? error.message : "Riproduzione non riuscita.",
-              cue: intervention.proposedCue,
+              cue: grantedCue,
             });
             return;
           }
         }
         sendJson(response, 200, {
           ok: true,
-          cue: intervention.proposedCue,
+          cue: grantedCue,
           delivery,
           rendererArmed,
         });

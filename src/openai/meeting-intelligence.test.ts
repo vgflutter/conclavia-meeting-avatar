@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  canOpenAutonomousRequest,
   hasSufficientAutonomousApplauseContext,
   maxOutputTokensForLane,
   meetingContextBudget,
@@ -25,11 +26,11 @@ await test("uses a compact LLM lane when Mary only needs to react while listenin
   );
 });
 
-await test("keeps ordinary direct questions off the web-search planning path", () => {
-  assert.equal(shouldOfferWebSearch(true, "direct", "Mary, quanto fa due più due?"), false);
+await test("offers optional web search to every direct question", () => {
+  assert.equal(shouldOfferWebSearch(true, "direct", "Mary, quanto fa due più due?"), true);
   assert.equal(
     shouldOfferWebSearch(true, "direct", "Mary, spiegami perché una coda riduce la latenza."),
-    false,
+    true,
   );
   assert.equal(shouldOfferWebSearch(false, "direct", "Mary, cerca online le ultime notizie."), false);
 });
@@ -172,6 +173,45 @@ await test("requires material importance and confidence before an autonomous req
   assert.equal(qualifiesAutonomousIntervention(materialCorrection), true);
   assert.equal(qualifiesAutonomousIntervention(marginalAddition), false);
   assert.equal(qualifiesAutonomousIntervention(uncertainCorrection), false);
+});
+
+await test("uses stricter thresholds for subjective omissions and additions", () => {
+  const ordinaryOmission = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Manca un dettaglio.","interventionType":"critical-omission","importance":4,"confidence":5,"sentences":[{"text":"Aggiungerei un dettaglio.","mood":"attentive","level":2}]}',
+    "observer",
+  );
+  const decisiveOmission = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Manca un vincolo decisivo.","interventionType":"critical-omission","importance":5,"confidence":4,"sentences":[{"text":"Il vincolo cambia la decisione.","mood":"concerned","level":3}]}',
+    "observer",
+  );
+  const uncertainAddition = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Potrebbe essere utile.","interventionType":"material-addition","importance":5,"confidence":4,"sentences":[{"text":"Aggiungerei un contesto.","mood":"attentive","level":2}]}',
+    "observer",
+  );
+
+  assert.equal(qualifiesAutonomousIntervention(ordinaryOmission), false);
+  assert.equal(qualifiesAutonomousIntervention(decisiveOmission), true);
+  assert.equal(qualifiesAutonomousIntervention(uncertainAddition), false);
+});
+
+await test("does not let cooldown hide a certain critical factual error", () => {
+  const arithmeticError = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Il calcolo dichiarato è falso.","interventionType":"factual-correction","importance":5,"confidence":5,"sentences":[{"text":"Tre più tre fa sei, non nove.","mood":"assertive","level":3}]}',
+    "observer",
+  );
+  const marginalAddition = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Potrei aggiungere un dettaglio.","interventionType":"material-addition","importance":3,"confidence":5,"sentences":[{"text":"Aggiungerei un dettaglio.","mood":"attentive","level":2}]}',
+    "observer",
+  );
+  const importantOmission = parseMaryTurn(
+    '{"action":"request-to-speak","reason":"Manca un vincolo decisivo.","interventionType":"critical-omission","importance":5,"confidence":5,"sentences":[{"text":"Manca il vincolo normativo.","mood":"concerned","level":3}]}',
+    "observer",
+  );
+
+  assert.equal(canOpenAutonomousRequest(arithmeticError, false), true);
+  assert.equal(canOpenAutonomousRequest(marginalAddition, false), false);
+  assert.equal(canOpenAutonomousRequest(importantOmission, false), false);
+  assert.equal(canOpenAutonomousRequest(importantOmission, true), true);
 });
 
 await test("reserves autonomous applause for a highly significant conclusion", () => {

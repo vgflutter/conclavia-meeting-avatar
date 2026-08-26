@@ -156,7 +156,7 @@ async function main(): Promise<void> {
     transcriptionModel:
       process.env.OPENAI_TRANSCRIPTION_MODEL?.trim() || "gpt-4o-mini-transcribe",
     realtimeTranscriptionModel:
-      process.env.OPENAI_REALTIME_TRANSCRIPTION_MODEL?.trim() || "gpt-4o-mini-transcribe",
+      process.env.OPENAI_REALTIME_TRANSCRIPTION_MODEL?.trim() || "gpt-transcribe",
     meetingAudioDevice:
       process.env.CONCLAVIA_MEETING_AUDIO_DEVICE?.trim()
       || process.env.CONCLAVIA_TEAMS_AUDIO_DEVICE?.trim()
