@@ -65,6 +65,19 @@ export function isAddressedToAvatar(text: string, wakeWord: string): boolean {
     }
   }
 
+  // Realtime meeting transcription can merge the previous speaker's sentence
+  // and a fresh invocation into one finalized turn. Preserve the strict
+  // start-of-clause rules above, but apply them again after a real sentence
+  // boundary. This accepts "... vediamo. Mary, quanto fa due per due?" while
+  // still rejecting narrative mentions such as "Mary ha già risposto".
+  const laterClause = new RegExp(
+    `(?:[.!?;:\u2026]+)\\s*(?<clause>(?:(?:ciao|buongiorno|buonasera|salve|ehi|hey|scusa|scusami|senti)[\\s,.:;!?-]+)?(?:@\\s*)?${escapedWakeWord}(?:$|[\\s,.:;!?-]).*)$`,
+    "iu",
+  ).exec(value)?.groups?.clause?.trim();
+  if (laterClause && laterClause !== value && isAddressedToAvatar(laterClause, wakeWord)) {
+    return true;
+  }
+
   // Also accept the natural vocative at the end of a question or directive,
   // while ignoring third-person references such as "Mary ha già risposto".
   const atEnd = new RegExp(
