@@ -23,11 +23,11 @@ if SCRIPT_DIR not in sys.path:
 
 from build_metahuman_hand_raise import (
     control_channels,
-    find_body_component,
     frame,
     key_bool_channel,
     key_euler_channels,
 )
+from web_showcase_actor import ensure_showcase_export_actor
 
 
 LEVEL_PATH = "/Game/Conclavia/Meeting/L_MeetingAvatar_v19"
@@ -120,8 +120,8 @@ def build() -> None:
     if rig_asset is None or not hasattr(rig_asset, "get_control_rig_class"):
         raise RuntimeError(f"Missing MetaHuman Control Rig: {CONTROL_RIG_PATH}")
 
-    staged_body = find_body_component()
-    body_mesh = staged_body.get_skeletal_mesh_asset()
+    showcase = ensure_showcase_export_actor()
+    body_mesh = showcase.body.get_skeletal_mesh_asset()
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     temporary_actor = actors.spawn_actor_from_class(
         unreal.SkeletalMeshActor,

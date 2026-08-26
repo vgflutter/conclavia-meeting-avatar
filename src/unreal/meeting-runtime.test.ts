@@ -563,7 +563,7 @@ await test("catalogs authored MetaHuman body motion before selecting Web microge
       repositoryFile("unreal/ConclaviaStudio/Scripts/build_metahuman_hand_raise.py"),
       "utf8",
     ),
-    /close_level_sequence\(\)/,
+    /ensure_showcase_export_actor\(\)[\s\S]*close_level_sequence\(\)/,
   );
   assert.match(wrapper, /build_web_authored_microgestures\.py/);
   assert.match(wrapper, /refine_applause_hand_contact\.py/);

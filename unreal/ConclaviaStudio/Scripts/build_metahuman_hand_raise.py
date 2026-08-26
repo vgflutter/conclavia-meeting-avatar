@@ -9,8 +9,17 @@ hold and a lower segment so the runtime can pause while waiting for permission.
 from __future__ import annotations
 
 import math
+from pathlib import Path
+import sys
 
 import unreal
+
+
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+if str(SCRIPT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIRECTORY))
+
+from web_showcase_actor import ensure_showcase_export_actor
 
 
 LEVEL_PATH = "/Game/Conclavia/Meeting/L_MeetingAvatar_v19"
@@ -176,8 +185,12 @@ def build() -> None:
     if rig_asset is None or not hasattr(rig_asset, "get_control_rig_class"):
         raise RuntimeError(f"Missing MetaHuman Control Rig: {CONTROL_RIG_PATH}")
 
-    body_component = find_body_component()
-    body_mesh = body_component.get_skeletal_mesh_asset()
+    # Author on the exact Optimized/High Showcase body exported to Web. The
+    # meeting level also contains a legacy Elena runtime anchor; selecting the
+    # first tagged Body bakes correct motion onto the wrong proportions and
+    # visibly separates the arm after name-based glTF retargeting.
+    showcase = ensure_showcase_export_actor()
+    body_mesh = showcase.body.get_skeletal_mesh_asset()
     actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     temporary_actor = actor_subsystem.spawn_actor_from_class(
         unreal.SkeletalMeshActor,
