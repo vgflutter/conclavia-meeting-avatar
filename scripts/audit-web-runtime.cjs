@@ -22,6 +22,14 @@ const actionDelay = Number.parseInt(
   process.env.CONCLAVIA_WEB_RUNTIME_ACTION_DELAY_MS || "900",
   10,
 );
+const viewportWidth = Number.parseInt(
+  process.env.CONCLAVIA_WEB_RUNTIME_VIEWPORT_WIDTH || "1920",
+  10,
+);
+const viewportHeight = Number.parseInt(
+  process.env.CONCLAVIA_WEB_RUNTIME_VIEWPORT_HEIGHT || "1080",
+  10,
+);
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -53,6 +61,8 @@ async function main() {
   const userDataDirectory = await mkdtemp(join(tmpdir(), "conclavia-chrome-"));
   const chrome = spawn(chromePath, [
     "--headless=new",
+    `--window-size=${viewportWidth},${viewportHeight}`,
+    "--force-device-scale-factor=1",
     `--remote-debugging-port=${debuggingPort}`,
     `--user-data-dir=${userDataDirectory}`,
     "--autoplay-policy=no-user-gesture-required",
@@ -125,6 +135,12 @@ async function main() {
     await command("Log.enable");
     await command("Network.enable");
     await command("Page.enable");
+    await command("Emulation.setDeviceMetricsOverride", {
+      width: viewportWidth,
+      height: viewportHeight,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
     await command("Page.reload", { ignoreCache: true });
     await delay(4_000);
     if (actionText) {
@@ -168,6 +184,9 @@ async function main() {
           readyState: document.readyState,
           canvasWidth: canvas?.width || 0,
           canvasHeight: canvas?.height || 0,
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+          devicePixelRatio: window.devicePixelRatio,
           streamReady: window.conclaviaPerformanceStream instanceof MediaStream,
           videoTracks: window.conclaviaPerformanceStream?.getVideoTracks().length || 0,
           audioTracks: window.conclaviaPerformanceStream?.getAudioTracks().length || 0,

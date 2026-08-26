@@ -106,7 +106,10 @@ export class WebPerformanceRenderer {
       avatarId: this.#avatarProfile,
       avatarName: speakerName,
       gesture: "applause",
-      durationMs: 4_500,
+      // The authored seated take contains one continuous 3.5 second applause
+      // passage. Stop before its end instead of visibly jumping back to the
+      // beginning for a partial second loop.
+      durationMs: 3_400,
       mood: "amused",
       rendererMood: "playfulness",
       intensity: 0.58,

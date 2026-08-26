@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 const loopingGestures = new Set(["applause"]);
 
@@ -40,8 +41,15 @@ function portableMaterials(node) {
 }
 
 function preparePortableMaterial(material, renderer) {
-  if (material.map) {
-    material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  for (const texture of [
+    material.map,
+    material.normalMap,
+    material.roughnessMap,
+    material.metalnessMap,
+    material.aoMap,
+    material.emissiveMap,
+  ]) {
+    if (texture) texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
   }
   const name = String(material.name || "").toLowerCase();
   if (name.includes("hair_cards")) {
@@ -49,16 +57,40 @@ function preparePortableMaterial(material, renderer) {
     material.transparent = false;
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
+    material.envMapIntensity = 0.38;
   }
   if (name.includes("face_skin_baked_lod1") && material.map) {
-    // UE's portable Simple bake includes the identity texture but its stock
-    // glTF PBR conversion over-darkens the eye sockets under Web lighting.
-    // A restrained texture-driven fill restores webcam readability while the
-    // authored normal/roughness maps continue to carry the skin detail.
+    // Keep the high-frequency identity texture and normal response visible.
+    // A tiny texture fill only compensates for MetaHuman subsurface scattering,
+    // which glTF PBR cannot represent; the previous 0.35 emissive workaround
+    // flattened pores, specular breakup and facial volume.
     material.aoMap = null;
     material.emissiveMap = material.map;
     material.emissive = new THREE.Color(0xffffff);
-    material.emissiveIntensity = 0.35;
+    material.emissiveIntensity = 0.075;
+    material.envMapIntensity = 0.52;
+    material.metalness = 0;
+    if (material.normalScale) material.normalScale.set(1.08, 1.08);
+    material.onBeforeCompile = (shader) => {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <lights_fragment_end>",
+        `#include <lights_fragment_end>
+        float conclaviaSkinEdge = pow(
+          1.0 - saturate(dot(geometryNormal, geometryViewDir)),
+          2.0
+        );
+        reflectedLight.indirectDiffuse += diffuseColor.rgb
+          * vec3(1.0, 0.34, 0.22)
+          * conclaviaSkinEdge
+          * 0.055;`,
+      );
+    };
+    material.customProgramCacheKey = () => "conclavia-skin-hq-v1";
+  } else if (name.includes("eyel_baked") || name.includes("eyer_baked")) {
+    material.envMapIntensity = 1.35;
+    material.roughness = Math.max(0.1, material.roughness || 0);
+  } else if (material.isMeshStandardMaterial) {
+    material.envMapIntensity = 0.62;
   }
   material.needsUpdate = true;
 }
@@ -145,23 +177,53 @@ class ThreeAvatarPerformer {
     });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.92;
+    this.renderer.toneMappingExposure = 1.02;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.info.autoReset = true;
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(manifest.environment.background);
+    this.environmentTarget = new THREE.PMREMGenerator(this.renderer)
+      .fromScene(new RoomEnvironment(), 0.04);
+    this.scene.environment = this.environmentTarget.texture;
+    this.scene.environmentIntensity = 0.72;
     this.camera = new THREE.PerspectiveCamera(manifest.framing.fov, 16 / 9, 0.01, 1000);
     this.camera.position.fromArray(manifest.framing.camera);
     this.camera.lookAt(new THREE.Vector3().fromArray(manifest.framing.target));
 
-    const hemisphere = new THREE.HemisphereLight(0xdde9ff, 0x18312d, manifest.environment.fillLightIntensity);
+    const hemisphere = new THREE.HemisphereLight(
+      0xffeee4,
+      0x17332f,
+      manifest.environment.fillLightIntensity * 0.58,
+    );
     this.scene.add(hemisphere);
-    const key = new THREE.DirectionalLight(0xffead8, manifest.environment.keyLightIntensity);
+    const key = new THREE.DirectionalLight(
+      0xffddca,
+      manifest.environment.keyLightIntensity * 0.76,
+    );
     key.position.set(2.2, 3.1, 2.4);
     key.castShadow = true;
+    key.shadow.mapSize.set(4096, 4096);
+    key.shadow.bias = -0.00008;
+    key.shadow.normalBias = 0.018;
+    key.shadow.camera.near = 0.1;
+    key.shadow.camera.far = 12;
+    key.shadow.camera.left = -2;
+    key.shadow.camera.right = 2;
+    key.shadow.camera.top = 3;
+    key.shadow.camera.bottom = -1;
     this.scene.add(key);
-    const rim = new THREE.DirectionalLight(0x70aaff, manifest.environment.fillLightIntensity * 0.55);
+    const fill = new THREE.DirectionalLight(
+      0xfff1e8,
+      manifest.environment.fillLightIntensity * 0.38,
+    );
+    fill.position.set(-1.8, 1.8, 2.7);
+    this.scene.add(fill);
+    const rim = new THREE.DirectionalLight(
+      0x76a9ff,
+      manifest.environment.fillLightIntensity * 0.32,
+    );
     rim.position.set(-2.4, 2.1, -1.2);
     this.scene.add(rim);
 
@@ -283,6 +345,7 @@ class ThreeAvatarPerformer {
       }
     });
     this.renderer.dispose();
+    this.environmentTarget?.dispose();
     this.canvas.width = 1;
     this.canvas.height = 1;
   }
@@ -357,7 +420,7 @@ class ThreeAvatarPerformer {
       moodReference ? `mood:${state.mood}` : "",
       moodReference,
       boundedWeight(state.moodLevel),
-      0.14,
+      0.24,
     );
     const visemeReference = state.speaking
       ? facialClips.visemes?.[state.viseme] || null
@@ -367,7 +430,7 @@ class ThreeAvatarPerformer {
       visemeReference ? `viseme:${state.viseme}` : "",
       visemeReference,
       visemeReference ? 1 : 0,
-      0.045,
+      0.06,
     );
   }
 
@@ -434,8 +497,8 @@ class ThreeAvatarPerformer {
     action.clampWhenFinished = true;
     if (previous === action) action.play();
     else {
-      action.fadeIn(0.32).play();
-      previous?.fadeOut(0.32);
+      action.fadeIn(0.46).play();
+      previous?.fadeOut(0.56);
     }
     this.currentAction = action;
     this.currentClipName = normalized;

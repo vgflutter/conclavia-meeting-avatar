@@ -32,8 +32,9 @@ LEVEL_PATH = os.environ.get(
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
 ASSET_VERSION = os.environ.get(
     "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
-    "ue58-v38-face-control-rig",
+    "ue58-v39-web-hq",
 )
+MATERIAL_BAKE_SIZE = 2048
 OUTPUT_DIRECTORY = Path(
     os.environ.get(
         "CONCLAVIA_WEB_AVATAR_EXPORT_DIR",
@@ -59,11 +60,11 @@ ANIMATION_EXPORTS = (
         "anim-reflective-idle.glb",
     ),
     (
-        "/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_SeatedMarkerless_v1",
+        "/Game/Conclavia/Meeting/Animations/AS_MeetingHandRaise_ControlRig_v2",
         "anim-hand-raise.glb",
     ),
     (
-        "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedMarkerless_v1",
+        "/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedContactIK_v3",
         "anim-applause.glb",
     ),
     (
@@ -145,6 +146,15 @@ def configure_options(*, preview_mesh: bool) -> unreal.GLTFExportOptions:
         # recommends Simple for this case: bake on a quad and retain the
         # MetaHuman's authored texture coordinates.
         "bake_material_inputs": unreal.GLTFMaterialBakeMode.SIMPLE,
+        # Epic's Optimized/High assembly owns 2K source textures, but the glTF
+        # exporter defaults every baked input to 1K. Preserve the full real-time
+        # tier so skin normals, eyes, hair cards and wardrobe survive a close
+        # webcam crop.
+        "default_material_bake_size": unreal.GLTFMaterialBakeSize(
+            x=MATERIAL_BAKE_SIZE,
+            y=MATERIAL_BAKE_SIZE,
+            auto_detect=False,
+        ),
     }
     optional = {
         "export_cameras": False,
@@ -254,20 +264,20 @@ def write_bundle_inventory(
                 "emphasis": "AS_MeetingEmphasis_Authored_v1",
                 "settle": "AS_MeetingSettle_Authored_v1",
                 "raise-hand": {
-                    "clip": "AS_MeetingHandRaise_SeatedMarkerless_v1",
-                    "startSeconds": 1.75,
-                    "endSeconds": 3.25,
+                    "clip": "AS_MeetingHandRaise_ControlRig_v2",
+                    "startSeconds": 0.4,
+                    "endSeconds": 1.6,
                 },
                 "lower-hand": {
-                    "clip": "AS_MeetingHandRaise_SeatedMarkerless_v1",
-                    "startSeconds": 5.75,
-                    "endSeconds": 7.5,
+                    "clip": "AS_MeetingHandRaise_ControlRig_v2",
+                    "startSeconds": 3.5,
+                    "endSeconds": 4.7,
                 },
                 "applause": {
-                    "clip": "AS_MeetingApplause_SeatedMarkerless_v1",
+                    "clip": "AS_MeetingApplause_SeatedContactIK_v3",
                     "startSeconds": 3.25,
                     "endSeconds": 6.75,
-                    "loop": True,
+                    "loop": False,
                 },
             },
         },

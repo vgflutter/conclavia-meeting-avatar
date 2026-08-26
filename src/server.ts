@@ -93,6 +93,7 @@ const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
   ["/vendor/three/build/three.module.js", ["../node_modules/three/build/three.module.js", "text/javascript; charset=utf-8"]],
   ["/vendor/three/build/three.core.js", ["../node_modules/three/build/three.core.js", "text/javascript; charset=utf-8"]],
   ["/vendor/three/examples/jsm/loaders/GLTFLoader.js", ["../node_modules/three/examples/jsm/loaders/GLTFLoader.js", "text/javascript; charset=utf-8"]],
+  ["/vendor/three/examples/jsm/environments/RoomEnvironment.js", ["../node_modules/three/examples/jsm/environments/RoomEnvironment.js", "text/javascript; charset=utf-8"]],
   ["/vendor/three/examples/jsm/utils/BufferGeometryUtils.js", ["../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js", "text/javascript; charset=utf-8"]],
   ["/vendor/three/examples/jsm/utils/SkeletonUtils.js", ["../node_modules/three/examples/jsm/utils/SkeletonUtils.js", "text/javascript; charset=utf-8"]],
 ] as const);

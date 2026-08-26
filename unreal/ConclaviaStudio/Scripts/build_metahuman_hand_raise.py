@@ -13,13 +13,13 @@ import math
 import unreal
 
 
-LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-SOURCE_IDLE_PATH = "/Game/Conclavia/Studio/Animations/AS_Conclavia_SeatedIdle"
-CONTROL_RIG_PATH = "/Game/MetaHumans/Common/Common/MetaHuman_ControlRig"
-OUTPUT_ROOT = "/Game/Conclavia/Studio/Animations"
-OUTPUT_NAME = "AS_Conclavia_MetaHumanHandRaise"
+LEVEL_PATH = "/Game/Conclavia/Meeting/L_MeetingAvatar_v19"
+SOURCE_IDLE_PATH = "/Game/Conclavia/Meeting/Animations/AS_MeetingCalmIdle_v1"
+CONTROL_RIG_PATH = "/Game/Conclavia/Meeting/MetaHumans/Common/Common/MetaHuman_ControlRig"
+OUTPUT_ROOT = "/Game/Conclavia/Meeting/Animations"
+OUTPUT_NAME = "AS_MeetingHandRaise_ControlRig_v2"
 OUTPUT_PATH = f"{OUTPUT_ROOT}/{OUTPUT_NAME}"
-TEMP_SEQUENCE_NAME = "LS_Conclavia_MetaHumanHandRaise_Source"
+TEMP_SEQUENCE_NAME = "LS_MeetingHandRaise_ControlRig_v2"
 TEMP_SEQUENCE_PATH = f"{OUTPUT_ROOT}/{TEMP_SEQUENCE_NAME}"
 
 FPS = 30

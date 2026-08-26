@@ -171,7 +171,10 @@ function coverRect(sourceWidth, sourceHeight, targetWidth, targetHeight, zoom) {
 function drawFrame(now) {
   const deltaSeconds = Math.min(0.1, Math.max(0, now - lastFrameAt) / 1000);
   lastFrameAt = now;
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+  // Render a 2x supersampled performance frame. OBS and meeting clients then
+  // downsample it to their negotiated output size, retaining cleaner hair,
+  // eyelashes, skin normals and silhouette edges.
+  const pixelRatio = Math.min(Math.max(window.devicePixelRatio || 1, 2), 2);
   const width = Math.max(1, Math.round(canvas.clientWidth * pixelRatio));
   const height = Math.max(1, Math.round(canvas.clientHeight * pixelRatio));
   if (canvas.width !== width || canvas.height !== height) {

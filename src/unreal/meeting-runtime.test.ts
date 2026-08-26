@@ -353,10 +353,12 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /"attentive"/);
   assert.match(exporter, /"amused"/);
   assert.match(exporter, /GLTFExporter\.export_to_gltf/);
-  assert.match(exporter, /AS_MeetingHandRaise_SeatedMarkerless_v1/);
-  assert.match(exporter, /AS_MeetingApplause_SeatedMarkerless_v1/);
-  assert.doesNotMatch(exporter, /AS_MeetingApplause_SeatedContactIK_v3/);
-  assert.match(exporter, /"startSeconds": 5\.75/);
+  assert.match(exporter, /AS_MeetingHandRaise_ControlRig_v2/);
+  assert.match(exporter, /AS_MeetingApplause_SeatedContactIK_v3/);
+  assert.match(exporter, /MATERIAL_BAKE_SIZE = 2048/);
+  assert.match(exporter, /default_material_bake_size/);
+  assert.match(exporter, /"loop": False/);
+  assert.match(exporter, /"startSeconds": 3\.5/);
   assert.match(exporter, /CONCLAVIA_WEB_AVATAR_EXPORT_OK/);
   assert.match(exporter, /"assetVersion": ASSET_VERSION/);
   assert.match(exporter, /"hairGeometry": "cards"/);
@@ -554,7 +556,11 @@ await test("catalogs authored MetaHuman body motion before selecting Web microge
   assert.doesNotMatch(builder, /add_bone_track\(["'](?:root|pelvis|thigh|calf|foot)/iu);
   assert.match(wrapper, /build_seated_idle\.py/);
   assert.match(wrapper, /build_meeting_attentive_idle\.py/);
+  assert.match(wrapper, /build_metahuman_hand_raise\.py/);
+  assert.match(wrapper, /CONCLAVIA_HAND_RAISE: READY/);
   assert.match(wrapper, /build_web_authored_microgestures\.py/);
+  assert.match(wrapper, /refine_applause_hand_contact\.py/);
+  assert.match(wrapper, /CONCLAVIA_APPLAUSE_CONTACT_IK: READY/);
   assert.match(wrapper, /CONCLAVIA_WEB_MICROGESTURES: READY/);
   assert.match(exporter, /anim-nod\.glb/);
   assert.match(exporter, /anim-tilt\.glb/);
@@ -563,6 +569,7 @@ await test("catalogs authored MetaHuman body motion before selecting Web microge
   assert.match(exporter, /"nod": "AS_MeetingNod_Authored_v1"/);
   assert.match(exporter, /"settle": "AS_MeetingSettle_Authored_v1"/);
   assert.match(rendererManifest, /build_web_authored_microgestures\.py/);
+  assert.match(rendererManifest, /build_metahuman_hand_raise\.py/);
   assert.match(rendererManifest, /Build-WebAuthoredMicrogestures\.ps1/);
   assert.match(deployScript, /Build-WebAuthoredMicrogestures\.ps1/);
 });

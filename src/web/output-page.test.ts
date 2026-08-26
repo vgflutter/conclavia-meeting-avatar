@@ -81,12 +81,16 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(output, /outputMode === "obs" \? "clean" : "console"/);
   assert.match(html, /data-output="console"/);
   assert.match(performer, /new THREE\.AnimationMixer/);
+  assert.match(performer, /new THREE\.PMREMGenerator/);
+  assert.match(performer, /new RoomEnvironment/);
+  assert.match(performer, /key\.shadow\.mapSize\.set\(4096, 4096\)/);
+  assert.match(performer, /emissiveIntensity = 0\.075/);
   assert.match(performer, /addAnimationGltfs/);
   assert.match(performer, /manifest\.animationModels/);
   assert.match(performer, /const performer = new ThreeAvatarPerformer/);
   assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = await Promise\.all/);
   assert.match(performer, /material\.alphaTest = 0\.05/);
-  assert.match(performer, /material\.emissiveIntensity = 0\.35/);
+  assert.match(output, /Math\.max\(window\.devicePixelRatio \|\| 1, 2\)/);
   assert.match(performer, /stabilizePortableHair\(this\.root\)/);
   assert.match(performer, /faceComponent\.attach\(group\)/);
   assert.match(performer, /retargetPortableClip/);
@@ -104,7 +108,8 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /morphTargetInfluences/);
   assert.match(performer, /manifest\.framing\.rotationDegrees/);
   assert.match(performer, /THREE\.MathUtils\.degToRad/);
-  assert.match(performer, /fadeIn\(0\.32\)/);
+  assert.match(performer, /fadeIn\(0\.46\)/);
+  assert.match(server, /RoomEnvironment\.js/);
   assert.match(server, /api\/performance\/avatar/);
   assert.match(server, /model\/gltf-binary/);
   assert.match(server, /animationModels\.map/);

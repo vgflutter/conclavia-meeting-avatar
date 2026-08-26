@@ -19,9 +19,19 @@ $steps = @(
         Marker = "CONCLAVIA_MEETING_IDLE: READY"
     },
     @{
+        Name = "solver driven hand raise"
+        Script = Join-Path $projectRoot "Scripts\build_metahuman_hand_raise.py"
+        Marker = "CONCLAVIA_HAND_RAISE: READY"
+    },
+    @{
         Name = "authored Web microgestures"
         Script = Join-Path $projectRoot "Scripts\build_web_authored_microgestures.py"
         Marker = "CONCLAVIA_WEB_MICROGESTURES: READY"
+    },
+    @{
+        Name = "applause hand contact"
+        Script = Join-Path $projectRoot "Scripts\refine_applause_hand_contact.py"
+        Marker = "CONCLAVIA_APPLAUSE_CONTACT_IK: READY"
     }
 )
 
@@ -51,4 +61,4 @@ foreach ($step in $steps) {
     }
 }
 
-Write-Output "Four seated authored Web microgestures are ready."
+Write-Output "Seated authored Web microgestures and applause contact IK are ready."
