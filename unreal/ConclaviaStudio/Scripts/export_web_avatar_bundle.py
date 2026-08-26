@@ -32,7 +32,7 @@ LEVEL_PATH = os.environ.get(
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
 ASSET_VERSION = os.environ.get(
     "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
-    "ue58-v35-optimized-high-simple-bake",
+    "ue58-v36-optimized-high-hair-cards",
 )
 OUTPUT_DIRECTORY = Path(
     os.environ.get(

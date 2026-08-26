@@ -120,6 +120,7 @@ def _spawn_showcase(anchor: unreal.Actor) -> unreal.Actor:
 def _spawn_web_hair(
     actor: unreal.Actor,
     body: unreal.SkeletalMeshComponent,
+    hair_cards_material: unreal.MaterialInterface,
 ) -> tuple[unreal.StaticMeshActor, ...]:
     subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     hair_actors: list[unreal.StaticMeshActor] = []
@@ -144,6 +145,11 @@ def _spawn_web_hair(
         if not isinstance(component, unreal.StaticMeshComponent):
             raise RuntimeError("Showcase Web hair actor has no Static Mesh component")
         component.set_static_mesh(mesh)
+        # Groom cards receive their shader as a component override; the
+        # generated Static Mesh assets themselves deliberately have no useful
+        # material assignment. Preserve Epic's Hair Cards material so the
+        # glTF Simple bake sees the same atlas/coverage as the MetaHuman.
+        component.set_material(0, hair_cards_material)
         component.set_mobility(unreal.ComponentMobility.MOVABLE)
         component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
         component.set_visibility(True, True)
@@ -177,15 +183,32 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
                 f"Web {role} identity mismatch: expected {SHOWCASE_ASSET_FRAGMENT}, got {path}"
             )
 
+    groom_components = actor.get_components_by_class(unreal.GroomComponent)
+    hair_components = [
+        component for component in groom_components if component.get_name() == "Hair"
+    ]
+    if len(hair_components) != 1:
+        raise RuntimeError(
+            f"Expected one Showcase Hair Groom component, found {len(hair_components)}"
+        )
+    hair_cards_material = hair_components[0].get_material(0)
+    if (
+        not isinstance(hair_cards_material, unreal.MaterialInterface)
+        or "Hair_Cards" not in hair_cards_material.get_path_name()
+    ):
+        raise RuntimeError(
+            "Showcase Hair Groom has no verified Hair Cards material override"
+        )
+
     groom_paths: list[str] = []
-    for component in actor.get_components_by_class(unreal.GroomComponent):
+    for component in groom_components:
         groom = component.get_editor_property("groom_asset")
         if groom is not None:
             groom_paths.append(groom.get_path_name())
     if not groom_paths:
         raise RuntimeError("Optimized Showcase has no Groom components; refusing a bald Web export")
 
-    hair_actors = _spawn_web_hair(actor, body)
+    hair_actors = _spawn_web_hair(actor, body, hair_cards_material)
     hair_mesh_paths = tuple(
         component.get_editor_property("static_mesh").get_path_name()
         for hair_actor in hair_actors
@@ -202,6 +225,7 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
         "READY "
         f"class={actor.get_class().get_path_name()} "
         f"face={face_mesh_path} body={body_mesh_path} grooms={len(groom_paths)} "
+        f"hairMaterial={hair_cards_material.get_path_name()} "
         f"webHair={','.join(hair_mesh_paths)}"
     )
     return ShowcaseActorGraph(
