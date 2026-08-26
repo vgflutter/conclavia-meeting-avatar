@@ -55,7 +55,7 @@ await test("preserves web verification for material autonomous decisions", () =>
   assert.equal(shouldOfferWebSearch(true, "observer-listening", "Ultime notizie."), false);
 });
 
-await test("uses lane-aware meeting context without weakening summaries", () => {
+await test("gives direct answers the complete retained meeting transcript", () => {
   const listening = meetingContextBudget("observer-listening", "Continuiamo.");
   const direct = meetingContextBudget("direct", "Mary, cosa suggerisci?");
   const autonomy = meetingContextBudget("observer-autonomy", "Questo dato cambia la decisione.");
@@ -63,9 +63,10 @@ await test("uses lane-aware meeting context without weakening summaries", () => 
 
   assert.ok(listening.maximumCharacters < direct.maximumCharacters);
   assert.ok(listening.maximumSegments < direct.maximumSegments);
-  assert.ok(direct.maximumCharacters < autonomy.maximumCharacters);
-  assert.ok(direct.maximumSegments < autonomy.maximumSegments);
-  assert.deepEqual(summary, { maximumCharacters: 14_000, maximumSegments: 80 });
+  assert.ok(autonomy.maximumCharacters < direct.maximumCharacters);
+  assert.ok(autonomy.maximumSegments < direct.maximumSegments);
+  assert.deepEqual(direct, { maximumCharacters: 48_000, maximumSegments: 200 });
+  assert.deepEqual(summary, direct);
 });
 
 await test("parses sentence-level moods from Mary JSON", () => {

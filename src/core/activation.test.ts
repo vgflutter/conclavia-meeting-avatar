@@ -83,7 +83,7 @@ await test("does not treat unrelated meeting chatter as an active-dialogue follo
   assert.equal(isDialogueFollowUpCandidate("Parliamo del preventivo domani."), false);
 });
 
-await test("distinguishes addressing Mary from talking about Mary", () => {
+await test("uses any exact avatar-name mention as the explicit wake trigger", () => {
   assert.equal(isAddressedToAvatar("Mary, cosa suggerisci?", "Mary"), true);
   assert.equal(isAddressedToAvatar("Mary mi ascolti", "Mary"), true);
   assert.equal(isAddressedToAvatar("Mary mi senti", "Mary"), true);
@@ -113,33 +113,37 @@ await test("distinguishes addressing Mary from talking about Mary", () => {
     true,
   );
   assert.equal(isAddressedToAvatar("Ciao Pippo, Mary, che dici?", "Mary"), true);
+  assert.equal(isAddressedToAvatar("Ciao Pippo Mary, come stai?", "Mary"), true);
   assert.equal(
     isAddressedToAvatar("Pippo ha finito. Ehi Mary, cosa suggerisci?", "Mary"),
     true,
   );
   assert.equal(isAddressedToAvatar("Che cosa suggerisci, Mary?", "Mary"), true);
-  assert.equal(isAddressedToAvatar("Ciao a tutti, sono Mary.", "Mary"), false);
+  assert.equal(isAddressedToAvatar("Ciao a tutti, sono Mary.", "Mary"), true);
   assert.equal(
     isAddressedToAvatar("Buongiorno a tutti, Mary ci raggiunge più tardi.", "Mary"),
-    false,
+    true,
   );
-  assert.equal(isAddressedToAvatar("Mary ha già risposto a questa domanda.", "Mary"), false);
+  assert.equal(isAddressedToAvatar("Mary ha già risposto a questa domanda.", "Mary"), true);
   assert.equal(
     isAddressedToAvatar(
       "Abbiamo discusso il problema. Mary ha già risposto a questa domanda.",
       "Mary",
     ),
-    false,
+    true,
   );
-  assert.equal(isAddressedToAvatar("Ciao Pippo, Mary arriva dopo.", "Mary"), false);
+  assert.equal(isAddressedToAvatar("Ciao Pippo, Mary arriva dopo.", "Mary"), true);
   assert.equal(
     isAddressedToAvatar("Ciao Pippo, Mary, arriva dopo la pausa.", "Mary"),
-    false,
+    true,
   );
+  assert.equal(isAddressedToAvatar("Mariano ci raggiunge più tardi.", "Mary"), false);
+  assert.equal(isAddressedToAvatar("Il progetto Maryland è pronto.", "Mary"), false);
+  assert.equal(isAddressedToAvatar("Ciao Mary   Jane, come stai?", "Mary Jane"), true);
   assert.equal(
     decideActivation(segment({ text: "Mary ha già risposto a questa domanda." }), "Mary")
       .activated,
-    false,
+    true,
   );
 });
 

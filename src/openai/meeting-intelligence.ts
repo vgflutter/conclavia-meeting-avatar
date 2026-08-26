@@ -312,23 +312,22 @@ export interface MeetingContextBudget {
   maximumSegments: number;
 }
 
-const extendedContextSignals =
-  /\b(?:riassum\w*|summary|summari[sz]e|recap|finora|so far|intera riunione|whole meeting|scaletta|agenda|verbale|minutes)\b/iu;
-
 export function meetingContextBudget(
   lane: ParticipationLane,
   latestText: string,
 ): MeetingContextBudget {
+  void latestText;
   if (lane === "observer-listening") {
     return { maximumCharacters: 1_800, maximumSegments: 12 };
   }
   if (lane === "observer-autonomy") {
     return { maximumCharacters: 8_000, maximumSegments: 48 };
   }
-  if (extendedContextSignals.test(latestText)) {
-    return { maximumCharacters: 14_000, maximumSegments: 80 };
-  }
-  return { maximumCharacters: 6_000, maximumSegments: 36 };
+  // A direct invocation must be answered with the meeting in mind, not as an
+  // isolated last utterance. The server retains at most 200 segments, so this
+  // budget exposes that complete retained transcript to the response lane.
+  // Listening-only reactions remain deliberately compact above.
+  return { maximumCharacters: 48_000, maximumSegments: 200 };
 }
 
 function transcriptForModel(

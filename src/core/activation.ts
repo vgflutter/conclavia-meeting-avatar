@@ -34,80 +34,19 @@ export function isDialogueFollowUpCandidate(text: string): boolean {
 
 export function isAddressedToAvatar(text: string, wakeWord: string): boolean {
   const value = text.trim();
-  if (!value) return false;
-  const escapedWakeWord = escapeRegExp(wakeWord);
+  const name = wakeWord.trim();
+  if (!value || !name) return false;
 
-  // People rarely start a meeting turn with the bare wake word. Accept a
-  // short greeting or attention marker immediately before the avatar name,
-  // while keeping third-person mentions such as "Ciao a tutti, Mary arriva
-  // dopo" outside the activation path.
-  const naturalAddress = value.replace(
-    new RegExp(
-      `^(?:(?:ciao|buongiorno|buonasera|salve|ehi|hey|scusa|scusami|senti)[\\s,.:;!?-]+)(?=(?:@\\s*)?${escapedWakeWord}(?:$|[\\s,.:;!?-]))`,
-      "iu",
-    ),
-    "",
-  );
-  const atStart = new RegExp(
-    `^(?<mention>@\\s*)?${escapedWakeWord}(?<separator>[\\s,.:;!?-]*)(?<remainder>.*)$`,
-    "iu",
-  ).exec(naturalAddress);
-  if (atStart?.groups) {
-    const separator = atStart.groups.separator ?? "";
-    const remainder = atStart.groups.remainder?.trim() ?? "";
-    const explicitPunctuation = /[,.:;!?-]/u.test(separator);
-    const directQuestion = naturalAddress.endsWith("?") ||
-      isDialogueFollowUpCandidate(remainder) ||
-      /^(?:(?:sei|hai|sai|vuoi|devi|pensi|credi|ricordi|ritieni|puoi|potresti|riesci)(?=$|[\s,.:;!?-])|(?:mi|ci)\s+(?:ascolti|senti|aiuti|rispondi|segui|capisci|spieghi|dici)(?=$|[\s,.:;!?-])|ciao|buongiorno|buonasera|salve|ehi|hey)(?=$|[\s,.:;!?-])/iu
-        .test(remainder);
-    if (atStart.groups.mention || explicitPunctuation || !remainder || directQuestion) {
-      return true;
-    }
-  }
-
-  // Realtime meeting transcription can merge the previous speaker's sentence
-  // and a fresh invocation into one finalized turn. Preserve the strict
-  // start-of-clause rules above, but apply them again after a real sentence
-  // boundary. This accepts "... vediamo. Mary, quanto fa due per due?" while
-  // still rejecting narrative mentions such as "Mary ha già risposto".
-  const laterClause = new RegExp(
-    `(?:[.!?;:\u2026]+)\\s*(?<clause>(?:(?:ciao|buongiorno|buonasera|salve|ehi|hey|scusa|scusami|senti)[\\s,.:;!?-]+)?(?:@\\s*)?${escapedWakeWord}(?:$|[\\s,.:;!?-]).*)$`,
-    "iu",
-  ).exec(value)?.groups?.clause?.trim();
-  if (laterClause && laterClause !== value && isAddressedToAvatar(laterClause, wakeWord)) {
-    return true;
-  }
-
-  // A participant may greet or address somebody else before turning to the
-  // avatar in the same breath: "Ciao Pippo, Mary, che dici?". Treat the name
-  // as a vocative only when punctuation surrounds it and the remaining clause
-  // is clearly a question or directive. A plain mention such as "Mary arriva
-  // dopo" therefore remains passive meeting context.
-  const inlineVocative = new RegExp(
-    `(?:^|[,;:.!?\u2026])\\s*(?:@\\s*)?${escapedWakeWord}\\s*[,;:.!?-]+\\s*(?<remainder>.+)$`,
-    "iu",
-  ).exec(value);
-  const inlineRemainder = inlineVocative?.groups?.remainder?.trim() ?? "";
-  if (
-    inlineRemainder &&
-    (value.endsWith("?") || isDialogueFollowUpCandidate(inlineRemainder))
-  ) {
-    return true;
-  }
-
-  // Also accept the natural vocative at the end of a question or directive,
-  // while ignoring third-person references such as "Mary ha già risposto".
-  const atEnd = new RegExp(
-    `(?:^|[\\s,.:;!?-])${escapedWakeWord}[\\s,.:;!?-]*$`,
+  // The configured avatar name is an explicit wake trigger wherever it occurs
+  // in a finalized meeting turn. Transcription frequently removes vocative
+  // commas ("Ciao Pippo Mary, come stai?"); requiring punctuation or the name
+  // at the beginning therefore loses real invocations. Unicode token guards
+  // still prevent partial-name matches such as "Mariano" or "Maryland".
+  const escapedWakeWord = escapeRegExp(name).replace(/\s+/gu, "\\s+");
+  return new RegExp(
+    `(?:^|[^\\p{L}\\p{N}_])(?:@\\s*)?${escapedWakeWord}(?=$|[^\\p{L}\\p{N}_])`,
     "iu",
   ).test(value);
-  return atEnd && (
-    value.endsWith("?") ||
-    isDialogueFollowUpCandidate(value.replace(
-      new RegExp(`${escapedWakeWord}[\\s,.:;!?-]*$`, "iu"),
-      "",
-    ))
-  );
 }
 
 export function decideActivation(
