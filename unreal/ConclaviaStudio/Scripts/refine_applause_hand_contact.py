@@ -230,6 +230,7 @@ def build() -> None:
         raise RuntimeError("Could not export contact-refined applause")
     unreal.EditorAssetLibrary.save_loaded_asset(output, only_if_is_dirty=False)
     unreal.EditorAssetLibrary.save_loaded_asset(sequence, only_if_is_dirty=False)
+    unreal.LevelSequenceEditorBlueprintLibrary.close_level_sequence()
     actors.destroy_actor(temporary_actor)
     log(
         f"READY output={output.get_path_name()} frames={frame_count + 1} "

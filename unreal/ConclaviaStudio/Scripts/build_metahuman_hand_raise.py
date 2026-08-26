@@ -426,6 +426,10 @@ def build() -> None:
         f"hand_world_raised={raised_hand_world} keyed_hand={keyed_hand} "
         f"bone_deltas={' '.join(deltas)}"
     )
+    # UE 5.8 keeps a SharedPlaybackState alive while Sequencer is open. Close
+    # it explicitly before the commandlet exits or the otherwise valid bake
+    # terminates with MovieScene's stale-root ensure and a non-zero exit code.
+    unreal.LevelSequenceEditorBlueprintLibrary.close_level_sequence()
     actor_subsystem.destroy_actor(temporary_actor)
 
 

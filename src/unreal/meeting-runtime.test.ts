@@ -558,6 +558,13 @@ await test("catalogs authored MetaHuman body motion before selecting Web microge
   assert.match(wrapper, /build_meeting_attentive_idle\.py/);
   assert.match(wrapper, /build_metahuman_hand_raise\.py/);
   assert.match(wrapper, /CONCLAVIA_HAND_RAISE: READY/);
+  assert.match(
+    await readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/build_metahuman_hand_raise.py"),
+      "utf8",
+    ),
+    /close_level_sequence\(\)/,
+  );
   assert.match(wrapper, /build_web_authored_microgestures\.py/);
   assert.match(wrapper, /refine_applause_hand_contact\.py/);
   assert.match(wrapper, /CONCLAVIA_APPLAUSE_CONTACT_IK: READY/);
