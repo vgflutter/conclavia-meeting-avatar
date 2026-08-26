@@ -28,7 +28,11 @@ REVISION="$REVISION" node <<'NODE' > "$MANIFEST"
 const { execFileSync } = require("node:child_process");
 const commit = process.env.REVISION;
 const createdAt = new Date().toISOString();
-const trackedTree = execFileSync("git", ["rev-parse", `${commit}^{tree}`], { encoding: "utf8" }).trim();
+const trackedTree = execFileSync(
+  "git",
+  ["rev-parse", `${commit}:unreal/ConclaviaStudio`],
+  { encoding: "utf8" },
+).trim();
 process.stdout.write(`${JSON.stringify({ commit, trackedTree, createdAt }, null, 2)}\n`);
 NODE
 

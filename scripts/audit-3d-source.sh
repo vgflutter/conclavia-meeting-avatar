@@ -50,10 +50,10 @@ REVISION="$REVISION" \
 LOCAL_MAIN_SHA="$LOCAL_MAIN_SHA" \
 LOCAL_SUPERVISOR_SHA="$LOCAL_SUPERVISOR_SHA" \
 REMOTE_RESULT="$RESULT" node <<'NODE'
+const { execFileSync } = require("node:child_process");
 const lines = (process.env.REMOTE_RESULT || "").trim().split(/\n/).filter(Boolean);
 const result = JSON.parse(lines.at(-1) || "{}");
 const expected = {
-  commit: process.env.REVISION,
   mainSha256: process.env.LOCAL_MAIN_SHA,
   supervisorSha256: process.env.LOCAL_SUPERVISOR_SHA,
 };
@@ -62,5 +62,23 @@ for (const [key, value] of Object.entries(expected)) {
     throw new Error(`AWS source audit failed for ${key}: expected ${value}, received ${result[key] || "missing"}`);
   }
 }
-console.log(`AWS source matches committed revision ${expected.commit}.`);
+if (typeof result.commit !== "string" || !/^[0-9a-f]{40}$/u.test(result.commit)) {
+  throw new Error("AWS source audit failed: remote committed revision is missing or invalid.");
+}
+const currentCommit = process.env.REVISION;
+const tree = (revision) => execFileSync(
+  "git",
+  ["rev-parse", `${revision}:unreal/ConclaviaStudio`],
+  { encoding: "utf8" },
+).trim();
+const currentTree = tree(currentCommit);
+const remoteTree = tree(result.commit);
+if (remoteTree !== currentTree) {
+  throw new Error(
+    `AWS Unreal tree differs from ${currentCommit}: remote ${remoteTree}, local ${currentTree}`,
+  );
+}
+console.log(
+  `AWS source matches Unreal tree ${currentTree} from committed revision ${result.commit}.`,
+);
 NODE
