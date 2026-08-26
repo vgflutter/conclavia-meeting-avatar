@@ -238,7 +238,7 @@ def merged_body_actor(graph: ShowcaseActorGraph) -> unreal.SkeletalMeshActor:
     actor.set_actor_scale3d(graph.actor.get_actor_scale3d())
     actor.set_actor_hidden_in_game(False)
     component = actor.skeletal_mesh_component
-    component.set_skeletal_mesh(merged_mesh)
+    component.set_skinned_asset_and_update(merged_mesh, True)
     component.set_visibility(True, True)
     component.set_hidden_in_game(False, True)
     component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
@@ -252,7 +252,8 @@ def merged_body_actor(graph: ShowcaseActorGraph) -> unreal.SkeletalMeshActor:
         outfit.set_hidden_in_game(True, True)
     log(
         "MERGED_BODY_OUTFIT "
-        f"sources={1 + len(outfit_meshes)} materials={len(merged_mesh.get_materials())}"
+        f"sources={1 + len(outfit_meshes)} "
+        f"materials={len(merged_mesh.get_editor_property('materials'))}"
     )
     return actor
 
