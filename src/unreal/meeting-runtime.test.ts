@@ -12,6 +12,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     stageBuilder,
     supervisor,
     readinessVerifier,
+    rendererManifest,
   ] = await Promise.all([
     readFile(repositoryFile("unreal/ConclaviaStudio/Config/DefaultEngine.ini"), "utf8"),
     readFile(
@@ -36,6 +37,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
       repositoryFile("unreal/ConclaviaStudio/Scripts/Verify-SingleHeroReadiness.cjs"),
       "utf8",
     ),
+    readFile(repositoryFile("unreal/renderer-manifest.json"), "utf8"),
   ]);
 
   assert.match(
@@ -129,6 +131,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /Config\.IntraOpThreads = 2;[\s\S]*40 ms audio cadence/);
   assert.doesNotMatch(moduleSource, /Config\.IntraOpThreads = 4;/);
   assert.match(moduleSource, /ue58-commercial-lipsync-v29-smooth-speech/);
+  assert.match(rendererManifest, /ue58-commercial-lipsync-v29-smooth-speech/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
   assert.match(supervisor, /performanceSemanticMood/);
