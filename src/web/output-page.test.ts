@@ -96,15 +96,15 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /conclavia-skin-influences/);
   assert.match(output, /Math\.max\(window\.devicePixelRatio \|\| 1, 2\)/);
   assert.match(performer, /stabilizePortableHair\(this\.root\)/);
-  assert.match(performer, /faceComponent\.attach\(group\)/);
+  assert.match(performer, /anchor\.attach\(group\)/);
   assert.match(performer, /retargetPortableClip/);
   assert.match(performer, /portableRigNodes/);
   assert.match(performer, /boneNames\.has\("upperarml"\)/);
   assert.match(performer, /boneNames\.has\("facialcfacialroot"\)/);
-  assert.match(
-    performer,
-    /!facial && \(property === "position" \|\| property === "scale"\)/,
-  );
+  assert.match(performer, /trackHasMotion/);
+  assert.match(performer, /bodyCorrection/);
+  assert.match(performer, /components\.bodyTranslations/);
+  assert.match(performer, /#applyApplauseContact/);
   assert.match(performer, /exactIndex\.get\(sourceName\)[\s\S]*normalizedIndex\.get/);
   assert.match(performer, /replace\(\/_\[1-9\]\$\/u, ""\)/);
   assert.match(performer, /this\.root\.getObjectByName\("SkeletalMesh"\)/);

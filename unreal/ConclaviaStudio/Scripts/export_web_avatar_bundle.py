@@ -32,7 +32,7 @@ LEVEL_PATH = os.environ.get(
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
 ASSET_VERSION = os.environ.get(
     "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
-    "ue58-v43-showcase-skin12-hq",
+    "ue58-v44-showcase-cinecards-lod0-hq",
 )
 MATERIAL_BAKE_SIZE = 2048
 OUTPUT_DIRECTORY = Path(
@@ -282,9 +282,9 @@ def write_bundle_inventory(
             "bodyOutfitMerge": "SkeletalMergingLibrary",
             "groomAssets": list(graph.groom_asset_paths),
             "webHairMeshes": list(graph.hair_mesh_paths),
-            # The stock glTF exporter ignores Groom Components. The
-            # Optimized/High assembly supplies two LOD1 cards groups that
-            # are exported with the portable face and body.
+            # The stock glTF exporter ignores Groom Components. The portable
+            # graph combines the Optimized/High face and body with the Cine
+            # assembly's denser LOD0 hair and eyebrow card geometry.
             "hairGeometry": "cards",
             "visualReview": "pending",
         },

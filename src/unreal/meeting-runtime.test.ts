@@ -370,10 +370,11 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /"assetVersion": ASSET_VERSION/);
   assert.match(exporter, /"hairGeometry": "cards"/);
   assert.match(exporter, /"visualReview": "pending"/);
-  assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group0_LOD1/);
-  assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group1_LOD1/);
+  assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group0_LOD0/);
+  assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group1_LOD0/);
+  assert.match(showcaseResolver, /Eyebrows_L_Shaded_CardsMesh_Group0_LOD0/);
   assert.match(showcaseResolver, /AttachmentRule\.KEEP_WORLD/);
-  assert.match(showcaseResolver, /set_material\(0, hair_cards_material\)/);
+  assert.match(showcaseResolver, /set_material\(0, card_materials\[role\]\)/);
   assert.match(showcaseResolver, /Hair_Cards/);
   assert.match(showcaseRepair, /_validate_extended_skin_influences/);
   assert.match(showcaseRepair, /JOINTS_\{set_index\}/);

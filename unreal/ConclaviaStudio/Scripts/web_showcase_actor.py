@@ -24,16 +24,27 @@ SHOWCASE_CLASS_PATH = (
     "MHC_Showcase_WebHigh/BP_MHC_Showcase_WebHigh.BP_MHC_Showcase_WebHigh_C"
 )
 SHOWCASE_ASSET_FRAGMENT = "/MHC_Showcase_WebHigh/"
-WEB_HAIR_MESH_PATHS = (
+WEB_CARD_SPECS = (
     (
-        "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebHigh/"
-        "MHC_Showcase_WebHigh/Grooms/Hair_S_UpdoBraids_CardsMesh_Group0_LOD1."
-        "Hair_S_UpdoBraids_CardsMesh_Group0_LOD1"
+        "Hair",
+        0,
+        "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
+        "Hair_S_UpdoBraids_CardsMesh_Group0_LOD0."
+        "Hair_S_UpdoBraids_CardsMesh_Group0_LOD0",
     ),
     (
-        "/Game/Conclavia/Meeting/WebMetaHumans/MHC_Showcase_WebHigh/"
-        "MHC_Showcase_WebHigh/Grooms/Hair_S_UpdoBraids_CardsMesh_Group1_LOD1."
-        "Hair_S_UpdoBraids_CardsMesh_Group1_LOD1"
+        "Hair",
+        1,
+        "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
+        "Hair_S_UpdoBraids_CardsMesh_Group1_LOD0."
+        "Hair_S_UpdoBraids_CardsMesh_Group1_LOD0",
+    ),
+    (
+        "Eyebrows",
+        0,
+        "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
+        "Eyebrows_L_Shaded_CardsMesh_Group0_LOD0."
+        "Eyebrows_L_Shaded_CardsMesh_Group0_LOD0",
     ),
 )
 
@@ -122,11 +133,11 @@ def _spawn_showcase(anchor: unreal.Actor) -> unreal.Actor:
 def _spawn_web_hair(
     actor: unreal.Actor,
     body: unreal.SkeletalMeshComponent,
-    hair_cards_material: unreal.MaterialInterface,
+    card_materials: dict[str, unreal.MaterialInterface],
 ) -> tuple[unreal.StaticMeshActor, ...]:
     subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     hair_actors: list[unreal.StaticMeshActor] = []
-    for group, mesh_path in enumerate(WEB_HAIR_MESH_PATHS):
+    for role, group, mesh_path in WEB_CARD_SPECS:
         mesh = unreal.load_asset(mesh_path)
         if not isinstance(mesh, unreal.StaticMesh):
             raise RuntimeError(
@@ -140,7 +151,7 @@ def _spawn_web_hair(
         )
         if not isinstance(hair_actor, unreal.StaticMeshActor):
             raise RuntimeError("Could not spawn a Showcase Web hair-cards actor")
-        hair_actor.set_actor_label(f"WEB_ShowcaseHairCards_Group{group}_LOD1")
+        hair_actor.set_actor_label(f"WEB_Showcase{role}Cards_Group{group}_LOD0")
         hair_actor.tags = [unreal.Name(WEB_EXPORT_TAG)]
         hair_actor.set_actor_scale3d(actor.get_actor_scale3d())
         component = hair_actor.get_component_by_class(unreal.StaticMeshComponent)
@@ -148,10 +159,10 @@ def _spawn_web_hair(
             raise RuntimeError("Showcase Web hair actor has no Static Mesh component")
         component.set_static_mesh(mesh)
         # Groom cards receive their shader as a component override; the
-        # generated Static Mesh assets themselves deliberately have no useful
-        # material assignment. Preserve Epic's Hair Cards material so the
-        # glTF Simple bake sees the same atlas/coverage as the MetaHuman.
-        component.set_material(0, hair_cards_material)
+        # Generated Static Mesh assets themselves deliberately have no useful
+        # material assignment. Preserve the matching groom card material so
+        # the glTF Simple bake sees the same atlas/coverage as the MetaHuman.
+        component.set_material(0, card_materials[role])
         component.set_mobility(unreal.ComponentMobility.MOVABLE)
         component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
         component.set_visibility(True, True)
@@ -199,21 +210,23 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
             )
 
     groom_components = actor.get_components_by_class(unreal.GroomComponent)
-    hair_components = [
-        component for component in groom_components if component.get_name() == "Hair"
-    ]
-    if len(hair_components) != 1:
-        raise RuntimeError(
-            f"Expected one Showcase Hair Groom component, found {len(hair_components)}"
-        )
-    hair_cards_material = hair_components[0].get_material(0)
-    if (
-        not isinstance(hair_cards_material, unreal.MaterialInterface)
-        or "Hair_Cards" not in hair_cards_material.get_path_name()
-    ):
-        raise RuntimeError(
-            "Showcase Hair Groom has no verified Hair Cards material override"
-        )
+    card_materials: dict[str, unreal.MaterialInterface] = {}
+    for role in {spec[0] for spec in WEB_CARD_SPECS}:
+        components = [
+            component for component in groom_components if component.get_name() == role
+        ]
+        if len(components) != 1:
+            raise RuntimeError(
+                f"Expected one Showcase {role} Groom component, found {len(components)}"
+            )
+        material = components[0].get_material(0)
+        if not isinstance(material, unreal.MaterialInterface):
+            raise RuntimeError(f"Showcase {role} Groom has no card material override")
+        if role == "Hair" and "Hair_Cards" not in material.get_path_name():
+            raise RuntimeError(
+                "Showcase Hair Groom has no verified Hair Cards material override"
+            )
+        card_materials[role] = material
 
     groom_paths: list[str] = []
     for component in groom_components:
@@ -223,7 +236,7 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
     if not groom_paths:
         raise RuntimeError("Optimized Showcase has no Groom components; refusing a bald Web export")
 
-    hair_actors = _spawn_web_hair(actor, body, hair_cards_material)
+    hair_actors = _spawn_web_hair(actor, body, card_materials)
     hair_mesh_paths = tuple(
         component.get_editor_property("static_mesh").get_path_name()
         for hair_actor in hair_actors
@@ -241,7 +254,7 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
         f"class={actor.get_class().get_path_name()} "
         f"face={face_mesh_path} body={body_mesh_path} grooms={len(groom_paths)} "
         f"outfits={','.join(outfit_mesh_paths)} "
-        f"hairMaterial={hair_cards_material.get_path_name()} "
+        f"hairMaterial={card_materials['Hair'].get_path_name()} "
         f"webHair={','.join(hair_mesh_paths)}"
     )
     return ShowcaseActorGraph(

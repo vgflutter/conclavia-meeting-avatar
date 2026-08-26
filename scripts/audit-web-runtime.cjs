@@ -18,6 +18,7 @@ const expectsCleanOutput = new URL(runtimeUrl).searchParams.get("conclaviaOutput
 const screenshotPath = process.env.CONCLAVIA_WEB_RUNTIME_SCREENSHOT || "";
 const actionText = process.env.CONCLAVIA_WEB_RUNTIME_ACTION || "";
 const actionChannel = process.env.CONCLAVIA_WEB_RUNTIME_ACTION_CHANNEL || "chat";
+const actionAsync = process.env.CONCLAVIA_WEB_RUNTIME_ACTION_ASYNC === "1";
 const actionDelay = Number.parseInt(
   process.env.CONCLAVIA_WEB_RUNTIME_ACTION_DELAY_MS || "900",
   10,
@@ -176,7 +177,7 @@ async function main() {
       const action = await command("Runtime.evaluate", {
         expression: `(async () => {
           const channel = ${JSON.stringify(actionChannel)};
-          const response = await fetch(channel === 'voice' ? '/api/simulate' : '/api/chat/messages', {
+          const request = fetch(channel === 'voice' ? '/api/simulate' : '/api/chat/messages', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(channel === 'voice'
@@ -190,12 +191,20 @@ async function main() {
                 capturedAt: new Date().toISOString(),
               }),
           });
+          if (${JSON.stringify(actionAsync)}) {
+            window.__conclaviaRuntimeAuditAction = request.then(async (response) => ({
+              status: response.status,
+              body: await response.json(),
+            }));
+            return { status: 202, body: { started: true } };
+          }
+          const response = await request;
           return { status: response.status, body: await response.json() };
         })()`,
         returnByValue: true,
         awaitPromise: true,
       });
-      if (action.result.value?.status !== 200) {
+      if (![200, 202].includes(action.result.value?.status)) {
         throw new Error(`Runtime action failed: ${JSON.stringify(action.result.value)}`);
       }
       await delay(Number.isFinite(actionDelay) ? actionDelay : 900);
@@ -269,6 +278,7 @@ async function main() {
       ...(screenshotPath ? { screenshotPath } : {}),
       ...(actionText ? { actionText } : {}),
       ...(actionText ? { actionChannel } : {}),
+      ...(actionText ? { actionAsync } : {}),
     }, null, 2));
   } finally {
     chrome.kill("SIGTERM");
