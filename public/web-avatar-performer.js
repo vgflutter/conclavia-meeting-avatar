@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 
 const loopingGestures = new Set(["applause"]);
 const gestureWeights = {
@@ -183,13 +184,14 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     // of the mask. A low deterministic cutoff preserves the fine strands; a
     // higher runtime override makes the hairstyle disappear entirely.
     material.alphaTest = 0.05;
+    material.alphaHash = true;
     material.alphaToCoverage = true;
     material.transparent = false;
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
-    material.envMapIntensity = 0.38;
+    material.envMapIntensity = 0.44;
     material.metalness = 0;
-    material.roughness = Math.max(0.54, material.roughness || 0);
+    material.roughness = Math.max(0.5, material.roughness || 0);
     if (material.map) material.color = new THREE.Color(0xffffff);
     if ("specularIntensity" in material) material.specularIntensity = 0.3;
   }
@@ -202,9 +204,10 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.emissiveMap = material.map;
     material.emissive = new THREE.Color(0xffffff);
     material.emissiveIntensity = 0.075;
-    material.envMapIntensity = 0.52;
+    material.envMapIntensity = 0.58;
     material.metalness = 0;
-    if (material.normalScale) material.normalScale.set(1.08, 1.08);
+    material.roughness = THREE.MathUtils.clamp(material.roughness || 0.5, 0.42, 0.58);
+    if (material.normalScale) material.normalScale.set(1.02, 1.02);
     material.onBeforeCompile = (shader) => {
       shader.fragmentShader = shader.fragmentShader.replace(
         "#include <lights_fragment_end>",
@@ -221,7 +224,7 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     };
     material.customProgramCacheKey = () => "conclavia-skin-hq-v1";
     addFaceCoverageMask(node, material);
-  } else if (name.includes("body_baked")) {
+  } else if (name.includes("body_baked") && influenceSets < 2) {
     // UE's merged body normal texture keeps tangent frames from the source
     // sections; after Skeletal Mesh Merge those frames produce triangular
     // highlights on exposed arms. The high-density body geometry is smooth
@@ -230,10 +233,27 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.map = null;
     material.normalMap = null;
     material.color = new THREE.Color(0xc9907d);
-    material.side = THREE.DoubleSide;
+    material.side = THREE.FrontSide;
     material.envMapIntensity = 0.46;
     material.metalness = 0;
     material.roughness = Math.max(0.58, material.roughness || 0);
+  } else if (name.includes("body_baked")) {
+    // The meeting-HQ bundle retains 8-12 normalized influences and valid
+    // tangent frames. In that path the original skin maps are more detailed
+    // than any procedural replacement, especially in the arms and neckline.
+    material.side = THREE.FrontSide;
+    material.envMapIntensity = 0.5;
+    material.metalness = 0;
+    material.roughness = THREE.MathUtils.clamp(material.roughness || 0.54, 0.5, 0.64);
+    if (material.normalScale) material.normalScale.set(0.92, 0.92);
+  } else if (name.includes("bodyshapea_shirt") || name.includes("shirt")) {
+    // Cloth should read as soft fabric, not as a glossy white polygon shell.
+    // The authored color/normal/occlusion maps remain untouched.
+    material.side = THREE.FrontSide;
+    material.envMapIntensity = 0.24;
+    material.metalness = 0;
+    material.roughness = Math.max(0.76, material.roughness || 0);
+    if (material.normalScale) material.normalScale.set(0.72, 0.72);
   } else if (name.includes("bodyshapea_short")) {
     // This lower garment is fully covered in the half-bust meeting framing.
     // Omitting it prevents a second hidden cloth layer from poking through the
@@ -434,7 +454,11 @@ class ThreeAvatarPerformer {
     });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.02;
+    this.renderer.toneMappingExposure = 0.94;
+    // The compositor already gives this renderer a 2x supersampled target.
+    // Keeping the inner renderer at 1 avoids an accidental 4x/8K render on a
+    // Retina Mac while preserving the full 2x OBS-quality frame.
+    this.renderer.setPixelRatio(1);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.info.autoReset = true;
@@ -442,22 +466,41 @@ class ThreeAvatarPerformer {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(manifest.environment.background);
     this.environmentTarget = new THREE.PMREMGenerator(this.renderer)
-      .fromScene(new RoomEnvironment(), 0.04);
+      .fromScene(new RoomEnvironment(), 0.055);
     this.scene.environment = this.environmentTarget.texture;
-    this.scene.environmentIntensity = 0.72;
+    this.scene.environmentIntensity = 0.78;
     this.camera = new THREE.PerspectiveCamera(manifest.framing.fov, 16 / 9, 0.01, 1000);
     this.camera.position.fromArray(manifest.framing.camera);
     this.camera.lookAt(new THREE.Vector3().fromArray(manifest.framing.target));
 
+    RectAreaLightUniformsLib.init();
     const hemisphere = new THREE.HemisphereLight(
-      0xffeee4,
+      0xfff4ec,
       0x17332f,
-      manifest.environment.fillLightIntensity * 0.58,
+      manifest.environment.fillLightIntensity * 0.36,
     );
     this.scene.add(hemisphere);
+    const portraitKey = new THREE.RectAreaLight(
+      0xffdfcf,
+      manifest.environment.keyLightIntensity * 1.2,
+      1.65,
+      1.95,
+    );
+    portraitKey.position.set(1.35, 2.45, 1.65);
+    portraitKey.lookAt(0, 1.5, 0);
+    this.scene.add(portraitKey);
+    const portraitFill = new THREE.RectAreaLight(
+      0xc8ddff,
+      manifest.environment.fillLightIntensity * 0.58,
+      1.25,
+      1.55,
+    );
+    portraitFill.position.set(-1.25, 1.85, 1.35);
+    portraitFill.lookAt(0, 1.48, 0);
+    this.scene.add(portraitFill);
     const key = new THREE.DirectionalLight(
       0xffddca,
-      manifest.environment.keyLightIntensity * 0.76,
+      manifest.environment.keyLightIntensity * 0.34,
     );
     key.position.set(2.2, 3.1, 2.4);
     key.castShadow = true;
@@ -473,13 +516,13 @@ class ThreeAvatarPerformer {
     this.scene.add(key);
     const fill = new THREE.DirectionalLight(
       0xfff1e8,
-      manifest.environment.fillLightIntensity * 0.38,
+      manifest.environment.fillLightIntensity * 0.16,
     );
     fill.position.set(-1.8, 1.8, 2.7);
     this.scene.add(fill);
     const rim = new THREE.DirectionalLight(
       0x76a9ff,
-      manifest.environment.fillLightIntensity * 0.32,
+      manifest.environment.fillLightIntensity * 0.22,
     );
     rim.position.set(-2.4, 2.1, -1.2);
     this.scene.add(rim);
@@ -585,6 +628,8 @@ class ThreeAvatarPerformer {
       mood: { action: null, token: "", segment: null },
       viseme: { action: null, token: "", segment: null },
     };
+    this.renderWidth = 0;
+    this.renderHeight = 0;
     this.disposed = false;
   }
 
@@ -645,7 +690,9 @@ class ThreeAvatarPerformer {
   resize(width, height) {
     const safeWidth = Math.max(2, Math.round(width));
     const safeHeight = Math.max(2, Math.round(height));
-    if (this.canvas.width === safeWidth && this.canvas.height === safeHeight) return;
+    if (this.renderWidth === safeWidth && this.renderHeight === safeHeight) return;
+    this.renderWidth = safeWidth;
+    this.renderHeight = safeHeight;
     this.renderer.setSize(safeWidth, safeHeight, false);
     this.camera.aspect = safeWidth / safeHeight;
     this.camera.updateProjectionMatrix();

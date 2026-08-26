@@ -206,12 +206,15 @@ def _validate_extended_skin_influences(document: dict[str, object]) -> int:
     shoulders, so export must fail closed instead of silently discarding them.
     """
     meshes = document.get("meshes")
-    if not isinstance(meshes, list):
-        raise RuntimeError("GLB is missing meshes")
+    materials = document.get("materials")
+    if not isinstance(meshes, list) or not isinstance(materials, list):
+        raise RuntimeError("GLB is missing meshes or materials")
     maximum_sets = 0
+    deformation_critical_sets: list[int] = []
     for mesh in meshes:
         if not isinstance(mesh, dict):
             continue
+        mesh_name = str(mesh.get("name", "")).casefold()
         primitives = mesh.get("primitives")
         if not isinstance(primitives, list):
             continue
@@ -234,9 +237,23 @@ def _validate_extended_skin_influences(document: dict[str, object]) -> int:
             if set_count == 0:
                 raise RuntimeError("Skinned primitive has no complete influence set")
             maximum_sets = max(maximum_sets, set_count)
-    if maximum_sets < 2:
+            material_index = primitive.get("material")
+            material_name = ""
+            if isinstance(material_index, int) and 0 <= material_index < len(materials):
+                material = materials[material_index]
+                if isinstance(material, dict):
+                    material_name = str(material.get("name", "")).casefold()
+            identity = f"{mesh_name} {material_name}"
+            if any(
+                token in identity
+                for token in ("bodymesh", "outfit", "garment", "bodyshape", "shirt", "short")
+            ):
+                deformation_critical_sets.append(set_count)
+    if not deformation_critical_sets:
+        raise RuntimeError("Showcase export has no deformation-critical body or outfit primitives")
+    if min(deformation_critical_sets) < 2:
         raise RuntimeError(
-            "Showcase export lost its extended MetaHuman skin influences"
+            "Showcase body or outfit lost its extended MetaHuman skin influences"
         )
     return maximum_sets
 

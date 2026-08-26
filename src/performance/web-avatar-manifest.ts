@@ -23,6 +23,9 @@ export interface WebAvatarAppearance {
   sourceIdentity: string;
   hairGeometry: "cards" | "mesh" | "missing";
   visualReview: "pending" | "approved";
+  qualityTier?: "standard" | "meeting-hq";
+  minimumTextureSize?: number;
+  minimumSkinInfluenceSets?: number;
 }
 
 export interface WebAvatarManifest {
@@ -343,12 +346,25 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
     : cleanText(appearanceRecord.sourceIdentity, 160);
   const hairGeometry = appearanceRecord?.hairGeometry;
   const visualReview = appearanceRecord?.visualReview;
+  const qualityTier = appearanceRecord?.qualityTier;
+  const minimumTextureSize = appearanceRecord?.minimumTextureSize === undefined
+    ? undefined
+    : finiteNumber(appearanceRecord.minimumTextureSize, 256, 8_192);
+  const minimumSkinInfluenceSets = appearanceRecord?.minimumSkinInfluenceSets === undefined
+    ? undefined
+    : finiteNumber(appearanceRecord.minimumSkinInfluenceSets, 1, 3);
   if (
     appearanceRecord !== undefined
     && (
       !sourceIdentity
       || !["cards", "mesh", "missing"].includes(String(hairGeometry))
       || !["pending", "approved"].includes(String(visualReview))
+      || (
+        qualityTier !== undefined
+        && (typeof qualityTier !== "string" || !["standard", "meeting-hq"].includes(qualityTier))
+      )
+      || minimumTextureSize === null
+      || minimumSkinInfluenceSets === null
     )
   ) return null;
 
@@ -366,6 +382,15 @@ export function parseWebAvatarManifest(value: unknown): WebAvatarManifest | null
           sourceIdentity,
           hairGeometry: hairGeometry as WebAvatarAppearance["hairGeometry"],
           visualReview: visualReview as WebAvatarAppearance["visualReview"],
+          ...(qualityTier === undefined
+            ? {}
+            : {
+              qualityTier: qualityTier as NonNullable<WebAvatarAppearance["qualityTier"]>,
+            }),
+          ...(typeof minimumTextureSize === "number" ? { minimumTextureSize } : {}),
+          ...(typeof minimumSkinInfluenceSets === "number"
+            ? { minimumSkinInfluenceSets }
+            : {}),
         },
       }
       : {}),

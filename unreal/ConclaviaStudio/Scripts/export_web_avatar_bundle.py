@@ -287,6 +287,13 @@ def write_bundle_inventory(
             # assembly's denser LOD0 hair and eyebrow card geometry.
             "hairGeometry": "cards",
             "visualReview": "pending",
+            # These are acceptance criteria, not marketing labels. The local
+            # installer inspects the actual GLB and rejects an export when UE
+            # has silently collapsed the MetaHuman skin to four weights or
+            # downsampled critical skin/hair/wardrobe maps to 1K.
+            "qualityTier": "meeting-hq",
+            "minimumTextureSize": MATERIAL_BAKE_SIZE,
+            "minimumSkinInfluenceSets": 2,
         },
         # UE's glTF scene keeps the meeting anchor facing Unreal +X. Three.js
         # cameras conventionally look down -Z, so the portable renderer must

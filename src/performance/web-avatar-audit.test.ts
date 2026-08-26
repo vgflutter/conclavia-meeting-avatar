@@ -90,6 +90,15 @@ function glbWithBinary(document: unknown, binary: Uint8Array): Uint8Array {
   return output;
 }
 
+function pngHeader(size: number): Uint8Array {
+  const output = new Uint8Array(24);
+  output.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const view = new DataView(output.buffer);
+  view.setUint32(16, size);
+  view.setUint32(20, size);
+  return output;
+}
+
 await test("audits a self-contained rigged Web avatar", async () => {
   const directory = await mkdtemp(join(tmpdir(), "conclavia-glb-"));
   const path = join(directory, "test.glb");
@@ -120,10 +129,16 @@ await test("audits a self-contained rigged Web avatar", async () => {
     imageCount: 1,
     embeddedImageCount: 1,
     animationCount: 5,
+    skinnedPrimitiveCount: 0,
+    minimumSkinInfluenceSets: 0,
+    maximumSkinInfluenceSets: 0,
+    deformingPrimitiveCount: 0,
+    minimumDeformingSkinInfluenceSets: 0,
     nodeNames: ["head"],
     morphTargetNames: ["mouthClose", "smile"],
     animationClipNames: ["idle_a", "idle_b", "listen_a", "listen_b", "raise_hand"],
     externalImages: [],
+    embeddedImages: [],
   });
 });
 
@@ -341,4 +356,85 @@ await test("fails closed until Showcase hair and the visual review are verified"
     "hair-geometry-missing",
     "visual-review-pending",
   ]);
+});
+
+await test("enforces measurable meeting-HQ skinning and texture gates", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "conclavia-glb-hq-"));
+  const path = join(directory, "test.glb");
+  const texture = pngHeader(2_048);
+  const binary = new Uint8Array(texture.byteLength * 3);
+  binary.set(texture, 0);
+  binary.set(texture, texture.byteLength);
+  binary.set(texture, texture.byteLength * 2);
+  const hqManifest: WebAvatarManifest = {
+    ...manifest,
+    appearance: {
+      ...manifest.appearance!,
+      qualityTier: "meeting-hq",
+      minimumTextureSize: 2_048,
+      minimumSkinInfluenceSets: 2,
+    },
+  };
+  const baseDocument = {
+    asset: { version: "2.0" },
+    nodes: [{ name: "head", mesh: 0, skin: 0 }],
+    materials: [
+      { name: "MI_BodyShapeA_Shirt" },
+      { name: "MI_Face_Skin" },
+    ],
+    meshes: [{
+      name: "MHC_Showcase_Outfits",
+      extras: { targetNames: ["mouthClose", "smile"] },
+      primitives: [{
+        attributes: { POSITION: 0, JOINTS_0: 1, WEIGHTS_0: 2, JOINTS_1: 3, WEIGHTS_1: 4 },
+        material: 0,
+      }],
+    }, {
+      name: "SKM_MHC_Showcase_FaceMesh",
+      primitives: [{
+        attributes: { POSITION: 0, JOINTS_0: 1, WEIGHTS_0: 2 },
+        material: 1,
+      }],
+    }],
+    skins: [{}],
+    animations: [
+      { name: "idle_a" }, { name: "idle_b" },
+      { name: "listen_a" }, { name: "listen_b" },
+      { name: "raise_hand" },
+    ],
+    buffers: [{ byteLength: binary.byteLength }],
+    bufferViews: [0, 1, 2].map((index) => ({
+      byteOffset: index * texture.byteLength,
+      byteLength: texture.byteLength,
+    })),
+    images: [
+      { name: "MI_Face_Skin_BaseColor", mimeType: "image/png", bufferView: 0 },
+      { name: "MI_Hair_Cards_BaseColor", mimeType: "image/png", bufferView: 1 },
+      { name: "MI_BodyShapeA_Shirt_BaseColor", mimeType: "image/png", bufferView: 2 },
+    ],
+  };
+  await writeFile(path, glbWithBinary(baseDocument, binary));
+  const accepted = await auditWebAvatar(hqManifest, path);
+  assert.equal(accepted.valid, true);
+  assert.equal(accepted.minimumSkinInfluenceSets, 2);
+  assert.equal(accepted.minimumCriticalTextureSize, 2_048);
+
+  await writeFile(path, glb({
+    ...baseDocument,
+    meshes: [{
+      ...baseDocument.meshes[0],
+      primitives: [{
+        attributes: { POSITION: 0, JOINTS_0: 1, WEIGHTS_0: 2 },
+        material: 0,
+      }],
+    }],
+    bufferViews: undefined,
+    images: [{ bufferView: 0 }],
+  }));
+  const rejected = await auditWebAvatar(hqManifest, path);
+  assert.equal(rejected.valid, false);
+  assert.ok(rejected.appearanceIssues.includes("deforming-skin-influence-sets:1<2"));
+  assert.ok(rejected.appearanceIssues.includes("critical-texture-missing:face"));
+  assert.ok(rejected.appearanceIssues.includes("critical-texture-missing:hair"));
+  assert.ok(rejected.appearanceIssues.includes("critical-texture-missing:wardrobe"));
 });

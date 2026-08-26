@@ -83,6 +83,9 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /new THREE\.AnimationMixer/);
   assert.match(performer, /new THREE\.PMREMGenerator/);
   assert.match(performer, /new RoomEnvironment/);
+  assert.match(performer, /RectAreaLightUniformsLib\.init\(\)/);
+  assert.match(performer, /new THREE\.RectAreaLight/);
+  assert.match(performer, /this\.renderer\.setPixelRatio\(1\)/);
   assert.match(performer, /key\.shadow\.mapSize\.set\(4096, 4096\)/);
   assert.match(performer, /emissiveIntensity = 0\.075/);
   assert.match(performer, /addAnimationGltfs/);
@@ -123,6 +126,7 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /THREE\.MathUtils\.degToRad/);
   assert.match(performer, /fadeIn\(0\.46\)/);
   assert.match(server, /RoomEnvironment\.js/);
+  assert.match(server, /RectAreaLightUniformsLib\.js/);
   assert.match(server, /api\/performance\/avatar/);
   assert.match(server, /model\/gltf-binary/);
   assert.match(server, /animationModels\.map/);

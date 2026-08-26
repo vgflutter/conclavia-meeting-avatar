@@ -431,6 +431,9 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /"assetVersion": ASSET_VERSION/);
   assert.match(exporter, /"hairGeometry": "cards"/);
   assert.match(exporter, /"visualReview": "pending"/);
+  assert.match(exporter, /"qualityTier": "meeting-hq"/);
+  assert.match(exporter, /"minimumTextureSize": MATERIAL_BAKE_SIZE/);
+  assert.match(exporter, /"minimumSkinInfluenceSets": 2/);
   assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group0_LOD0/);
   assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group1_LOD0/);
   assert.match(showcaseResolver, /Eyebrows_L_Shaded_CardsMesh_Group0_LOD0/);
@@ -440,6 +443,7 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(showcaseResolver, /set_material\(0, card_materials\[role\]\)/);
   assert.match(showcaseResolver, /Hair_Cards/);
   assert.match(showcaseRepair, /_validate_extended_skin_influences/);
+  assert.match(showcaseRepair, /deformation_critical_sets/);
   assert.match(showcaseRepair, /JOINTS_\{set_index\}/);
   assert.match(showcaseRepair, /WEIGHTS_\{set_index\}/);
   assert.doesNotMatch(showcaseRepair, /_compact_skin_influences\(document, chunks\)/);

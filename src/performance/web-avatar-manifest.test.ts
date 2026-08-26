@@ -21,6 +21,9 @@ const validManifest = {
     sourceIdentity: "MHC_Showcase",
     hairGeometry: "cards",
     visualReview: "approved",
+    qualityTier: "meeting-hq",
+    minimumTextureSize: 2048,
+    minimumSkinInfluenceSets: 2,
   },
   framing: {
     camera: [0, 1.58, 1.25],
@@ -54,6 +57,7 @@ await test("accepts a bounded Web avatar manifest", () => {
   assert.deepEqual(manifest?.animationModels, []);
   assert.deepEqual(manifest?.facialClips, { visemes: {}, moods: {} });
   assert.deepEqual(manifest?.framing.rotationDegrees, [0, 90, 0]);
+  assert.equal(manifest?.appearance?.qualityTier, "meeting-hq");
 });
 
 await test("rejects an unsafe asset-space rotation", () => {
