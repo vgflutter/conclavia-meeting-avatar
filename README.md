@@ -189,6 +189,15 @@ separate structured-output contracts. Every finalized human turn still reaches
 the LLM and remains in chronological meeting memory. See the
 [standalone architecture](docs/architecture.md).
 
+The production meeting launcher selects the **Super** Unreal quality preset.
+It keeps the 1920x1080/30 meeting output required by OBS and conferencing
+clients, renders the scene internally at 115%, stores TSR history at 200%,
+uses four hair-visibility samples, and bounds H.264 compression at quality 68.
+This retains the Cine MetaHuman's LOD0 skin and Groom strands while avoiding a
+larger transport resolution that Teams or Meet would immediately downscale.
+The browser-native performer remains an experimental scalable tier until its
+generated hair-card atlases pass the same visual review as Unreal Groom.
+
 ### Performance packet
 
 `conclavia.performance` version 1 uses audio as the master clock for speech.

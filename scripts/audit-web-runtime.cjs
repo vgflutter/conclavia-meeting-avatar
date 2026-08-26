@@ -19,6 +19,7 @@ const screenshotPath = process.env.CONCLAVIA_WEB_RUNTIME_SCREENSHOT || "";
 const actionText = process.env.CONCLAVIA_WEB_RUNTIME_ACTION || "";
 const actionChannel = process.env.CONCLAVIA_WEB_RUNTIME_ACTION_CHANNEL || "chat";
 const actionAsync = process.env.CONCLAVIA_WEB_RUNTIME_ACTION_ASYNC === "1";
+const armRenderer = process.env.CONCLAVIA_WEB_RUNTIME_ARM_RENDERER !== "0";
 const actionDelay = Number.parseInt(
   process.env.CONCLAVIA_WEB_RUNTIME_ACTION_DELAY_MS || "900",
   10,
@@ -173,6 +174,31 @@ async function main() {
     if (!runtimeReady) {
       throw new Error("Web performer did not become live within 30 seconds");
     }
+    if (actionText && armRenderer) {
+      const armed = await command("Runtime.evaluate", {
+        expression: `(async () => {
+          const start = await fetch('/api/renderer/start', { method: 'POST' });
+          const startBody = await start.json();
+          if (![200, 202].includes(start.status)) {
+            return { ok: false, status: start.status, body: startBody };
+          }
+          for (let attempt = 0; attempt < 100; attempt += 1) {
+            const statusResponse = await fetch('/api/renderer/status', { cache: 'no-store' });
+            const status = await statusResponse.json();
+            if (statusResponse.ok && status.armed === true) {
+              return { ok: true, status: statusResponse.status, body: status };
+            }
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+          return { ok: false, status: 408, body: { error: 'renderer arm timeout' } };
+        })()`,
+        returnByValue: true,
+        awaitPromise: true,
+      });
+      if (armed.result.value?.ok !== true) {
+        throw new Error(`Runtime renderer arm failed: ${JSON.stringify(armed.result.value)}`);
+      }
+    }
     if (actionText) {
       const action = await command("Runtime.evaluate", {
         expression: `(async () => {
@@ -279,6 +305,7 @@ async function main() {
       ...(actionText ? { actionText } : {}),
       ...(actionText ? { actionChannel } : {}),
       ...(actionText ? { actionAsync } : {}),
+      ...(actionText ? { rendererArmedByAudit: armRenderer } : {}),
     }, null, 2));
   } finally {
     chrome.kill("SIGTERM");

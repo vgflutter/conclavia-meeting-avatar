@@ -111,6 +111,14 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(engineConfig, /^r\.Tonemapper\.Sharpen=0\.22$/mu);
   assert.match(startScript, /r\.SSS\.SampleSet 2/);
   assert.match(startScript, /r\.Tonemapper\.Sharpen 0\.22/);
+  assert.match(startScript, /\[string\]\$QualityPreset = "super"/);
+  assert.match(startScript, /\$screenPercentage = if \(\$QualityPreset -eq "super"\) \{ 115 \}/);
+  assert.match(startScript, /\$tsrHistoryPercentage = if \(\$QualityPreset -eq "super"\) \{ 200 \}/);
+  assert.match(startScript, /\$hairVisibilitySamples = if \(\$QualityPreset -eq "super"\) \{ 4 \}/);
+  assert.match(startScript, /\$encoderMinQuality = if \(\$QualityPreset -eq "super"\) \{ 68 \}/);
+  assert.match(startScript, /-ConclaviaQualityPreset=\$QualityPreset/);
+  assert.match(supervisor, /"-QualityPreset", "super"/);
+  assert.match(supervisor, /qualityPreset = \$qualityPreset/);
   assert.match(moduleSource, /ConfigureShowcaseSkinDetail/);
   assert.match(moduleSource, /Micro Skin Normal Strength[\s\S]*1\.22f/);
   assert.match(moduleSource, /Roughness Adjust[\s\S]*1\.16f/);

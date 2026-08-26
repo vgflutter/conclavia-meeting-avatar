@@ -3,6 +3,8 @@ param(
     [string]$Profile = "meeting",
     [ValidateSet("showcase", "aera", "ada", "vivian", "jelena")]
     [string]$AvatarId = "aera",
+    [ValidateSet("balanced", "super")]
+    [string]$QualityPreset = "super",
     [int]$PlayerPort = 8080,
     [int]$StreamerPort = 8888,
     # AWS DCV exposes the same physical L4 twice to D3D12. Adapter 1 renders,
@@ -594,6 +596,10 @@ $map = if ($isLegacyLipSync) {
 $renderWidth = 1920
 $renderHeight = 1080
 $h264Profile = if ($isUnreal58LipSync) { "BASELINE" } else { "HIGH" }
+$screenPercentage = if ($QualityPreset -eq "super") { 115 } else { 100 }
+$tsrHistoryPercentage = if ($QualityPreset -eq "super") { 200 } else { 150 }
+$hairVisibilitySamples = if ($QualityPreset -eq "super") { 4 } else { 2 }
+$encoderMinQuality = if ($QualityPreset -eq "super") { 68 } else { 60 }
 $arguments = @(
     $projectPath,
     $map,
@@ -608,6 +614,7 @@ $arguments = @(
     "-graphicsadapter=$GraphicsAdapter",
     "-ConclaviaStudioProfile=$Profile",
     "-ConclaviaAvatar=$AvatarId",
+    "-ConclaviaQualityPreset=$QualityPreset",
     "-PixelStreamingURL=ws://127.0.0.1:$StreamerPort",
     # H.264 High is the most stable hardware path for the current UE 5.6/5.8
     # Pixel Streaming player. AV1 produced sporadic grey/corrupt delta frames
@@ -622,7 +629,7 @@ $arguments = @(
     "-PixelStreamingWebRTCStartBitrate=24000000",
     "-PixelStreamingWebRTCMinBitrate=12000000",
     "-PixelStreamingWebRTCMaxBitrate=45000000",
-    "-PixelStreamingEncoderMinQuality=60",
+    "-PixelStreamingEncoderMinQuality=$encoderMinQuality",
     "-PixelStreamingEncoderMaxQuality=95",
     "-PixelStreamingWebRTCDisableAudioSync=false",
     # MetaHuman's solver asks for six *background* workers. The command-line
@@ -631,7 +638,7 @@ $arguments = @(
     # worker and leave the remaining scheduler capacity to the audio solver.
     "-foregroundworkers=0",
     "-TaskGraphForceNewBackend",
-    "-ExecCmds=t.MaxFPS 30,sg.ViewDistanceQuality 4,sg.AntiAliasingQuality 4,sg.ShadowQuality 4,sg.GlobalIlluminationQuality 4,sg.ReflectionQuality 4,sg.PostProcessQuality 4,sg.TextureQuality 4,sg.EffectsQuality 4,sg.ShadingQuality 4,r.ScreenPercentage 100,r.AntiAliasingMethod 4,r.TSR.History.ScreenPercentage 150,r.TSR.ShadingRejection.Flickering 1,r.TSR.ShadingRejection.Flickering.Period 3,r.TSR.ShadingRejection.Flickering.FrameRateCap 30,r.MotionBlurQuality 0,r.DefaultFeature.MotionBlur 0,r.Lumen.ScreenProbeGather.Temporal.MaxFramesAccumulated 8,r.Streaming.PoolSize 8192,r.Streaming.LimitPoolSizeToVRAM 1,r.Streaming.FullyLoadUsedTextures 1,r.Streaming.UseAllMips 1,r.Streaming.Boost 4,r.MipMapLODBias -1,r.SkeletalMeshLODBias -2,r.ForceLOD 0,r.HairStrands.Strands 1,r.HairStrands.Visibility.MSAA.SamplePerPixel 2,r.SSS.Quality 2,r.SSS.SampleSet 2,r.SSS.HalfRes 0,r.Tonemapper.Sharpen 0.22,a.ParallelAnimEvaluation 1,a.ParallelAnimUpdate 1,PixelStreaming2.WebRTC.DisableAudioSync 0",
+    "-ExecCmds=t.MaxFPS 30,sg.ViewDistanceQuality 4,sg.AntiAliasingQuality 4,sg.ShadowQuality 4,sg.GlobalIlluminationQuality 4,sg.ReflectionQuality 4,sg.PostProcessQuality 4,sg.TextureQuality 4,sg.EffectsQuality 4,sg.ShadingQuality 4,r.ScreenPercentage $screenPercentage,r.AntiAliasingMethod 4,r.TSR.History.ScreenPercentage $tsrHistoryPercentage,r.TSR.ShadingRejection.Flickering 1,r.TSR.ShadingRejection.Flickering.Period 3,r.TSR.ShadingRejection.Flickering.FrameRateCap 30,r.MotionBlurQuality 0,r.DefaultFeature.MotionBlur 0,r.Lumen.ScreenProbeGather.Temporal.MaxFramesAccumulated 8,r.Streaming.PoolSize 8192,r.Streaming.LimitPoolSizeToVRAM 1,r.Streaming.FullyLoadUsedTextures 1,r.Streaming.UseAllMips 1,r.Streaming.Boost 4,r.MipMapLODBias -1,r.SkeletalMeshLODBias -2,r.ForceLOD 0,r.HairStrands.Strands 1,r.HairStrands.Visibility.MSAA.SamplePerPixel $hairVisibilitySamples,r.SSS.Quality 2,r.SSS.SampleSet 2,r.SSS.HalfRes 0,r.Tonemapper.Sharpen 0.22,a.ParallelAnimEvaluation 1,a.ParallelAnimUpdate 1,PixelStreaming2.WebRTC.DisableAudioSync 0",
     "-log"
 )
 if ($isLegacyLipSync) {
@@ -651,6 +658,7 @@ $unreal = Start-Process -FilePath $editor -ArgumentList $arguments -PassThru
     unreal = $unreal.Id
     profile = $Profile
     avatarId = $AvatarId
+    qualityPreset = $QualityPreset
     player = $playerUri
 } | ConvertTo-Json | Set-Content -Path $pidFile -Encoding UTF8
 
@@ -791,6 +799,7 @@ if ($isCommercialLipSync) {
     unreal = $unreal.Id
     profile = $Profile
     avatarId = $AvatarId
+    qualityPreset = $QualityPreset
     player = $playerUri
 } | ConvertTo-Json | Set-Content -Path $pidFile -Encoding UTF8
 
@@ -800,6 +809,7 @@ if ($isCommercialLipSync) {
     unreal = $unreal.Id
     profile = $Profile
     avatarId = $AvatarId
+    qualityPreset = $QualityPreset
     player = $playerUri
     verifiedAt = (Get-Date).ToUniversalTime().ToString("o")
 } | ConvertTo-Json | Set-Content -Path $readyFile -Encoding UTF8

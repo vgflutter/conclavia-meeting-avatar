@@ -71,6 +71,15 @@ function Get-RunningAvatar {
     return "aera"
 }
 
+function Get-RunningQualityPreset {
+    $process = Get-UnrealProcess
+    if (-not $process) { return $null }
+    if ($process.CommandLine -match "-ConclaviaQualityPreset=(balanced|super)") {
+        return $Matches[1]
+    }
+    return "balanced"
+}
+
 function Stop-StudioProcesses {
     $starter = Get-StudioStartProcess
     if ($starter) {
@@ -107,6 +116,7 @@ function Get-State {
     }
     $profile = Get-RunningProfile
     $avatarId = Get-RunningAvatar
+    $qualityPreset = Get-RunningQualityPreset
     $processId = if ($process) { [int]$process.ProcessId } else { 0 }
     if (Test-Path $pidFile) {
         if (-not $profile) {
@@ -124,6 +134,7 @@ function Get-State {
         verified = $verified
         profile = $profile
         avatarId = $avatarId
+        qualityPreset = $qualityPreset
         processId = $processId
     }
     if ($running) {
@@ -321,7 +332,8 @@ try {
                                 "-ExecutionPolicy", "Bypass",
                                 "-File", $startScript,
                                 "-Profile", $profile,
-                                "-AvatarId", $avatarId
+                                "-AvatarId", $avatarId,
+                                "-QualityPreset", "super"
                             ) `
                             -WindowStyle Hidden `
                             -RedirectStandardOutput (Join-Path $artifacts "review-bootstrap.stdout.log") `
