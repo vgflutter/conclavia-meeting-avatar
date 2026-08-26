@@ -279,6 +279,7 @@ const replacements = {
   AWS_REGION: process.env.AWS_REGION || "eu-central-1",
   AWS_PROFILE: process.env.AWS_PROFILE || "conclavia-studio",
   CONCLAVIA_AWS_PROFILE: process.env.AWS_PROFILE || "conclavia-studio",
+  CONCLAVIA_RENDERER_MODE: "unreal",
   CONCLAVIA_LOCAL_STUDIO_LIFECYCLE: "true",
 };
 let source = fs.existsSync(path) ? fs.readFileSync(path, "utf8") : "";

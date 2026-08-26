@@ -451,8 +451,10 @@ is already running: it refreshes the IP allow-list, supervisor token and
 automatic shutdown deadline, saves only rotating local values to the ignored
 `.env`, rebuilds and restarts the local companion, starts the selected
 MetaHuman, waits for the video to become live and starts meeting listening when
-OpenAI is configured. The command does not report the studio as ready until the
-avatar is actually live. Stop both the companion and GPU billing with
+OpenAI is configured. It explicitly pins `CONCLAVIA_RENDERER_MODE=unreal`, so a
+previous Web Performance Runtime experiment cannot leak into a production
+meeting. The command does not report the studio as ready until the avatar is
+actually live. Stop both the companion and GPU billing with
 `npm run studio:3d:stop`.
 
 If the local companion is restarted while the Unreal process is still healthy,
