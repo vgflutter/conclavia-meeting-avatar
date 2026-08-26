@@ -459,6 +459,10 @@ If the local companion is restarted while the Unreal process is still healthy,
 it automatically re-arms the matching live MetaHuman before the next meeting
 turn. This recovery is deliberately one-way: probing a stopped renderer never
 powers on the AWS GPU, and an explicit **Stop avatar** remains authoritative.
+If an Availability Zone temporarily has no `g6.2xlarge` capacity, the bootstrap
+retries eight times by default. Unattended validation can extend that bounded
+window with `CONCLAVIA_3D_START_ATTEMPTS` (maximum 60) and
+`CONCLAVIA_3D_START_RETRY_SECONDS` (5–60 seconds).
 
 On macOS the companion is launched as a detached child of this interactive
 command, rather than as a LaunchAgent. This keeps BlackHole capture inside the

@@ -11,11 +11,23 @@ INSTANCE_ID="${UNREAL_STUDIO_INSTANCE_ID:-i-033248199865f3e6e}"
 SECURITY_GROUP_ID="${CONCLAVIA_STUDIO_SECURITY_GROUP_ID:-sg-0b2e4054a32145ed7}"
 AUTO_STOP_BUCKET="${CONCLAVIA_STUDIO_AUTOMATION_BUCKET:-conclavia-unreal-poc-transfer-194000006241}"
 AUTO_STOP_MINUTES="${CONCLAVIA_3D_MAX_RUNTIME_MINUTES:-120}"
+START_ATTEMPTS="${CONCLAVIA_3D_START_ATTEMPTS:-8}"
+START_RETRY_SECONDS="${CONCLAVIA_3D_START_RETRY_SECONDS:-15}"
 export AWS_PROFILE
 
 if ! [[ "$AUTO_STOP_MINUTES" =~ ^[0-9]+$ ]] \
   || (( AUTO_STOP_MINUTES < 15 || AUTO_STOP_MINUTES > 720 )); then
   echo "CONCLAVIA_3D_MAX_RUNTIME_MINUTES deve essere compreso tra 15 e 720."
+  exit 1
+fi
+if ! [[ "$START_ATTEMPTS" =~ ^[0-9]+$ ]] \
+  || (( START_ATTEMPTS < 1 || START_ATTEMPTS > 60 )); then
+  echo "CONCLAVIA_3D_START_ATTEMPTS deve essere compreso tra 1 e 60."
+  exit 1
+fi
+if ! [[ "$START_RETRY_SECONDS" =~ ^[0-9]+$ ]] \
+  || (( START_RETRY_SECONDS < 5 || START_RETRY_SECONDS > 60 )); then
+  echo "CONCLAVIA_3D_START_RETRY_SECONDS deve essere compreso tra 5 e 60."
   exit 1
 fi
 
@@ -46,7 +58,7 @@ fi
 # Retry the idempotent start request before failing; this avoids turning a
 # short EC2 allocation race into a manual restart of the whole local stack.
 STARTED=false
-for attempt in $(seq 1 8); do
+for attempt in $(seq 1 "$START_ATTEMPTS"); do
   START_OUTPUT=""
   if START_OUTPUT=$(aws ec2 start-instances \
     --region "$AWS_REGION" \
@@ -59,9 +71,9 @@ for attempt in $(seq 1 8); do
     echo "$START_OUTPUT" >&2
     exit 1
   fi
-  if (( attempt < 8 )); then
-    echo "Capacità GPU temporaneamente esaurita; nuovo tentativo $((attempt + 1))/8 tra 15 secondi…"
-    sleep 15
+  if (( attempt < START_ATTEMPTS )); then
+    echo "Capacità GPU temporaneamente esaurita; nuovo tentativo $((attempt + 1))/$START_ATTEMPTS tra $START_RETRY_SECONDS secondi…"
+    sleep "$START_RETRY_SECONDS"
   fi
 done
 if [[ "$STARTED" != "true" ]]; then
