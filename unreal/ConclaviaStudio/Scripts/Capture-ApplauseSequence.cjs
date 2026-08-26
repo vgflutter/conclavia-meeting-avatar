@@ -78,6 +78,18 @@ async function captureAfter(video, startedAt, targetMs, filename) {
   });
 }
 
+function positionDistance(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right)
+      || left.length !== 3 || right.length !== 3) {
+    throw new Error(`Invalid body position sample: ${JSON.stringify({ left, right })}`);
+  }
+  return Math.hypot(
+    right[0] - left[0],
+    right[1] - left[1],
+    right[2] - left[2]
+  );
+}
+
 (async () => {
   fs.rmSync(outputDirectory, { recursive: true, force: true });
   fs.mkdirSync(outputDirectory, { recursive: true });
@@ -159,12 +171,28 @@ async function captureAfter(video, startedAt, targetMs, filename) {
       1_650, 1_950, 2_250, 2_550, 2_850,
       3_150, 3_450, 3_750, 4_050, 4_350
     ];
+    const poseSamples = [];
     for (const targetMs of captureTimes) {
       await captureAfter(
         video,
         applauseStartedAt,
         targetMs,
         `applause-${String(targetMs).padStart(4, "0")}ms.jpg`
+      );
+      poseSamples.push(await health());
+    }
+    const maxHeadDriftCm = Math.max(...poseSamples.map(
+      (sample) => positionDistance(idleHealth.bodyHeadWorld, sample.bodyHeadWorld)
+    ));
+    const maxPelvisDriftCm = Math.max(...poseSamples.map(
+      (sample) => positionDistance(idleHealth.bodyPelvisWorld, sample.bodyPelvisWorld)
+    ));
+    if (maxHeadDriftCm > 3.5 || maxPelvisDriftCm > 2.0) {
+      throw new Error(
+        `Applause pulled Mary out of the seated pose: ${JSON.stringify({
+          maxHeadDriftCm,
+          maxPelvisDriftCm
+        })}`
       );
     }
     const settledHealth = await waitForHealth(
@@ -190,7 +218,9 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         applauseMood: applauseHealth.commercialMood,
         applauseSemanticMood: applauseHealth.performanceSemanticMood,
         applauseMoodIntensity: applauseHealth.commercialMoodIntensity,
-        applauseExpressionDriver: applauseHealth.applauseExpressionDriver
+        applauseExpressionDriver: applauseHealth.applauseExpressionDriver,
+        maxHeadDriftCm,
+        maxPelvisDriftCm
       }, null, 2)
     );
     process.stdout.write(JSON.stringify({ ok: true, outputDirectory }));

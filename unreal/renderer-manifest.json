@@ -16,7 +16,7 @@
     "root": "C:\\ConclaviaMeetingAvatar",
     "uproject": "unreal/ConclaviaStudio/ConclaviaStudio.uproject",
     "editorTarget": "ConclaviaStudioEditor",
-    "runtimeRevision": "ue58-commercial-lipsync-v31-super-cinematic-contact"
+    "runtimeRevision": "ue58-commercial-lipsync-v32-seated-contact"
   },
   "pixelStreamingInfrastructure": {
     "repository": "https://github.com/EpicGamesExt/PixelStreamingInfrastructure.git",
@@ -39,7 +39,7 @@
     }
   ],
   "generatedAssets": [
-    "/Game/Conclavia/Meeting/L_MeetingAvatar_v20",
+    "/Game/Conclavia/Meeting/L_MeetingAvatar_v21",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingCalmIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingAttentiveIdle_v1",
     "/Game/Conclavia/Meeting/Animations/AS_MeetingEngagedIdle_v1",

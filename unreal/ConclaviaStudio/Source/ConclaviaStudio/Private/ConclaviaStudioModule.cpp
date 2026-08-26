@@ -4278,6 +4278,9 @@ private:
         FString BodyAnimClass = TEXT("");
         FString BodyAnimInstance = TEXT("");
         int32 BodyAnimationMode = -1;
+        FVector BodyHeadWorld = FVector::ZeroVector;
+        FVector BodyPelvisWorld = FVector::ZeroVector;
+        bool bBodyPoseSampleReady = false;
         if (ParticipantFaces.IsValidIndex(ActiveFaceIndex))
         {
             if (USkeletalMeshComponent* ActiveBody =
@@ -4292,6 +4295,9 @@ private:
                 {
                     BodyAnimInstance = ActiveBody->GetAnimInstance()->GetClass()->GetPathName();
                 }
+                BodyHeadWorld = ActiveBody->GetSocketLocation(TEXT("head"));
+                BodyPelvisWorld = ActiveBody->GetSocketLocation(TEXT("pelvis"));
+                bBodyPoseSampleReady = true;
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
@@ -4311,7 +4317,7 @@ private:
             : TEXT("ue58-metahuman-authored-attentive-loop");
         const float BodyIdlePlayRate = ActiveBodyIdlePlayRate;
         FString Body = FString::Printf(
-            TEXT("{\"ok\":true,\"service\":\"conclavia-meeting-avatar-renderer\",\"runtimeRevision\":\"%s\",\"engineVersion\":\"%s\",\"profile\":\"%s\",\"avatarId\":\"%s\",\"stageReady\":%s,\"cameraCount\":%d,\"cameraPackage\":\"%s\",\"castCount\":%d,\"activeCamera\":\"%s\",\"lastCueAt\":\"%s\",\"audioSubjectReady\":%s,\"audioSubjectValid\":%s,\"faceDrivenByLiveLink\":%s,\"commercialLipSyncReady\":%s,\"commercialModelReady\":%s,\"commercialModelRouteReady\":%s,\"commercialGeneratorBound\":%s,\"commercialControlsBound\":%s,\"commercialSpeechActive\":%s,\"commercialControlCount\":%d,\"commercialMaxControl\":%.6f,\"commercialMaxMouthControl\":%.6f,\"commercialMaxMouthControlName\":\"%s\",\"commercialJawInput\":%.6f,\"commercialJawCurve\":%.6f,\"commercialBoundNodeCount\":%d,\"commercialSolverChunksSubmitted\":%d,\"commercialSolverCursor\":%d,\"bodyAnimationMode\":%d,\"bodyAnimClass\":\"%s\",\"bodyAnimInstance\":\"%s\",\"pcmBytesReceived\":%lld,\"activeFaceIndex\":%d}"),
+            TEXT("{\"ok\":true,\"service\":\"conclavia-meeting-avatar-renderer\",\"runtimeRevision\":\"%s\",\"engineVersion\":\"%s\",\"profile\":\"%s\",\"avatarId\":\"%s\",\"stageReady\":%s,\"cameraCount\":%d,\"cameraPackage\":\"%s\",\"castCount\":%d,\"activeCamera\":\"%s\",\"lastCueAt\":\"%s\",\"audioSubjectReady\":%s,\"audioSubjectValid\":%s,\"faceDrivenByLiveLink\":%s,\"commercialLipSyncReady\":%s,\"commercialModelReady\":%s,\"commercialModelRouteReady\":%s,\"commercialGeneratorBound\":%s,\"commercialControlsBound\":%s,\"commercialSpeechActive\":%s,\"commercialControlCount\":%d,\"commercialMaxControl\":%.6f,\"commercialMaxMouthControl\":%.6f,\"commercialMaxMouthControlName\":\"%s\",\"commercialJawInput\":%.6f,\"commercialJawCurve\":%.6f,\"commercialBoundNodeCount\":%d,\"commercialSolverChunksSubmitted\":%d,\"commercialSolverCursor\":%d,\"bodyAnimationMode\":%d,\"bodyAnimClass\":\"%s\",\"bodyAnimInstance\":\"%s\",\"bodyPoseSampleReady\":%s,\"bodyHeadWorld\":[%.3f,%.3f,%.3f],\"bodyPelvisWorld\":[%.3f,%.3f,%.3f],\"pcmBytesReceived\":%lld,\"activeFaceIndex\":%d}"),
             *RuntimeRevision.ReplaceCharWithEscapedChar(),
             *EngineVersion.ReplaceCharWithEscapedChar(),
             *StudioProfile.ReplaceCharWithEscapedChar(),
@@ -4343,6 +4349,13 @@ private:
             BodyAnimationMode,
             *BodyAnimClass.ReplaceCharWithEscapedChar(),
             *BodyAnimInstance.ReplaceCharWithEscapedChar(),
+            bBodyPoseSampleReady ? TEXT("true") : TEXT("false"),
+            BodyHeadWorld.X,
+            BodyHeadWorld.Y,
+            BodyHeadWorld.Z,
+            BodyPelvisWorld.X,
+            BodyPelvisWorld.Y,
+            BodyPelvisWorld.Z,
             PcmBytesReceived,
             ActiveFaceIndex);
         Body.RemoveFromEnd(TEXT("}"));

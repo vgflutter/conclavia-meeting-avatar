@@ -15,7 +15,7 @@ import unreal
 
 
 SOURCE_LEVEL_PATH = "/Game/Conclavia/Studio/L_PremiumStudio"
-STAGE_REVISION = "v20"
+STAGE_REVISION = "v21"
 CONTENT_ROOT = "/Game/Conclavia/Meeting"
 LEVEL_PATH = f"{CONTENT_ROOT}/L_MeetingAvatar_{STAGE_REVISION}"
 MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4.0
@@ -302,10 +302,11 @@ def build() -> None:
     # sits in the upper third like a real webcam participant, while the lower
     # half of the frame remains available to both authored hand performances.
     webcam_target = unreal.Vector(0.0, 0.0, 160.0)
-    # An eight-percent optical push-in is the maximum crop that keeps the held
-    # request-to-speak palm inside the 16:9 safe frame. Do not implement
-    # gesture-specific camera cuts: every performance must share this camera.
-    webcam_focal_length = 176.0
+    # Keep only a subtle optical push-in over v19. The markerless request-to-
+    # speak hand reaches the left edge of its authored performance, so a more
+    # aggressive crop would sacrifice the physical gesture. Do not implement
+    # gesture-specific camera cuts: every performance shares this camera.
+    webcam_focal_length = 166.0
     add_camera(
         "CAM_Meeting_Portrait",
         webcam_position,

@@ -403,9 +403,11 @@ cleared. It never reconstructs the shoulder or arm with procedural bone
 rotations.
 
 Applause plays the captured two-arm and finger performance once. A MetaHuman
-Control Rig backwards-solve pass applies hand IK only around the 46 closest
-contact frames, reducing the minimum wrist separation from 10.96 cm to 5.74 cm
-while retaining the captured shoulder, elbow, finger and timing performance.
+Control Rig backwards-solve pass applies hand IK only around the closest
+contact frames. It targets an eight-centimetre wrist separation so the palms
+meet without crossing, then restores the exact solved seated root, pelvis and
+torso tracks so arm IK cannot pull the participant out of the chair. Shoulder,
+elbow, finger and timing performance remain markerless-authored.
 It then returns to the varied seated idle. It can be invoked deterministically by the
 companion's `applause` cue. Autonomous applause is a separate, conservative
 social decision: it requires an exceptional complex conclusion, maximum

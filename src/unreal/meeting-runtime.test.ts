@@ -91,10 +91,12 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("teeth"\)/);
   assert.match(moduleSource, /Control\.Key\.Contains\(TEXT\("neck"\)/);
   assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
-  assert.match(startScript, /L_MeetingAvatar_v20/);
-  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v20$/mu);
-  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v20$/mu);
-  assert.match(stageBuilder, /^STAGE_REVISION = "v20"$/mu);
+  assert.match(moduleSource, /bodyHeadWorld/);
+  assert.match(moduleSource, /bodyPelvisWorld/);
+  assert.match(startScript, /L_MeetingAvatar_v21/);
+  assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v21$/mu);
+  assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v21$/mu);
+  assert.match(stageBuilder, /^STAGE_REVISION = "v21"$/mu);
   assert.doesNotMatch(stageBuilder, /CAM_Meeting_Applause/);
   assert.doesNotMatch(stageBuilder, /CAM_Meeting_Gesture/);
   assert.match(stageBuilder, /^CONTENT_ROOT = "\/Game\/Conclavia\/Meeting"$/mu);
@@ -102,7 +104,7 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(stageBuilder, /webcam_position = unreal\.Vector\(-360\.0, 0\.0, 185\.0\)/);
   assert.match(stageBuilder, /webcam_target = unreal\.Vector\(0\.0, 0\.0, 160\.0\)/);
   assert.match(stageBuilder, /^MEETING_AVATAR_SCREEN_OFFSET_Y_CM = 4\.0$/mu);
-  assert.match(stageBuilder, /webcam_focal_length = 176\.0/);
+  assert.match(stageBuilder, /webcam_focal_length = 166\.0/);
   assert.match(stageBuilder, /unreal\.Vector\(-300\.0, -335\.0, 335\.0\)/);
   assert.match(stageBuilder, /\n\s{8}132\.0,\n/);
   assert.match(stageBuilder, /sky_component\.set_editor_property\("intensity", 0\.035\)/);
@@ -241,8 +243,11 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseBuildScript, /CONCLAVIA_MARKERLESS_PIPELINE_OK/);
   assert.match(applauseContactScript, /MetaHuman_ControlRig/);
   assert.match(applauseContactScript, /hand_\{side\}_ik_ctrl/);
-  assert.match(applauseContactScript, /CONTACT_TARGET_CM = 5\.0/);
+  assert.match(applauseContactScript, /CONTACT_TARGET_CM = 8\.0/);
   assert.match(applauseContactScript, /corrected_pair/);
+  assert.match(applauseContactScript, /restore_seated_body/);
+  assert.match(applauseContactScript, /STABLE_SEATED_BONES/);
+  assert.match(applauseContactScript, /Restore markerless seated body after hand IK/);
   assert.match(rendererManifest, /AS_MeetingApplause_SeatedContactIK_v3/);
   assert.match(applauseCaptureScript, /applauseGestureReady/);
   assert.match(applauseCaptureScript, /bodyGesturePhase === "applauding"/);
@@ -252,6 +257,8 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseCaptureScript, /cameraCount === fixedCamera\.count/);
   assert.match(applauseCaptureScript, /activeCamera === fixedCamera\.name/);
   assert.match(applauseCaptureScript, /ue58-metahuman-curve-only-positive-expression/);
+  assert.match(applauseCaptureScript, /maxHeadDriftCm > 3\.5/);
+  assert.match(applauseCaptureScript, /maxPelvisDriftCm > 2\.0/);
   assert.match(positiveExpressionBuilder, /AS_MeetingPositiveExpression_CurveOnly_v1/);
   assert.match(positiveExpressionBuilder, /RawCurveTrackTypes\.RCT_FLOAT/);
   assert.match(positiveExpressionBuilder, /ctrl_expressions_mouthcornerpull/);

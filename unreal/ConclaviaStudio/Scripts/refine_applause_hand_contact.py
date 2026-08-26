@@ -40,7 +40,27 @@ TEMP_NAME = "LS_MeetingApplause_ContactIK_v3"
 TEMP_PATH = f"{OUTPUT_ROOT}/{TEMP_NAME}"
 FPS = 30
 CONTACT_ENTRY_CM = 32.0
-CONTACT_TARGET_CM = 5.0
+CONTACT_TARGET_CM = 8.0
+STABLE_SEATED_BONES = (
+    "root",
+    "pelvis",
+    "thigh_l",
+    "calf_l",
+    "foot_l",
+    "ball_l",
+    "thigh_r",
+    "calf_r",
+    "foot_r",
+    "ball_r",
+    "spine_01",
+    "spine_02",
+    "spine_03",
+    "spine_04",
+    "spine_05",
+    "neck_01",
+    "neck_02",
+    "head",
+)
 
 
 def log(message: str) -> None:
@@ -108,6 +128,58 @@ def corrected_pair(
     new_right.rotation = right.rotation
     new_right.scale3d = right.scale3d
     return new_left, new_right, desired
+
+
+def restore_seated_body(
+    source: unreal.AnimSequence,
+    output: unreal.AnimSequence,
+    frame_count: int,
+) -> int:
+    """Keep the solver's arm result without accepting Full Body root pull.
+
+    MetaHuman's arm IK can translate the root and pelvis to satisfy a hand
+    target. That behaviour is useful for standing locomotion, but in a fixed
+    webcam portrait it makes the participant appear to stand or makes the
+    camera appear to jump. Reapply the exact markerless source transforms for
+    the seated base and torso after the Backwards Solve. Arms, wrists, hands,
+    fingers and timing remain the solver output.
+    """
+
+    track_names = {
+        str(name)
+        for name in unreal.AnimationLibrary.get_animation_track_names(output)
+    }
+    stable_bones = [bone for bone in STABLE_SEATED_BONES if bone in track_names]
+    options = unreal.AnimPoseEvaluationOptions()
+    options.set_editor_property("should_retarget", True)
+    source_duration = max(0.001, float(source.get_play_length()))
+    samples: dict[str, list[unreal.Transform]] = {
+        bone: [] for bone in stable_bones
+    }
+    for at in range(frame_count + 1):
+        pose = source.get_anim_pose_at_time(
+            min(source_duration, at / FPS),
+            options,
+        )
+        for bone in stable_bones:
+            samples[bone].append(
+                pose.get_bone_pose(bone, unreal.AnimPoseSpaces.LOCAL)
+            )
+
+    controller = output.controller
+    controller.open_bracket("Restore markerless seated body after hand IK")
+    try:
+        for bone, transforms in samples.items():
+            controller.set_bone_track_keys(
+                bone,
+                [value.translation for value in transforms],
+                [value.rotation for value in transforms],
+                [value.scale3d for value in transforms],
+                False,
+            )
+    finally:
+        controller.close_bracket(False)
+    return len(stable_bones)
 
 
 def build() -> None:
@@ -228,6 +300,7 @@ def build() -> None:
         world, sequence, output, options, binding, False
     ):
         raise RuntimeError("Could not export contact-refined applause")
+    stabilized_bones = restore_seated_body(source, output, frame_count)
     unreal.EditorAssetLibrary.save_loaded_asset(output, only_if_is_dirty=False)
     unreal.EditorAssetLibrary.save_loaded_asset(sequence, only_if_is_dirty=False)
     unreal.LevelSequenceEditorBlueprintLibrary.close_level_sequence()
@@ -235,7 +308,7 @@ def build() -> None:
     log(
         f"READY output={output.get_path_name()} frames={frame_count + 1} "
         f"corrected={corrected_frames} source_min_cm={source_min:.3f} "
-        f"target_min_cm={output_min:.3f}"
+        f"target_min_cm={output_min:.3f} seated_bones={stabilized_bones}"
     )
 
 
