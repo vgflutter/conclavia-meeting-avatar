@@ -78,6 +78,23 @@ export function isAddressedToAvatar(text: string, wakeWord: string): boolean {
     return true;
   }
 
+  // A participant may greet or address somebody else before turning to the
+  // avatar in the same breath: "Ciao Pippo, Mary, che dici?". Treat the name
+  // as a vocative only when punctuation surrounds it and the remaining clause
+  // is clearly a question or directive. A plain mention such as "Mary arriva
+  // dopo" therefore remains passive meeting context.
+  const inlineVocative = new RegExp(
+    `(?:^|[,;:.!?\u2026])\\s*(?:@\\s*)?${escapedWakeWord}\\s*[,;:.!?-]+\\s*(?<remainder>.+)$`,
+    "iu",
+  ).exec(value);
+  const inlineRemainder = inlineVocative?.groups?.remainder?.trim() ?? "";
+  if (
+    inlineRemainder &&
+    (value.endsWith("?") || isDialogueFollowUpCandidate(inlineRemainder))
+  ) {
+    return true;
+  }
+
   // Also accept the natural vocative at the end of a question or directive,
   // while ignoring third-person references such as "Mary ha già risposto".
   const atEnd = new RegExp(

@@ -112,6 +112,11 @@ await test("distinguishes addressing Mary from talking about Mary", () => {
     ),
     true,
   );
+  assert.equal(isAddressedToAvatar("Ciao Pippo, Mary, che dici?", "Mary"), true);
+  assert.equal(
+    isAddressedToAvatar("Pippo ha finito. Ehi Mary, cosa suggerisci?", "Mary"),
+    true,
+  );
   assert.equal(isAddressedToAvatar("Che cosa suggerisci, Mary?", "Mary"), true);
   assert.equal(isAddressedToAvatar("Ciao a tutti, sono Mary.", "Mary"), false);
   assert.equal(
@@ -124,6 +129,11 @@ await test("distinguishes addressing Mary from talking about Mary", () => {
       "Abbiamo discusso il problema. Mary ha già risposto a questa domanda.",
       "Mary",
     ),
+    false,
+  );
+  assert.equal(isAddressedToAvatar("Ciao Pippo, Mary arriva dopo.", "Mary"), false);
+  assert.equal(
+    isAddressedToAvatar("Ciao Pippo, Mary, arriva dopo la pausa.", "Mary"),
     false,
   );
   assert.equal(
