@@ -16,6 +16,12 @@ const debuggingPort = Number.parseInt(
 );
 const expectsCleanOutput = new URL(runtimeUrl).searchParams.get("conclaviaOutput") === "obs";
 const screenshotPath = process.env.CONCLAVIA_WEB_RUNTIME_SCREENSHOT || "";
+const actionText = process.env.CONCLAVIA_WEB_RUNTIME_ACTION || "";
+const actionChannel = process.env.CONCLAVIA_WEB_RUNTIME_ACTION_CHANNEL || "chat";
+const actionDelay = Number.parseInt(
+  process.env.CONCLAVIA_WEB_RUNTIME_ACTION_DELAY_MS || "900",
+  10,
+);
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -121,6 +127,34 @@ async function main() {
     await command("Page.enable");
     await command("Page.reload", { ignoreCache: true });
     await delay(4_000);
+    if (actionText) {
+      const action = await command("Runtime.evaluate", {
+        expression: `(async () => {
+          const channel = ${JSON.stringify(actionChannel)};
+          const response = await fetch(channel === 'voice' ? '/api/simulate' : '/api/chat/messages', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(channel === 'voice'
+              ? { speakerName: 'Vincenzo', text: ${JSON.stringify(actionText)} }
+              : {
+                platform: 'generic',
+                meetingId: 'runtime-audit',
+                messageId: crypto.randomUUID(),
+                speakerName: 'Vincenzo',
+                text: ${JSON.stringify(actionText)},
+                capturedAt: new Date().toISOString(),
+              }),
+          });
+          return { status: response.status, body: await response.json() };
+        })()`,
+        returnByValue: true,
+        awaitPromise: true,
+      });
+      if (action.result.value?.status !== 200) {
+        throw new Error(`Runtime action failed: ${JSON.stringify(action.result.value)}`);
+      }
+      await delay(Number.isFinite(actionDelay) ? actionDelay : 900);
+    }
     const evaluation = await command("Runtime.evaluate", {
       expression: `(async () => {
         const runtime = document.querySelector('#runtime');
@@ -184,6 +218,8 @@ async function main() {
       failedResources,
       chromeWarnings: chromeErrors.length,
       ...(screenshotPath ? { screenshotPath } : {}),
+      ...(actionText ? { actionText } : {}),
+      ...(actionText ? { actionChannel } : {}),
     }, null, 2));
   } finally {
     chrome.kill("SIGTERM");

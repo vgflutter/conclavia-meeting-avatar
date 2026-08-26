@@ -63,6 +63,71 @@ function preparePortableMaterial(material, renderer) {
   material.needsUpdate = true;
 }
 
+function stabilizePortableHair(root) {
+  const faceComponent = root.getObjectByName("Face");
+  if (!faceComponent) return;
+  const cardGroups = [];
+  root.traverse((node) => {
+    if (/^WEB_ShowcaseHairCards_Group\d+_LOD\d+$/u.test(node.name)) {
+      cardGroups.push(node);
+    }
+  });
+  if (!cardGroups.length) return;
+  root.updateMatrixWorld(true);
+  // UE exports rigid cards attached to the body skeleton's `head` bone. The
+  // separately baked Web body clips and MetaHuman face rig do not share that
+  // component-space head transform, so Three.js would drag the hairstyle down
+  // over the mouth as soon as the first idle starts. Keep the cards on the
+  // Face component while preserving their authored world transform.
+  for (const group of cardGroups) faceComponent.attach(group);
+  root.updateMatrixWorld(true);
+}
+
+function componentNodes(component) {
+  const nodes = [];
+  component?.traverse((node) => nodes.push(node));
+  return nodes;
+}
+
+function nodesByName(nodes) {
+  const index = new Map();
+  for (const node of nodes) {
+    if (!node.name) continue;
+    const exact = index.get(node.name) || [];
+    exact.push(node);
+    index.set(node.name, exact);
+  }
+  return index;
+}
+
+function retargetPortableClip(clip, components) {
+  const facial = /^asweb(?:mood|viseme)/u.test(normalizedName(clip.name));
+  const exactIndex = facial ? components.face : components.body;
+  const normalizedIndex = facial ? components.normalizedFace : components.normalizedBody;
+  const tracks = [];
+  for (const track of clip.tracks) {
+    const match = /^(.*)\.(position|quaternion|scale|morphTargetInfluences)$/u.exec(track.name);
+    if (!match) {
+      tracks.push(track.clone());
+      continue;
+    }
+    const [, sourceName, property] = match;
+    const candidates = exactIndex.get(sourceName)
+      || normalizedIndex.get(normalizedName(sourceName))
+      || [];
+    if (!candidates.length) continue;
+    const seen = new Set();
+    for (const node of candidates) {
+      if (seen.has(node.uuid)) continue;
+      seen.add(node.uuid);
+      const clone = track.clone();
+      clone.name = `${node.uuid}.${property}`;
+      tracks.push(clone);
+    }
+  }
+  return new THREE.AnimationClip(clip.name, clip.duration, tracks, clip.blendMode);
+}
+
 class ThreeAvatarPerformer {
   constructor(manifest, gltf) {
     this.manifest = manifest;
@@ -106,6 +171,24 @@ class ThreeAvatarPerformer {
       "YXZ",
     );
     this.scene.add(this.root);
+    stabilizePortableHair(this.root);
+    const bodyNodes = [
+      ...componentNodes(this.root.getObjectByName("Body")),
+      ...componentNodes(this.root.getObjectByName("SkeletalMesh")),
+    ];
+    const faceNodes = componentNodes(this.root.getObjectByName("Face"));
+    this.animationComponents = {
+      body: nodesByName(bodyNodes),
+      face: nodesByName(faceNodes),
+      normalizedBody: nodesByName(bodyNodes.map((node) => ({
+        name: normalizedName(node.name),
+        uuid: node.uuid,
+      }))),
+      normalizedFace: nodesByName(faceNodes.map((node) => ({
+        name: normalizedName(node.name),
+        uuid: node.uuid,
+      }))),
+    };
     this.mixer = new THREE.AnimationMixer(this.root);
     this.clips = new Map();
     this.#addAnimationClips(gltf.animations);
@@ -316,7 +399,12 @@ class ThreeAvatarPerformer {
   }
 
   #addAnimationClips(clips) {
-    for (const clip of clips) this.clips.set(normalizedName(clip.name), clip);
+    for (const clip of clips) {
+      this.clips.set(
+        normalizedName(clip.name),
+        retargetPortableClip(clip, this.animationComponents),
+      );
+    }
   }
 
   #playClip(reference, defaultLoop) {

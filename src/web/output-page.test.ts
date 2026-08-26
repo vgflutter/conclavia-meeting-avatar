@@ -87,6 +87,12 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = await Promise\.all/);
   assert.match(performer, /material\.alphaTest = 0\.05/);
   assert.match(performer, /material\.emissiveIntensity = 0\.35/);
+  assert.match(performer, /stabilizePortableHair\(this\.root\)/);
+  assert.match(performer, /faceComponent\.attach\(group\)/);
+  assert.match(performer, /retargetPortableClip/);
+  assert.match(performer, /this\.root\.getObjectByName\("SkeletalMesh"\)/);
+  assert.match(performer, /this\.root\.getObjectByName\("Face"\)/);
+  assert.match(performer, /clone\.name = `\$\{node\.uuid\}\.\$\{property\}`/);
   assert.match(performer, /#enforceClipSegment/);
   assert.match(performer, /#applyFacialAnimation/);
   assert.match(performer, /manifest\.facialClips/);
