@@ -109,7 +109,10 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /boneNames\.has\("facialcfacialroot"\)/);
   assert.match(performer, /trackHasMotion/);
   assert.match(performer, /bodyCorrection/);
-  assert.match(performer, /components\.bodyTranslations/);
+  assert.match(performer, /components\.bodyPositions/);
+  assert.match(performer, /components\.bodyScales/);
+  assert.match(performer, /bodyPositions\.push/);
+  assert.match(performer, /bodyScales\.push/);
   assert.match(performer, /#applyApplauseContact/);
   assert.match(performer, /exactIndex\.get\(sourceName\)[\s\S]*normalizedIndex\.get/);
   assert.match(performer, /replace\(\/_\[1-9\]\$\/u, ""\)/);

@@ -340,33 +340,40 @@ function uniqueNodes(nodes) {
 
 function portableRigNodes(root) {
   const body = [];
-  const bodyTranslations = [];
+  const bodyPositions = [];
+  const bodyScales = [];
   const face = [];
   root.traverse((node) => {
     if (!node.isSkinnedMesh || !node.skeleton?.bones?.length) return;
     const boneNames = new Set(node.skeleton.bones.map((bone) => normalizedNodeName(bone.name)));
     const facial = boneNames.has("facialcfacialroot") || boneNames.has("facialroot");
-    const bodySurface = portableMaterials(node).some((material) => (
-      String(material.name || "").toLowerCase().includes("body_baked")
-    ));
     // The face component contains a duplicate of the complete MetaHuman body
     // chain. Drive both copies from the same body clip so head, hair and neck
     // remain welded to the garment skeleton throughout ambient motion.
     if (boneNames.has("upperarml") && boneNames.has("pelvis")) {
       body.push(...node.skeleton.bones);
-      // Translation and scale tracks contain MetaHuman muscle/corrective
-      // offsets authored for the naked body skeleton. The wardrobe owns an
-      // equivalent but independently bound skeleton: replaying those absolute
-      // offsets on it tears the shirt apart during hand raise and applause.
-      // Rotations still target every skeleton above; positional correctives
-      // deliberately target only the native body surface.
-      if (!facial && bodySurface) bodyTranslations.push(...node.skeleton.bones);
+      // The v47 exporter restores the wardrobe's authoritative
+      // SkinWeightModifier payload. Its shirt is intentionally weighted to
+      // MetaHuman corrective joints, so translations and scale must follow the
+      // same body clip as rotations or the collar and sleeves separate during
+      // hand raise and applause.
+      if (!facial) {
+        bodyPositions.push(...node.skeleton.bones);
+        // MetaHuman's animated muscle scale belongs to the exposed body. The
+        // garment is already authored against those deformations; replaying
+        // the same scale on its duplicate skeleton over-corrects the sleeve
+        // and produces detached wedges around the shoulder.
+        if (!String(node.name || "").toLowerCase().includes("outfit")) {
+          bodyScales.push(...node.skeleton.bones);
+        }
+      }
     }
     if (facial) face.push(...node.skeleton.bones);
   });
   return {
     body: uniqueNodes(body),
-    bodyTranslations: uniqueNodes(bodyTranslations),
+    bodyPositions: uniqueNodes(bodyPositions),
+    bodyScales: uniqueNodes(bodyScales),
     face: uniqueNodes(face),
   };
 }
@@ -447,12 +454,18 @@ function retargetPortableClip(clip, components) {
     // head twice and reintroduce the neck/camera regression.
     const bodyCorrection = !facial && (property === "position" || property === "scale");
     if (bodyCorrection && !trackHasMotion(track, property)) continue;
+    const bodyCorrectionIndex = property === "scale"
+      ? components.bodyScales
+      : components.bodyPositions;
+    const normalizedBodyCorrectionIndex = property === "scale"
+      ? components.normalizedBodyScales
+      : components.normalizedBodyPositions;
     const exactIndex = facial
       ? components.face
-      : bodyCorrection ? components.bodyTranslations : components.body;
+      : bodyCorrection ? bodyCorrectionIndex : components.body;
     const normalizedIndex = facial
       ? components.normalizedFace
-      : bodyCorrection ? components.normalizedBodyTranslations : components.normalizedBody;
+      : bodyCorrection ? normalizedBodyCorrectionIndex : components.normalizedBody;
     // Merge exact and normalized names to tolerate GLTFLoader's duplicate-name
     // suffixes while targeting only the body or face component selected above.
     const candidates = [
@@ -586,14 +599,16 @@ class ThreeAvatarPerformer {
     const faceNodes = rigNodes.face.length ? rigNodes.face : componentNodes(faceComponent);
     this.animationComponents = {
       body: nodesByName(bodyNodes),
-      bodyTranslations: nodesByName(rigNodes.bodyTranslations),
+      bodyPositions: nodesByName(rigNodes.bodyPositions),
+      bodyScales: nodesByName(rigNodes.bodyScales),
       face: nodesByName(faceNodes),
       normalizedBody: nodesByNormalizedName(bodyNodes),
-      normalizedBodyTranslations: nodesByNormalizedName(rigNodes.bodyTranslations),
+      normalizedBodyPositions: nodesByNormalizedName(rigNodes.bodyPositions),
+      normalizedBodyScales: nodesByNormalizedName(rigNodes.bodyScales),
       normalizedFace: nodesByNormalizedName(faceNodes),
     };
     const bodyNode = (name) => (
-      this.animationComponents.bodyTranslations.get(name)?.[0]
+      this.animationComponents.bodyPositions.get(name)?.[0]
       || this.animationComponents.body.get(name)?.[0]
       || null
     );
