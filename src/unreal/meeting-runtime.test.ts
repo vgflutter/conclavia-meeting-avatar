@@ -336,6 +336,8 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19/);
   assert.match(exporter, /ensure_showcase_export_actor/);
   assert.match(exporter, /SkeletalMergingLibrary\.merge_meshes/);
+  assert.match(exporter, /graph\.body\.set_visibility\(False, False\)/);
+  assert.match(exporter, /graph\.body\.set_hidden_in_game\(True, False\)/);
   assert.match(exporter, /merged_body_actor/);
   assert.match(exporter, /bodyOutfitMerge/);
   assert.match(showcaseResolver, /MeetingAvatarAnchor/);

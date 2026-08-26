@@ -245,11 +245,14 @@ def merged_body_actor(graph: ShowcaseActorGraph) -> unreal.SkeletalMeshActor:
 
     # Keep the face on the authoritative assembly, but exclude the original
     # modular body and outfit components from this export.
-    graph.body.set_visibility(False, True)
-    graph.body.set_hidden_in_game(True, True)
+    # The MetaHuman Face and its hair-card attachments are children of the
+    # body component. Propagating this visibility change would silently remove
+    # every high-fidelity facial surface from the selected-actor export.
+    graph.body.set_visibility(False, False)
+    graph.body.set_hidden_in_game(True, False)
     for outfit in graph.outfits:
-        outfit.set_visibility(False, True)
-        outfit.set_hidden_in_game(True, True)
+        outfit.set_visibility(False, False)
+        outfit.set_hidden_in_game(True, False)
     log(
         "MERGED_BODY_OUTFIT "
         f"sources={1 + len(outfit_meshes)} "
