@@ -197,6 +197,50 @@ def _compact_skin_influences(
     return compacted_vertices
 
 
+def _validate_extended_skin_influences(document: dict[str, object]) -> int:
+    """Keep Unreal's authored 4/8/12-weight skinning contract intact.
+
+    The browser renderer consumes the additional JOINTS_n/WEIGHTS_n sets with
+    an extended Three.js skinning shader. Reducing the MetaHuman wardrobe to
+    four weights creates visible tears as soon as an idle or gesture moves the
+    shoulders, so export must fail closed instead of silently discarding them.
+    """
+    meshes = document.get("meshes")
+    if not isinstance(meshes, list):
+        raise RuntimeError("GLB is missing meshes")
+    maximum_sets = 0
+    for mesh in meshes:
+        if not isinstance(mesh, dict):
+            continue
+        primitives = mesh.get("primitives")
+        if not isinstance(primitives, list):
+            continue
+        for primitive in primitives:
+            if not isinstance(primitive, dict):
+                continue
+            attributes = primitive.get("attributes")
+            if not isinstance(attributes, dict) or "JOINTS_0" not in attributes:
+                continue
+            set_count = 0
+            for set_index in range(3):
+                has_joints = f"JOINTS_{set_index}" in attributes
+                has_weights = f"WEIGHTS_{set_index}" in attributes
+                if has_joints != has_weights:
+                    raise RuntimeError(
+                        f"Skin influence set {set_index} is incomplete"
+                    )
+                if has_joints:
+                    set_count += 1
+            if set_count == 0:
+                raise RuntimeError("Skinned primitive has no complete influence set")
+            maximum_sets = max(maximum_sets, set_count)
+    if maximum_sets < 2:
+        raise RuntimeError(
+            "Showcase export lost its extended MetaHuman skin influences"
+        )
+    return maximum_sets
+
+
 def _repair_hair_cards_materials(materials: list[dict[str, object]]) -> int:
     repaired = 0
     for material in materials:
@@ -319,7 +363,7 @@ def repair_showcase_face_materials(path: Path) -> tuple[str, ...]:
         # section) from the Web mesh.
         faces[0]["primitives"] = [primitives[index] for index in (0, 1, 3, 4)]
 
-    _compact_skin_influences(document, chunks)
+    _validate_extended_skin_influences(document)
     _repair_hair_cards_materials(materials)
 
     repaired_json = json.dumps(document, separators=(",", ":"), ensure_ascii=False).encode(

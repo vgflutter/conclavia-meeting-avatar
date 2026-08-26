@@ -8,6 +8,13 @@ function normalizedName(value) {
   return String(value || "").trim().toLowerCase().replaceAll(/[^a-z0-9]+/g, "");
 }
 
+function normalizedNodeName(value) {
+  // GLTFLoader makes duplicate node names globally unique (`upperarm_l_1`,
+  // `upperarm_l_2`). Those suffixes identify the face and wardrobe copies of
+  // the same MetaHuman joint; they are not part of the skeleton contract.
+  return normalizedName(String(value || "").replace(/_[1-9]$/u, ""));
+}
+
 function boundedWeight(value) {
   return Math.max(0, Math.min(1, Number(value) || 0));
 }
@@ -40,7 +47,60 @@ function portableMaterials(node) {
   return Array.isArray(node.material) ? node.material : [node.material];
 }
 
-function preparePortableMaterial(material, renderer) {
+function enableExtendedSkinning(material, influenceSets) {
+  if (influenceSets < 2) return;
+  const additionalSets = Array.from(
+    { length: Math.min(3, influenceSets) - 1 },
+    (_, index) => index + 1,
+  );
+  const previousCompile = material.onBeforeCompile?.bind(material);
+  const previousCacheKey = material.customProgramCacheKey?.bind(material);
+  material.onBeforeCompile = (shader, renderer) => {
+    previousCompile?.(shader, renderer);
+    const declarations = additionalSets
+      .map((setIndex) => `attribute vec4 joints_${setIndex};\nattribute vec4 weights_${setIndex};`)
+      .join("\n");
+    const positionTerms = additionalSets.flatMap((setIndex) => ["x", "y", "z", "w"]
+      .map((component) => `conclaviaSkinned += getBoneMatrix(joints_${setIndex}.${component}) * skinVertex * weights_${setIndex}.${component};`))
+      .join("\n");
+    const normalTerms = additionalSets.flatMap((setIndex) => ["x", "y", "z", "w"]
+      .map((component) => `conclaviaSkinMatrix += weights_${setIndex}.${component} * getBoneMatrix(joints_${setIndex}.${component});`))
+      .join("\n");
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <skinning_pars_vertex>",
+        `#include <skinning_pars_vertex>\n#ifdef USE_SKINNING\n${declarations}\n#endif`,
+      )
+      .replace(
+        "#include <beginnormal_vertex>",
+        "#include <beginnormal_vertex>\nvec3 conclaviaBaseObjectNormal = objectNormal;",
+      )
+      .replace(
+        "#include <skinnormal_vertex>",
+        `#include <skinnormal_vertex>
+#ifdef USE_SKINNING
+mat4 conclaviaSkinMatrix = mat4(0.0);
+${normalTerms}
+objectNormal += (bindMatrixInverse * conclaviaSkinMatrix * bindMatrix * vec4(conclaviaBaseObjectNormal, 0.0)).xyz;
+#endif`,
+      )
+      .replace(
+        "#include <skinning_vertex>",
+        `#include <skinning_vertex>
+#ifdef USE_SKINNING
+vec4 conclaviaSkinned = vec4(0.0);
+${positionTerms}
+transformed += (bindMatrixInverse * conclaviaSkinned).xyz;
+#endif`,
+      );
+  };
+  material.customProgramCacheKey = () => [
+    previousCacheKey?.() || "",
+    `conclavia-skin-influences-${influenceSets * 4}`,
+  ].join(":");
+}
+
+function preparePortableMaterial(material, renderer, influenceSets = 1) {
   for (const texture of [
     material.map,
     material.normalMap,
@@ -53,11 +113,17 @@ function preparePortableMaterial(material, renderer) {
   }
   const name = String(material.name || "").toLowerCase();
   if (name.includes("hair_cards")) {
+    // Unreal's baked cards atlas quantizes the authored threshold at the edge
+    // of the mask. A low deterministic cutoff preserves the fine strands; a
+    // higher runtime override makes the hairstyle disappear entirely.
     material.alphaTest = 0.05;
     material.transparent = false;
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
-    material.envMapIntensity = 0.38;
+    material.envMapIntensity = 0.22;
+    material.metalness = 0;
+    material.roughness = Math.max(0.62, material.roughness || 0);
+    if ("specularIntensity" in material) material.specularIntensity = 0.32;
   }
   if (name.includes("face_skin_baked_lod1") && material.map) {
     // Keep the high-frequency identity texture and normal response visible.
@@ -87,11 +153,12 @@ function preparePortableMaterial(material, renderer) {
     };
     material.customProgramCacheKey = () => "conclavia-skin-hq-v1";
   } else if (name.includes("eyel_baked") || name.includes("eyer_baked")) {
-    material.envMapIntensity = 1.35;
-    material.roughness = Math.max(0.1, material.roughness || 0);
+    material.envMapIntensity = 0.88;
+    material.roughness = Math.max(0.18, material.roughness || 0);
   } else if (material.isMeshStandardMaterial) {
     material.envMapIntensity = 0.62;
   }
+  enableExtendedSkinning(material, influenceSets);
   material.needsUpdate = true;
 }
 
@@ -126,6 +193,31 @@ function componentNodes(component, excludedRoots = new Set()) {
   return nodes;
 }
 
+function uniqueNodes(nodes) {
+  const seen = new Set();
+  return nodes.filter((node) => {
+    if (!node || seen.has(node.uuid)) return false;
+    seen.add(node.uuid);
+    return true;
+  });
+}
+
+function portableRigNodes(root) {
+  const body = [];
+  const face = [];
+  root.traverse((node) => {
+    if (!node.isSkinnedMesh || !node.skeleton?.bones?.length) return;
+    const boneNames = new Set(node.skeleton.bones.map((bone) => normalizedNodeName(bone.name)));
+    if (boneNames.has("upperarml") && boneNames.has("pelvis")) {
+      body.push(...node.skeleton.bones);
+    }
+    if (boneNames.has("facialcfacialroot") || boneNames.has("facialroot")) {
+      face.push(...node.skeleton.bones);
+    }
+  });
+  return { body: uniqueNodes(body), face: uniqueNodes(face) };
+}
+
 function nodesByName(nodes) {
   const index = new Map();
   for (const node of nodes) {
@@ -149,9 +241,19 @@ function retargetPortableClip(clip, components) {
       continue;
     }
     const [, sourceName, property] = match;
-    const candidates = exactIndex.get(sourceName)
-      || normalizedIndex.get(normalizedName(sourceName))
-      || [];
+    // Body animation assets may carry the reference translations of the
+    // authoring skeleton. MetaHuman Optimized bodies keep the same joint
+    // topology but can have different limb lengths, so replaying those local
+    // translations opens visible gaps at the shoulder, elbow and wrist.
+    // Rotations preserve the target avatar's own bind proportions and are the
+    // correct retargeting primitive for portable body gestures.
+    if (!facial && (property === "position" || property === "scale")) continue;
+    // Merge exact and normalized names to tolerate GLTFLoader's duplicate-name
+    // suffixes while targeting only the body or face component selected above.
+    const candidates = [
+      ...(exactIndex.get(sourceName) || []),
+      ...(normalizedIndex.get(normalizedNodeName(sourceName)) || []),
+    ];
     if (!candidates.length) continue;
     const seen = new Set();
     for (const node of candidates) {
@@ -239,28 +341,39 @@ class ThreeAvatarPerformer {
     );
     this.scene.add(this.root);
     stabilizePortableHair(this.root);
+    const rigNodes = portableRigNodes(this.root);
     const bodyComponent = this.root.getObjectByName("Body");
     const faceComponent = this.root.getObjectByName("Face");
     const duplicateBodyComponent = this.root.getObjectByName("SkeletalMesh");
-    const bodyNodes = [
-      ...componentNodes(
+    // Read the actual skeleton bindings first. Skeletal Mesh Merge is free to
+    // rename the exported component, while the authored MetaHuman bone
+    // contract remains stable. Keep the component walk only as a compatibility
+    // fallback for older v38-v40 bundles.
+    const bodyNodes = rigNodes.body.length
+      ? rigNodes.body
+      : componentNodes(
         bodyComponent,
         new Set([faceComponent, duplicateBodyComponent].filter(Boolean)),
-      ),
-      ...componentNodes(duplicateBodyComponent),
-    ];
-    const faceNodes = componentNodes(faceComponent);
+      );
+    const faceNodes = rigNodes.face.length ? rigNodes.face : componentNodes(faceComponent);
     this.animationComponents = {
       body: nodesByName(bodyNodes),
       face: nodesByName(faceNodes),
       normalizedBody: nodesByName(bodyNodes.map((node) => ({
-        name: normalizedName(node.name),
+        name: normalizedNodeName(node.name),
         uuid: node.uuid,
       }))),
       normalizedFace: nodesByName(faceNodes.map((node) => ({
-        name: normalizedName(node.name),
+        name: normalizedNodeName(node.name),
         uuid: node.uuid,
       }))),
+    };
+    const bodyNode = (name) => this.animationComponents.body.get(name)?.[0] || null;
+    this.bodyRig = {
+      lowerarmL: bodyNode("lowerarm_l"),
+      handL: bodyNode("hand_l"),
+      lowerarmR: bodyNode("lowerarm_r"),
+      handR: bodyNode("hand_r"),
     };
     this.mixer = new THREE.AnimationMixer(this.root);
     this.clips = new Map();
@@ -270,8 +383,15 @@ class ThreeAvatarPerformer {
       if (node.isMesh) {
         node.castShadow = true;
         node.receiveShadow = true;
+        const influenceSets = [0, 1, 2]
+          .filter((index) => node.geometry?.getAttribute(
+            index === 0 ? "skinIndex" : `joints_${index}`,
+          ) && node.geometry?.getAttribute(
+            index === 0 ? "skinWeight" : `weights_${index}`,
+          ))
+          .length;
         for (const material of portableMaterials(node)) {
-          preparePortableMaterial(material, this.renderer);
+          preparePortableMaterial(material, this.renderer, influenceSets);
         }
       }
       if (!node.morphTargetDictionary || !node.morphTargetInfluences) return;
@@ -301,6 +421,33 @@ class ThreeAvatarPerformer {
       viseme: { action: null, token: "", segment: null },
     };
     this.disposed = false;
+  }
+
+  diagnostics() {
+    this.root.updateMatrixWorld(true);
+    const point = (node) => node
+      ? node.getWorldPosition(new THREE.Vector3()).toArray().map((value) => Number(value.toFixed(4)))
+      : null;
+    const skins = [];
+    this.root.traverse((node) => {
+      if (!node.isSkinnedMesh) return;
+      skins.push({
+        name: node.name,
+        parent: node.parent?.name || null,
+        bones: node.skeleton?.bones.length || 0,
+        firstBone: node.skeleton?.bones[0]?.name || null,
+        bindMatrix: node.bindMatrix.elements.map((value) => Number(value.toFixed(4))),
+        worldMatrix: node.matrixWorld.elements.map((value) => Number(value.toFixed(4))),
+        materials: portableMaterials(node).map((material) => material.name || ""),
+      });
+    });
+    return {
+      lowerarmL: point(this.bodyRig.lowerarmL),
+      handL: point(this.bodyRig.handL),
+      lowerarmR: point(this.bodyRig.lowerarmR),
+      handR: point(this.bodyRig.handR),
+      skins,
+    };
   }
 
   addAnimationGltfs(animationGltfs) {

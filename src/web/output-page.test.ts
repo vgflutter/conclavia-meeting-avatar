@@ -90,10 +90,23 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /const performer = new ThreeAvatarPerformer/);
   assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = await Promise\.all/);
   assert.match(performer, /material\.alphaTest = 0\.05/);
+  assert.match(performer, /enableExtendedSkinning/);
+  assert.match(performer, /attribute vec4 joints_\$\{setIndex\}/);
+  assert.match(performer, /getBoneMatrix\(joints_\$\{setIndex\}/);
+  assert.match(performer, /conclavia-skin-influences/);
   assert.match(output, /Math\.max\(window\.devicePixelRatio \|\| 1, 2\)/);
   assert.match(performer, /stabilizePortableHair\(this\.root\)/);
   assert.match(performer, /faceComponent\.attach\(group\)/);
   assert.match(performer, /retargetPortableClip/);
+  assert.match(performer, /portableRigNodes/);
+  assert.match(performer, /boneNames\.has\("upperarml"\)/);
+  assert.match(performer, /boneNames\.has\("facialcfacialroot"\)/);
+  assert.match(
+    performer,
+    /!facial && \(property === "position" \|\| property === "scale"\)/,
+  );
+  assert.match(performer, /exactIndex\.get\(sourceName\)[\s\S]*normalizedIndex\.get/);
+  assert.match(performer, /replace\(\/_\[1-9\]\$\/u, ""\)/);
   assert.match(performer, /this\.root\.getObjectByName\("SkeletalMesh"\)/);
   assert.match(performer, /this\.root\.getObjectByName\("Face"\)/);
   assert.match(performer, /excludedRoots\.has\(node\)/);

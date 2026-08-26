@@ -100,6 +100,7 @@ async function loadAvatar(avatarId) {
     }
     avatarPerformer?.dispose();
     avatarPerformer = performer;
+    window.conclaviaAvatarDiagnostics = () => avatarPerformer?.diagnostics() || null;
     runtime.dataset.performer = performer ? "three" : "photo";
     runtimeStatus.textContent = performer
       ? `Web LOD ${performer.manifest.assetVersion} caricato`
@@ -108,6 +109,7 @@ async function loadAvatar(avatarId) {
     if (generation !== avatarLoadGeneration) return;
     avatarPerformer?.dispose();
     avatarPerformer = null;
+    window.conclaviaAvatarDiagnostics = () => null;
     loadedAvatarId = "";
     runtime.dataset.performer = "photo";
     runtimeStatus.textContent = `Fallback fotografico: ${error.message}`;

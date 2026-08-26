@@ -375,8 +375,10 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(showcaseResolver, /AttachmentRule\.KEEP_WORLD/);
   assert.match(showcaseResolver, /set_material\(0, hair_cards_material\)/);
   assert.match(showcaseResolver, /Hair_Cards/);
-  assert.match(showcaseRepair, /_compact_skin_influences/);
-  assert.match(showcaseRepair, /extra_sets/);
+  assert.match(showcaseRepair, /_validate_extended_skin_influences/);
+  assert.match(showcaseRepair, /JOINTS_\{set_index\}/);
+  assert.match(showcaseRepair, /WEIGHTS_\{set_index\}/);
+  assert.doesNotMatch(showcaseRepair, /_compact_skin_influences\(document, chunks\)/);
   assert.match(showcaseRepair, /_repair_hair_cards_materials/);
   assert.match(showcaseRepair, /material\["alphaCutoff"\] = 0\.05/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);

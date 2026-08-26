@@ -142,7 +142,36 @@ async function main() {
       mobile: false,
     });
     await command("Page.reload", { ignoreCache: true });
-    await delay(4_000);
+    // High-fidelity portable bundles can exceed 100 MB. Wait for the actual
+    // performer/stream contract instead of sampling after a fixed delay, which
+    // could report a false failure while Chrome was still decoding the GLBs.
+    let runtimeReady = false;
+    for (let attempt = 0; attempt < 300; attempt += 1) {
+      const probe = await command("Runtime.evaluate", {
+        expression: `(() => {
+          const runtime = document.querySelector('#runtime');
+          return {
+            state: runtime?.dataset.state || null,
+            performer: runtime?.dataset.performer || null,
+            streamReady: window.conclaviaPerformanceStream instanceof MediaStream,
+          };
+        })()`,
+        returnByValue: true,
+      });
+      const value = probe.result.value;
+      if (
+        value?.state === "live"
+        && new Set(["photo", "three"]).has(value?.performer)
+        && value?.streamReady === true
+      ) {
+        runtimeReady = true;
+        break;
+      }
+      await delay(100);
+    }
+    if (!runtimeReady) {
+      throw new Error("Web performer did not become live within 30 seconds");
+    }
     if (actionText) {
       const action = await command("Runtime.evaluate", {
         expression: `(async () => {
@@ -193,6 +222,7 @@ async function main() {
           runtimeStatus: document.querySelector('#runtime-status')?.textContent || null,
           avatarReady: performanceStatus.webAvatar?.ready ?? null,
           avatarAuditError: performanceStatus.webAvatar?.error ?? null,
+          avatarDiagnostics: window.conclaviaAvatarDiagnostics?.() || null,
           overlaysHidden: ['.runtime-badges', '.runtime-card', '#diagnostics'].every((selector) => {
             const element = document.querySelector(selector);
             return element && getComputedStyle(element).display === 'none';

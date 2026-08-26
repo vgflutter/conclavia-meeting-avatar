@@ -214,7 +214,7 @@ export async function scaffoldWebAvatarManifest(
     animationModels: animationModelPaths.map((path) => basename(path)),
     ...(options.appearance ? { appearance: options.appearance } : {}),
     framing: {
-      camera: [0, 1.56, 1.02],
+      camera: [0, 1.56, 0.89],
       target: [0, 1.49, 0],
       fov: 34,
       scale: 1,
@@ -300,7 +300,7 @@ export async function writeWebAvatarBundleScaffold(
     animationModels: record.animationModels,
     ...(record.appearance === undefined ? {} : { appearance: record.appearance }),
     framing: {
-      camera: [0, 1.56, 1.02],
+      camera: [0, 1.56, 0.89],
       target: [0, 1.49, 0],
       fov: 34,
       scale: 1,

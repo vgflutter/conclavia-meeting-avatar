@@ -32,7 +32,7 @@ LEVEL_PATH = os.environ.get(
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
 ASSET_VERSION = os.environ.get(
     "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
-    "ue58-v41-showcase-merged-hq",
+    "ue58-v43-showcase-skin12-hq",
 )
 MATERIAL_BAKE_SIZE = 2048
 OUTPUT_DIRECTORY = Path(
