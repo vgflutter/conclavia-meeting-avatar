@@ -331,12 +331,17 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   ]);
 
   assert.match(project, /"Name": "GLTFExporter", "Enabled": true/);
+  assert.match(project, /"Name": "SkeletalMerging", "Enabled": true/);
   assert.match(rendererManifest, /export_web_avatar_bundle\.py/);
   assert.match(exporter, /\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v19/);
   assert.match(exporter, /ensure_showcase_export_actor/);
+  assert.match(exporter, /SkeletalMergingLibrary\.merge_meshes/);
+  assert.match(exporter, /merged_body_actor/);
+  assert.match(exporter, /bodyOutfitMerge/);
   assert.match(showcaseResolver, /MeetingAvatarAnchor/);
   assert.match(showcaseResolver, /BP_MHC_Showcase_WebHigh\.BP_MHC_Showcase_WebHigh_C/);
   assert.match(showcaseResolver, /Optimized\/High Showcase/);
+  assert.match(showcaseResolver, /exportable outfit Skeletal Mesh/);
   assert.match(showcaseResolver, /refusing a bald Web export/);
   assert.match(exporter, /export_vertex_skin_weights/);
   assert.match(exporter, /GLTFMaterialBakeMode\.SIMPLE/);

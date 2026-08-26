@@ -23,6 +23,7 @@
     { "Name": "CaptureManagerEditor", "Enabled": true },
     { "Name": "PythonScriptPlugin", "Enabled": true },
     { "Name": "EditorScriptingUtilities", "Enabled": true },
-    { "Name": "GLTFExporter", "Enabled": true }
+    { "Name": "GLTFExporter", "Enabled": true },
+    { "Name": "SkeletalMerging", "Enabled": true }
   ]
 }

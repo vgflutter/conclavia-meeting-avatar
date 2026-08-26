@@ -43,8 +43,10 @@ class ShowcaseActorGraph:
     actor: unreal.Actor
     face: unreal.SkeletalMeshComponent
     body: unreal.SkeletalMeshComponent
+    outfits: tuple[unreal.SkeletalMeshComponent, ...]
     face_mesh_path: str
     body_mesh_path: str
+    outfit_mesh_paths: tuple[str, ...]
     groom_asset_paths: tuple[str, ...]
     hair_actors: tuple[unreal.StaticMeshActor, ...]
     hair_mesh_paths: tuple[str, ...]
@@ -175,8 +177,21 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
     actor = _spawn_showcase(anchor)
     face = _single_skeletal_component(actor, "Face")
     body = _single_skeletal_component(actor, "Body")
+    outfits = tuple(
+        component
+        for component in actor.get_components_by_class(unreal.SkeletalMeshComponent)
+        if component not in (face, body)
+        and isinstance(component.get_skeletal_mesh_asset(), unreal.SkeletalMesh)
+        and (
+            "outfit" in component.get_name().casefold()
+            or "/clothing/" in _asset_path(component).casefold()
+        )
+    )
+    if not outfits:
+        raise RuntimeError("Optimized Showcase has no exportable outfit Skeletal Mesh")
     face_mesh_path = _asset_path(face)
     body_mesh_path = _asset_path(body)
+    outfit_mesh_paths = tuple(_asset_path(component) for component in outfits)
     for role, path in (("Face", face_mesh_path), ("Body", body_mesh_path)):
         if SHOWCASE_ASSET_FRAGMENT not in path:
             raise RuntimeError(
@@ -225,6 +240,7 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
         "READY "
         f"class={actor.get_class().get_path_name()} "
         f"face={face_mesh_path} body={body_mesh_path} grooms={len(groom_paths)} "
+        f"outfits={','.join(outfit_mesh_paths)} "
         f"hairMaterial={hair_cards_material.get_path_name()} "
         f"webHair={','.join(hair_mesh_paths)}"
     )
@@ -232,8 +248,10 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
         actor=actor,
         face=face,
         body=body,
+        outfits=outfits,
         face_mesh_path=face_mesh_path,
         body_mesh_path=body_mesh_path,
+        outfit_mesh_paths=outfit_mesh_paths,
         groom_asset_paths=tuple(sorted(groom_paths)),
         hair_actors=hair_actors,
         hair_mesh_paths=hair_mesh_paths,
