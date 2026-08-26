@@ -363,6 +363,9 @@ silence), all twelve moods, all seven gestures, and the ambient repertoire. A
 bundle can keep animation sequences in separate GLBs; the browser binds their
 tracks to the resident base skeleton and respects authored ranges for raising,
 holding and lowering the hand without restarting the complete take.
+Every non-neutral facial clip is evaluated through Epic's MetaHuman Face
+Control Rig on the Showcase identity. Export and installation reject neutral,
+non-returning, duplicate-pose, or duplicate-binary facial performances.
 Installation then audits the source before copying it, never overwrites an
 existing avatar, and exposes the GLB to the browser only after the final
 directory rename has completed. Private character binaries remain under the

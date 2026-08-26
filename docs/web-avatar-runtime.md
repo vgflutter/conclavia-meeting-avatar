@@ -165,6 +165,15 @@ non-neutral moods and sixteen case-sensitive visemes on the Showcase identity,
 exports each baked face skeleton, and writes `export.json` plus a ZIP. No
 podcast scene, Pixel Streaming frame, or runtime GPU state enters the bundle.
 
+Facial export is not a curve-only glTF conversion. Unreal loads Epic's
+`Face_ControlBoard_CtrlRig`, runs Backwards Solve for every semantic mood, and
+keys the same rig's licensed speech controls for every Polly viseme before
+baking Showcase-specific bone transforms. Each clip must leave neutral, reach
+a distinct midpoint pose, and return to neutral. The export fails closed if
+any of those conditions is false. The local bundle audit also fingerprints the
+binary payload of every facial GLB, preventing a set of renamed neutral clips
+from passing readiness again.
+
 After expanding the ZIP locally:
 
 ```bash

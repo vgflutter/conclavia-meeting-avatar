@@ -83,9 +83,14 @@ function stabilizePortableHair(root) {
   root.updateMatrixWorld(true);
 }
 
-function componentNodes(component) {
+function componentNodes(component, excludedRoots = new Set()) {
   const nodes = [];
-  component?.traverse((node) => nodes.push(node));
+  const visit = (node) => {
+    if (!node || excludedRoots.has(node)) return;
+    nodes.push(node);
+    for (const child of node.children || []) visit(child);
+  };
+  visit(component);
   return nodes;
 }
 
@@ -172,11 +177,17 @@ class ThreeAvatarPerformer {
     );
     this.scene.add(this.root);
     stabilizePortableHair(this.root);
+    const bodyComponent = this.root.getObjectByName("Body");
+    const faceComponent = this.root.getObjectByName("Face");
+    const duplicateBodyComponent = this.root.getObjectByName("SkeletalMesh");
     const bodyNodes = [
-      ...componentNodes(this.root.getObjectByName("Body")),
-      ...componentNodes(this.root.getObjectByName("SkeletalMesh")),
+      ...componentNodes(
+        bodyComponent,
+        new Set([faceComponent, duplicateBodyComponent].filter(Boolean)),
+      ),
+      ...componentNodes(duplicateBodyComponent),
     ];
-    const faceNodes = componentNodes(this.root.getObjectByName("Face"));
+    const faceNodes = componentNodes(faceComponent);
     this.animationComponents = {
       body: nodesByName(bodyNodes),
       face: nodesByName(faceNodes),

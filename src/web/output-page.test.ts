@@ -92,6 +92,8 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /retargetPortableClip/);
   assert.match(performer, /this\.root\.getObjectByName\("SkeletalMesh"\)/);
   assert.match(performer, /this\.root\.getObjectByName\("Face"\)/);
+  assert.match(performer, /excludedRoots\.has\(node\)/);
+  assert.match(performer, /new Set\(\[faceComponent, duplicateBodyComponent\]\.filter\(Boolean\)\)/);
   assert.match(performer, /clone\.name = `\$\{node\.uuid\}\.\$\{property\}`/);
   assert.match(performer, /#enforceClipSegment/);
   assert.match(performer, /#applyFacialAnimation/);

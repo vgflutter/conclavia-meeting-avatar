@@ -29,6 +29,7 @@ from bake_web_facial_moods import (
     meeting_face,
     recreate_asset,
 )
+from web_face_control_rig_bake import bake_face_animation
 
 
 DURATION_SECONDS = 0.30
@@ -186,55 +187,25 @@ def bake_and_export(
     alias: str,
     label: str,
     source: unreal.AnimSequence,
-    actor: unreal.Actor,
-    face: unreal.SkeletalMeshComponent,
+    face_mesh: unreal.SkeletalMesh,
     face_skeleton: unreal.Skeleton,
     control_count: int,
+    controls: dict[str, float],
 ) -> dict[str, object]:
     sequence_name = f"LS_WebViseme{label}_v1"
     baked_name = f"AS_WebViseme{label}_v1"
-    sequence = recreate_asset(
-        f"{TEMP_ROOT}/{sequence_name}",
-        sequence_name,
-        unreal.LevelSequence,
-        unreal.LevelSequenceFactoryNew(),
+    baked, bake_report = bake_face_animation(
+        label=f"viseme-{alias}",
+        source=source,
+        face_mesh=face_mesh,
+        face_skeleton=face_skeleton,
+        sequence_name=sequence_name,
+        output_name=baked_name,
+        fps=FPS,
+        direct_controls=controls,
+        key_times=KEY_TIMES,
+        key_weights=KEY_WEIGHTS,
     )
-    frame_count = max(2, int(round(source.get_play_length() * FPS)))
-    sequence.set_display_rate(unreal.FrameRate(FPS, 1))
-    sequence.set_tick_resolution_directly(unreal.FrameRate(FPS, 1))
-    sequence.set_playback_start(0)
-    sequence.set_playback_end(frame_count)
-    unreal.LevelSequenceEditorBlueprintLibrary.open_level_sequence(sequence)
-    actor_binding = sequence.add_possessable(actor)
-    face_binding = sequence.add_possessable(face)
-    face_binding.set_parent(actor_binding)
-    track = face_binding.add_track(unreal.MovieSceneSkeletalAnimationTrack)
-    if track is None:
-        raise RuntimeError(f"Could not create facial track for viseme {viseme}")
-    section = track.add_section()
-    section.set_range(0, frame_count)
-    parameters = section.get_editor_property("params")
-    parameters.set_editor_property("animation", source)
-    section.set_editor_property("params", parameters)
-
-    factory = unreal.AnimSequenceFactory()
-    factory.target_skeleton = face_skeleton
-    baked = recreate_asset(
-        f"{TEMP_ROOT}/{baked_name}",
-        baked_name,
-        unreal.AnimSequence,
-        factory,
-    )
-    options = unreal.AnimSeqExportOption()
-    options.export_transforms = True
-    options.export_morph_targets = True
-    options.evaluate_all_skeletal_mesh_components = True
-    world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
-    if not unreal.SequencerTools.export_anim_sequence(
-        world, sequence, baked, options, face_binding, False
-    ):
-        raise RuntimeError(f"Sequencer could not bake Showcase viseme {viseme}")
-    unreal.EditorAssetLibrary.save_loaded_asset(baked, only_if_is_dirty=False)
     bone_tracks = list(unreal.AnimationLibrary.get_animation_track_names(baked))
     if not bone_tracks:
         raise RuntimeError(f"Showcase viseme {viseme} produced no facial-bone transforms")
@@ -248,7 +219,6 @@ def bake_and_export(
         gltf_options(),
         set(),
     )
-    unreal.LevelSequenceEditorBlueprintLibrary.close_level_sequence()
     if not output.is_file() or output.stat().st_size < 20:
         raise RuntimeError(f"Facial GLB export failed for viseme {viseme}: {output}")
     return {
@@ -259,6 +229,13 @@ def bake_and_export(
         "bytes": output.stat().st_size,
         "boneTracks": len(bone_tracks),
         "curveCount": control_count,
+        "poseDigests": {
+            "start": bake_report["startDigest"],
+            "midpoint": bake_report["midpointDigest"],
+            "end": bake_report["endDigest"],
+        },
+        "controlRig": bake_report["controlRig"],
+        "directControls": bake_report["directControls"],
         "exported": bool(exported),
     }
 
@@ -267,7 +244,7 @@ def main() -> None:
     samples, input_report = load_samples()
     if not unreal.EditorLoadingAndSavingUtils.load_map(LEVEL_PATH):
         raise RuntimeError(f"Could not load meeting level: {LEVEL_PATH}")
-    actor, face = meeting_face()
+    _, face = meeting_face()
     face_mesh = face.get_skeletal_mesh_asset()
     if not isinstance(face_mesh, unreal.SkeletalMesh):
         raise RuntimeError("Showcase Face has no Skeletal Mesh")
@@ -286,10 +263,10 @@ def main() -> None:
             alias,
             label,
             source,
-            actor,
-            face,
+            face_mesh,
             face_skeleton,
             len(controls),
+            controls,
         )
         exports.append(result)
         log(
@@ -297,6 +274,9 @@ def main() -> None:
             f"bytes={result['bytes']} bones={result['boneTracks']} "
             f"curves={result['curveCount']}"
         )
+    midpoint_digests = {item["poseDigests"]["midpoint"] for item in exports}
+    if len(midpoint_digests) < len(exports):
+        raise RuntimeError("Portable Web viseme bake produced duplicate facial poses")
     report = {
         "schema": "conclavia.web-facial-visemes",
         "version": 1,

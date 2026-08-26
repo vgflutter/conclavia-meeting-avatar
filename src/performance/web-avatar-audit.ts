@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
@@ -118,6 +119,23 @@ function parseGlbJson(bytes: Uint8Array): GltfDocument {
   throw new Error("GLB JSON chunk not found");
 }
 
+function glbBinaryFingerprint(bytes: Uint8Array): string | null {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let offset = 12;
+  while (offset + 8 <= bytes.byteLength) {
+    const length = view.getUint32(offset, true);
+    const type = view.getUint32(offset + 4, true);
+    const start = offset + 8;
+    const end = start + length;
+    if (end > bytes.byteLength) throw new Error("GLB contains a truncated chunk");
+    if (type === 0x004e4942) {
+      return createHash("sha256").update(bytes.subarray(start, end)).digest("hex");
+    }
+    offset = end;
+  }
+  return null;
+}
+
 function sortedUnique(values: readonly string[]): string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
@@ -164,10 +182,14 @@ export async function auditWebAvatar(
 ): Promise<WebAvatarAudit> {
   const inventory = await inspectWebAvatarModel(modelPath);
   const animationInventories = await Promise.all(
-    animationModelPaths.map(async (path) => ({
-      path,
-      inventory: await inspectWebAvatarModel(path),
-    })),
+    animationModelPaths.map(async (path) => {
+      const bytes = await readFile(path);
+      return {
+        path,
+        inventory: await inspectWebAvatarModel(path),
+        binaryFingerprint: glbBinaryFingerprint(bytes),
+      };
+    }),
   );
   const nodeNames = new Set(inventory.nodeNames);
   const morphNames = new Set(inventory.morphTargetNames);
@@ -191,14 +213,29 @@ export async function auditWebAvatar(
     ...inventory.externalImages,
     ...animationInventories.flatMap(({ inventory: asset }) => asset.externalImages),
   ]);
-  const invalidAnimationAssets = animationInventories.flatMap(({ path, inventory: asset }) => {
-    const issues = [
-      ...(asset.gltfVersion === "2.0" ? [] : ["gltf-version"]),
-      ...(asset.animationCount > 0 ? [] : ["animations"]),
-      ...(asset.externalImages.length === 0 ? [] : ["external-images"]),
-    ];
-    return issues.map((issue) => `${basename(path)}:${issue}`);
+  const duplicateFacialFingerprints = new Map<string, string>();
+  const duplicateFacialAssets = animationInventories.flatMap(({ path, binaryFingerprint }) => {
+    if (!/^anim-(?:face|viseme)-.+\.glb$/i.test(basename(path)) || !binaryFingerprint) {
+      return [];
+    }
+    const first = duplicateFacialFingerprints.get(binaryFingerprint);
+    if (!first) {
+      duplicateFacialFingerprints.set(binaryFingerprint, basename(path));
+      return [];
+    }
+    return [`${basename(path)}:duplicate-facial-payload:${first}`];
   });
+  const invalidAnimationAssets = [
+    ...animationInventories.flatMap(({ path, inventory: asset }) => {
+      const issues = [
+        ...(asset.gltfVersion === "2.0" ? [] : ["gltf-version"]),
+        ...(asset.animationCount > 0 ? [] : ["animations"]),
+        ...(asset.externalImages.length === 0 ? [] : ["external-images"]),
+      ];
+      return issues.map((issue) => `${basename(path)}:${issue}`);
+    }),
+    ...duplicateFacialAssets,
+  ];
   const missingNodes = requiredNodes.filter((name) => !nodeNames.has(name));
   const missingMorphTargets = [...requiredMorphs].filter((name) => !morphNames.has(name));
   const missingAnimationClips = [...requiredClips].filter((name) => !clipNames.has(name));

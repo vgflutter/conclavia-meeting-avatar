@@ -292,6 +292,7 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
     showcaseResolver,
     facialBaker,
     visemeBaker,
+    faceControlRigBaker,
     showcaseRepair,
     wrapper,
   ] = await Promise.all([
@@ -311,6 +312,12 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
     ),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/bake_web_facial_visemes.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile(
+        "unreal/ConclaviaStudio/Scripts/web_face_control_rig_bake.py",
+      ),
       "utf8",
     ),
     readFile(
@@ -364,18 +371,22 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(showcaseRepair, /_repair_hair_cards_materials/);
   assert.match(showcaseRepair, /material\["alphaCutoff"\] = 0\.05/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
-  assert.match(facialBaker, /SequencerTools\.export_anim_sequence/);
-  assert.match(facialBaker, /evaluate_all_skeletal_mesh_components/);
-  assert.match(facialBaker, /close_level_sequence\(\)/);
+  assert.match(facialBaker, /bake_face_animation/);
+  assert.match(faceControlRigBaker, /Face_ControlBoard_CtrlRig/);
+  assert.match(faceControlRigBaker, /load_anim_sequence_into_control_rig_section/);
+  assert.match(faceControlRigBaker, /SequencerTools\.export_anim_sequence/);
+  assert.match(faceControlRigBaker, /evaluate_all_skeletal_mesh_components/);
+  assert.match(faceControlRigBaker, /close_level_sequence\(\)/);
+  assert.match(faceControlRigBaker, /start_digest == midpoint_digest/);
+  assert.match(faceControlRigBaker, /start_digest != end_digest/);
   assert.match(facialBaker, /"export_preview_mesh": False/);
   assert.match(facialBaker, /"export_morph_targets": False/);
   assert.match(facialBaker, /anim-face-\{mood\}\.glb/);
   assert.match(facialBaker, /CONCLAVIA_WEB_FACIAL_MOODS: \{message\}/);
   assert.doesNotMatch(facialBaker, /jawopen|tongue|teeth|mouthpress|mouthpucker/iu);
   assert.match(visemeBaker, /conclavia\.web-visemes/);
-  assert.match(visemeBaker, /SequencerTools\.export_anim_sequence/);
-  assert.match(visemeBaker, /evaluate_all_skeletal_mesh_components/);
-  assert.match(visemeBaker, /close_level_sequence\(\)/);
+  assert.match(visemeBaker, /bake_face_animation/);
+  assert.match(faceControlRigBaker, /key_direct_controls/);
   assert.match(visemeBaker, /anim-viseme-\{alias\}\.glb/);
   assert.match(visemeBaker, /\("S", "sh", "Sh"\)/);
   assert.match(visemeBaker, /\("T", "th", "Th"\)/);

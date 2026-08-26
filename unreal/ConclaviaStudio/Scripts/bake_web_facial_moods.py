@@ -24,6 +24,7 @@ if str(SCRIPT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIRECTORY))
 
 from web_showcase_actor import ensure_showcase_export_actor
+from web_face_control_rig_bake import bake_face_animation
 
 
 LEVEL_PATH = "/Game/Conclavia/Meeting/L_MeetingAvatar_v19"
@@ -275,55 +276,21 @@ def build_curve_source(mood: str, recipe: MoodRecipe) -> unreal.AnimSequence:
 def bake_and_export(
     mood: str,
     source: unreal.AnimSequence,
-    actor: unreal.Actor,
-    face: unreal.SkeletalMeshComponent,
+    face_mesh: unreal.SkeletalMesh,
     face_skeleton: unreal.Skeleton,
 ) -> dict[str, object]:
     label = asset_label(mood)
     sequence_name = f"LS_WebMood{label}_v1"
     baked_name = f"AS_WebMood{label}_v1"
-    sequence = recreate_asset(
-        f"{TEMP_ROOT}/{sequence_name}",
-        sequence_name,
-        unreal.LevelSequence,
-        unreal.LevelSequenceFactoryNew(),
+    baked, bake_report = bake_face_animation(
+        label=f"mood-{mood}",
+        source=source,
+        face_mesh=face_mesh,
+        face_skeleton=face_skeleton,
+        sequence_name=sequence_name,
+        output_name=baked_name,
+        fps=FPS,
     )
-    frame_count = max(2, int(round(source.get_play_length() * FPS)))
-    sequence.set_display_rate(unreal.FrameRate(FPS, 1))
-    sequence.set_tick_resolution_directly(unreal.FrameRate(FPS, 1))
-    sequence.set_playback_start(0)
-    sequence.set_playback_end(frame_count)
-    unreal.LevelSequenceEditorBlueprintLibrary.open_level_sequence(sequence)
-    actor_binding = sequence.add_possessable(actor)
-    face_binding = sequence.add_possessable(face)
-    face_binding.set_parent(actor_binding)
-    track = face_binding.add_track(unreal.MovieSceneSkeletalAnimationTrack)
-    if track is None:
-        raise RuntimeError(f"Could not create facial track for {mood}")
-    section = track.add_section()
-    section.set_range(0, frame_count)
-    parameters = section.get_editor_property("params")
-    parameters.set_editor_property("animation", source)
-    section.set_editor_property("params", parameters)
-
-    factory = unreal.AnimSequenceFactory()
-    factory.target_skeleton = face_skeleton
-    baked = recreate_asset(
-        f"{TEMP_ROOT}/{baked_name}",
-        baked_name,
-        unreal.AnimSequence,
-        factory,
-    )
-    options = unreal.AnimSeqExportOption()
-    options.export_transforms = True
-    options.export_morph_targets = True
-    options.evaluate_all_skeletal_mesh_components = True
-    world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
-    if not unreal.SequencerTools.export_anim_sequence(
-        world, sequence, baked, options, face_binding, False
-    ):
-        raise RuntimeError(f"Sequencer could not bake Showcase mood {mood}")
-    unreal.EditorAssetLibrary.save_loaded_asset(baked, only_if_is_dirty=False)
     bone_tracks = list(unreal.AnimationLibrary.get_animation_track_names(baked))
     if not bone_tracks:
         raise RuntimeError(f"Showcase mood {mood} produced no facial-bone transforms")
@@ -337,10 +304,6 @@ def bake_and_export(
         gltf_options(),
         set(),
     )
-    # Commandlet shutdown can dereference the active Sequencer toolkit after
-    # all assets have already been exported. Explicitly close each sequence so
-    # the unattended authoring process exits cleanly as well as producing data.
-    unreal.LevelSequenceEditorBlueprintLibrary.close_level_sequence()
     if not output.is_file() or output.stat().st_size < 20:
         raise RuntimeError(f"Facial GLB export failed for {mood}: {output}")
     recipe_controls = RECIPES[mood].controls
@@ -352,6 +315,12 @@ def bake_and_export(
         "boneTracks": len(bone_tracks),
         "curveCount": len(recipe_controls),
         "controls": sorted(recipe_controls),
+        "poseDigests": {
+            "start": bake_report["startDigest"],
+            "midpoint": bake_report["midpointDigest"],
+            "end": bake_report["endDigest"],
+        },
+        "controlRig": bake_report["controlRig"],
         "exported": bool(exported),
     }
 
@@ -359,7 +328,7 @@ def bake_and_export(
 def main() -> None:
     if not unreal.EditorLoadingAndSavingUtils.load_map(LEVEL_PATH):
         raise RuntimeError(f"Could not load meeting level: {LEVEL_PATH}")
-    actor, face = meeting_face()
+    _, face = meeting_face()
     face_mesh = face.get_skeletal_mesh_asset()
     if not isinstance(face_mesh, unreal.SkeletalMesh):
         raise RuntimeError("Showcase Face has no Skeletal Mesh")
@@ -371,12 +340,15 @@ def main() -> None:
     exports = []
     for mood, recipe in RECIPES.items():
         source = build_curve_source(mood, recipe)
-        result = bake_and_export(mood, source, actor, face, face_skeleton)
+        result = bake_and_export(mood, source, face_mesh, face_skeleton)
         exports.append(result)
         log(
             f"MOOD mood={mood} file={result['file']} bytes={result['bytes']} "
             f"bones={result['boneTracks']} curves={result['curveCount']}"
         )
+    midpoint_digests = {item["poseDigests"]["midpoint"] for item in exports}
+    if len(midpoint_digests) < len(exports):
+        raise RuntimeError("Portable Web mood bake produced duplicate facial poses")
     report = {
         "schema": "conclavia.web-facial-moods",
         "version": 1,

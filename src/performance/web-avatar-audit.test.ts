@@ -70,6 +70,26 @@ function glb(document: unknown): Uint8Array {
   return output;
 }
 
+function glbWithBinary(document: unknown, binary: Uint8Array): Uint8Array {
+  const encoded = new TextEncoder().encode(JSON.stringify(document));
+  const jsonLength = Math.ceil(encoded.byteLength / 4) * 4;
+  const binaryLength = Math.ceil(binary.byteLength / 4) * 4;
+  const output = new Uint8Array(28 + jsonLength + binaryLength);
+  output.fill(0x20, 20, 20 + jsonLength);
+  const view = new DataView(output.buffer);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, output.byteLength, true);
+  view.setUint32(12, jsonLength, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  output.set(encoded, 20);
+  const binaryHeader = 20 + jsonLength;
+  view.setUint32(binaryHeader, binaryLength, true);
+  view.setUint32(binaryHeader + 4, 0x004e4942, true);
+  output.set(binary, binaryHeader + 8);
+  return output;
+}
+
 await test("audits a self-contained rigged Web avatar", async () => {
   const directory = await mkdtemp(join(tmpdir(), "conclavia-glb-"));
   const path = join(directory, "test.glb");
@@ -184,6 +204,57 @@ await test("accepts identity-baked skeletal facial clips instead of morph target
   assert.deepEqual(result.missingVisemeMappings, []);
   assert.deepEqual(result.missingMoodMappings, []);
   assert.deepEqual(result.missingAnimationClips, []);
+});
+
+await test("rejects facial GLBs that only rename the same neutral payload", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "conclavia-glb-face-duplicate-"));
+  const modelPath = join(directory, "test.glb");
+  const firstPath = join(directory, "anim-face-attentive.glb");
+  const secondPath = join(directory, "anim-face-curious.glb");
+  await writeFile(modelPath, glb({
+    asset: { version: "2.0" },
+    nodes: [{ name: "head", mesh: 0, skin: 0 }],
+    meshes: [{}],
+    skins: [{}],
+    animations: [
+      { name: "idle_a" }, { name: "idle_b" },
+      { name: "listen_a" }, { name: "listen_b" },
+      { name: "raise_hand" },
+    ],
+    images: [{ bufferView: 2 }],
+  }));
+  const duplicatePayload = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+  await writeFile(firstPath, glbWithBinary({
+    asset: { version: "2.0" },
+    animations: [{ name: "face_pose" }],
+    buffers: [{ byteLength: duplicatePayload.byteLength }],
+  }, duplicatePayload));
+  await writeFile(secondPath, glbWithBinary({
+    asset: { version: "2.0" },
+    animations: [{ name: "face_pose" }],
+    buffers: [{ byteLength: duplicatePayload.byteLength }],
+  }, duplicatePayload));
+  const result = await auditWebAvatar(
+    {
+      ...manifest,
+      animationModels: ["anim-face-attentive.glb", "anim-face-curious.glb"],
+      morphs: { visemes: { sil: {} }, moods: { neutral: {} } },
+      facialClips: {
+        visemes: Object.fromEntries(
+          visemes.filter((name) => name !== "sil").map((name) => [name, "face_pose"]),
+        ),
+        moods: Object.fromEntries(
+          moods.filter((name) => name !== "neutral").map((name) => [name, "face_pose"]),
+        ),
+      },
+    },
+    modelPath,
+    [firstPath, secondPath],
+  );
+  assert.equal(result.valid, false);
+  assert.deepEqual(result.invalidAnimationAssets, [
+    "anim-face-curious.glb:duplicate-facial-payload:anim-face-attentive.glb",
+  ]);
 });
 
 await test("reports missing rig channels and external texture dependencies", async () => {
