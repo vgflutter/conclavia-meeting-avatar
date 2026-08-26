@@ -147,6 +147,29 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.doesNotMatch(stageBuilder, /save_directory/);
 });
 
+await test("keeps a live meeting from being cut off by the GPU watchdog", async () => {
+  const [autoStop, supervisor, server, studio] = await Promise.all([
+    readFile(repositoryFile("scripts/install-3d-auto-stop.ps1"), "utf8"),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Start-StudioSupervisor.ps1"),
+      "utf8",
+    ),
+    readFile(repositoryFile("src/server.ts"), "utf8"),
+    readFile(repositoryFile("src/conclavia/unreal-studio.ts"), "utf8"),
+  ]);
+
+  assert.match(autoStop, /Invoke-ConclaviaAutoStop\.ps1/);
+  assert.match(autoStop, /lease\.expiresAt/);
+  assert.match(autoStop, /Start-Sleep -Seconds 30/);
+  assert.match(autoStop, /leaseAware = \$true/);
+  assert.match(supervisor, /POST[\s\S]*\/session\/lease/);
+  assert.match(supervisor, /auto-stop-lease\.json/);
+  assert.match(server, /rendererLeaseTimer/);
+  assert.match(server, /if \(!rendererArmed \|\| options\.rendererMode !== "unreal"\) return/);
+  assert.match(studio, /renewUnrealStudioLease/);
+  assert.match(studio, /\/session\/lease/);
+});
+
 await test("builds meeting gestures from private markerless captures with visual gates", async () => {
   const [
     project,

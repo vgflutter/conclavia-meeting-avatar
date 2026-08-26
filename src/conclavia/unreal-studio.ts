@@ -382,6 +382,25 @@ export async function stopUnrealStudio(): Promise<void> {
   );
 }
 
+/**
+ * Renews the GPU watchdog lease while a meeting renderer is actually armed.
+ * A missing lease is intentionally treated as inactivity so a crashed local
+ * companion cannot leave the paid GPU running indefinitely.
+ */
+export async function renewUnrealStudioLease(): Promise<void> {
+  const config = getUnrealStudioConfig();
+  if (!config.supervisorUrl) return;
+  await jsonRequest(
+    `${config.supervisorUrl}/session/lease`,
+    {
+      method: "POST",
+      headers: requestHeaders(config, true),
+      body: "{}",
+    },
+    4_000,
+  );
+}
+
 export async function sendUnrealDirectorCue(cue: UnrealDirectorCue): Promise<void> {
   const config = getUnrealStudioConfig();
   if (!config.controlUrl) throw new Error("Control plane Unreal non configurato.");

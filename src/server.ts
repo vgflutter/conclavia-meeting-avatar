@@ -31,6 +31,7 @@ import { synthesizeUnrealSpeech } from "./conclavia/unreal-speech.js";
 import {
   isUnrealAvatarId,
   playUnrealSpeech,
+  renewUnrealStudioLease,
   sendUnrealDirectorCue,
   sendUnrealPcm,
   standaloneRendererStatus,
@@ -497,12 +498,21 @@ export function startServer(options: ServerOptions): Promise<void> {
   const collectiveFarewells = new CollectiveFarewellTracker();
 
   const markRendererReady = (playerUrl?: string): void => {
-    const shouldRestoreRaisedHand = !rendererArmed && avatarHandRaised;
+    const wasRendererArmed = rendererArmed;
+    const shouldRestoreRaisedHand = !wasRendererArmed && avatarHandRaised;
     if (playerUrl) rendererPlayerUrl = playerUrl;
     rendererArmed = true;
     rendererStarting = false;
     rendererTargetProfile = null;
     rendererStartError = null;
+    if (!wasRendererArmed && options.rendererMode === "unreal") {
+      void renewUnrealStudioLease().catch((error: unknown) => {
+        console.warn(
+          "Conclavia GPU session lease was not renewed:",
+          error instanceof Error ? error.message : error,
+        );
+      });
+    }
     if (shouldRestoreRaisedHand) {
       void renderer.raiseHand(runtimeConfig.name).catch((error: unknown) => {
         console.error("Conclavia pending raise-hand cue failed:", error);
@@ -1246,6 +1256,20 @@ export function startServer(options: ServerOptions): Promise<void> {
     }
   }, 1_000);
   agendaTimer.unref();
+
+  // Renew only while the renderer is armed. If the companion or active
+  // meeting disappears, the Windows watchdog sees the lease expire and still
+  // shuts the paid GPU down automatically.
+  const rendererLeaseTimer = setInterval(() => {
+    if (!rendererArmed || options.rendererMode !== "unreal") return;
+    void renewUnrealStudioLease().catch((error: unknown) => {
+      console.warn(
+        "Conclavia GPU session lease was not renewed:",
+        error instanceof Error ? error.message : error,
+      );
+    });
+  }, 60_000);
+  rendererLeaseTimer.unref();
 
   const createListener = () => runtimeConfig.apiKey
     ? new MeetingListener({
@@ -2112,6 +2136,7 @@ export function startServer(options: ServerOptions): Promise<void> {
   process.once("SIGTERM", shutdown);
   server.once("close", () => {
     clearInterval(agendaTimer);
+    clearInterval(rendererLeaseTimer);
     process.off("SIGINT", shutdown);
     process.off("SIGTERM", shutdown);
   });

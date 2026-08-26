@@ -11,6 +11,8 @@ $startScript = "C:\ConclaviaMeetingAvatar\Scripts\Start-ReviewStream.ps1"
 $stopScript = "C:\ConclaviaMeetingAvatar\Scripts\Stop-ReviewStream.ps1"
 $pcmBridgeScript = "C:\ConclaviaMeetingAvatar\Scripts\Start-PcmBridge.ps1"
 $pcmBridgePort = 8091
+$autoStopLeasePath = "C:\ConclaviaMeetingAvatar\Saved\auto-stop-lease.json"
+$autoStopLeaseMinutes = 4
 
 if (-not (Test-Path $TokenFile)) {
     throw "Studio supervisor token file is missing: $TokenFile"
@@ -276,6 +278,18 @@ try {
                 continue
             }
 
+            if ($method -eq "POST" -and $path -eq "/session/lease") {
+                $renewedAt = (Get-Date).ToUniversalTime()
+                $lease = [ordered]@{
+                    active = $true
+                    renewedAt = $renewedAt.ToString("o")
+                    expiresAt = $renewedAt.AddMinutes($autoStopLeaseMinutes).ToString("o")
+                }
+                $lease | ConvertTo-Json | Set-Content -Path $autoStopLeasePath -Encoding UTF8
+                Send-Json $context 200 $lease
+                continue
+            }
+
             if ($method -eq "POST" -and $path -eq "/start") {
                 $reader = [IO.StreamReader]::new($context.Request.InputStream, $context.Request.ContentEncoding)
                 $raw = $reader.ReadToEnd()
@@ -409,6 +423,7 @@ try {
             }
 
             if ($method -eq "POST" -and $path -eq "/stop") {
+                Remove-Item $autoStopLeasePath -Force -ErrorAction SilentlyContinue
                 Stop-StudioProcesses
                 Send-Json $context 200 (Get-State)
                 continue
