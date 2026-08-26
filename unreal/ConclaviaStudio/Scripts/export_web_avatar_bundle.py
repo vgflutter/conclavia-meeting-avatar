@@ -32,7 +32,7 @@ LEVEL_PATH = os.environ.get(
 PROFILE_ID = os.environ.get("CONCLAVIA_WEB_AVATAR_ID", "showcase")
 ASSET_VERSION = os.environ.get(
     "CONCLAVIA_WEB_AVATAR_ASSET_VERSION",
-    "ue58-v34-optimized-high",
+    "ue58-v35-optimized-high-simple-bake",
 )
 OUTPUT_DIRECTORY = Path(
     os.environ.get(
@@ -139,6 +139,12 @@ def configure_options(*, preview_mesh: bool) -> unreal.GLTFExportOptions:
         "export_morph_targets": False,
         "export_preview_mesh": preview_mesh,
         "make_skinned_meshes_root": True,
+        # Optimized/High face materials contain mesh-dependent expressions but
+        # their UV0 is not a non-overlapping lightmap. UE's UseMeshData bake
+        # consequently produces a striped brown face atlas. Epic explicitly
+        # recommends Simple for this case: bake on a quad and retain the
+        # MetaHuman's authored texture coordinates.
+        "bake_material_inputs": unreal.GLTFMaterialBakeMode.SIMPLE,
     }
     optional = {
         "export_cameras": False,

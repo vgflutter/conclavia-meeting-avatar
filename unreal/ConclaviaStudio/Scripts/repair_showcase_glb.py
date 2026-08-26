@@ -3,9 +3,9 @@
 UE 5.8's glTF exporter serializes the Optimized MetaHuman Face primitives in
 their LOD section order, but resolves the component's material array in a
 different order.  The result is structurally valid glTF with the teeth
-material on the skin, an eye material on the teeth and the skin material on an
-eye.  Keep this repair deliberately narrow and fail closed if Epic changes the
-four-section Optimized face layout.
+material on the skin and every following slot shifted. Keep this repair
+deliberately narrow and fail closed if Epic changes a verified Optimized face
+layout.
 """
 
 from __future__ import annotations
@@ -70,17 +70,35 @@ def repair_showcase_face_materials(path: Path) -> tuple[str, ...]:
     if len(faces) != 1:
         raise RuntimeError(f"Expected one Face mesh, found {len(faces)}")
     primitives = faces[0].get("primitives")
-    if not isinstance(primitives, list) or len(primitives) != 4:
+    if not isinstance(primitives, list) or len(primitives) not in (4, 9):
         count = len(primitives) if isinstance(primitives, list) else 0
-        raise RuntimeError(f"Expected the Optimized four-section Face mesh, found {count}")
+        raise RuntimeError(
+            f"Expected a verified Optimized Face layout (4 or 9 sections), found {count}"
+        )
 
-    # Optimized MetaHuman Face LOD section order: skin, teeth, left eye, right eye.
-    intended = (
-        _material_index(materials, "face_skin"),
-        _material_index(materials, "teeth"),
-        _material_index(materials, "eyel"),
-        _material_index(materials, "eyer"),
-    )
+    if len(primitives) == 4:
+        # Optimized Low Face section order.
+        intended = (
+            _material_index(materials, "face_skin"),
+            _material_index(materials, "teeth"),
+            _material_index(materials, "eyel"),
+            _material_index(materials, "eyer"),
+        )
+    else:
+        # Optimized High LOD1 Face section order, verified against the actual
+        # Showcase assembly. The extra surfaces preserve eye wetness and
+        # high-LOD lashes in a close webcam framing.
+        intended = (
+            _material_index(materials, "face_skin_baked_lod1"),
+            _material_index(materials, "teeth_baked"),
+            _material_index(materials, "m_hide"),
+            _material_index(materials, "eyel_baked"),
+            _material_index(materials, "eyer_baked"),
+            _material_index(materials, "face_eyeshell"),
+            _material_index(materials, "face_eyelashes_face"),
+            _material_index(materials, "face_lacrimalfluid"),
+            _material_index(materials, "face_eyelasheshilods"),
+        )
     for primitive, material_index in zip(primitives, intended, strict=True):
         if not isinstance(primitive, dict):
             raise RuntimeError("Face primitive is not an object")

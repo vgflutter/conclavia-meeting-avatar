@@ -327,6 +327,7 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(showcaseResolver, /Optimized\/High Showcase/);
   assert.match(showcaseResolver, /refusing a bald Web export/);
   assert.match(exporter, /export_vertex_skin_weights/);
+  assert.match(exporter, /GLTFMaterialBakeMode\.SIMPLE/);
   assert.match(exporter, /export_morph_targets/);
   assert.match(exporter, /"export_morph_targets": False/);
   assert.match(exporter, /export_preview_mesh/);
