@@ -187,11 +187,24 @@ function positionDistance(left, right) {
     const maxPelvisDriftCm = Math.max(...poseSamples.map(
       (sample) => positionDistance(idleHealth.bodyPelvisWorld, sample.bodyPelvisWorld)
     ));
+    const minimumHandDistanceCm = Math.min(...poseSamples.map(
+      (sample) => positionDistance(
+        sample.bodyLeftHandWorld,
+        sample.bodyRightHandWorld
+      )
+    ));
     if (maxHeadDriftCm > 3.5 || maxPelvisDriftCm > 2.0) {
       throw new Error(
         `Applause pulled Mary out of the seated pose: ${JSON.stringify({
           maxHeadDriftCm,
           maxPelvisDriftCm
+        })}`
+      );
+    }
+    if (minimumHandDistanceCm < 6.0 || minimumHandDistanceCm > 10.5) {
+      throw new Error(
+        `Applause missed or crossed the palm-contact corridor: ${JSON.stringify({
+          minimumHandDistanceCm
         })}`
       );
     }
@@ -220,7 +233,8 @@ function positionDistance(left, right) {
         applauseMoodIntensity: applauseHealth.commercialMoodIntensity,
         applauseExpressionDriver: applauseHealth.applauseExpressionDriver,
         maxHeadDriftCm,
-        maxPelvisDriftCm
+        maxPelvisDriftCm,
+        minimumHandDistanceCm
       }, null, 2)
     );
     process.stdout.write(JSON.stringify({ ok: true, outputDirectory }));

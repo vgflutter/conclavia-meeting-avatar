@@ -93,6 +93,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /ApplauseGestureEndSeconds - ApplauseGestureStartSeconds/);
   assert.match(moduleSource, /bodyHeadWorld/);
   assert.match(moduleSource, /bodyPelvisWorld/);
+  assert.match(moduleSource, /bodyRightHandScreen/);
+  assert.match(moduleSource, /ProjectWorldLocationToScreen/);
   assert.match(startScript, /L_MeetingAvatar_v21/);
   assert.match(engineConfig, /^GameDefaultMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v21$/mu);
   assert.match(engineConfig, /^EditorStartupMap=\/Game\/Conclavia\/Meeting\/L_MeetingAvatar_v21$/mu);
@@ -147,6 +149,8 @@ await test("builds meeting gestures from private markerless captures with visual
     solveScript,
     handBuildScript,
     applauseBuildScript,
+    solverHandBuilder,
+    handCaptureScript,
     applauseContactScript,
     applauseCaptureScript,
     positiveExpressionBuilder,
@@ -167,6 +171,14 @@ await test("builds meeting gestures from private markerless captures with visual
     ),
     readFile(
       repositoryFile("unreal/ConclaviaStudio/Scripts/Build-MarkerlessApplause.ps1"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/build_metahuman_hand_raise.py"),
+      "utf8",
+    ),
+    readFile(
+      repositoryFile("unreal/ConclaviaStudio/Scripts/Capture-HandRaiseSequence.cjs"),
       "utf8",
     ),
     readFile(
@@ -248,6 +260,10 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseContactScript, /restore_seated_body/);
   assert.match(applauseContactScript, /STABLE_SEATED_BONES/);
   assert.match(applauseContactScript, /Restore markerless seated body after hand IK/);
+  assert.match(solverHandBuilder, /side_x \* 20\.0/);
+  assert.match(solverHandBuilder, /side_y \* 20\.0/);
+  assert.match(handCaptureScript, /bodyRightHandScreen/);
+  assert.match(handCaptureScript, /value < 0\.055/);
   assert.match(rendererManifest, /AS_MeetingApplause_SeatedContactIK_v3/);
   assert.match(applauseCaptureScript, /applauseGestureReady/);
   assert.match(applauseCaptureScript, /bodyGesturePhase === "applauding"/);
@@ -259,6 +275,8 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.match(applauseCaptureScript, /ue58-metahuman-curve-only-positive-expression/);
   assert.match(applauseCaptureScript, /maxHeadDriftCm > 3\.5/);
   assert.match(applauseCaptureScript, /maxPelvisDriftCm > 2\.0/);
+  assert.match(applauseCaptureScript, /minimumHandDistanceCm/);
+  assert.match(applauseCaptureScript, /minimumHandDistanceCm < 6\.0/);
   assert.match(positiveExpressionBuilder, /AS_MeetingPositiveExpression_CurveOnly_v1/);
   assert.match(positiveExpressionBuilder, /RawCurveTrackTypes\.RCT_FLOAT/);
   assert.match(positiveExpressionBuilder, /ctrl_expressions_mouthcornerpull/);

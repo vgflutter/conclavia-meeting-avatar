@@ -316,8 +316,13 @@ def build() -> None:
     raised_switch = not base_switch
     raised_hand_world = unreal.Transform()
     raised_hand_world.translation = unreal.Vector(
-        head_pose.translation.x + (side_x * 26.0),
-        head_pose.translation.y + (side_y * 26.0),
+        # Keep the wrist twenty centimetres from the head centre.  The prior
+        # 26 cm target was biomechanically valid, but it placed half the palm
+        # outside a fixed 16:9 meeting crop.  This remains an official
+        # MetaHuman IK solve; only its world-space effector target moves into
+        # the same camera-safe region a human participant naturally uses.
+        head_pose.translation.x + (side_x * 20.0),
+        head_pose.translation.y + (side_y * 20.0),
         # Wrist just above the head centre keeps the fingertips inside the
         # meeting camera safe area while the raised-hand silhouette stays clear.
         head_pose.translation.z + 8.0,

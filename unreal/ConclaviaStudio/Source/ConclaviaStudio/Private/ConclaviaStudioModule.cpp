@@ -4280,6 +4280,11 @@ private:
         int32 BodyAnimationMode = -1;
         FVector BodyHeadWorld = FVector::ZeroVector;
         FVector BodyPelvisWorld = FVector::ZeroVector;
+        FVector BodyLeftHandWorld = FVector::ZeroVector;
+        FVector BodyRightHandWorld = FVector::ZeroVector;
+        FVector2D BodyLeftHandScreen = FVector2D::ZeroVector;
+        FVector2D BodyRightHandScreen = FVector2D::ZeroVector;
+        bool bBodyHandsProjected = false;
         bool bBodyPoseSampleReady = false;
         if (ParticipantFaces.IsValidIndex(ActiveFaceIndex))
         {
@@ -4297,6 +4302,37 @@ private:
                 }
                 BodyHeadWorld = ActiveBody->GetSocketLocation(TEXT("head"));
                 BodyPelvisWorld = ActiveBody->GetSocketLocation(TEXT("pelvis"));
+                BodyLeftHandWorld = ActiveBody->GetSocketLocation(TEXT("hand_l"));
+                BodyRightHandWorld = ActiveBody->GetSocketLocation(TEXT("hand_r"));
+                if (StudioWorld)
+                {
+                    if (APlayerController* Controller =
+                            StudioWorld->GetFirstPlayerController())
+                    {
+                        int32 ViewportWidth = 0;
+                        int32 ViewportHeight = 0;
+                        Controller->GetViewportSize(ViewportWidth, ViewportHeight);
+                        FVector2D LeftPixels = FVector2D::ZeroVector;
+                        FVector2D RightPixels = FVector2D::ZeroVector;
+                        const bool bLeftProjected =
+                            Controller->ProjectWorldLocationToScreen(
+                                BodyLeftHandWorld, LeftPixels, false);
+                        const bool bRightProjected =
+                            Controller->ProjectWorldLocationToScreen(
+                                BodyRightHandWorld, RightPixels, false);
+                        if (bLeftProjected && bRightProjected
+                            && ViewportWidth > 0 && ViewportHeight > 0)
+                        {
+                            BodyLeftHandScreen = FVector2D(
+                                LeftPixels.X / ViewportWidth,
+                                LeftPixels.Y / ViewportHeight);
+                            BodyRightHandScreen = FVector2D(
+                                RightPixels.X / ViewportWidth,
+                                RightPixels.Y / ViewportHeight);
+                            bBodyHandsProjected = true;
+                        }
+                    }
+                }
                 bBodyPoseSampleReady = true;
             }
         }
@@ -4358,6 +4394,20 @@ private:
             BodyPelvisWorld.Z,
             PcmBytesReceived,
             ActiveFaceIndex);
+        Body.RemoveFromEnd(TEXT("}"));
+        Body += FString::Printf(
+            TEXT(",\"bodyLeftHandWorld\":[%.3f,%.3f,%.3f],\"bodyRightHandWorld\":[%.3f,%.3f,%.3f],\"bodyHandsProjected\":%s,\"bodyLeftHandScreen\":[%.6f,%.6f],\"bodyRightHandScreen\":[%.6f,%.6f]}"),
+            BodyLeftHandWorld.X,
+            BodyLeftHandWorld.Y,
+            BodyLeftHandWorld.Z,
+            BodyRightHandWorld.X,
+            BodyRightHandWorld.Y,
+            BodyRightHandWorld.Z,
+            bBodyHandsProjected ? TEXT("true") : TEXT("false"),
+            BodyLeftHandScreen.X,
+            BodyLeftHandScreen.Y,
+            BodyRightHandScreen.X,
+            BodyRightHandScreen.Y);
         Body.RemoveFromEnd(TEXT("}"));
         Body += FString::Printf(
             TEXT(",\"commercialModel\":\"mood-full-face\",\"commercialMood\":\"%s\",\"commercialMoodIntensity\":%.3f,\"commercialLookaheadMs\":40,\"commercialMaxUpperFaceControl\":%.6f,\"commercialMaxUpperFaceControlName\":\"%s\",\"commercialSpeechPeakMouthControl\":%.6f,\"commercialSpeechPeakMouthControlName\":\"%s\",\"commercialSpeechPeakUpperFaceControl\":%.6f,\"commercialSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechPeakMouthControl\":%.6f,\"commercialLastSpeechPeakMouthControlName\":\"%s\",\"commercialLastSpeechPeakUpperFaceControl\":%.6f,\"commercialLastSpeechPeakUpperFaceControlName\":\"%s\",\"commercialLastSpeechSolverChunks\":%d,\"commercialLastSpeechSolverCursor\":%d,\"commercialCompletedSpeechCount\":%d,\"performancePlanReady\":%s,\"performanceBeatCount\":%d,\"performanceSolverBeatIndex\":%d,\"performanceMood\":\"%s\",\"performanceSemanticMood\":\"%s\",\"performanceTargetIntensity\":%.3f,\"performanceFocus\":\"%s\",\"performanceGesture\":\"%s\",\"performanceAppliedBeatCount\":%d,\"bodyGesture\":\"%s\",\"bodyGestureAlpha\":%.3f,\"bodyGesturePhase\":\"%s\",\"physicalGestureReady\":%s,\"physicalGestureDriver\":\"%s\",\"bodyIdleDriver\":\"%s\",\"bodyIdleVariant\":\"%s\",\"bodyIdleVariantCount\":%d,\"bodyIdleSwitchCount\":%d,\"bodyIdlePlayRate\":%.2f,\"listeningReactionActive\":%s,\"listeningModelReady\":%s,\"listeningSolverChunks\":%d,\"naturalGazeEnabled\":%s,\"naturalGazeDriver\":\"runtime-metahuman-eyes-aim\"}"),

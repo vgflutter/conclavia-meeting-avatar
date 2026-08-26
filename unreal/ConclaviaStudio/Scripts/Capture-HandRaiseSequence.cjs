@@ -132,12 +132,37 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         && ["raising", "held"].includes(candidate.bodyGesturePhase),
       "authored raise-hand state"
     );
+    const raisedPoseSamples = [];
     for (const targetMs of [120, 280, 480, 760, 1_100, 1_650, 2_400]) {
       await captureAfter(
         video,
         raiseStartedAt,
         targetMs,
         `raise-${String(targetMs).padStart(4, "0")}ms.jpg`
+      );
+      raisedPoseSamples.push(await health());
+    }
+    const heldPoseSamples = raisedPoseSamples.filter(
+      (sample) => sample.bodyGesturePhase === "held"
+        || sample.bodyGestureAlpha >= 0.95
+    );
+    if (!heldPoseSamples.length
+        || heldPoseSamples.some((sample) => sample.bodyHandsProjected !== true)) {
+      throw new Error("Raised-hand screen projection was not available.");
+    }
+    const raisedHandScreenX = heldPoseSamples.map(
+      (sample) => sample.bodyRightHandScreen?.[0]
+    );
+    const raisedHandScreenY = heldPoseSamples.map(
+      (sample) => sample.bodyRightHandScreen?.[1]
+    );
+    if (raisedHandScreenX.some((value) => !Number.isFinite(value) || value < 0.055 || value > 0.945)
+        || raisedHandScreenY.some((value) => !Number.isFinite(value) || value < 0.08 || value > 0.92)) {
+      throw new Error(
+        `Raised hand left the meeting safe area: ${JSON.stringify({
+          raisedHandScreenX,
+          raisedHandScreenY
+        })}`
       );
     }
 
@@ -168,6 +193,8 @@ async function captureAfter(video, startedAt, targetMs, filename) {
         raiseFrames: 7,
         lowerFrames: 5,
         physicalGestureDriver: initialHealth.physicalGestureDriver,
+        raisedHandScreenX,
+        raisedHandScreenY,
         phases: {
           idle: idleHealth.bodyGesturePhase,
           raised: raisedHealth.bodyGesturePhase,
