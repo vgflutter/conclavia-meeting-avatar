@@ -165,6 +165,7 @@ export interface ActivationDecision {
     | "autonomous-applause"
     | "collective-farewell"
     | "audio-echo"
+    | "stale-segment"
     | "not-final"
     | "not-addressed";
   cue?: AvatarSpeechCue;

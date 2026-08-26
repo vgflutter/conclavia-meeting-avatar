@@ -16,6 +16,7 @@ import { ListeningReactionStabilizer } from "./core/listening-reaction.js";
 import { DialogueLease } from "./core/dialogue-lease.js";
 import { immediateResponseFor } from "./core/immediate-response.js";
 import { isLikelyAvatarSpeechEcho } from "./core/transcript-echo.js";
+import { isCurrentReactionSegment } from "./core/transcript-recency.js";
 import {
   createInterventionRequest,
   grantedInterventionCue,
@@ -613,6 +614,12 @@ export function startServer(options: ServerOptions): Promise<void> {
 
   const retainSegment = (segment: TranscriptSegment) => {
     transcriptHistory.push(segment);
+    transcriptHistory.sort((left, right) => {
+      const leftAt = Date.parse(left.capturedAt);
+      const rightAt = Date.parse(right.capturedAt);
+      if (!Number.isFinite(leftAt) || !Number.isFinite(rightAt)) return 0;
+      return leftAt - rightAt;
+    });
     if (transcriptHistory.length > maxRetainedSegments) {
       transcriptHistory.splice(0, transcriptHistory.length - maxRetainedSegments);
     }
@@ -690,6 +697,35 @@ export function startServer(options: ServerOptions): Promise<void> {
           ingested: false,
           activated: false,
           reason: "audio-echo" as const,
+        },
+        renderer: {
+          armed: rendererArmed,
+          playerUrl: rendererPlayerUrl ?? null,
+          delivery: null,
+        },
+        physicalAction: null,
+        latency: {
+          llmMs: null,
+          rendererMs: null,
+          totalMs: Math.round(performance.now() - startedAt),
+        },
+        usedWebSearch: false,
+        warning: null,
+        responseChannel,
+      };
+    }
+    if (
+      segment.isFinal &&
+      !isCurrentReactionSegment(segment, transcriptHistory, runtimeConfig.name)
+    ) {
+      retainSegment(segment);
+      return {
+        segment,
+        llmContext: contextSnapshot(),
+        decision: {
+          ingested: true,
+          activated: false,
+          reason: "stale-segment" as const,
         },
         renderer: {
           armed: rendererArmed,

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { TranscriptSegment } from "../domain/protocol.js";
+
 import {
   canOpenAutonomousRequest,
   hasSufficientAutonomousApplauseContext,
@@ -12,6 +14,7 @@ import {
   qualifiesAutonomousApplause,
   qualifiesAutonomousIntervention,
   shouldOfferWebSearch,
+  transcriptForModel,
 } from "./meeting-intelligence.js";
 
 await test("uses a compact LLM lane when Mary only needs to react while listening", () => {
@@ -66,8 +69,50 @@ await test("gives direct answers the complete retained meeting transcript", () =
   assert.ok(listening.maximumSegments < direct.maximumSegments);
   assert.ok(autonomy.maximumCharacters < direct.maximumCharacters);
   assert.ok(autonomy.maximumSegments < direct.maximumSegments);
-  assert.deepEqual(direct, { maximumCharacters: 48_000, maximumSegments: 200 });
+  assert.deepEqual(direct, {
+    maximumCharacters: 48_000,
+    maximumSegments: 200,
+    maximumAgeMs: null,
+  });
   assert.deepEqual(summary, direct);
+});
+
+await test("keeps complete direct memory but bounds observer context to recent phrases", () => {
+  const oldSegment: TranscriptSegment = {
+    id: "old",
+    speakerName: "Vincenzo",
+    text: "Questa frase è vecchia.",
+    isFinal: true,
+    capturedAt: "2026-08-26T12:00:00.000Z",
+    source: "speech",
+  };
+  const recentSegment: TranscriptSegment = {
+    ...oldSegment,
+    id: "recent",
+    text: "Questa frase è recente.",
+    capturedAt: "2026-08-26T12:04:45.000Z",
+  };
+  const latestSegment: TranscriptSegment = {
+    ...oldSegment,
+    id: "latest",
+    text: "Questa è l'ultima frase.",
+    capturedAt: "2026-08-26T12:05:00.000Z",
+  };
+
+  const observerContext = transcriptForModel(
+    [oldSegment, recentSegment, latestSegment],
+    latestSegment,
+    meetingContextBudget("observer-autonomy", latestSegment.text),
+  );
+  const directContext = transcriptForModel(
+    [oldSegment, recentSegment, latestSegment],
+    latestSegment,
+    meetingContextBudget("direct", latestSegment.text),
+  );
+  assert.doesNotMatch(observerContext, /vecchia/u);
+  assert.match(observerContext, /recente/u);
+  assert.match(directContext, /vecchia/u);
+  assert.match(directContext, /recente/u);
 });
 
 await test("parses sentence-level moods from Mary JSON", () => {

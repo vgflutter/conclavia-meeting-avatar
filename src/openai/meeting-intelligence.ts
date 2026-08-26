@@ -321,6 +321,7 @@ export function parseMaryReply(value: string): AvatarSpeechSentence[] {
 export interface MeetingContextBudget {
   maximumCharacters: number;
   maximumSegments: number;
+  maximumAgeMs: number | null;
 }
 
 export function meetingContextBudget(
@@ -329,26 +330,41 @@ export function meetingContextBudget(
 ): MeetingContextBudget {
   void latestText;
   if (lane === "observer-listening") {
-    return { maximumCharacters: 1_800, maximumSegments: 12 };
+    return { maximumCharacters: 1_800, maximumSegments: 12, maximumAgeMs: 60_000 };
   }
   if (lane === "observer-autonomy") {
-    return { maximumCharacters: 8_000, maximumSegments: 48 };
+    return { maximumCharacters: 8_000, maximumSegments: 48, maximumAgeMs: 60_000 };
   }
   // A direct invocation must be answered with the meeting in mind, not as an
   // isolated last utterance. The server retains at most 200 segments, so this
   // budget exposes that complete retained transcript to the response lane.
   // Listening-only reactions remain deliberately compact above.
-  return { maximumCharacters: 48_000, maximumSegments: 200 };
+  return { maximumCharacters: 48_000, maximumSegments: 200, maximumAgeMs: null };
 }
 
-function transcriptForModel(
+export function transcriptSegmentsForModel(
   history: readonly TranscriptSegment[],
-  latestSegmentId: string,
+  latestSegment: TranscriptSegment,
+  budget: MeetingContextBudget,
+): TranscriptSegment[] {
+  const latestAt = Date.parse(latestSegment.capturedAt);
+  return history
+    .filter((segment) => {
+      if (segment.id === latestSegment.id) return false;
+      if (budget.maximumAgeMs === null || !Number.isFinite(latestAt)) return true;
+      const capturedAt = Date.parse(segment.capturedAt);
+      return !Number.isFinite(capturedAt) ||
+        (capturedAt <= latestAt && latestAt - capturedAt <= budget.maximumAgeMs);
+    })
+    .slice(-budget.maximumSegments);
+}
+
+export function transcriptForModel(
+  history: readonly TranscriptSegment[],
+  latestSegment: TranscriptSegment,
   budget: MeetingContextBudget,
 ): string {
-  const lines = history
-    .filter((segment) => segment.id !== latestSegmentId)
-    .slice(-budget.maximumSegments)
+  const lines = transcriptSegmentsForModel(history, latestSegment, budget)
     .map((segment) => {
       const source = segment.source === "chat"
         ? `CHAT ${segment.platform ?? "generic"}`
@@ -546,6 +562,8 @@ export class MeetingIntelligence {
   ): Promise<MaryTurnDecision> {
     const controller = this.#requestController();
     const lane = participationLane(mode, allowAutonomousIntervention);
+    const contextBudget = meetingContextBudget(lane, latestSegment.text);
+    const contextSegments = transcriptSegmentsForModel(history, latestSegment, contextBudget);
     const webSearchAvailable = shouldOfferWebSearch(
       this.#options.webSearchEnabled,
       lane,
@@ -590,8 +608,8 @@ export class MeetingIntelligence {
           "CONTESTO RECENTE DELLA RIUNIONE:",
           transcriptForModel(
             history,
-            latestSegment.id,
-            meetingContextBudget(lane, latestSegment.text),
+            latestSegment,
+            contextBudget,
           ),
           "",
           `ULTIMO INTERVENTO (speaker: ${latestSegment.speakerName}):`,
@@ -641,7 +659,10 @@ export class MeetingIntelligence {
         speakerName: this.#options.avatarName,
         sentences: parsed.sentences,
         addressedTo: latestSegment.speakerName,
-        sourceSegmentIds: history.map((segment) => segment.id),
+        sourceSegmentIds: [
+          ...contextSegments.map((segment) => segment.id),
+          latestSegment.id,
+        ],
         ...(webSources.length > 0 ? { webSources } : {}),
         createdAt: new Date().toISOString(),
       },
@@ -670,6 +691,7 @@ export class MeetingIntelligence {
       return [
         ...identity,
         `Non parlare e non proporre interventi. Scegli soltanto la reazione sociale silenziosa di ${this.#options.avatarName} a ciò che ha appena ascoltato.`,
+        "Reagisci esclusivamente all'ULTIMO INTERVENTO. Il contesto precedente serve solo a disambiguarlo: non riprendere né riattivare emozioni di frasi più vecchie.",
         "Non copiare meccanicamente l'emozione dell'interlocutore.",
         moodLevelGuidance(this.#options.characterTraits),
         `Restituisci solo il JSON richiesto. I mood ammessi sono: ${avatarMoods.join(", ")}.`,
@@ -702,6 +724,7 @@ export class MeetingIntelligence {
     return [
       ...identity,
       "Non puoi parlare autonomamente. Usa request-to-speak solo per una correzione fattuale oggettivamente verificabile, un rischio o vincolo decisivo omesso, oppure un'aggiunta indispensabile a una decisione importante.",
+      "Qualunque richiesta di parola, applauso o listeningMood deve essere una reazione all'ULTIMO INTERVENTO. Usa il contesto precedente solo per capirlo; non reagire a un'affermazione vecchia incontrata nella cronologia.",
       "Una relazione numerica o logica inequivocabilmente falsa dichiarata come premessa (per esempio un calcolo aritmetico errato) merita factual-correction con importance almeno 4 e confidence 5: potrebbe invalidare ciò che segue anche se la frase è breve.",
       "Non chiedere la parola per opinioni, preferenze, previsioni, giudizi di valore, semplificazioni retoriche, differenze terminologiche o dettagli veri ma irrilevanti. Non correggere un probabile refuso o rumore di trascrizione: considera tutto il contesto e, se la frase resta ambigua, usa silence.",
       "L'irruenza regola quanto rapidamente cogli un'occasione valida, ma non abbassa mai le soglie di importanza e confidenza e non autorizza interventi marginali.",
