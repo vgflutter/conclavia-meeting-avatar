@@ -63,8 +63,10 @@ for _ in $(seq 1 60); do
   if [[ "$turns" -gt "$baseline_turns" && "$segment_id" != "$baseline_id" ]]; then
     transcript=$(printf '%s' "$candidate" | jq -r '.lastSegment.text // ""')
     answer=$(printf '%s' "$candidate" | jq -r '[.lastResult.decision.cue.sentences[]?.text] | join(" ")')
+    delivered=$(printf '%s' "$candidate" | jq -r '.lastResult.renderer.delivery.delivered // false')
     if printf '%s' "$transcript" | tr '[:upper:]' '[:lower:]' | grep -Eq 'mary.*(2|due).*(2|due)' \
-      && printf '%s' "$answer" | tr '[:upper:]' '[:lower:]' | grep -Eq '(^|[^0-9])4([^0-9]|$)|quattro'; then
+      && printf '%s' "$answer" | tr '[:upper:]' '[:lower:]' | grep -Eq '(^|[^0-9])4([^0-9]|$)|quattro' \
+      && { [[ "$REQUIRE_RENDERER" != "true" ]] || [[ "$delivered" == "true" ]]; }; then
       result=$candidate
       break
     fi
