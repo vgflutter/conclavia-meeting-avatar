@@ -84,6 +84,9 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /addAnimationGltfs/);
   assert.match(performer, /manifest\.animationModels/);
   assert.match(performer, /const performer = new ThreeAvatarPerformer/);
+  assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = await Promise\.all/);
+  assert.match(performer, /material\.alphaTest = 0\.05/);
+  assert.match(performer, /material\.emissiveIntensity = 0\.35/);
   assert.match(performer, /#enforceClipSegment/);
   assert.match(performer, /#applyFacialAnimation/);
   assert.match(performer, /manifest\.facialClips/);

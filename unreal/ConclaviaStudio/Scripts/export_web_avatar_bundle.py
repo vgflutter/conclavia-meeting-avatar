@@ -206,8 +206,8 @@ def write_bundle_inventory(
             "bodyMesh": graph.body_mesh_path,
             "groomAssets": list(graph.groom_asset_paths),
             "webHairMeshes": list(graph.hair_mesh_paths),
-            # The stock glTF exporter ignores Groom Components. Showcase's
-            # The Optimized/High assembly supplies two LOD1 cards groups that
+            # The stock glTF exporter ignores Groom Components. The
+            # Optimized/High assembly supplies two LOD1 cards groups that
             # are exported with the portable face and body.
             "hairGeometry": "cards",
             "visualReview": "pending",

@@ -34,6 +34,35 @@ function clipReference(value, defaultLoop = false) {
     };
 }
 
+function portableMaterials(node) {
+  if (!node?.material) return [];
+  return Array.isArray(node.material) ? node.material : [node.material];
+}
+
+function preparePortableMaterial(material, renderer) {
+  if (material.map) {
+    material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  }
+  const name = String(material.name || "").toLowerCase();
+  if (name.includes("hair_cards")) {
+    material.alphaTest = 0.05;
+    material.transparent = false;
+    material.depthWrite = true;
+    material.side = THREE.DoubleSide;
+  }
+  if (name.includes("face_skin_baked_lod1") && material.map) {
+    // UE's portable Simple bake includes the identity texture but its stock
+    // glTF PBR conversion over-darkens the eye sockets under Web lighting.
+    // A restrained texture-driven fill restores webcam readability while the
+    // authored normal/roughness maps continue to carry the skin detail.
+    material.aoMap = null;
+    material.emissiveMap = material.map;
+    material.emissive = new THREE.Color(0xffffff);
+    material.emissiveIntensity = 0.35;
+  }
+  material.needsUpdate = true;
+}
+
 class ThreeAvatarPerformer {
   constructor(manifest, gltf) {
     this.manifest = manifest;
@@ -85,8 +114,8 @@ class ThreeAvatarPerformer {
       if (node.isMesh) {
         node.castShadow = true;
         node.receiveShadow = true;
-        if (node.material?.map) {
-          node.material.map.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+        for (const material of portableMaterials(node)) {
+          preparePortableMaterial(material, this.renderer);
         }
       }
       if (!node.morphTargetDictionary || !node.morphTargetInfluences) return;
@@ -359,12 +388,11 @@ export async function loadThreeAvatarPerformer(avatarId) {
     throw new Error("Avatar manifest non compatibile");
   }
   const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(manifest.model);
+  const [gltf, ...animationGltfs] = await Promise.all([
+    loader.loadAsync(manifest.model),
+    ...(manifest.animationModels || []).map((model) => loader.loadAsync(model)),
+  ]);
   const performer = new ThreeAvatarPerformer(manifest, gltf);
-  Promise.all(
-    (manifest.animationModels || []).map((model) => loader.loadAsync(model)),
-  ).then((animationGltfs) => performer.addAnimationGltfs(animationGltfs)).catch((error) => {
-    console.error("Caricamento animazioni Web avatar non riuscito", error);
-  });
+  performer.addAnimationGltfs(animationGltfs);
   return performer;
 }

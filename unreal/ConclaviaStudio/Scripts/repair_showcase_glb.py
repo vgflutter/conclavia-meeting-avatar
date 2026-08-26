@@ -197,6 +197,28 @@ def _compact_skin_influences(
     return compacted_vertices
 
 
+def _repair_hair_cards_materials(materials: list[dict[str, object]]) -> int:
+    repaired = 0
+    for material in materials:
+        name = str(material.get("name", ""))
+        if "hair_cards" not in name.casefold():
+            continue
+        # Unreal's Simple glTF bake quantizes this cards atlas to alpha 85/255
+        # while exporting the source threshold as 0.33. The two values round
+        # to the same boundary, so stock WebGL discards almost every strand.
+        # A low deterministic alpha test preserves Epic's authored silhouette
+        # and remains opaque/depth-writing for stable meeting rendering.
+        material["alphaMode"] = "MASK"
+        material["alphaCutoff"] = 0.05
+        material["doubleSided"] = True
+        repaired += 1
+    if repaired != 1:
+        raise RuntimeError(
+            f"Expected one portable Hair Cards material, repaired {repaired}"
+        )
+    return repaired
+
+
 def repair_showcase_face_materials(path: Path) -> tuple[str, ...]:
     payload = path.read_bytes()
     if len(payload) < 20:
@@ -248,13 +270,27 @@ def repair_showcase_face_materials(path: Path) -> tuple[str, ...]:
         )
 
     if len(primitives) == 4:
-        # Optimized Low Face section order.
-        intended = (
-            _material_index(materials, "face_skin"),
-            _material_index(materials, "teeth"),
-            _material_index(materials, "eyel"),
-            _material_index(materials, "eyer"),
-        )
+        high_skin_matches = [
+            material
+            for material in materials
+            if "face_skin_baked_lod1" in str(material.get("name", "")).casefold()
+        ]
+        if len(high_skin_matches) == 1:
+            # Idempotent pass over an already stripped High Web face.
+            intended = (
+                _material_index(materials, "face_skin_baked_lod1"),
+                _material_index(materials, "teeth_baked"),
+                _material_index(materials, "eyel_baked"),
+                _material_index(materials, "eyer_baked"),
+            )
+        else:
+            # Optimized Low Face section order.
+            intended = (
+                _material_index(materials, "face_skin"),
+                _material_index(materials, "teeth"),
+                _material_index(materials, "eyel"),
+                _material_index(materials, "eyer"),
+            )
     else:
         # Optimized High LOD1 Face section order, verified against the actual
         # Showcase assembly. The extra surfaces preserve eye wetness and
@@ -284,6 +320,7 @@ def repair_showcase_face_materials(path: Path) -> tuple[str, ...]:
         faces[0]["primitives"] = [primitives[index] for index in (0, 1, 3, 4)]
 
     _compact_skin_influences(document, chunks)
+    _repair_hair_cards_materials(materials)
 
     repaired_json = json.dumps(document, separators=(",", ":"), ensure_ascii=False).encode(
         "utf-8"

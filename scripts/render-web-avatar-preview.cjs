@@ -37,19 +37,24 @@ import { GLTFLoader } from "three/addons/GLTFLoader.js";
 const params = new URLSearchParams(location.search);
 const rotation = Number(params.get("rotation") || 0);
 const unlit = params.get("unlit") === "1";
+const normalMode = params.get("normal") || "authored";
+const aoMode = params.get("ao") || "authored";
+const exposure = Number(params.get("exposure") || 0.9);
+const lightScale = Number(params.get("lightScale") || 1);
+const faceFill = Number(params.get("faceFill") || 0);
 const renderer = new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.9;
+renderer.toneMappingExposure = exposure;
 document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#123b35");
-scene.add(new THREE.HemisphereLight(0xf4f7ff,0x20332e,1.15));
-const key = new THREE.DirectionalLight(0xffe8d6,2.0); key.position.set(2.2,3.2,2.8); scene.add(key);
-const fill = new THREE.DirectionalLight(0xb8d7ff,0.55); fill.position.set(-2.3,1.8,2); scene.add(fill);
-const rim = new THREE.DirectionalLight(0x76aaff,0.4); rim.position.set(-2,2,-2); scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xf4f7ff,0x20332e,1.15*lightScale));
+const key = new THREE.DirectionalLight(0xffe8d6,2.0*lightScale); key.position.set(2.2,3.2,2.8); scene.add(key);
+const fill = new THREE.DirectionalLight(0xb8d7ff,0.55*lightScale); fill.position.set(-2.3,1.8,2); scene.add(fill);
+const rim = new THREE.DirectionalLight(0x76aaff,0.4*lightScale); rim.position.set(-2,2,-2); scene.add(rim);
 const camera = new THREE.PerspectiveCamera(34,innerWidth/innerHeight,0.01,100);
 new GLTFLoader().load("/model.glb",({scene:root})=>{
   root.rotation.y = THREE.MathUtils.degToRad(rotation);
@@ -69,10 +74,22 @@ new GLTFLoader().load("/model.glb",({scene:root})=>{
     const reviewed = materials.map((material)=>unlit
       ? new THREE.MeshBasicMaterial({map:material.map,color:material.color,side:THREE.FrontSide})
       : material);
-    for(const material of reviewed){material.side=THREE.FrontSide;material.needsUpdate=true;}
+    for(const material of reviewed){
+      material.side=THREE.FrontSide;
+      if(normalMode==="none") material.normalMap=null;
+      if(normalMode==="flip" && material.normalScale) material.normalScale.y*=-1;
+      if(aoMode==="none") material.aoMap=null;
+      if(faceFill>0 && /face_skin_baked_lod1/i.test(material.name)){
+        material.aoMap=null;
+        material.emissiveMap=material.map;
+        material.emissive=new THREE.Color(0xffffff);
+        material.emissiveIntensity=faceFill;
+      }
+      material.needsUpdate=true;
+    }
     node.material=Array.isArray(node.material)?reviewed:reviewed[0];
   }});
-  document.querySelector("#status").textContent = "rotation="+rotation+" unlit="+unlit+" bbox="+size.toArray().map(v=>v.toFixed(2)).join("×");
+  document.querySelector("#status").textContent = "rotation="+rotation+" unlit="+unlit+" normal="+normalMode+" ao="+aoMode+" faceFill="+faceFill+" exposure="+exposure+" light="+lightScale+" bbox="+size.toArray().map(v=>v.toFixed(2)).join("×");
   document.body.dataset.ready="true";
   renderer.render(scene,camera);
 },undefined,(error)=>{document.querySelector("#status").textContent=String(error);});
@@ -168,7 +185,12 @@ async function runChrome(url, screenshot, debuggingPort) {
   } finally {
     chrome.kill("SIGTERM");
     await delay(200);
-    await rm(userDataDirectory, { recursive: true, force: true });
+    await rm(userDataDirectory, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 100,
+    });
   }
 }
 
@@ -180,7 +202,7 @@ server.listen(0, "127.0.0.1", async () => {
     for (const rotation of [0, 90, -90, 180]) {
       const suffix = String(rotation).replace("-", "minus-");
       await runChrome(
-        `http://127.0.0.1:${port}/?rotation=${rotation}&unlit=${process.env.CONCLAVIA_WEB_AVATAR_REVIEW_UNLIT === "1" ? "1" : "0"}`,
+        `http://127.0.0.1:${port}/?rotation=${rotation}&unlit=${process.env.CONCLAVIA_WEB_AVATAR_REVIEW_UNLIT === "1" ? "1" : "0"}&normal=${encodeURIComponent(process.env.CONCLAVIA_WEB_AVATAR_REVIEW_NORMAL || "authored")}&ao=${encodeURIComponent(process.env.CONCLAVIA_WEB_AVATAR_REVIEW_AO || "authored")}&faceFill=${encodeURIComponent(process.env.CONCLAVIA_WEB_AVATAR_REVIEW_FACE_FILL || "0")}&exposure=${encodeURIComponent(process.env.CONCLAVIA_WEB_AVATAR_REVIEW_EXPOSURE || "0.9")}&lightScale=${encodeURIComponent(process.env.CONCLAVIA_WEB_AVATAR_REVIEW_LIGHT_SCALE || "1")}`,
         join(outputDirectory, `rotation-${suffix}.png`),
         9430 + index,
       );

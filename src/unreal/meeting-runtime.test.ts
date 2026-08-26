@@ -361,6 +361,8 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(showcaseResolver, /Hair_Cards/);
   assert.match(showcaseRepair, /_compact_skin_influences/);
   assert.match(showcaseRepair, /extra_sets/);
+  assert.match(showcaseRepair, /_repair_hair_cards_materials/);
+  assert.match(showcaseRepair, /material\["alphaCutoff"\] = 0\.05/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
   assert.match(facialBaker, /SequencerTools\.export_anim_sequence/);
   assert.match(facialBaker, /evaluate_all_skeletal_mesh_components/);
