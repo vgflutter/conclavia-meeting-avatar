@@ -47,6 +47,17 @@ WEB_CARD_SPECS = (
         "Eyebrows_L_Shaded_CardsMesh_Group0_LOD0",
     ),
 )
+CINE_CARD_MATERIAL_PATHS = {
+    "Hair": (
+        "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
+        "MI_WI_Hair_S_UpdoBraids_Hair_Cards."
+        "MI_WI_Hair_S_UpdoBraids_Hair_Cards"
+    ),
+    "Eyebrows": (
+        "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
+        "MI_WI_Eyebrows_L_Shaded_Hair.MI_WI_Eyebrows_L_Shaded_Hair"
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -211,20 +222,15 @@ def ensure_showcase_export_actor() -> ShowcaseActorGraph:
 
     groom_components = actor.get_components_by_class(unreal.GroomComponent)
     card_materials: dict[str, unreal.MaterialInterface] = {}
-    for role in {spec[0] for spec in WEB_CARD_SPECS}:
-        components = [
-            component for component in groom_components if component.get_name() == role
-        ]
-        if len(components) != 1:
-            raise RuntimeError(
-                f"Expected one Showcase {role} Groom component, found {len(components)}"
-            )
-        material = components[0].get_material(0)
+    for role, material_path in CINE_CARD_MATERIAL_PATHS.items():
+        material = unreal.load_asset(material_path)
         if not isinstance(material, unreal.MaterialInterface):
-            raise RuntimeError(f"Showcase {role} Groom has no card material override")
+            raise RuntimeError(
+                f"Showcase Cine {role} card material is unavailable: {material_path}"
+            )
         if role == "Hair" and "Hair_Cards" not in material.get_path_name():
             raise RuntimeError(
-                "Showcase Hair Groom has no verified Hair Cards material override"
+                "Showcase Cine Hair has no verified Hair Cards material"
             )
         card_materials[role] = material
 

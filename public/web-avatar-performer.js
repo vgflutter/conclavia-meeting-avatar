@@ -190,11 +190,7 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.envMapIntensity = 0.38;
     material.metalness = 0;
     material.roughness = Math.max(0.54, material.roughness || 0);
-    if (material.map) {
-      material.emissiveMap = material.map;
-      material.emissive = new THREE.Color(0xd88978);
-      material.emissiveIntensity = 0.065;
-    }
+    if (material.map) material.color = new THREE.Color(0xffffff);
     if ("specularIntensity" in material) material.specularIntensity = 0.3;
   }
   if (name.includes("face_skin_baked_lod1") && material.map) {
