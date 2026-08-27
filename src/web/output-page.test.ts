@@ -28,6 +28,7 @@ await test("keeps the OBS output free of meeting-console overlays", async () => 
   assert.match(script, /FRAME_STALL_TIMEOUT_MS/);
   assert.match(script, /reconnectStalledPlayer/);
   assert.match(managementScript, /frame\.dataset\.stream !== streamId/);
+  assert.match(managementScript, /url\.searchParams\.set\("conclaviaOutput", "obs"\)/);
   assert.match(managementScript, /status\.streamId \|\| ""/);
   assert.match(managementScript, /fallback fotografico/);
   assert.match(managementScript, /non supera l’audit/);

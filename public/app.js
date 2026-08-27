@@ -862,6 +862,13 @@ function pixelStreamingUrl(value) {
   const url = new URL(value, window.location.origin);
   url.searchParams.set("AutoConnect", "true");
   url.searchParams.set("AutoPlayVideo", "true");
+  // The meeting console already owns participant state and action badges.
+  // Mount the portable renderer as a clean camera feed so its diagnostics do
+  // not overlap the console controls; opening /web-output directly still
+  // retains the useful development overlay.
+  if (url.pathname === "/web-output" || url.pathname === "/web-output.html") {
+    url.searchParams.set("conclaviaOutput", "obs");
+  }
   url.searchParams.set("conclaviaMeeting", String(Date.now()));
   return url.toString();
 }
