@@ -103,6 +103,8 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(output, /Math\.max\(window\.devicePixelRatio \|\| 1, 2\)/);
   assert.match(performer, /stabilizePortableHair\(this\.root\)/);
   assert.match(performer, /anchor\.attach\(group\)/);
+  assert.match(performer, /WEB_ShowcaseHairHelmet/);
+  assert.match(performer, /Epic's low groom LOD uses an opaque helmet/);
   assert.match(performer, /retargetPortableClip/);
   assert.match(performer, /portableRigNodes/);
   assert.match(performer, /boneNames\.has\("upperarml"\)/);

@@ -437,8 +437,10 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(exporter, /"minimumSkinInfluenceSets": 2/);
   assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group0_LOD0/);
   assert.match(showcaseResolver, /Hair_S_UpdoBraids_CardsMesh_Group1_LOD0/);
+  assert.match(showcaseResolver, /Hair_S_UpdoBraids_Helmet_LOD5/);
   assert.match(showcaseResolver, /Eyebrows_L_Shaded_CardsMesh_Group0_LOD0/);
   assert.match(showcaseResolver, /MI_WI_Hair_S_UpdoBraids_Hair_Cards/);
+  assert.match(showcaseResolver, /MI_WI_Hair_S_UpdoBraids_Hair_Helmet/);
   assert.match(showcaseResolver, /MI_WI_Eyebrows_L_Shaded_Hair/);
   assert.match(showcaseResolver, /AttachmentRule\.KEEP_WORLD/);
   assert.match(showcaseResolver, /set_material\(0, card_materials\[role\]\)/);

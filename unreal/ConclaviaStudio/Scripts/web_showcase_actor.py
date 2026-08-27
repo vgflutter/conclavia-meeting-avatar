@@ -40,6 +40,13 @@ WEB_CARD_SPECS = (
         "Hair_S_UpdoBraids_CardsMesh_Group1_LOD0",
     ),
     (
+        "HairHelmet",
+        5,
+        "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
+        "Hair_S_UpdoBraids_Helmet_LOD5."
+        "Hair_S_UpdoBraids_Helmet_LOD5",
+    ),
+    (
         "Eyebrows",
         0,
         "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
@@ -52,6 +59,11 @@ CINE_CARD_MATERIAL_PATHS = {
         "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
         "MI_WI_Hair_S_UpdoBraids_Hair_Cards."
         "MI_WI_Hair_S_UpdoBraids_Hair_Cards"
+    ),
+    "HairHelmet": (
+        "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
+        "MI_WI_Hair_S_UpdoBraids_Hair_Helmet."
+        "MI_WI_Hair_S_UpdoBraids_Hair_Helmet"
     ),
     "Eyebrows": (
         "/Game/Conclavia/Meeting/MetaHumans/MHC_Showcase/MHC_Showcase/Grooms/"
@@ -152,7 +164,7 @@ def _spawn_web_hair(
         mesh = unreal.load_asset(mesh_path)
         if not isinstance(mesh, unreal.StaticMesh):
             raise RuntimeError(
-                "Showcase Web hair cards are unavailable. Build the Web High assembly "
+                "Showcase Web hair geometry is unavailable. Build the Web High assembly "
                 f"first: {mesh_path}"
             )
         hair_actor = subsystem.spawn_actor_from_class(

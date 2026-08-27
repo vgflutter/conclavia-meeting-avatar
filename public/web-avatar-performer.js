@@ -632,8 +632,23 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     if (texture) texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
   }
   const name = String(material.name || "").toLowerCase();
-  const cardSurface = name.includes("hair_cards")
-    || /^WEB_Showcase(?:Hair|Eyebrows)Cards_/u.test(node.name);
+  const helmetSurface = name.includes("hair_helmet")
+    || /^WEB_ShowcaseHairHelmet/u.test(node.name);
+  const cardSurface = !helmetSurface && (name.includes("hair_cards")
+    || /^WEB_Showcase(?:Hair|Eyebrows)Cards_/u.test(node.name));
+  if (helmetSurface) {
+    // Epic's low groom LOD uses an opaque helmet below the strand cards. It
+    // restores the authored silhouette and bun volume while the Compact card
+    // atlas supplies the fine fringe, flyaways and breakup above it.
+    material.side = THREE.DoubleSide;
+    material.transparent = false;
+    material.alphaTest = 0;
+    material.depthWrite = true;
+    material.color = new THREE.Color(0x32191b);
+    material.envMapIntensity = 0.3;
+    material.metalness = 0;
+    material.roughness = Math.max(0.64, material.roughness || 0);
+  }
   if (cardSurface) {
     const eyebrowSurface = /eyebrow/iu.test(`${node.name} ${material.name || ""}`);
     // The HQ GLB embeds Epic's native Groom Cards Compact Attribute atlas.
@@ -754,7 +769,7 @@ function stabilizePortableHair(root) {
   if (!faceComponent) return;
   const cardGroups = [];
   root.traverse((node) => {
-    if (/^WEB_Showcase(?:Hair|Eyebrows)Cards_Group\d+_LOD\d+$/u.test(node.name)) {
+    if (/^WEB_Showcase(?:Hair|HairHelmet|Eyebrows)Cards_Group\d+_LOD\d+$/u.test(node.name)) {
       cardGroups.push(node);
     }
   });
