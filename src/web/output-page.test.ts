@@ -100,8 +100,12 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /const performer = new ThreeAvatarPerformer/);
   assert.match(performer, /gltfs = await Promise\.all/);
   assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = gltfs/);
-  assert.match(performer, /THREE\.MathUtils\.clamp\(hairAlphaThreshold, 0\.01, 0\.2\)/);
-  assert.match(performer, /conclaviaHairAlpha["']\) \|\| 0\.055/);
+  assert.match(performer, /THREE\.MathUtils\.clamp\(hairAlphaThreshold, 0\.01, 0\.5\)/);
+  assert.match(performer, /conclaviaHairAlpha["']\) \|\| 0\.2/);
+  assert.match(performer, /conclaviaEyebrowAlpha["']\) \|\| 0\.14/);
+  assert.match(performer, /conclaviaEyebrowForward["']\) \|\| 0\.018/);
+  assert.match(performer, /conclaviaHairCards["']\) \|\| ["']crown["']/);
+  assert.match(performer, /function trimPortableHairCrown\(node\)/);
   assert.match(performer, /conclaviaGroomCompactAttributes\.r/);
   assert.match(performer, /enableExtendedSkinning/);
   assert.match(performer, /preserveExtendedWeights/);
@@ -116,7 +120,9 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /conclaviaHairHelmetAlpha/);
   assert.match(performer, /conclaviaWardrobeVariants/);
   assert.match(performer, /authoredInfluenceSets/);
-  assert.match(performer, /material\.color = new THREE\.Color\(0x623c40\)/);
+  assert.match(performer, /material\.color = new THREE\.Color\(0x3f292d\)/);
+  assert.match(performer, /conclaviaGroomCoverage = conclaviaGroomCompactAttributes\.r/);
+  assert.match(performer, /material\.alphaToCoverage = false/);
   assert.match(performer, /transformed \+= objectNormal \* 0\.004/);
   assert.match(performer, /const wristGap = THREE\.MathUtils\.lerp\(0\.245, 0\.068, contact\)/);
   assert.match(performer, /Number\(state\.performanceElapsedMs\)/);

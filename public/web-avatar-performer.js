@@ -27,11 +27,23 @@ const skinInfluenceMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaInfluenceMode") || "extended"
   : "extended";
 const hairAlphaThreshold = typeof window !== "undefined"
-  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairAlpha") || 0.055)
-  : 0.055;
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairAlpha") || 0.2)
+  : 0.2;
 const hairHelmetAlphaThreshold = typeof window !== "undefined"
-  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairHelmetAlpha") || 0.05)
-  : 0.05;
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairHelmetAlpha") || 0.18)
+  : 0.18;
+const eyebrowAlphaThreshold = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaEyebrowAlpha") || 0.14)
+  : 0.14;
+const eyebrowForwardOffset = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaEyebrowForward") || 0.018)
+  : 0.018;
+const hairCardPresentationMode = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaHairCards") || "crown"
+  : "crown";
+const hairCrownMinimumY = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairCrownY") || 1.61)
+  : 1.61;
 const raisedHandPresentationMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaRaisedHandIK") || "on"
   : "on";
@@ -712,7 +724,7 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.depthWrite = true;
     // Preserve the baked auburn base color instead of multiplying it by a
     // second near-black tint.
-    material.color = new THREE.Color(0x623c40);
+    material.color = new THREE.Color(0x3f292d);
     material.envMapIntensity = 0.18;
     material.metalness = 0;
     material.roughness = Math.max(0.82, material.roughness || 0);
@@ -724,14 +736,17 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     // authored in red. Green and blue contain non-opacity attributes and must
     // never be merged into the silhouette.
     material.alphaTest = eyebrowSurface
-      ? 0.12
-      : THREE.MathUtils.clamp(hairAlphaThreshold, 0.01, 0.2);
+      ? THREE.MathUtils.clamp(eyebrowAlphaThreshold, 0.01, 0.2)
+      : THREE.MathUtils.clamp(hairAlphaThreshold, 0.01, 0.5);
     material.alphaHash = false;
-    material.alphaToCoverage = true;
+    // Alpha-to-coverage turns the low-value fringe of Epic's compact atlas
+    // into a visible screen-door pattern at a close meeting-camera distance.
+    // A clean 4K cutout is more stable in Chrome and survives OBS scaling.
+    material.alphaToCoverage = false;
     material.transparent = false;
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
-    material.color = new THREE.Color(eyebrowSurface ? 0x4a2e2a : 0x713b42);
+    material.color = new THREE.Color(eyebrowSurface ? 0x2c1b19 : 0x4b282f);
     material.envMapIntensity = eyebrowSurface ? 0.22 : 0.25;
     material.metalness = 0;
     material.roughness = Math.max(eyebrowSurface ? 0.74 : 0.72, material.roughness || 0);
@@ -744,9 +759,7 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <map_fragment>",
           `vec4 conclaviaGroomCompactAttributes = texture2D(map, vMapUv);
-          float conclaviaGroomCoverage = ${eyebrowSurface
-            ? "max(max(conclaviaGroomCompactAttributes.r, conclaviaGroomCompactAttributes.g), conclaviaGroomCompactAttributes.b)"
-            : "conclaviaGroomCompactAttributes.r"};
+          float conclaviaGroomCoverage = conclaviaGroomCompactAttributes.r;
           diffuseColor.a *= conclaviaGroomCoverage;
           float conclaviaStrandTone = smoothstep(0.08, 0.96, conclaviaGroomCoverage);
           diffuseColor.rgb *= mix(0.74, 1.12, conclaviaStrandTone);`,
@@ -754,7 +767,7 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
       };
       material.customProgramCacheKey = () => [
         previousCacheKey?.() || "",
-        `conclavia-native-groom-compact-v4-${eyebrowSurface ? "brow" : "hair"}`,
+        `conclavia-native-groom-compact-v5-${eyebrowSurface ? "brow" : "hair"}`,
       ].join(":");
     }
     if ("specularIntensity" in material) material.specularIntensity = 0.28;
@@ -888,12 +901,39 @@ function stabilizePortableHair(root) {
     // offset or one side can disappear into the animated forehead.
     const anchorRotation = anchor.getWorldQuaternion(new THREE.Quaternion()).invert();
     const anchorScale = anchor.getWorldScale(new THREE.Vector3());
-    const localOffset = new THREE.Vector3(0, 0, 0.0045)
+    const localOffset = new THREE.Vector3(
+      0,
+      0,
+      THREE.MathUtils.clamp(eyebrowForwardOffset, 0.0065, 0.03),
+    )
       .applyQuaternion(anchorRotation)
       .divide(anchorScale);
     for (const eyebrow of eyebrowGroups) eyebrow.position.add(localOffset);
   }
   root.updateMatrixWorld(true);
+}
+
+function trimPortableHairCrown(node) {
+  const source = node.geometry;
+  const position = source?.getAttribute("position");
+  const index = source?.getIndex();
+  if (!position || !index) return 0;
+  const minimumY = THREE.MathUtils.clamp(hairCrownMinimumY, 1.5, 1.69);
+  const kept = [];
+  for (let offset = 0; offset < index.count; offset += 3) {
+    const a = index.getX(offset);
+    const b = index.getX(offset + 1);
+    const c = index.getX(offset + 2);
+    if (Math.min(position.getY(a), position.getY(b), position.getY(c)) < minimumY) continue;
+    kept.push(a, b, c);
+  }
+  const geometry = source.clone();
+  const IndexArray = position.count > 65_535 ? Uint32Array : Uint16Array;
+  geometry.setIndex(new THREE.BufferAttribute(new IndexArray(kept), 1));
+  geometry.clearGroups();
+  geometry.addGroup(0, kept.length, 0);
+  node.geometry = geometry;
+  return kept.length / 3;
 }
 
 function shareWardrobeSkeleton(root) {
@@ -1446,6 +1486,24 @@ class ThreeAvatarPerformer {
       if (node.isMesh) {
         node.castShadow = true;
         node.receiveShadow = true;
+        if (
+          hairCardPresentationMode === "off"
+          && /^WEB_ShowcaseHairCards_Group\d+_LOD\d+$/u.test(node.name)
+        ) {
+          node.visible = false;
+        }
+        if (
+          hairCardPresentationMode === "accent"
+          && /^WEB_ShowcaseHairCards_Group0_LOD\d+$/u.test(node.name)
+        ) {
+          node.visible = false;
+        }
+        if (
+          hairCardPresentationMode === "crown"
+          && /^WEB_ShowcaseHairCards_Group0_LOD\d+$/u.test(node.name)
+        ) {
+          trimPortableHairCrown(node);
+        }
         if (portableMaterials(node).some((material) => (
           String(material.name || "").toLowerCase().includes("bodyshapea_short")
         ))) {
