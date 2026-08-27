@@ -1837,7 +1837,10 @@ class ThreeAvatarPerformer {
     this.raisePresentationWeight = THREE.MathUtils.damp(
       this.raisePresentationWeight,
       targetWeight,
-      raised ? 7 : 8,
+      // Lowering packets can arrive after their short blend-in window because
+      // the event stream is polled. Keep a full second of visual release even
+      // in that case, instead of dropping the IK pose in one or two frames.
+      raised ? 7 : 3.5,
       Math.max(0, deltaSeconds),
     );
     if (this.raisePresentationWeight < 0.001 || !this.bodyRig.headBody) return;
