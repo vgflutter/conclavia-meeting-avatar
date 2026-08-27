@@ -76,8 +76,8 @@
       },
       "applause": {
         "clip": "Gesture_Applause_Seated",
-        "startSeconds": 3.25,
-        "endSeconds": 6.75,
+        "startSeconds": 4.35,
+        "endSeconds": 6.25,
         "loop": true
       }
     }

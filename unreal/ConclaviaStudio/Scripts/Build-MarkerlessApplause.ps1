@@ -36,12 +36,12 @@ $pythonArguments = @(
     "--preserve-motion-translations",
     "--stabilize-meeting-torso",
     # Capture Manager exposes the first eight tracked seconds of this take,
-    # not the original 28-second video timecode. Use the complete first clap
-    # cycle in that solved timeline and retain its authored preparation and
-    # lowering. The long boundary ease keeps both transitions quiet.
-    "--ease-segment-start-seconds", "3.25",
-    "--ease-segment-end-seconds", "6.75",
-    "--transition-seconds", "0.75",
+    # not the original 28-second video timecode. Keep only the stable seated
+    # clap window: the earlier preparation contains the walk-back/overhead
+    # transfer from the source capture and is unsuitable for a meeting frame.
+    "--ease-segment-start-seconds", "4.35",
+    "--ease-segment-end-seconds", "6.25",
+    "--transition-seconds", "0.38",
     # Preserve the complete markerless take. Blending even six percent back
     # toward the seated base separates and lowers the wrists on MetaHumans
     # whose arm proportions differ from the performer, so the palms no longer

@@ -52,8 +52,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     engineConfig,
     /^MeetingApplauseAnimation=\/Game\/Conclavia\/Meeting\/Animations\/AS_MeetingApplause_SeatedContactIK_v3\.AS_MeetingApplause_SeatedContactIK_v3$/mu,
   );
-  assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=3\.25$/mu);
-  assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=6\.75$/mu);
+  assert.match(engineConfig, /^MeetingApplauseStartTimeSeconds=4\.35$/mu);
+  assert.match(engineConfig, /^MeetingApplauseEndTimeSeconds=6\.25$/mu);
   assert.match(moduleSource, /Rejected non-meeting gesture asset/);
   assert.match(moduleSource, /Rejected non-meeting applause asset/);
   assert.doesNotMatch(moduleSource, /BodyGestureRaiseSeconds/);
@@ -256,15 +256,15 @@ await test("builds meeting gestures from private markerless captures with visual
   assert.doesNotMatch(applauseBuildScript, /--delta-from-stabilized-pose/);
   assert.match(applauseBuildScript, /--preserve-motion-translations/);
   assert.match(applauseBuildScript, /--stabilize-meeting-torso/);
-  assert.match(applauseBuildScript, /--ease-segment-start-seconds", "3\.25/);
-  assert.match(applauseBuildScript, /--ease-segment-end-seconds", "6\.75/);
+  assert.match(applauseBuildScript, /--ease-segment-start-seconds", "4\.35/);
+  assert.match(applauseBuildScript, /--ease-segment-end-seconds", "6\.25/);
   assert.match(handBuildScript, /--transition-seconds", "0\.80/);
   assert.match(handBuildScript, /\[string\]\$CapturePath = ""/);
   assert.match(handBuildScript, /if \(-not \$ReusePerformance/);
   assert.match(handBuildScript, /--gesture-strength", "0\.82/);
   assert.match(handBuildScript, /--hold-pose-seconds", "3\.25/);
   assert.match(handBuildScript, /--lower-segment-start-seconds", "5\.75/);
-  assert.match(applauseBuildScript, /--transition-seconds", "0\.75/);
+  assert.match(applauseBuildScript, /--transition-seconds", "0\.38/);
   assert.match(applauseBuildScript, /--gesture-strength", "1\.0/);
   assert.match(solveScript, /def release_weight/);
   assert.match(solveScript, /gesture_weight\(frame_index\) \* gesture_strength/);

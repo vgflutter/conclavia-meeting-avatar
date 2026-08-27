@@ -1,4 +1,5 @@
 import { loadThreeAvatarPerformer } from "/web-avatar-performer.js";
+import { gestureStateAt, visemeBlendAt } from "/web-performance-timeline.js";
 
 const runtime = document.querySelector("#runtime");
 const canvas = document.querySelector("#stage");
@@ -21,12 +22,17 @@ let mediaDestination = null;
 let activeSource = null;
 let activePacket = null;
 let activeStartedAt = 0;
-let activeStartedAtAudio = 0;
+let activeStartedAtAudio = Number.NaN;
 let currentMood = "neutral";
 let currentMoodLevel = 0;
 let currentViseme = "-";
+let currentVisemeBlend = [];
 let currentGaze = "camera";
 let currentGesture = "none";
+let currentGestureWeight = 0;
+let currentGestureStartedAtMs = 0;
+let currentGestureBlendInMs = 320;
+let currentGestureBlendOutMs = 480;
 let handRaised = false;
 let applauseUntil = 0;
 let latestSequence = 0;
@@ -40,6 +46,7 @@ let speechQueue = [];
 let activeDeliveryId = "";
 let activeChunkIndex = -1;
 let speechStarting = false;
+const decodedAudio = new Map();
 
 const moodTints = {
   neutral: [18, 35, 61],
@@ -73,6 +80,7 @@ function ensureAudio() {
 function elapsedMs() {
   if (!activePacket) return 0;
   if (activePacket.clock.source === "audio" && audioContext) {
+    if (!Number.isFinite(activeStartedAtAudio)) return 0;
     return Math.max(0, (audioContext.currentTime - activeStartedAtAudio) * 1000);
   }
   return Math.max(0, performance.now() - activeStartedAt);
@@ -122,8 +130,11 @@ function updatePerformanceState(elapsed) {
     && elapsed < activePacket.clock.durationMs;
   if (!running) {
     currentViseme = "-";
+    currentVisemeBlend = [];
     currentGaze = "camera";
     currentGesture = handRaised ? "raise-hand" : "none";
+    currentGestureWeight = handRaised ? 1 : 0;
+    currentGestureStartedAtMs = 0;
     const speechExpressionReleased = activePacket.kind === "speech"
       && elapsed >= activePacket.clock.durationMs + 900;
     if (
@@ -140,16 +151,28 @@ function updatePerformanceState(elapsed) {
     return;
   }
   const expression = latestAt(activePacket.tracks.expressions, elapsed);
-  const viseme = latestAt(activePacket.tracks.visemes, elapsed);
   const gaze = latestAt(activePacket.tracks.gaze, elapsed);
   if (expression) {
     currentMood = expression.semanticMood;
     currentMoodLevel = expression.level;
   }
-  currentViseme = viseme?.value || "-";
+  currentVisemeBlend = activePacket.kind === "speech"
+    ? visemeBlendAt(activePacket.tracks.visemes, elapsed)
+    : [];
+  currentViseme = currentVisemeBlend
+    .slice()
+    .sort((left, right) => right.weight - left.weight)[0]?.value || "-";
   currentGaze = gaze?.target || "camera";
-  const gesture = latestAt(activePacket.tracks.gestures, elapsed);
+  const gesture = gestureStateAt(
+    activePacket.tracks.gestures,
+    elapsed,
+    activePacket.clock.durationMs,
+  );
   currentGesture = gesture?.clip || (handRaised ? "raise-hand" : "none");
+  currentGestureWeight = gesture?.weight ?? (handRaised ? 1 : 0);
+  currentGestureStartedAtMs = gesture?.startMs ?? 0;
+  currentGestureBlendInMs = gesture?.blendInMs ?? 320;
+  currentGestureBlendOutMs = gesture?.blendOutMs ?? 480;
   if (gesture?.clip === "raise-hand") handRaised = true;
   if (gesture?.clip === "lower-hand") handRaised = false;
   if (gesture?.clip === "applause") applauseUntil = activeStartedAt + activePacket.clock.durationMs;
@@ -195,7 +218,8 @@ function drawFrame(now) {
   const performanceRunning = Boolean(
     activePacket
     && activePacket.clock.durationMs > 0
-    && elapsed < activePacket.clock.durationMs,
+    && elapsed < activePacket.clock.durationMs
+    && (activePacket.clock.source !== "audio" || Number.isFinite(activeStartedAtAudio)),
   );
   if (avatarPerformer) {
     avatarPerformer.resize(width, height);
@@ -204,8 +228,14 @@ function drawFrame(now) {
       mood: currentMood,
       moodLevel: currentMoodLevel,
       viseme: currentViseme,
+      visemeBlend: currentVisemeBlend,
       gaze: currentGaze,
       gesture: currentGesture,
+      gestureWeight: currentGestureWeight,
+      gestureStartedAtMs: currentGestureStartedAtMs,
+      gestureBlendInMs: currentGestureBlendInMs,
+      gestureBlendOutMs: currentGestureBlendOutMs,
+      performanceElapsedMs: elapsed,
       speaking: performanceRunning && activePacket?.kind === "speech",
       listening: !performanceRunning || activePacket?.kind === "listening",
     }, deltaSeconds);
@@ -249,6 +279,27 @@ function stopActiveAudio() {
   try { activeSource.stop(); } catch { }
   activeSource.disconnect();
   activeSource = null;
+}
+
+function preloadAudio(packet) {
+  if (!packet?.audio) return null;
+  const assetId = packet.audio.assetId;
+  const cached = decodedAudio.get(assetId);
+  if (cached) return cached;
+  const audio = ensureAudio();
+  const pending = fetch(packet.audio.url, { cache: "force-cache" })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Audio HTTP ${response.status}`);
+      return response.arrayBuffer();
+    })
+    .then((bytes) => audio.decodeAudioData(bytes))
+    .catch((error) => {
+      decodedAudio.delete(assetId);
+      throw error;
+    });
+  decodedAudio.set(assetId, pending);
+  while (decodedAudio.size > 20) decodedAudio.delete(decodedAudio.keys().next().value);
+  return pending;
 }
 
 function deliveryId(packet) {
@@ -300,9 +351,7 @@ function playNextSpeechChunk() {
 async function playSpeech(packet) {
   speechStarting = true;
   const audio = ensureAudio();
-  const response = await fetch(packet.audio.url, { cache: "force-cache" });
-  if (!response.ok) throw new Error(`Audio HTTP ${response.status}`);
-  const buffer = await audio.decodeAudioData(await response.arrayBuffer());
+  const buffer = await preloadAudio(packet);
   if (activePacket?.performanceId !== packet.performanceId) return;
   stopActiveAudio();
   const source = audio.createBufferSource();
@@ -311,12 +360,14 @@ async function playSpeech(packet) {
   source.connect(mediaDestination);
   activeSource = source;
   speechStarting = false;
-  activeStartedAtAudio = audio.currentTime + 0.04;
-  activeStartedAt = performance.now() + 40;
+  const preRollSeconds = chunkIndex(packet) > 0 ? 0.008 : 0.025;
+  activeStartedAtAudio = audio.currentTime + preRollSeconds;
+  activeStartedAt = performance.now() + preRollSeconds * 1_000;
   source.start(activeStartedAtAudio);
   source.addEventListener("ended", () => {
     if (activeSource !== source) return;
     activeSource = null;
+    decodedAudio.delete(packet.audio.assetId);
     playNextSpeechChunk();
   });
 }
@@ -324,7 +375,9 @@ async function playSpeech(packet) {
 async function activatePacket(packet) {
   activePacket = packet;
   activeStartedAt = performance.now();
-  activeStartedAtAudio = audioContext?.currentTime || 0;
+  activeStartedAtAudio = packet.clock.source === "audio"
+    ? Number.NaN
+    : audioContext?.currentTime || 0;
   runtimeStatus.textContent = `${packet.kind} sincronizzata`;
   if (packet.events.some((event) => event.type === "lower-hand")) handRaised = false;
   if (!packet.audio) return;
@@ -335,6 +388,9 @@ async function activatePacket(packet) {
   } catch (error) {
     if (activePacket?.performanceId !== packet.performanceId) return;
     speechStarting = false;
+    activePacket = null;
+    currentViseme = "-";
+    currentVisemeBlend = [];
     runtimeStatus.textContent = `Audio non disponibile: ${error.message}`;
     playNextSpeechChunk();
   }
@@ -353,9 +409,11 @@ async function acceptPacket(packet) {
     stopActiveAudio();
     activePacket = null;
     currentViseme = "-";
+    currentVisemeBlend = [];
     runtimeStatus.textContent = "Interruzione ricevuta";
     return;
   }
+  if (packet.audio) void preloadAudio(packet)?.catch(() => {});
   if (queueContinuation(packet)) return;
   const speechIsActive = activeSource || speechStarting;
   if (speechIsActive && activePacket?.kind === "speech" && packet.priority < activePacket.priority) {
@@ -409,6 +467,24 @@ window.addEventListener("message", (event) => {
 });
 document.addEventListener("pointerdown", ensureAudio, { capture: true });
 document.addEventListener("keydown", ensureAudio, { capture: true });
+window.conclaviaPlaybackDiagnostics = () => ({
+  activePerformanceId: activePacket?.performanceId || null,
+  activeKind: activePacket?.kind || null,
+  elapsedMs: Math.round(elapsedMs()),
+  audioScheduled: Number.isFinite(activeStartedAtAudio),
+  audioContextState: audioContext?.state || "uninitialized",
+  currentMood,
+  currentMoodLevel: Number(currentMoodLevel.toFixed(3)),
+  currentViseme,
+  currentVisemeBlend: currentVisemeBlend.map((viseme) => ({
+    ...viseme,
+    weight: Number(viseme.weight.toFixed(3)),
+  })),
+  currentGesture,
+  currentGestureWeight: Number(currentGestureWeight.toFixed(3)),
+  handRaised,
+  queuedSpeechChunks: speechQueue.length,
+});
 function startAnimation() {
   if (animationStarted) return;
   animationStarted = true;

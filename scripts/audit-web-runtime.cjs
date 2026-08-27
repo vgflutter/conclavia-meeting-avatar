@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { spawn } = require("node:child_process");
-const { mkdtemp, rm, writeFile } = require("node:fs/promises");
+const { mkdir, mkdtemp, rm, writeFile } = require("node:fs/promises");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 const WebSocket = require("ws");
@@ -24,6 +24,16 @@ const actionDelay = Number.parseInt(
   process.env.CONCLAVIA_WEB_RUNTIME_ACTION_DELAY_MS || "900",
   10,
 );
+const sampleInterval = Number.parseInt(
+  process.env.CONCLAVIA_WEB_RUNTIME_SAMPLE_INTERVAL_MS || "0",
+  10,
+);
+const sampleCount = Number.parseInt(
+  process.env.CONCLAVIA_WEB_RUNTIME_SAMPLE_COUNT || "0",
+  10,
+);
+const sampleScreenshotDirectory =
+  process.env.CONCLAVIA_WEB_RUNTIME_SAMPLE_SCREENSHOT_DIR || "";
 const viewportWidth = Number.parseInt(
   process.env.CONCLAVIA_WEB_RUNTIME_VIEWPORT_WIDTH || "1920",
   10,
@@ -233,7 +243,38 @@ async function main() {
       if (![200, 202].includes(action.result.value?.status)) {
         throw new Error(`Runtime action failed: ${JSON.stringify(action.result.value)}`);
       }
-      await delay(Number.isFinite(actionDelay) ? actionDelay : 900);
+      if (!(sampleInterval > 0 && sampleCount > 0)) {
+        await delay(Number.isFinite(actionDelay) ? actionDelay : 900);
+      }
+    }
+    const playbackSamples = [];
+    if (sampleInterval > 0 && sampleCount > 0) {
+      if (sampleScreenshotDirectory) {
+        await mkdir(sampleScreenshotDirectory, { recursive: true });
+      }
+      for (let index = 0; index < sampleCount; index += 1) {
+        await delay(sampleInterval);
+        const sample = await command("Runtime.evaluate", {
+          expression: `(() => ({
+            atMs: ${sampleInterval * (index + 1)},
+            playback: window.conclaviaPlaybackDiagnostics?.() || null,
+            avatar: window.conclaviaAvatarDiagnostics?.() || null,
+          }))()`,
+          returnByValue: true,
+        });
+        playbackSamples.push(sample.result.value);
+        if (sampleScreenshotDirectory) {
+          const screenshot = await command("Page.captureScreenshot", {
+            format: "png",
+            fromSurface: true,
+            captureBeyondViewport: false,
+          });
+          await writeFile(
+            join(sampleScreenshotDirectory, `${String(index + 1).padStart(3, "0")}.png`),
+            Buffer.from(screenshot.data, "base64"),
+          );
+        }
+      }
     }
     const evaluation = await command("Runtime.evaluate", {
       expression: `(async () => {
@@ -258,6 +299,7 @@ async function main() {
           avatarReady: performanceStatus.webAvatar?.ready ?? null,
           avatarAuditError: performanceStatus.webAvatar?.error ?? null,
           avatarDiagnostics: window.conclaviaAvatarDiagnostics?.() || null,
+          playbackDiagnostics: window.conclaviaPlaybackDiagnostics?.() || null,
           overlaysHidden: ['.runtime-badges', '.runtime-card', '#diagnostics'].every((selector) => {
             const element = document.querySelector(selector);
             return element && getComputedStyle(element).display === 'none';
@@ -277,6 +319,7 @@ async function main() {
     }
     socket.close();
     const result = evaluation.result.value;
+    result.playbackSamples = playbackSamples;
     const failures = [];
     if (result.state !== "live") failures.push(`state=${result.state}`);
     if (!new Set(["photo", "three"]).has(result.performer)) {

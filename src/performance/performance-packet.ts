@@ -130,6 +130,29 @@ export interface SpeechPerformanceInput {
   };
 }
 
+// The licensed MetaHuman viseme clips are intentionally expressive probes.
+// Driving every probe at full strength makes plosives and open vowels read as
+// facial spasms in a conversational close-up. These calibrated gains preserve
+// articulation while leaving room for the sentence mood layer.
+const conversationalVisemeWeight: Readonly<Record<string, number>> = {
+  p: 0.86,
+  t: 0.7,
+  S: 0.68,
+  T: 0.66,
+  f: 0.72,
+  k: 0.68,
+  i: 0.62,
+  r: 0.58,
+  s: 0.58,
+  u: 0.68,
+  "@": 0.54,
+  a: 0.74,
+  e: 0.64,
+  E: 0.68,
+  o: 0.66,
+  O: 0.72,
+};
+
 function emptyTracks(): PerformancePacket["tracks"] {
   return { visemes: [], expressions: [], gaze: [], gestures: [] };
 }
@@ -140,7 +163,11 @@ export function speechPerformancePacket(
   const tracks = emptyTracks();
   tracks.visemes = input.speechMarks
     .filter((mark) => mark.type === "viseme")
-    .map((mark) => ({ atMs: mark.time, value: mark.value, weight: 1 }));
+    .map((mark) => ({
+      atMs: mark.time,
+      value: mark.value,
+      weight: conversationalVisemeWeight[mark.value] ?? 0.64,
+    }));
   tracks.expressions = input.beats.map((beat) => ({
     atMs: beat.atMs,
     semanticMood: beat.semanticMood,

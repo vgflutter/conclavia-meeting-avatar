@@ -9,6 +9,7 @@ const managementHtmlUrl = new URL("../../public/index.html", import.meta.url);
 const managementStylesUrl = new URL("../../public/styles.css", import.meta.url);
 const webOutputHtmlUrl = new URL("../../public/web-output.html", import.meta.url);
 const webOutputScriptUrl = new URL("../../public/web-output.js", import.meta.url);
+const webTimelineUrl = new URL("../../public/web-performance-timeline.js", import.meta.url);
 const webPerformerUrl = new URL("../../public/web-avatar-performer.js", import.meta.url);
 const serverUrl = new URL("../server.ts", import.meta.url);
 
@@ -61,9 +62,10 @@ await test("uses the Conclavia brand system in the meeting console", async () =>
 });
 
 await test("loads a rigged Web performer while retaining a diagnostic fallback", async () => {
-  const [html, output, performer, server] = await Promise.all([
+  const [html, output, timeline, performer, server] = await Promise.all([
     readFile(webOutputHtmlUrl, "utf8"),
     readFile(webOutputScriptUrl, "utf8"),
+    readFile(webTimelineUrl, "utf8"),
     readFile(webPerformerUrl, "utf8"),
     readFile(serverUrl, "utf8"),
   ]);
@@ -71,6 +73,11 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(html, /type="importmap"/);
   assert.match(html, /\/vendor\/three\/build\/three\.module\.js/);
   assert.match(output, /loadThreeAvatarPerformer/);
+  assert.match(output, /visemeBlendAt/);
+  assert.match(output, /preloadAudio/);
+  assert.match(output, /Number\.isFinite\(activeStartedAtAudio\)/);
+  assert.match(timeline, /co-articulated pair of visemes/);
+  assert.match(timeline, /gestureStateAt/);
   assert.match(output, /Fallback fotografico/);
   assert.match(output, /speechExpressionReleased/);
   assert.match(output, /queueContinuation/);
@@ -93,7 +100,8 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /const performer = new ThreeAvatarPerformer/);
   assert.match(performer, /gltfs = await Promise\.all/);
   assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = gltfs/);
-  assert.match(performer, /material\.alphaTest = THREE\.MathUtils\.clamp\(hairAlphaThreshold/);
+  assert.match(performer, /THREE\.MathUtils\.clamp\(hairAlphaThreshold, 0\.01, 0\.2\)/);
+  assert.match(performer, /conclaviaHairAlpha["']\) \|\| 0\.055/);
   assert.match(performer, /conclaviaGroomCompactAttributes\.r/);
   assert.match(performer, /enableExtendedSkinning/);
   assert.match(performer, /preserveExtendedWeights/);
@@ -108,11 +116,13 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /conclaviaHairHelmetAlpha/);
   assert.match(performer, /conclaviaWardrobeVariants/);
   assert.match(performer, /authoredInfluenceSets/);
-  assert.match(performer, /material\.color = new THREE\.Color\(0x8f777a\)/);
+  assert.match(performer, /material\.color = new THREE\.Color\(0x623c40\)/);
   assert.match(performer, /transformed \+= objectNormal \* 0\.004/);
-  assert.match(performer, /const targetGap = 0\.105/);
-  assert.doesNotMatch(performer, /const targetGap = 0\.285/);
+  assert.match(performer, /const wristGap = THREE\.MathUtils\.lerp\(0\.245, 0\.068, contact\)/);
+  assert.match(performer, /Number\(state\.performanceElapsedMs\)/);
+  assert.match(output, /performanceElapsedMs: elapsed/);
   assert.match(performer, /solveTwoBonePresentation/);
+  assert.match(performer, /middleFingerL/);
   assert.match(performer, /middleFingerR/);
   assert.match(performer, /retargetPortableClip/);
   assert.match(performer, /portableRigNodes/);
@@ -136,15 +146,21 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /#applyFacialAnimation/);
   assert.match(performer, /manifest\.facialClips/);
   assert.match(performer, /#syncFacialLayer/);
+  assert.match(performer, /viseme0/);
+  assert.match(performer, /viseme1/);
+  assert.match(performer, /this\.actionVariants/);
   assert.match(performer, /this\.#applyGaze\(state\.gaze, deltaSeconds\);/);
   assert.match(performer, /segment\.startSeconds/);
   assert.match(performer, /morphTargetInfluences/);
   assert.match(performer, /manifest\.framing\.rotationDegrees/);
   assert.match(performer, /THREE\.MathUtils\.degToRad/);
-  assert.match(performer, /fadeIn\(0\.46\)/);
+  assert.match(performer, /fadeIn\(transition\.fadeInSeconds \?\? 0\.46\)/);
+  assert.match(performer, /gestureStartedAtMs/);
+  assert.match(output, /conclaviaPlaybackDiagnostics/);
   assert.match(server, /RoomEnvironment\.js/);
   assert.match(server, /RectAreaLightUniformsLib\.js/);
   assert.match(server, /api\/performance\/avatar/);
+  assert.match(server, /web-performance-timeline\.js/);
   assert.match(server, /model\/gltf-binary/);
   assert.match(server, /animationModels\.map/);
   assert.match(server, /animationModels\.indexOf\(requestedFilename\)/);

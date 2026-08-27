@@ -393,8 +393,8 @@ MeetingHandRaiseHoldTimeSeconds=3.25
 MeetingHandRaiseLowerTimeSeconds=5.75
 MeetingHandRaiseEndTimeSeconds=7.50
 MeetingApplauseAnimation=/Game/Conclavia/Meeting/Animations/AS_MeetingApplause_SeatedContactIK_v3.AS_MeetingApplause_SeatedContactIK_v3
-MeetingApplauseStartTimeSeconds=3.25
-MeetingApplauseEndTimeSeconds=6.75
+MeetingApplauseStartTimeSeconds=4.35
+MeetingApplauseEndTimeSeconds=6.25
 ```
 
 The runtime plays the captured rise, pauses on a genuine captured hold while
@@ -402,7 +402,10 @@ permission is pending, and resumes the captured lowering motion when the hand is
 cleared. It never reconstructs the shoulder or arm with procedural bone
 rotations.
 
-Applause plays the captured two-arm and finger performance once. A MetaHuman
+Applause plays the captured two-arm and finger performance once. The runtime
+starts at the first stable seated clap and stops before the captured recovery,
+so neither the standing preparation nor the large overhead arm sweep reaches a
+meeting frame. A MetaHuman
 Control Rig backwards-solve pass applies hand IK only around the closest
 contact frames. It targets an eight-centimetre wrist separation so the palms
 meet without crossing, then restores the exact solved seated root, pelvis and

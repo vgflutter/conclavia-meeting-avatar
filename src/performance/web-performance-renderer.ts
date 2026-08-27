@@ -106,10 +106,10 @@ export class WebPerformanceRenderer {
       avatarId: this.#avatarProfile,
       avatarName: speakerName,
       gesture: "applause",
-      // The authored seated take contains one continuous 3.5 second applause
-      // passage. Stop before its end instead of visibly jumping back to the
-      // beginning for a partial second loop.
-      durationMs: 3_400,
+      // The Web/Unreal contract keeps only the stable 1.9 second seated clap
+      // window. Allow its 560 ms release to finish, but never hold the last
+      // low-arm capture frame after the useful gesture has ended.
+      durationMs: 2_450,
       mood: "amused",
       rendererMood: "playfulness",
       intensity: 0.58,

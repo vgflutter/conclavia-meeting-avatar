@@ -212,8 +212,8 @@ await test("resolves UE glTF numeric clip suffixes without losing authored segme
         },
         applause: {
           clip: "AS_MeetingApplause_SeatedMarkerless_v1",
-          startSeconds: 3.25,
-          endSeconds: 6.75,
+          startSeconds: 4.35,
+          endSeconds: 6.25,
           loop: true,
         },
       },
@@ -241,8 +241,8 @@ await test("resolves UE glTF numeric clip suffixes without losing authored segme
   ]);
   assert.deepEqual(result.manifest.clips.gestures.applause, {
     clip: "AS_MeetingApplause_SeatedMarkerless_v1_0",
-    startSeconds: 3.25,
-    endSeconds: 6.75,
+    startSeconds: 4.35,
+    endSeconds: 6.25,
     loop: true,
   });
   assert.equal(

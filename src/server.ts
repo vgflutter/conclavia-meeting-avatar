@@ -91,6 +91,7 @@ const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
   ["/web-output", ["web-output.html", "text/html; charset=utf-8"]],
   ["/web-output.html", ["web-output.html", "text/html; charset=utf-8"]],
   ["/web-output.js", ["web-output.js", "text/javascript; charset=utf-8"]],
+  ["/web-performance-timeline.js", ["web-performance-timeline.js", "text/javascript; charset=utf-8"]],
   ["/web-avatar-performer.js", ["web-avatar-performer.js", "text/javascript; charset=utf-8"]],
   ["/web-output.css", ["web-output.css", "text/css; charset=utf-8"]],
   ["/app.js", ["app.js", "text/javascript; charset=utf-8"]],

@@ -336,8 +336,8 @@ def write_bundle_inventory(
                 },
                 "applause": {
                     "clip": "AS_MeetingApplause_SeatedContactIK_v3",
-                    "startSeconds": 3.25,
-                    "endSeconds": 6.75,
+                    "startSeconds": 4.35,
+                    "endSeconds": 6.25,
                     "loop": False,
                 },
             },

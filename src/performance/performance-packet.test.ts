@@ -59,7 +59,7 @@ await test("builds a versioned audio-clock performance packet", () => {
   assert.equal(draft.schema, "conclavia.performance");
   assert.equal(draft.version, 1);
   assert.equal(draft.clock.source, "audio");
-  assert.deepEqual(draft.tracks.visemes, [{ atMs: 45, value: "u", weight: 1 }]);
+  assert.deepEqual(draft.tracks.visemes, [{ atMs: 45, value: "u", weight: 0.68 }]);
   assert.deepEqual(draft.tracks.expressions, [{
     atMs: 0,
     semanticMood: "confident",
