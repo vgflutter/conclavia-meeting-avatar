@@ -454,6 +454,11 @@ await test("exports a portable Web performer from the authored UE 5.8 meeting as
   assert.match(showcaseRepair, /_repair_wardrobe_skin_weights/);
   assert.match(showcaseRepair, /source-skin-weight-modifier-v1/);
   assert.match(showcaseRepair, /conclaviaCoverageChannel/);
+  assert.match(showcaseRepair, /Conclavia_HairCards_CompactTangent/);
+  assert.match(showcaseRepair, /Conclavia_EyebrowsCards_CompactTangent/);
+  assert.match(showcaseRepair, /conclaviaGroomTangentTexture/);
+  assert.match(exporter, /hair-cards-tangent\.png/);
+  assert.match(exporter, /eyebrows-cards-tangent\.png/);
   assert.match(showcaseRepair, /material\["alphaCutoff"\] = 0\.065/);
   assert.match(facialBaker, /TemplateAnimations\/Facial_Poses/);
   assert.match(facialBaker, /bake_face_animation/);

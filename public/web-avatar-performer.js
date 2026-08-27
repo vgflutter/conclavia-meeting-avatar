@@ -50,6 +50,9 @@ const forcedBlinkWeight = typeof window !== "undefined"
 const blinkAngleRadians = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("conclaviaBlinkAngle") || 0.7)
   : 0.7;
+const restingLidWeight = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaRestingLids") || 0.075)
+  : 0.075;
 const raisedHandPresentationMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaRaisedHandIK") || "on"
   : "on";
@@ -737,6 +740,17 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
   }
   if (cardSurface) {
     const eyebrowSurface = /eyebrow/iu.test(`${node.name} ${material.name || ""}`);
+    const groomTangentMap = material.userData?.conclaviaGroomTangentTexture === true
+      ? material.normalMap
+      : null;
+    if (groomTangentMap) {
+      // The export deliberately stores Epic's Compact Tangent atlas in the
+      // glTF normalTexture slot so GLTFLoader embeds and resolves it. It is
+      // groom data, not a tangent-space surface normal: remove it from the PBR
+      // normal path before the first frame and hand it to the hair shader.
+      groomTangentMap.colorSpace = THREE.NoColorSpace;
+      material.normalMap = null;
+    }
     // The HQ GLB embeds Epic's native Groom Cards Compact Attribute atlas.
     // The Showcase card entries use the Compact layout, where Coverage is
     // authored in red. Green and blue contain non-opacity attributes and must
@@ -762,18 +776,38 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
       const previousCacheKey = material.customProgramCacheKey?.bind(material);
       material.onBeforeCompile = (shader, activeRenderer) => {
         previousCompile?.(shader, activeRenderer);
+        if (groomTangentMap) {
+          shader.uniforms.conclaviaGroomTangentMap = { value: groomTangentMap };
+          shader.fragmentShader = shader.fragmentShader.replace(
+            "void main() {",
+            "uniform sampler2D conclaviaGroomTangentMap;\nvoid main() {",
+          );
+        }
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <map_fragment>",
           `vec4 conclaviaGroomCompactAttributes = texture2D(map, vMapUv);
           float conclaviaGroomCoverage = conclaviaGroomCompactAttributes.r;
           diffuseColor.a *= conclaviaGroomCoverage;
           float conclaviaStrandTone = smoothstep(0.08, 0.96, conclaviaGroomCoverage);
-          diffuseColor.rgb *= mix(0.74, 1.12, conclaviaStrandTone);`,
+          float conclaviaStrandSeed = conclaviaGroomCompactAttributes.b;
+          ${groomTangentMap ? `vec4 conclaviaGroomTangent = texture2D(
+            conclaviaGroomTangentMap,
+            vMapUv
+          );
+          float conclaviaStrandFlow = smoothstep(0.08, 0.92, conclaviaGroomTangent.a);
+          float conclaviaAuthoredVariation = mix(
+            conclaviaStrandSeed,
+            conclaviaStrandFlow,
+            0.38
+          );` : "float conclaviaAuthoredVariation = conclaviaStrandSeed;"}
+          diffuseColor.rgb *= mix(0.72, 1.13, conclaviaStrandTone)
+            * mix(0.91, 1.09, conclaviaAuthoredVariation);`,
         );
       };
       material.customProgramCacheKey = () => [
         previousCacheKey?.() || "",
-        `conclavia-native-groom-compact-v5-${eyebrowSurface ? "brow" : "hair"}`,
+        `conclavia-native-groom-compact-v6-${eyebrowSurface ? "brow" : "hair"}`,
+        groomTangentMap ? "tangent" : "attribute-only",
       ].join(":");
     }
     if ("specularIntensity" in material) material.specularIntensity = 0.28;
@@ -1579,6 +1613,7 @@ class ThreeAvatarPerformer {
     this.nextBlinkAtSeconds = 1.4 + Math.random() * 1.6;
     this.blinkStartedAtSeconds = null;
     this.blinkWeight = 0;
+    this.currentRestingLidWeight = 0;
     this.nextSaccadeAtSeconds = 0.35;
     this.saccadeYaw = 0;
     this.saccadePitch = 0;
@@ -1689,6 +1724,7 @@ class ThreeAvatarPerformer {
       raisePresentationWeight: Number(this.raisePresentationWeight.toFixed(3)),
       applauseContactWeight: Number(this.applauseContactWeight.toFixed(3)),
       blinkWeight: Number(this.blinkWeight.toFixed(3)),
+      restingLidWeight: Number(this.currentRestingLidWeight.toFixed(3)),
       blinkControls: this.blinkControls.length,
       saccade: [this.saccadeYaw, this.saccadePitch]
         .map((value) => Number(value.toFixed(4))),
@@ -1964,11 +2000,11 @@ class ThreeAvatarPerformer {
       const engagement = state.speaking ? 0.72 : state.listening ? 1 : 0.58;
       this.saccadeTargetYaw = returnToSpeaker
         ? 0
-        : (Math.random() * 2 - 1) * 0.028 * engagement;
+        : (Math.random() * 2 - 1) * 0.038 * engagement;
       this.saccadeTargetPitch = returnToSpeaker
         ? 0
-        : (Math.random() * 2 - 1) * 0.012 * engagement;
-      this.nextSaccadeAtSeconds = this.lifeElapsedSeconds + 0.55 + Math.random() * 1.35;
+        : (Math.random() * 2 - 1) * 0.017 * engagement;
+      this.nextSaccadeAtSeconds = this.lifeElapsedSeconds + 0.7 + Math.random() * 1.55;
     }
     this.saccadeYaw = THREE.MathUtils.damp(
       this.saccadeYaw,
@@ -2026,10 +2062,21 @@ class ThreeAvatarPerformer {
   #applyBlink() {
     const signedAngle = THREE.MathUtils.clamp(blinkAngleRadians, -0.85, 0.85);
     const axis = new THREE.Vector3(1, 0, 0);
+    // A perfectly open neutral eyelid reads as a stare in a close meeting
+    // crop. MetaHuman's full Unreal post-process supplies this resting
+    // aperture implicitly; the portable skeleton needs a small additive
+    // correction. Keep it asymmetric and slow, then let a real blink fully
+    // override it instead of stacking two closures.
+    const baseRest = THREE.MathUtils.clamp(restingLidWeight, 0, 0.16);
+    const breathingRest = baseRest + Math.sin(this.lifeElapsedSeconds * 0.63) * 0.008;
+    this.currentRestingLidWeight = THREE.MathUtils.clamp(breathingRest, 0, 0.18);
+    const eyelidWeight = this.currentRestingLidWeight
+      + (1 - this.currentRestingLidWeight) * this.blinkWeight;
     for (const control of this.blinkControls) {
+      const sideVariation = /_L_/u.test(control.node.name) ? 0.985 : 1.015;
       control.correction.setFromAxisAngle(
         axis,
-        signedAngle * control.amplitude * this.blinkWeight,
+        signedAngle * control.amplitude * eyelidWeight * sideVariation,
       );
       control.node.quaternion.multiply(control.correction);
     }
@@ -2101,7 +2148,7 @@ class ThreeAvatarPerformer {
       moodReference ? `mood:${activeMood}` : "",
       moodReference,
       ambientExpression
-        ? (state.listening ? 0.16 : 0.1)
+        ? (state.listening ? 0.22 : 0.15)
         : boundedWeight(state.moodLevel) * moodGain,
       0.32,
       deltaSeconds,

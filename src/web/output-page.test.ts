@@ -109,8 +109,13 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /#advanceLifeLayer\(state, deltaSeconds\)/);
   assert.match(performer, /FACIAL_L_EyelidUpperA/);
   assert.match(performer, /conclaviaBlinkTest/);
+  assert.match(performer, /conclaviaRestingLids/);
+  assert.match(performer, /currentRestingLidWeight/);
   assert.match(performer, /ambientExpression \? "attentive" : state\.mood/);
   assert.match(performer, /conclaviaGroomCompactAttributes\.r/);
+  assert.match(performer, /conclaviaGroomTangentTexture/);
+  assert.match(performer, /conclaviaGroomTangentMap/);
+  assert.match(performer, /conclaviaStrandFlow/);
   assert.match(performer, /enableExtendedSkinning/);
   assert.match(performer, /preserveExtendedWeights/);
   assert.match(performer, /attribute vec4 joints_\$\{setIndex\}/);

@@ -528,22 +528,38 @@ def _embedded_png_texture(
 def _repair_hair_cards_materials(
     document: dict[str, object],
     chunks: list[tuple[int, bytes]],
+    hair_tangent_path: Path | None,
     hair_attribute_path: Path | None,
+    eyebrow_tangent_path: Path | None,
     eyebrow_attribute_path: Path | None,
 ) -> int:
     materials = document.get("materials")
     if not isinstance(materials, list):
         raise RuntimeError("GLB is missing materials")
-    source_textures: dict[str, int] = {}
+    source_textures: dict[str, dict[str, int]] = {}
+    if hair_tangent_path is not None:
+        source_textures.setdefault("hair", {})["tangent"] = _embedded_png_texture(
+            document,
+            chunks,
+            hair_tangent_path,
+            "Conclavia_HairCards_CompactTangent",
+        )
     if hair_attribute_path is not None:
-        source_textures["hair"] = _embedded_png_texture(
+        source_textures.setdefault("hair", {})["attribute"] = _embedded_png_texture(
             document,
             chunks,
             hair_attribute_path,
             "Conclavia_HairCards_CompactAttribute",
         )
+    if eyebrow_tangent_path is not None:
+        source_textures.setdefault("eyebrows", {})["tangent"] = _embedded_png_texture(
+            document,
+            chunks,
+            eyebrow_tangent_path,
+            "Conclavia_EyebrowsCards_CompactTangent",
+        )
     if eyebrow_attribute_path is not None:
-        source_textures["eyebrows"] = _embedded_png_texture(
+        source_textures.setdefault("eyebrows", {})["attribute"] = _embedded_png_texture(
             document,
             chunks,
             eyebrow_attribute_path,
@@ -567,12 +583,27 @@ def _repair_hair_cards_materials(
         # Groom Compact layout: its card entry owns Tangent plus Attribute,
         # with Coverage packed into Attribute.r. Embed that source data texture
         # so the Web shader preserves the authored strand silhouette.
-        texture_index = source_textures.get(role)
+        role_textures = source_textures.get(role, {})
+        attribute_texture_index = role_textures.get("attribute")
+        tangent_texture_index = role_textures.get("tangent")
         pbr = material.setdefault("pbrMetallicRoughness", {})
         if not isinstance(pbr, dict):
             raise RuntimeError(f"Hair material has invalid PBR data: {name}")
-        if texture_index is not None:
-            pbr["baseColorTexture"] = {"index": texture_index, "texCoord": 0}
+        if attribute_texture_index is not None:
+            pbr["baseColorTexture"] = {
+                "index": attribute_texture_index,
+                "texCoord": 0,
+            }
+        if tangent_texture_index is not None:
+            # glTF has no portable groom-tangent slot. normalTexture makes the
+            # authored atlas a first-class, embedded dependency that
+            # GLTFLoader resolves for us. The Web performer recognises the
+            # explicit extra below, detaches it from normalMap before the first
+            # frame, and feeds it to the groom shader instead.
+            material["normalTexture"] = {
+                "index": tangent_texture_index,
+                "texCoord": 0,
+            }
         pbr["baseColorFactor"] = (
             [0.34, 0.075, 0.04, 1.0]
             if role == "hair"
@@ -587,6 +618,9 @@ def _repair_hair_cards_materials(
         if isinstance(extras, dict):
             extras["conclaviaCoverageChannel"] = "red"
             extras["conclaviaGroomRole"] = role
+            extras["conclaviaGroomTangentTexture"] = (
+                tangent_texture_index is not None
+            )
         repaired += 1
     if repaired != 2:
         raise RuntimeError(
@@ -597,7 +631,9 @@ def _repair_hair_cards_materials(
 
 def repair_showcase_face_materials(
     path: Path,
+    hair_tangent_path: Path | None = None,
     hair_attribute_path: Path | None = None,
+    eyebrow_tangent_path: Path | None = None,
     eyebrow_attribute_path: Path | None = None,
     wardrobe_skin_weights: list[list[tuple[str, float]]] | None = None,
 ) -> tuple[str, ...]:
@@ -706,7 +742,9 @@ def repair_showcase_face_materials(
     _repair_hair_cards_materials(
         document,
         chunks,
+        hair_tangent_path,
         hair_attribute_path,
+        eyebrow_tangent_path,
         eyebrow_attribute_path,
     )
 
@@ -724,14 +762,17 @@ def repair_showcase_face_materials(
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (2, 4):
+    if len(sys.argv) not in (2, 6):
         raise SystemExit(
             "usage: repair_showcase_glb.py /path/to/model.glb "
-            "[/path/to/hair-attribute.png /path/to/eyebrows-attribute.png]"
+            "[/path/to/hair-tangent.png /path/to/hair-attribute.png "
+            "/path/to/eyebrows-tangent.png /path/to/eyebrows-attribute.png]"
         )
     repaired = repair_showcase_face_materials(
         Path(sys.argv[1]),
-        Path(sys.argv[2]) if len(sys.argv) == 4 else None,
-        Path(sys.argv[3]) if len(sys.argv) == 4 else None,
+        Path(sys.argv[2]) if len(sys.argv) == 6 else None,
+        Path(sys.argv[3]) if len(sys.argv) == 6 else None,
+        Path(sys.argv[4]) if len(sys.argv) == 6 else None,
+        Path(sys.argv[5]) if len(sys.argv) == 6 else None,
     )
     print("Repaired Showcase Face materials: " + ", ".join(repaired))
