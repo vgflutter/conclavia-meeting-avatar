@@ -21,14 +21,20 @@ const wardrobeSkeletonMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaWardrobeSkeleton") || "shared"
   : "shared";
 const wardrobeLimbMode = typeof window !== "undefined"
-  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeLimb") || "stable"
-  : "stable";
+  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeLimb") || "dynamic"
+  : "dynamic";
 const skinInfluenceMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaInfluenceMode") || "extended"
   : "extended";
 const hairAlphaThreshold = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("conclaviaHairAlpha") || 0.055)
   : 0.055;
+const hairHelmetAlphaThreshold = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairHelmetAlpha") || 0.05)
+  : 0.05;
+const raisedHandPresentationMode = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaRaisedHandIK") || "on"
+  : "on";
 const retargetDiagnostics = { matched: 0, missing: 0, transformed: 0, samples: [] };
 const gestureWeights = {
   nod: 0.32,
@@ -193,7 +199,16 @@ function applyMeetingWardrobeRig(root) {
       "lowerarm_r",
     ];
     if (required.some((name) => !jointByName.has(name))) return;
-    for (let vertex = 0; vertex < position.count; vertex += 1) {
+    const [baseJoints, baseWeights] = influenceSets[0];
+    const authoredInfluenceSets = influenceSets.map(([joints, weights], index) => ({
+      jointsAttribute: index === 0 ? "skinIndex" : `joints_${index}`,
+      weightsAttribute: index === 0 ? "skinWeight" : `weights_${index}`,
+      joints: joints.array.slice(),
+      weights: weights.array.slice(),
+    }));
+    const stableJoints = baseJoints.clone();
+    const stableWeights = baseWeights.clone();
+    const collapsedInfluences = (vertex) => {
       const collapsed = new Map();
       // Start from Epic's authored garment masks. Only collapse joints whose
       // deformation normally comes from MetaHuman's post-process/cloth graph;
@@ -207,13 +222,7 @@ function applyMeetingWardrobeRig(root) {
           const sourceName = String(node.skeleton.bones[sourceIndex]?.name || "")
             .toLowerCase()
             .replace(/_[1-9]$/u, "");
-          let targetName = meetingWardrobeTarget(sourceName);
-          if (wardrobeLimbMode === "adaptive") {
-            const side = /_(l|r)$/u.exec(targetName)?.[1];
-            if (side && (/^clavicle_/u.test(targetName) || /^lowerarm_/u.test(targetName))) {
-              targetName = `upperarm_${side}`;
-            }
-          }
+          const targetName = meetingWardrobeTarget(sourceName);
           const targetIndex = jointByName.get(targetName) ?? sourceIndex;
           collapsed.set(targetIndex, (collapsed.get(targetIndex) || 0) + weight);
         }
@@ -223,15 +232,11 @@ function applyMeetingWardrobeRig(root) {
       // Without that pass the bottom corners fly with a raised arm. Fade those
       // limb weights out below the armpit and return them to the upper torso;
       // authored sleeve and collar masks remain untouched above the blend.
-      const verticalGate = wardrobeLimbMode === "adaptive"
-        ? portableSmoothstep(1.08, 1.2, position.getY(vertex))
-        : 0;
-      const horizontal = Math.abs(position.getX(vertex));
       const limbGates = new Map([
-        [jointByName.get("clavicle_l"), verticalGate * portableSmoothstep(0.14, 0.22, horizontal)],
-        [jointByName.get("clavicle_r"), verticalGate * portableSmoothstep(0.14, 0.22, horizontal)],
-        [jointByName.get("upperarm_l"), verticalGate * portableSmoothstep(0.14, 0.22, horizontal)],
-        [jointByName.get("upperarm_r"), verticalGate * portableSmoothstep(0.14, 0.22, horizontal)],
+        [jointByName.get("clavicle_l"), 0],
+        [jointByName.get("clavicle_r"), 0],
+        [jointByName.get("upperarm_l"), 0],
+        [jointByName.get("upperarm_r"), 0],
         [jointByName.get("lowerarm_l"), 0],
         [jointByName.get("lowerarm_r"), 0],
       ]);
@@ -250,13 +255,23 @@ function applyMeetingWardrobeRig(root) {
         .sort((left, right) => right[1] - left[1])
         .slice(0, 4);
       const total = influences.reduce((sum, [, weight]) => sum + weight, 0) || 1;
-      const [baseJoints, baseWeights] = influenceSets[0];
+      return { influences, total };
+    };
+    const writeInfluences = (vertex, targetJoints, targetWeights, result) => {
       for (let component = 0; component < 4; component += 1) {
-        const influence = influences[component]
-          || [influences[0]?.[0] || 0, 0];
-        baseJoints.setComponent(vertex, component, influence[0]);
-        baseWeights.setComponent(vertex, component, influence[1] / total);
+        const influence = result.influences[component]
+          || [result.influences[0]?.[0] || 0, 0];
+        targetJoints.setComponent(vertex, component, influence[0]);
+        targetWeights.setComponent(vertex, component, influence[1] / result.total);
       }
+    };
+    for (let vertex = 0; vertex < position.count; vertex += 1) {
+      writeInfluences(
+        vertex,
+        stableJoints,
+        stableWeights,
+        collapsedInfluences(vertex),
+      );
       for (const [extraJoints, extraWeights] of influenceSets.slice(1)) {
         for (let component = 0; component < extraJoints.itemSize; component += 1) {
           extraJoints.setComponent(vertex, component, 0);
@@ -264,7 +279,33 @@ function applyMeetingWardrobeRig(root) {
         }
       }
     }
-    for (const [joints, weights] of influenceSets) {
+    node.geometry.setAttribute("skinIndex", stableJoints);
+    node.geometry.setAttribute("skinWeight", stableWeights);
+    node.userData.conclaviaWardrobeVariants = {
+      stable: {
+        influenceSets: [
+          {
+            jointsAttribute: "skinIndex",
+            weightsAttribute: "skinWeight",
+            joints: stableJoints.array.slice(),
+            weights: stableWeights.array.slice(),
+          },
+          ...influenceSets.slice(1).map(([joints, weights], index) => ({
+            jointsAttribute: `joints_${index + 1}`,
+            weightsAttribute: `weights_${index + 1}`,
+            joints: joints.array.slice(),
+            weights: weights.array.slice(),
+          })),
+        ],
+      },
+      raised: {
+        // The authored Epic weights are the cleanest match for the captured
+        // request-to-speak pose. Restore all 12 influences only for that clip;
+        // the stable four-influence variant remains active for idle/applause.
+        influenceSets: authoredInfluenceSets,
+      },
+    };
+    for (const [joints, weights] of influenceSets.slice(1)) {
       joints.needsUpdate = true;
       weights.needsUpdate = true;
     }
@@ -591,8 +632,10 @@ function addFaceCoverageMask(node, material) {
     // underlay. It is not needed with the meeting shirt and can break through
     // during large shoulder gestures. Keep the authored head and neck, but
     // remove that covered section in immutable bind space.
-    underlay[vertex] = position.getY(vertex) < 1.43 ? 1 : 0;
-    hidden[vertex] = position.getY(vertex) < 1.405 ? 1 : 0;
+    const x = Math.abs(position.getX(vertex));
+    const y = position.getY(vertex);
+    underlay[vertex] = y < 1.43 || (y < 1.465 && x > 0.075) ? 1 : 0;
+    hidden[vertex] = y < 1.405 || (y < 1.455 && x > 0.08) ? 1 : 0;
   }
   node.geometry.setAttribute("conclaviaFaceUnderlay", new THREE.BufferAttribute(underlay, 1));
   node.geometry.setAttribute("conclaviaFaceHidden", new THREE.BufferAttribute(hidden, 1));
@@ -642,12 +685,18 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     // atlas supplies the fine fringe, flyaways and breakup above it.
     material.side = THREE.DoubleSide;
     material.transparent = false;
-    material.alphaTest = 0;
+    // Keep the compact helmet opaque by default: sparse alpha-cut cards alone
+    // expose the scalp at meeting distance. Detailed 4K card layers add the
+    // hairline and flyaways over this dense authored volume. The threshold is
+    // still query-tunable for asset authoring diagnostics.
+    material.alphaTest = THREE.MathUtils.clamp(hairHelmetAlphaThreshold, 0, 0.2);
     material.depthWrite = true;
-    material.color = new THREE.Color(0x32191b);
-    material.envMapIntensity = 0.3;
+    // Preserve the baked auburn base color instead of multiplying it by a
+    // second near-black tint.
+    material.color = new THREE.Color(0x8f777a);
+    material.envMapIntensity = 0.18;
     material.metalness = 0;
-    material.roughness = Math.max(0.64, material.roughness || 0);
+    material.roughness = Math.max(0.82, material.roughness || 0);
   }
   if (cardSurface) {
     const eyebrowSurface = /eyebrow/iu.test(`${node.name} ${material.name || ""}`);
@@ -661,10 +710,10 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.transparent = false;
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
-    material.color = new THREE.Color(eyebrowSurface ? 0x2b1b19 : 0x3b1c1d);
-    material.envMapIntensity = eyebrowSurface ? 0.26 : 0.4;
+    material.color = new THREE.Color(eyebrowSurface ? 0x3a2421 : 0x7b4147);
+    material.envMapIntensity = eyebrowSurface ? 0.22 : 0.25;
     material.metalness = 0;
-    material.roughness = Math.max(eyebrowSurface ? 0.68 : 0.62, material.roughness || 0);
+    material.roughness = Math.max(eyebrowSurface ? 0.74 : 0.72, material.roughness || 0);
     if (material.map) {
       material.map.colorSpace = THREE.NoColorSpace;
       const previousCompile = material.onBeforeCompile?.bind(material);
@@ -748,7 +797,26 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.envMapIntensity = 0.24;
     material.metalness = 0;
     material.roughness = Math.max(0.76, material.roughness || 0);
+    material.polygonOffset = true;
+    material.polygonOffsetFactor = -1;
+    material.polygonOffsetUnits = -2;
     if (material.normalScale) material.normalScale.set(0.72, 0.72);
+    // Unreal's garment deformer maintains a tiny clearance over the body.
+    // Recreate that clearance in bind space so animated shoulders and collar
+    // never z-fight or expose skin through the shirt in the Web renderer.
+    const previousCompile = material.onBeforeCompile?.bind(material);
+    const previousCacheKey = material.customProgramCacheKey?.bind(material);
+    material.onBeforeCompile = (shader, activeRenderer) => {
+      previousCompile?.(shader, activeRenderer);
+      shader.vertexShader = shader.vertexShader.replace(
+        "#include <begin_vertex>",
+        "#include <begin_vertex>\ntransformed += objectNormal * 0.004;",
+      );
+    };
+    material.customProgramCacheKey = () => [
+      previousCacheKey?.() || "",
+      "conclavia-garment-clearance-v3",
+    ].join(":");
   } else if (name.includes("bodyshapea_short")) {
     // This lower garment is fully covered in the half-bust meeting framing.
     // Omitting it prevents a second hidden cloth layer from poking through the
@@ -1008,6 +1076,15 @@ function retargetPortableClip(clip, components, sourceRoot = null) {
       continue;
     }
     const [, sourceName, property] = match;
+    const handRaise = normalizedName(clip.name).includes("meetinghandraise");
+    const leftArmTrack = /^(?:clavicle|upperarm|lowerarm|hand|thumb|index|middle|ring|pinky).*_l$/iu
+      .test(sourceName);
+    // The captured request-to-speak take contains sub-degree markerless noise
+    // on the resting arm. Unreal's post-process rig absorbs it, while a raw Web
+    // skin can pull the opposite sleeve through the torso. The intent of this
+    // one-sided gesture is explicit, so leave the resting chain on the current
+    // attentive pose and animate only the raised side.
+    if (handRaise && leftArmTrack) continue;
     const sourceNode = (
       sourceNodes.exact.get(sourceName)?.[0]
       || sourceNodes.normalized.get(normalizedNodeName(sourceName))?.[0]
@@ -1077,6 +1154,102 @@ function retargetPortableClip(clip, components, sourceRoot = null) {
     }
   }
   return new THREE.AnimationClip(clip.name, clip.duration, tracks, clip.blendMode);
+}
+
+function rotateBoneDirectionToward(bone, currentDirection, desiredDirection, weight = 1) {
+  if (!bone?.parent || currentDirection.lengthSq() < 0.000001 || desiredDirection.lengthSq() < 0.000001) {
+    return;
+  }
+  const current = currentDirection.clone().normalize();
+  const desired = desiredDirection.clone().normalize();
+  const worldRotation = bone.getWorldQuaternion(new THREE.Quaternion());
+  const correction = new THREE.Quaternion().setFromUnitVectors(current, desired);
+  const desiredWorld = correction.multiply(worldRotation);
+  const parentWorldInverse = bone.parent
+    .getWorldQuaternion(new THREE.Quaternion())
+    .invert();
+  const desiredLocal = parentWorldInverse.multiply(desiredWorld).normalize();
+  bone.quaternion.slerp(desiredLocal, THREE.MathUtils.clamp(weight, 0, 1));
+}
+
+function solveTwoBonePresentation(root, upperarm, lowerarm, hand, target, elbowHint, weight) {
+  if (!upperarm || !lowerarm || !hand || weight <= 0) return;
+  root.updateMatrixWorld(true);
+  const shoulder = upperarm.getWorldPosition(new THREE.Vector3());
+  const elbow = lowerarm.getWorldPosition(new THREE.Vector3());
+  const wrist = hand.getWorldPosition(new THREE.Vector3());
+  const upperLength = shoulder.distanceTo(elbow);
+  const lowerLength = elbow.distanceTo(wrist);
+  const toTarget = target.clone().sub(shoulder);
+  const maximumReach = Math.max(0.001, upperLength + lowerLength - 0.004);
+  const minimumReach = Math.abs(upperLength - lowerLength) + 0.004;
+  const distance = THREE.MathUtils.clamp(toTarget.length(), minimumReach, maximumReach);
+  const direction = toTarget.normalize();
+  const along = (
+    upperLength * upperLength
+    - lowerLength * lowerLength
+    + distance * distance
+  ) / (2 * distance);
+  const height = Math.sqrt(Math.max(0, upperLength * upperLength - along * along));
+  const hint = elbowHint.clone().sub(shoulder);
+  const perpendicular = hint.addScaledVector(direction, -hint.dot(direction));
+  if (perpendicular.lengthSq() < 0.000001) perpendicular.set(0, 0, 1);
+  perpendicular.normalize();
+  const desiredElbow = shoulder.clone()
+    .addScaledVector(direction, along)
+    .addScaledVector(perpendicular, height);
+  rotateBoneDirectionToward(
+    upperarm,
+    elbow.clone().sub(shoulder),
+    desiredElbow.clone().sub(shoulder),
+    weight,
+  );
+  root.updateMatrixWorld(true);
+  const solvedElbow = lowerarm.getWorldPosition(new THREE.Vector3());
+  const solvedWrist = hand.getWorldPosition(new THREE.Vector3());
+  rotateBoneDirectionToward(
+    lowerarm,
+    solvedWrist.sub(solvedElbow),
+    target.clone().sub(solvedElbow),
+    weight,
+  );
+  root.updateMatrixWorld(true);
+}
+
+function boneHierarchyRoot(bone) {
+  let root = bone;
+  while (root?.parent?.isBone) root = root.parent;
+  return root || null;
+}
+
+function boneInHierarchy(root, name) {
+  if (!root) return null;
+  const normalized = normalizedNodeName(name);
+  let match = null;
+  root.traverse((node) => {
+    if (!match && node.isBone && normalizedNodeName(node.name) === normalized) match = node;
+  });
+  return match;
+}
+
+function portableBodyRigs(components) {
+  const roots = new Map();
+  for (const upperarm of components.normalizedBody.get("upperarmr") || []) {
+    const root = boneHierarchyRoot(upperarm);
+    if (root) roots.set(root.uuid, root);
+  }
+  return [...roots.values()].map((root) => ({
+    root,
+    headBody: boneInHierarchy(root, "head"),
+    upperarmL: boneInHierarchy(root, "upperarm_l"),
+    lowerarmL: boneInHierarchy(root, "lowerarm_l"),
+    handL: boneInHierarchy(root, "hand_l"),
+    upperarmR: boneInHierarchy(root, "upperarm_r"),
+    lowerarmR: boneInHierarchy(root, "lowerarm_r"),
+    handR: boneInHierarchy(root, "hand_r"),
+    middleFingerR: boneInHierarchy(root, "middle_metacarpal_r")
+      || boneInHierarchy(root, "middle_01_r"),
+  })).filter((rig) => rig.upperarmR && rig.lowerarmR && rig.handR);
 }
 
 class ThreeAvatarPerformer {
@@ -1203,21 +1376,20 @@ class ThreeAvatarPerformer {
       normalizedBodyScales: nodesByNormalizedName(rigNodes.bodyScales),
       normalizedFace: nodesByNormalizedName(faceNodes),
     };
-    const bodyNode = (name) => (
-      this.animationComponents.bodyPositions.get(name)?.[0]
-      || this.animationComponents.body.get(name)?.[0]
-      || null
-    );
-    this.bodyRig = {
-      lowerarmL: bodyNode("lowerarm_l"),
-      handL: bodyNode("hand_l"),
-      lowerarmR: bodyNode("lowerarm_r"),
-      handR: bodyNode("hand_r"),
-    };
+    const faceNode = (name) => this.animationComponents.normalizedFace.get(name)?.[0] || null;
+    // MetaHuman body, face and wardrobe meshes can carry duplicate skeleton
+    // hierarchies. Animation tracks already target every copy; presentation
+    // corrections must do the same or the skin moves while a shirt sleeve is
+    // left in the authored pose.
+    this.bodyRigs = portableBodyRigs(this.animationComponents);
+    this.bodyRig = this.bodyRigs[0] || {};
+    this.bodyRig.headFace = faceNode("head");
     this.mixer = new THREE.AnimationMixer(this.root);
     this.clips = new Map();
     this.#addAnimationClips(gltf.animations, gltf.scene);
     this.morphBindings = [];
+    this.wardrobeMeshes = [];
+    this.wardrobePoseMode = "";
     this.root.traverse((node) => {
       if (node.isMesh) {
         node.castShadow = true;
@@ -1253,6 +1425,7 @@ class ThreeAvatarPerformer {
             influenceSets,
           );
         }
+        if (node.userData.conclaviaWardrobeVariants) this.wardrobeMeshes.push(node);
       }
       if (!node.morphTargetDictionary || !node.morphTargetInfluences) return;
       const targets = new Map();
@@ -1282,6 +1455,7 @@ class ThreeAvatarPerformer {
     };
     this.renderWidth = 0;
     this.renderHeight = 0;
+    this.raisePresentationWeight = 0;
     this.disposed = false;
   }
 
@@ -1289,6 +1463,9 @@ class ThreeAvatarPerformer {
     this.root.updateMatrixWorld(true);
     const point = (node) => node
       ? node.getWorldPosition(new THREE.Vector3()).toArray().map((value) => Number(value.toFixed(4)))
+      : null;
+    const rotation = (node) => node
+      ? node.getWorldQuaternion(new THREE.Quaternion()).toArray().map((value) => Number(value.toFixed(4)))
       : null;
     const skins = [];
     let wardrobeSkin = null;
@@ -1331,9 +1508,15 @@ class ThreeAvatarPerformer {
     });
     return {
       lowerarmL: point(this.bodyRig.lowerarmL),
+      upperarmL: point(this.bodyRig.upperarmL),
       handL: point(this.bodyRig.handL),
       lowerarmR: point(this.bodyRig.lowerarmR),
+      upperarmR: point(this.bodyRig.upperarmR),
       handR: point(this.bodyRig.handR),
+      headBody: point(this.bodyRig.headBody),
+      headFace: point(this.bodyRig.headFace),
+      headBodyRotation: rotation(this.bodyRig.headBody),
+      headFaceRotation: rotation(this.bodyRig.headFace),
       currentClip: this.currentClipName,
       currentClipTime: this.currentAction
         ? Number(this.currentAction.time.toFixed(3))
@@ -1365,11 +1548,13 @@ class ThreeAvatarPerformer {
   }
 
   update(state, deltaSeconds) {
+    this.#syncWardrobePose(state);
     this.#applyMorphs(state, deltaSeconds);
     if (!disableMotionForDiagnostics) this.#applyAnimation(state);
     this.#applyFacialAnimation(state);
     this.mixer.update(Math.min(0.1, deltaSeconds));
     this.#enforceClipSegments();
+    this.#applyRaisedHandPresentation(state, deltaSeconds);
     this.#applyApplauseContact(state);
     // Body and facial clips own the base pose. Gaze is a subtle additive
     // correction and must run after the mixer or the next animation tick would
@@ -1378,35 +1563,110 @@ class ThreeAvatarPerformer {
     this.renderer.render(this.scene, this.camera);
   }
 
+  #syncWardrobePose(state) {
+    const nextMode = wardrobeLimbMode === "stable"
+      ? "stable"
+      : wardrobeLimbMode === "adaptive" || state.gesture === "applause"
+        ? "stable"
+        : "raised";
+    if (nextMode === this.wardrobePoseMode) return;
+    for (const mesh of this.wardrobeMeshes) {
+      const variant = mesh.userData.conclaviaWardrobeVariants?.[nextMode];
+      if (!variant?.influenceSets) continue;
+      for (const influenceSet of variant.influenceSets) {
+        const joints = mesh.geometry?.getAttribute(influenceSet.jointsAttribute);
+        const weights = mesh.geometry?.getAttribute(influenceSet.weightsAttribute);
+        if (!joints?.array || !weights?.array) continue;
+        joints.array.set(influenceSet.joints);
+        weights.array.set(influenceSet.weights);
+        joints.needsUpdate = true;
+        weights.needsUpdate = true;
+      }
+    }
+    this.wardrobePoseMode = nextMode;
+  }
+
+  #applyRaisedHandPresentation(state, deltaSeconds) {
+    if (raisedHandPresentationMode === "off") return;
+    const raised = state.gesture === "raise-hand";
+    this.raisePresentationWeight = THREE.MathUtils.damp(
+      this.raisePresentationWeight,
+      raised ? 1 : 0,
+      raised ? 8 : 12,
+      Math.max(0, deltaSeconds),
+    );
+    if (this.raisePresentationWeight < 0.001 || !this.bodyRig.headBody) return;
+    this.root.updateMatrixWorld(true);
+    const head = this.bodyRig.headBody.getWorldPosition(new THREE.Vector3());
+    // Keep the captured gesture and use a compact two-bone presentation solve
+    // only to place the palm in the visible meeting plane. This prevents a
+    // markerless take from retargeting behind the shoulder while preserving
+    // its authored elbow arc, wrist pose and transition timing.
+    // Keep both joints close to the coronal plane of the torso. A deep
+    // positive Z target pushes the forearm toward a perspective camera and
+    // makes it look enormous; the compact offsets below bring the palm just
+    // in front of the shoulder without changing the meeting-camera scale.
+    const target = head.clone().add(new THREE.Vector3(-0.34, -0.02, 0.03));
+    const elbowHint = head.clone().add(new THREE.Vector3(-0.34, -0.45, -0.10));
+    for (const rig of this.bodyRigs) {
+      solveTwoBonePresentation(
+        this.root,
+        rig.upperarmR,
+        rig.lowerarmR,
+        rig.handR,
+        target,
+        elbowHint,
+        this.raisePresentationWeight * 0.88,
+      );
+      if (!rig.middleFingerR) continue;
+      this.root.updateMatrixWorld(true);
+      const wrist = rig.handR.getWorldPosition(new THREE.Vector3());
+      const middleFinger = rig.middleFingerR.getWorldPosition(new THREE.Vector3());
+      rotateBoneDirectionToward(
+        rig.handR,
+        middleFinger.sub(wrist),
+        new THREE.Vector3(0, 1, 0),
+        this.raisePresentationWeight * 0.82,
+      );
+      this.root.updateMatrixWorld(true);
+    }
+  }
+
   #applyApplauseContact(state) {
-    if (state.gesture !== "applause" || !this.bodyRig.handL || !this.bodyRig.handR) return;
-    this.root.updateMatrixWorld(true);
-    const left = this.bodyRig.handL.getWorldPosition(new THREE.Vector3());
-    const right = this.bodyRig.handR.getWorldPosition(new THREE.Vector3());
-    const horizontalGap = Math.abs(left.x - right.x);
-    // MetaHuman Animator gives us the complete captured arm chain, but a
-    // markerless phone take cannot guarantee palm collision after retargeting.
-    // Apply a tiny runtime contact constraint only in the closing phase. It
-    // preserves the captured arc while preventing fingers from passing through
-    // each other, and softly aligns the two palms in depth at the clap.
-    const influence = 1 - THREE.MathUtils.smoothstep(horizontalGap, 0.31, 0.39);
-    if (influence <= 0) return;
-    const midpoint = left.clone().add(right).multiplyScalar(0.5);
-    const targetGap = 0.285;
-    const leftSide = left.x >= right.x ? 1 : -1;
-    const leftTarget = left.clone();
-    const rightTarget = right.clone();
-    leftTarget.x = midpoint.x + leftSide * targetGap * 0.5;
-    rightTarget.x = midpoint.x - leftSide * targetGap * 0.5;
-    leftTarget.y = THREE.MathUtils.lerp(left.y, midpoint.y, influence * 0.34);
-    rightTarget.y = THREE.MathUtils.lerp(right.y, midpoint.y, influence * 0.34);
-    leftTarget.z = THREE.MathUtils.lerp(left.z, midpoint.z, influence * 0.58);
-    rightTarget.z = THREE.MathUtils.lerp(right.z, midpoint.z, influence * 0.58);
-    left.lerp(leftTarget, influence);
-    right.lerp(rightTarget, influence);
-    this.bodyRig.handL.position.copy(this.bodyRig.handL.parent.worldToLocal(left));
-    this.bodyRig.handR.position.copy(this.bodyRig.handR.parent.worldToLocal(right));
-    this.root.updateMatrixWorld(true);
+    if (state.gesture !== "applause") return;
+    for (const rig of this.bodyRigs) {
+      if (!rig.handL || !rig.handR) continue;
+      this.root.updateMatrixWorld(true);
+      const left = rig.handL.getWorldPosition(new THREE.Vector3());
+      const right = rig.handR.getWorldPosition(new THREE.Vector3());
+      const horizontalGap = Math.abs(left.x - right.x);
+      // MetaHuman Animator gives us the complete captured arm chain, but a
+      // markerless phone take cannot guarantee palm collision after retargeting.
+      // Apply a tiny runtime contact constraint only in the closing phase. It
+      // preserves the captured arc while preventing fingers from passing through
+      // each other, and softly aligns the two palms in depth at the clap.
+      const influence = 1 - THREE.MathUtils.smoothstep(horizontalGap, 0.31, 0.39);
+      if (influence <= 0) continue;
+      const midpoint = left.clone().add(right).multiplyScalar(0.5);
+      // Hand-bone origins sit inside each palm: 10.5 cm brings the visible palm
+      // surfaces into contact without making fingers cross through each other.
+      // The previous 28.5 cm target visibly left both hands floating.
+      const targetGap = 0.105;
+      const leftSide = left.x >= right.x ? 1 : -1;
+      const leftTarget = left.clone();
+      const rightTarget = right.clone();
+      leftTarget.x = midpoint.x + leftSide * targetGap * 0.5;
+      rightTarget.x = midpoint.x - leftSide * targetGap * 0.5;
+      leftTarget.y = THREE.MathUtils.lerp(left.y, midpoint.y, influence * 0.34);
+      rightTarget.y = THREE.MathUtils.lerp(right.y, midpoint.y, influence * 0.34);
+      leftTarget.z = THREE.MathUtils.lerp(left.z, midpoint.z, influence * 0.58);
+      rightTarget.z = THREE.MathUtils.lerp(right.z, midpoint.z, influence * 0.58);
+      left.lerp(leftTarget, influence);
+      right.lerp(rightTarget, influence);
+      rig.handL.position.copy(rig.handL.parent.worldToLocal(left));
+      rig.handR.position.copy(rig.handR.parent.worldToLocal(right));
+      this.root.updateMatrixWorld(true);
+    }
   }
 
   dispose() {

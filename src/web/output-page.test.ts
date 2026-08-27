@@ -105,6 +105,15 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /anchor\.attach\(group\)/);
   assert.match(performer, /WEB_ShowcaseHairHelmet/);
   assert.match(performer, /Epic's low groom LOD uses an opaque helmet/);
+  assert.match(performer, /conclaviaHairHelmetAlpha/);
+  assert.match(performer, /conclaviaWardrobeVariants/);
+  assert.match(performer, /authoredInfluenceSets/);
+  assert.match(performer, /material\.color = new THREE\.Color\(0x8f777a\)/);
+  assert.match(performer, /transformed \+= objectNormal \* 0\.004/);
+  assert.match(performer, /const targetGap = 0\.105/);
+  assert.doesNotMatch(performer, /const targetGap = 0\.285/);
+  assert.match(performer, /solveTwoBonePresentation/);
+  assert.match(performer, /middleFingerR/);
   assert.match(performer, /retargetPortableClip/);
   assert.match(performer, /portableRigNodes/);
   assert.match(performer, /boneNames\.has\("upperarml"\)/);
