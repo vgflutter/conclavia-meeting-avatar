@@ -17,6 +17,11 @@ const debuggingPort = Number.parseInt(
 const expectsCleanOutput = new URL(runtimeUrl).searchParams.get("conclaviaOutput") === "obs";
 const screenshotPath = process.env.CONCLAVIA_WEB_RUNTIME_SCREENSHOT || "";
 const actionText = process.env.CONCLAVIA_WEB_RUNTIME_ACTION || "";
+const followupActionText = process.env.CONCLAVIA_WEB_RUNTIME_FOLLOWUP_ACTION || "";
+const followupActionDelay = Number.parseInt(
+  process.env.CONCLAVIA_WEB_RUNTIME_FOLLOWUP_DELAY_MS || "1800",
+  10,
+);
 const actionChannel = process.env.CONCLAVIA_WEB_RUNTIME_ACTION_CHANNEL || "chat";
 const actionAsync = process.env.CONCLAVIA_WEB_RUNTIME_ACTION_ASYNC === "1";
 const armRenderer = process.env.CONCLAVIA_WEB_RUNTIME_ARM_RENDERER !== "0";
@@ -213,28 +218,41 @@ async function main() {
       const action = await command("Runtime.evaluate", {
         expression: `(async () => {
           const channel = ${JSON.stringify(actionChannel)};
-          const request = fetch(channel === 'voice' ? '/api/simulate' : '/api/chat/messages', {
+          const sendAction = (text) => fetch(channel === 'voice' ? '/api/simulate' : '/api/chat/messages', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(channel === 'voice'
-              ? { speakerName: 'Vincenzo', text: ${JSON.stringify(actionText)} }
+              ? { speakerName: 'Vincenzo', text }
               : {
                 platform: 'generic',
                 meetingId: 'runtime-audit',
                 messageId: crypto.randomUUID(),
                 speakerName: 'Vincenzo',
-                text: ${JSON.stringify(actionText)},
+                text,
                 capturedAt: new Date().toISOString(),
               }),
           });
+          const request = sendAction(${JSON.stringify(actionText)});
+          const scheduleFollowup = () => {
+            const text = ${JSON.stringify(followupActionText)};
+            if (!text) return;
+            window.setTimeout(() => {
+              window.__conclaviaRuntimeAuditFollowup = sendAction(text).then(async (response) => ({
+                status: response.status,
+                body: await response.json(),
+              }));
+            }, ${JSON.stringify(followupActionDelay)});
+          };
           if (${JSON.stringify(actionAsync)}) {
             window.__conclaviaRuntimeAuditAction = request.then(async (response) => ({
               status: response.status,
               body: await response.json(),
             }));
+            scheduleFollowup();
             return { status: 202, body: { started: true } };
           }
           const response = await request;
+          scheduleFollowup();
           return { status: response.status, body: await response.json() };
         })()`,
         returnByValue: true,
@@ -346,6 +364,7 @@ async function main() {
       chromeWarnings: chromeErrors.length,
       ...(screenshotPath ? { screenshotPath } : {}),
       ...(actionText ? { actionText } : {}),
+      ...(followupActionText ? { followupActionText, followupActionDelay } : {}),
       ...(actionText ? { actionChannel } : {}),
       ...(actionText ? { actionAsync } : {}),
       ...(actionText ? { rendererArmedByAudit: armRenderer } : {}),

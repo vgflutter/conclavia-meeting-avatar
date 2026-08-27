@@ -362,10 +362,13 @@ await test("enforces measurable meeting-HQ skinning and texture gates", async ()
   const directory = await mkdtemp(join(tmpdir(), "conclavia-glb-hq-"));
   const path = join(directory, "test.glb");
   const texture = pngHeader(2_048);
-  const binary = new Uint8Array(texture.byteLength * 3);
+  const groomControlTexture = pngHeader(512);
+  const binary = new Uint8Array(texture.byteLength * 3 + groomControlTexture.byteLength * 2);
   binary.set(texture, 0);
   binary.set(texture, texture.byteLength);
   binary.set(texture, texture.byteLength * 2);
+  binary.set(groomControlTexture, texture.byteLength * 3);
+  binary.set(groomControlTexture, texture.byteLength * 3 + groomControlTexture.byteLength);
   const hqManifest: WebAvatarManifest = {
     ...manifest,
     appearance: {
@@ -403,14 +406,26 @@ await test("enforces measurable meeting-HQ skinning and texture gates", async ()
       { name: "raise_hand" },
     ],
     buffers: [{ byteLength: binary.byteLength }],
-    bufferViews: [0, 1, 2].map((index) => ({
-      byteOffset: index * texture.byteLength,
-      byteLength: texture.byteLength,
-    })),
+    bufferViews: [
+      ...[0, 1, 2].map((index) => ({
+        byteOffset: index * texture.byteLength,
+        byteLength: texture.byteLength,
+      })),
+      {
+        byteOffset: texture.byteLength * 3,
+        byteLength: groomControlTexture.byteLength,
+      },
+      {
+        byteOffset: texture.byteLength * 3 + groomControlTexture.byteLength,
+        byteLength: groomControlTexture.byteLength,
+      },
+    ],
     images: [
       { name: "MI_Face_Skin_BaseColor", mimeType: "image/png", bufferView: 0 },
       { name: "MI_Hair_Cards_BaseColor", mimeType: "image/png", bufferView: 1 },
       { name: "MI_BodyShapeA_Shirt_BaseColor", mimeType: "image/png", bufferView: 2 },
+      { name: "Conclavia_HairCards_CompactTangent", mimeType: "image/png", bufferView: 3 },
+      { name: "Conclavia_HairCards_CompactAttribute", mimeType: "image/png", bufferView: 4 },
     ],
   };
   await writeFile(path, glbWithBinary(baseDocument, binary));

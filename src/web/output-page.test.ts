@@ -102,7 +102,7 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /gltfs = await Promise\.all/);
   assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = gltfs/);
   assert.match(performer, /THREE\.MathUtils\.clamp\(hairAlphaThreshold, 0\.01, 0\.5\)/);
-  assert.match(performer, /conclaviaHairAlpha["']\) \|\| 0\.2/);
+  assert.match(performer, /conclaviaHairAlpha["']\) \|\| 0\.12/);
   assert.match(performer, /conclaviaEyebrowAlpha["']\) \|\| 0\.14/);
   assert.match(performer, /conclaviaEyebrowForward["']\) \|\| 0\.018/);
   assert.match(performer, /conclaviaHairCards["']\) \|\| ["']crown["']/);
@@ -130,6 +130,7 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /conclaviaHairHelmetAlpha/);
   assert.match(performer, /conclaviaWardrobeVariants/);
   assert.match(performer, /authoredInfluenceSets/);
+  assert.match(performer, /conclaviaWardrobeLimb["']\) \|\| "stable"/);
   assert.match(performer, /material\.color = new THREE\.Color\(0x3f292d\)/);
   assert.match(performer, /conclaviaGroomCoverage = conclaviaGroomCompactAttributes\.r/);
   assert.match(performer, /material\.alphaToCoverage = false/);
@@ -138,9 +139,11 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /Number\(state\.performanceElapsedMs\)/);
   assert.match(output, /performanceElapsedMs: elapsed/);
   assert.match(performer, /solveTwoBonePresentation/);
+  assert.match(performer, /#restorePresentationArms\(\)/);
+  assert.match(performer, /handRaise && armTrack/);
   assert.match(performer, /state\.gesture === "lower-hand"[\s\S]*1 - boundedWeight\(state\.gestureWeight\)/);
-  assert.match(performer, /raised \? 7 : 3\.5/);
-  assert.match(performer, /new THREE\.Vector3\(-0\.285, 0\.02, -0\.075\)/);
+  assert.match(performer, /raised \? 3\.8 : 2\.8/);
+  assert.match(performer, /new THREE\.Vector3\(-0\.275, -0\.055, -0\.085\)/);
   assert.match(performer, /const cameraPalmNormal = new THREE\.Vector3\(0, 0, 1\)/);
   assert.match(performer, /middleFingerL/);
   assert.match(performer, /middleFingerR/);

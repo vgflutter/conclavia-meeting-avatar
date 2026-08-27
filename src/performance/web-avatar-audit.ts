@@ -260,7 +260,14 @@ function sortedUnique(values: readonly string[]): string[] {
 
 const meetingTextureGroups = [
   { name: "face", patterns: ["face_skin"] },
-  { name: "hair", patterns: ["hair_cards", "haircards"] },
+  {
+    name: "hair",
+    patterns: ["hair_cards", "haircards"],
+    // Compact groom tangent/attribute atlases are control data authored by
+    // Epic at a lower native resolution. They must be present for strand
+    // shading, but must not lower the 2K gate applied to visible hair colour.
+    excludePatterns: ["compacttangent", "compactattribute"],
+  },
   { name: "wardrobe", patterns: ["bodyshapea_shirt", "shirt"] },
 ] as const;
 
@@ -273,7 +280,9 @@ function inspectCriticalTextures(
   for (const group of meetingTextureGroups) {
     const matches = images.filter((image) => {
       const name = image.name.toLowerCase();
-      return group.patterns.some((pattern) => name.includes(pattern));
+      return group.patterns.some((pattern) => name.includes(pattern))
+        && (!("excludePatterns" in group)
+          || !group.excludePatterns.some((pattern) => name.includes(pattern)));
     });
     if (!matches.length) {
       issues.push(`critical-texture-missing:${group.name}`);

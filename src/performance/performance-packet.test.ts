@@ -104,5 +104,12 @@ await test("sequences, replays and broadcasts packets through the hub", () => {
   assert.deepEqual(observed, [1, 2]);
   assert.equal(first.sequence, 1);
   assert.equal(second.sequence, 2);
+  assert.deepEqual(second.tracks.gestures[0], {
+    atMs: 0,
+    clip: "raise-hand",
+    weight: 1,
+    blendInMs: 950,
+    blendOutMs: 760,
+  });
   assert.deepEqual(hub.since(1).map((packet) => packet.sequence), [2]);
 });

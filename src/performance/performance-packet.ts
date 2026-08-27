@@ -283,6 +283,11 @@ export function gesturePerformancePacket(input: {
     : input.gesture === "lower-hand"
       ? "lower-hand"
       : "applause";
+  const gestureEnvelope = input.gesture === "raise-hand"
+    ? { blendInMs: 950, blendOutMs: 760 }
+    : input.gesture === "lower-hand"
+      ? { blendInMs: 850, blendOutMs: 900 }
+      : { blendInMs: 620, blendOutMs: 760 };
   return {
     schema: performancePacketSchema,
     version: performancePacketVersion,
@@ -309,8 +314,7 @@ export function gesturePerformancePacket(input: {
         atMs: 0,
         clip: input.gesture,
         weight: 1,
-        blendInMs: 420,
-        blendOutMs: 560,
+        ...gestureEnvelope,
       }],
     },
     events: [{ atMs: 0, type: eventType }],

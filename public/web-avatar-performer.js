@@ -21,14 +21,14 @@ const wardrobeSkeletonMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaWardrobeSkeleton") || "shared"
   : "shared";
 const wardrobeLimbMode = typeof window !== "undefined"
-  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeLimb") || "dynamic"
-  : "dynamic";
+  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeLimb") || "stable"
+  : "stable";
 const skinInfluenceMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaInfluenceMode") || "extended"
   : "extended";
 const hairAlphaThreshold = typeof window !== "undefined"
-  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairAlpha") || 0.2)
-  : 0.2;
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairAlpha") || 0.12)
+  : 0.12;
 const hairHelmetAlphaThreshold = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("conclaviaHairHelmetAlpha") || 0.18)
   : 0.18;
@@ -51,14 +51,14 @@ const blinkAngleRadians = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("conclaviaBlinkAngle") || 0.7)
   : 0.7;
 const restingLidWeight = typeof window !== "undefined"
-  ? Number(new URLSearchParams(window.location.search).get("conclaviaRestingLids") || 0.075)
-  : 0.075;
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaRestingLids") || 0.12)
+  : 0.12;
 const raisedHandPresentationMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaRaisedHandIK") || "on"
   : "on";
 const cameraDolly = typeof window !== "undefined"
-  ? Number(new URLSearchParams(window.location.search).get("conclaviaCameraDolly") || 0.88)
-  : 0.88;
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaCameraDolly") || 0.82)
+  : 0.82;
 const retargetDiagnostics = { matched: 0, missing: 0, transformed: 0, samples: [] };
 const gestureWeights = {
   nod: 0.32,
@@ -68,8 +68,11 @@ const gestureWeights = {
   // Captured full-body clips include UE post-process correctives that a raw
   // browser skin does not have. Keep the intent strong while leaving enough
   // of the meeting base pose to protect shoulders, collar and garment seams.
-  "raise-hand": 0.34,
-  "lower-hand": 0.34,
+  // The presentation IK owns the visible arm path. The authored take remains
+  // at low weight to contribute only clavicle and torso anticipation; a
+  // stronger blend doubles the shoulder rotation and reads as a violent pop.
+  "raise-hand": 0.18,
+  "lower-hand": 0.18,
   // The phone capture supplies organic shoulder motion, while the portable
   // runtime solves the visible seated clap. A low authored weight prevents
   // the source take's standing/overhead arc from leaking into meeting video.
@@ -734,9 +737,9 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     // Preserve the baked auburn base color instead of multiplying it by a
     // second near-black tint.
     material.color = new THREE.Color(0x3f292d);
-    material.envMapIntensity = 0.18;
+    material.envMapIntensity = 0.32;
     material.metalness = 0;
-    material.roughness = Math.max(0.82, material.roughness || 0);
+    material.roughness = THREE.MathUtils.clamp(material.roughness || 0.72, 0.68, 0.78);
   }
   if (cardSurface) {
     const eyebrowSurface = /eyebrow/iu.test(`${node.name} ${material.name || ""}`);
@@ -767,9 +770,13 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
     material.color = new THREE.Color(eyebrowSurface ? 0x2c1b19 : 0x4b282f);
-    material.envMapIntensity = eyebrowSurface ? 0.22 : 0.25;
+    material.envMapIntensity = eyebrowSurface ? 0.24 : 0.48;
     material.metalness = 0;
-    material.roughness = Math.max(eyebrowSurface ? 0.74 : 0.72, material.roughness || 0);
+    material.roughness = THREE.MathUtils.clamp(
+      material.roughness || (eyebrowSurface ? 0.72 : 0.5),
+      eyebrowSurface ? 0.68 : 0.44,
+      eyebrowSurface ? 0.8 : 0.58,
+    );
     if (material.map) {
       material.map.colorSpace = THREE.NoColorSpace;
       const previousCompile = material.onBeforeCompile?.bind(material);
@@ -800,13 +807,19 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
             conclaviaStrandFlow,
             0.38
           );` : "float conclaviaAuthoredVariation = conclaviaStrandSeed;"}
-          diffuseColor.rgb *= mix(0.72, 1.13, conclaviaStrandTone)
-            * mix(0.91, 1.09, conclaviaAuthoredVariation);`,
+          float conclaviaFiberBreakup = 0.5 + 0.5 * sin(
+            vMapUv.y * 1536.0
+            + vMapUv.x * 91.0
+            + conclaviaAuthoredVariation * 6.2831853
+          );
+          diffuseColor.rgb *= mix(0.68, 1.16, conclaviaStrandTone)
+            * mix(0.9, 1.1, conclaviaAuthoredVariation)
+            * mix(0.955, 1.045, conclaviaFiberBreakup * conclaviaStrandTone);`,
         );
       };
       material.customProgramCacheKey = () => [
         previousCacheKey?.() || "",
-        `conclavia-native-groom-compact-v6-${eyebrowSurface ? "brow" : "hair"}`,
+        `conclavia-native-groom-compact-v7-${eyebrowSurface ? "brow" : "hair"}`,
         groomTangentMap ? "tangent" : "attribute-only",
       ].join(":");
     }
@@ -1182,7 +1195,9 @@ function retargetTransformTrack(track, property, sourceNode, targetNode, clipNam
 }
 
 function retargetPortableClip(clip, components, sourceRoot = null) {
-  const facial = /^asweb(?:mood|viseme)/u.test(normalizedName(clip.name));
+  const clipKey = normalizedName(clip.name);
+  const facial = /^asweb(?:mood|viseme)/u.test(clipKey);
+  const ambientBody = !facial && clipKey.includes("idle");
   const sourceNodes = sourceAnimationNodes(sourceRoot);
   const tracks = [];
   for (const track of clip.tracks) {
@@ -1192,9 +1207,23 @@ function retargetPortableClip(clip, components, sourceRoot = null) {
       continue;
     }
     const [, sourceName, property] = match;
-    const handRaise = normalizedName(clip.name).includes("meetinghandraise");
+    const handRaise = clipKey.includes("meetinghandraise");
+    const armTrack = /^(?:clavicle|upperarm|lowerarm|hand|thumb|index|middle|ring|pinky).*_[lr]$/iu
+      .test(sourceName);
     const leftArmTrack = /^(?:clavicle|upperarm|lowerarm|hand|thumb|index|middle|ring|pinky).*_l$/iu
       .test(sourceName);
+    // Listening clips should animate posture, breathing, head and gaze, not
+    // repeatedly swing the arms. Unreal's post-process rig corrects the raw
+    // markerless shoulders and garment collisions; a browser skin does not.
+    // Keep both arm chains in the clean meeting rest pose and reserve their
+    // full range for the authored raise-hand and applause actions.
+    if (ambientBody && armTrack) continue;
+    // The portable two-bone solver owns the request-to-speak arm. Retain the
+    // captured clavicle/torso anticipation, but never stack the authored
+    // upper arm, wrist and finger rotations underneath IK. Stacking both was
+    // responsible for the crooked transition and for the hand reappearing at
+    // the end of the lowering segment.
+    if (handRaise && armTrack && !/^clavicle/iu.test(sourceName)) continue;
     // The captured request-to-speak take contains sub-degree markerless noise
     // on the resting arm. Unreal's post-process rig absorbs it, while a raw Web
     // skin can pull the opposite sleeve through the torso. The intent of this
@@ -1516,6 +1545,21 @@ class ThreeAvatarPerformer {
     this.bodyRigs = portableBodyRigs(this.animationComponents);
     this.bodyRig = this.bodyRigs[0] || {};
     this.bodyRig.headFace = faceNode("head");
+    this.presentationArmNeutralRotations = new Map();
+    for (const rig of this.bodyRigs) {
+      for (const bone of [
+        rig.upperarmL,
+        rig.lowerarmL,
+        rig.handL,
+        rig.upperarmR,
+        rig.lowerarmR,
+        rig.handR,
+      ]) {
+        if (bone && !this.presentationArmNeutralRotations.has(bone)) {
+          this.presentationArmNeutralRotations.set(bone, bone.quaternion.clone());
+        }
+      }
+    }
     this.mixer = new THREE.AnimationMixer(this.root);
     this.clips = new Map();
     this.#addAnimationClips(gltf.animations, gltf.scene);
@@ -1771,6 +1815,7 @@ class ThreeAvatarPerformer {
 
   update(state, deltaSeconds) {
     this.#removeBlinkCorrection();
+    this.#restorePresentationArms();
     this.#syncWardrobePose(state);
     this.#applyMorphs(state, deltaSeconds);
     if (!disableMotionForDiagnostics) this.#applyAnimation(state);
@@ -1786,6 +1831,17 @@ class ThreeAvatarPerformer {
     this.#applyGaze(state.gaze, deltaSeconds);
     this.#applyBlink();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  #restorePresentationArms() {
+    // Presentation IK writes directly to bones after the AnimationMixer. If a
+    // subsequent clip intentionally omits those tracks, Three.js has nothing
+    // to reset on the next frame and the last solved pose would remain frozen.
+    // Re-establish the authored meeting rest before the mixer applies the
+    // current clip; gesture IK can then contribute a fresh correction once.
+    for (const [bone, neutral] of this.presentationArmNeutralRotations) {
+      bone.quaternion.copy(neutral);
+    }
   }
 
   #syncWardrobePose(state) {
@@ -1840,7 +1896,7 @@ class ThreeAvatarPerformer {
       // Lowering packets can arrive after their short blend-in window because
       // the event stream is polled. Keep a full second of visual release even
       // in that case, instead of dropping the IK pose in one or two frames.
-      raised ? 7 : 3.5,
+      raised ? 3.8 : 2.8,
       Math.max(0, deltaSeconds),
     );
     if (this.raisePresentationWeight < 0.001 || !this.bodyRig.headBody) return;
@@ -1851,8 +1907,8 @@ class ThreeAvatarPerformer {
     // beside the temple instead: the forearm can rise naturally, the elbow
     // stays close to the torso and the negative Z offset keeps the palm from
     // becoming oversized in the perspective meeting camera.
-    const target = head.clone().add(new THREE.Vector3(-0.285, 0.02, -0.075));
-    const elbowHint = head.clone().add(new THREE.Vector3(-0.18, -0.31, -0.12));
+    const target = head.clone().add(new THREE.Vector3(-0.275, -0.055, -0.085));
+    const elbowHint = head.clone().add(new THREE.Vector3(-0.17, -0.3, -0.13));
     for (const rig of this.bodyRigs) {
       solveTwoBonePresentation(
         this.root,
@@ -1861,7 +1917,7 @@ class ThreeAvatarPerformer {
         rig.handR,
         target,
         elbowHint,
-        this.raisePresentationWeight * 0.88,
+        this.raisePresentationWeight * 0.82,
       );
       if (!rig.middleFingerR) continue;
       this.root.updateMatrixWorld(true);
@@ -2189,7 +2245,7 @@ class ThreeAvatarPerformer {
       const choices = candidates.filter((name) => normalizedName(name) !== this.lastAmbientClip);
       const pool = choices.length ? choices : candidates;
       const next = pool[Math.floor(Math.random() * pool.length)];
-      if (next && this.#playClip(next, false, mode === "listening" ? 0.46 : 0.4, {
+      if (next && this.#playClip(next, false, mode === "listening" ? 0.27 : 0.22, {
         fadeInSeconds: 0.72,
         fadeOutSeconds: 0.64,
       })) {
