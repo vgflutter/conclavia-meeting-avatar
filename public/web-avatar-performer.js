@@ -44,6 +44,12 @@ const hairCardPresentationMode = typeof window !== "undefined"
 const hairCrownMinimumY = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("conclaviaHairCrownY") || 1.61)
   : 1.61;
+const forcedBlinkWeight = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaBlinkTest") || 0)
+  : 0;
+const blinkAngleRadians = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaBlinkAngle") || 0.7)
+  : 0.7;
 const raisedHandPresentationMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaRaisedHandIK") || "on"
   : "on";
@@ -1553,6 +1559,31 @@ class ThreeAvatarPerformer {
         .filter(Boolean)
         .map((node) => [node, node.rotation.clone()]),
     );
+    const blinkControl = (name, amplitude) => {
+      const node = this.root.getObjectByName(name);
+      return node ? {
+        node,
+        amplitude,
+        correction: new THREE.Quaternion(),
+      } : null;
+    };
+    this.blinkControls = [
+      blinkControl("FACIAL_L_EyelidUpperA", 1),
+      blinkControl("FACIAL_R_EyelidUpperA", 1),
+      blinkControl("FACIAL_L_EyelidUpperB", 0.78),
+      blinkControl("FACIAL_R_EyelidUpperB", 0.78),
+      blinkControl("FACIAL_L_EyelidLowerA", -0.14),
+      blinkControl("FACIAL_R_EyelidLowerA", -0.14),
+    ].filter(Boolean);
+    this.lifeElapsedSeconds = 0;
+    this.nextBlinkAtSeconds = 1.4 + Math.random() * 1.6;
+    this.blinkStartedAtSeconds = null;
+    this.blinkWeight = 0;
+    this.nextSaccadeAtSeconds = 0.35;
+    this.saccadeYaw = 0;
+    this.saccadePitch = 0;
+    this.saccadeTargetYaw = 0;
+    this.saccadeTargetPitch = 0;
     this.currentAction = null;
     this.currentClipName = "";
     this.performanceToken = "";
@@ -1657,6 +1688,10 @@ class ThreeAvatarPerformer {
       ),
       raisePresentationWeight: Number(this.raisePresentationWeight.toFixed(3)),
       applauseContactWeight: Number(this.applauseContactWeight.toFixed(3)),
+      blinkWeight: Number(this.blinkWeight.toFixed(3)),
+      blinkControls: this.blinkControls.length,
+      saccade: [this.saccadeYaw, this.saccadePitch]
+        .map((value) => Number(value.toFixed(4))),
       groomBounds,
       wardrobePoseMode: this.wardrobePoseMode,
       retarget: { ...retargetDiagnostics },
@@ -1686,6 +1721,7 @@ class ThreeAvatarPerformer {
   }
 
   update(state, deltaSeconds) {
+    this.#removeBlinkCorrection();
     this.#syncWardrobePose(state);
     this.#applyMorphs(state, deltaSeconds);
     if (!disableMotionForDiagnostics) this.#applyAnimation(state);
@@ -1697,7 +1733,9 @@ class ThreeAvatarPerformer {
     // Body and facial clips own the base pose. Gaze is a subtle additive
     // correction and must run after the mixer or the next animation tick would
     // overwrite it completely.
+    this.#advanceLifeLayer(state, deltaSeconds);
     this.#applyGaze(state.gaze, deltaSeconds);
+    this.#applyBlink();
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -1906,14 +1944,94 @@ class ThreeAvatarPerformer {
   }
 
   #applyGaze(gaze, deltaSeconds) {
-    const yaw = gaze === "thought" ? 0.09 : gaze === "target" ? -0.035 : 0;
-    const pitch = gaze === "thought" ? -0.025 : 0;
+    const yaw = (gaze === "thought" ? 0.09 : gaze === "target" ? -0.035 : 0)
+      + this.saccadeYaw;
+    const pitch = (gaze === "thought" ? -0.025 : 0) + this.saccadePitch;
     const blend = 1 - Math.exp(-Math.max(0, deltaSeconds) * 5);
     for (const [node, neutral] of this.neutralRotations) {
       const headScale = node === this.head ? 0.42 : 1;
       node.rotation.x += (neutral.x + pitch * headScale - node.rotation.x) * blend;
       node.rotation.y += (neutral.y + yaw * headScale - node.rotation.y) * blend;
       node.rotation.z += (neutral.z - node.rotation.z) * blend;
+    }
+  }
+
+  #advanceLifeLayer(state, deltaSeconds) {
+    const delta = Math.min(0.1, Math.max(0, deltaSeconds));
+    this.lifeElapsedSeconds += delta;
+    if (this.lifeElapsedSeconds >= this.nextSaccadeAtSeconds) {
+      const returnToSpeaker = Math.random() < 0.34;
+      const engagement = state.speaking ? 0.72 : state.listening ? 1 : 0.58;
+      this.saccadeTargetYaw = returnToSpeaker
+        ? 0
+        : (Math.random() * 2 - 1) * 0.028 * engagement;
+      this.saccadeTargetPitch = returnToSpeaker
+        ? 0
+        : (Math.random() * 2 - 1) * 0.012 * engagement;
+      this.nextSaccadeAtSeconds = this.lifeElapsedSeconds + 0.55 + Math.random() * 1.35;
+    }
+    this.saccadeYaw = THREE.MathUtils.damp(
+      this.saccadeYaw,
+      this.saccadeTargetYaw,
+      9,
+      delta,
+    );
+    this.saccadePitch = THREE.MathUtils.damp(
+      this.saccadePitch,
+      this.saccadeTargetPitch,
+      9,
+      delta,
+    );
+
+    if (forcedBlinkWeight > 0) {
+      this.blinkWeight = THREE.MathUtils.clamp(forcedBlinkWeight, 0, 1);
+      return;
+    }
+    if (
+      this.blinkStartedAtSeconds === null
+      && this.lifeElapsedSeconds >= this.nextBlinkAtSeconds
+    ) {
+      this.blinkStartedAtSeconds = this.lifeElapsedSeconds;
+    }
+    if (this.blinkStartedAtSeconds === null) {
+      this.blinkWeight = 0;
+      return;
+    }
+    const duration = state.speaking ? 0.2 : 0.22;
+    const phase = (this.lifeElapsedSeconds - this.blinkStartedAtSeconds) / duration;
+    if (phase >= 1) {
+      this.blinkWeight = 0;
+      this.blinkStartedAtSeconds = null;
+      const conversationalInterval = state.speaking ? 1.9 : state.listening ? 2.4 : 2.8;
+      this.nextBlinkAtSeconds = this.lifeElapsedSeconds
+        + conversationalInterval
+        + Math.random() * 2.8;
+      return;
+    }
+    this.blinkWeight = phase < 0.34
+      ? THREE.MathUtils.smoothstep(phase, 0, 0.34)
+      : phase < 0.48
+        ? 1
+        : 1 - THREE.MathUtils.smoothstep(phase, 0.48, 1);
+  }
+
+  #removeBlinkCorrection() {
+    for (const control of this.blinkControls) {
+      if (control.correction.w === 1) continue;
+      control.node.quaternion.multiply(control.correction.clone().invert());
+      control.correction.identity();
+    }
+  }
+
+  #applyBlink() {
+    const signedAngle = THREE.MathUtils.clamp(blinkAngleRadians, -0.85, 0.85);
+    const axis = new THREE.Vector3(1, 0, 0);
+    for (const control of this.blinkControls) {
+      control.correction.setFromAxisAngle(
+        axis,
+        signedAngle * control.amplitude * this.blinkWeight,
+      );
+      control.node.quaternion.multiply(control.correction);
     }
   }
 
@@ -1969,7 +2087,9 @@ class ThreeAvatarPerformer {
 
   #applyFacialAnimation(state, deltaSeconds) {
     const facialClips = this.manifest.facialClips || { moods: {}, visemes: {} };
-    const moodReference = facialClips.moods?.[state.mood] || null;
+    const ambientExpression = state.mood === "neutral";
+    const activeMood = ambientExpression ? "attentive" : state.mood;
+    const moodReference = facialClips.moods?.[activeMood] || null;
     // Applause is semantically positive and should read as such even at small
     // meeting-tile sizes. Keep it below the old full-strength preset (which
     // looked uncanny), while making the authored smile unmistakable.
@@ -1978,9 +2098,11 @@ class ThreeAvatarPerformer {
       : state.speaking ? 0.36 : 0.44;
     this.#syncFacialLayer(
       "mood",
-      moodReference ? `mood:${state.mood}` : "",
+      moodReference ? `mood:${activeMood}` : "",
       moodReference,
-      boundedWeight(state.moodLevel) * moodGain,
+      ambientExpression
+        ? (state.listening ? 0.16 : 0.1)
+        : boundedWeight(state.moodLevel) * moodGain,
       0.32,
       deltaSeconds,
       7,
