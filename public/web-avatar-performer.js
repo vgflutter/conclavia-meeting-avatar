@@ -68,8 +68,8 @@ const gestureWeights = {
   // Captured full-body clips include UE post-process correctives that a raw
   // browser skin does not have. Keep the intent strong while leaving enough
   // of the meeting base pose to protect shoulders, collar and garment seams.
-  "raise-hand": 0.58,
-  "lower-hand": 0.58,
+  "raise-hand": 0.34,
+  "lower-hand": 0.34,
   // The phone capture supplies organic shoulder motion, while the portable
   // runtime solves the visible seated clap. A low authored weight prevents
   // the source take's standing/overhead arc from leaking into meeting video.
@@ -1646,6 +1646,14 @@ class ThreeAvatarPerformer {
     const rotation = (node) => node
       ? node.getWorldQuaternion(new THREE.Quaternion()).toArray().map((value) => Number(value.toFixed(4)))
       : null;
+    const palmNormal = (hand, indexFinger, pinkyFinger) => {
+      if (!hand || !indexFinger || !pinkyFinger) return null;
+      const wrist = hand.getWorldPosition(new THREE.Vector3());
+      const index = indexFinger.getWorldPosition(new THREE.Vector3()).sub(wrist);
+      const pinky = pinkyFinger.getWorldPosition(new THREE.Vector3()).sub(wrist);
+      return index.cross(pinky).normalize().toArray()
+        .map((value) => Number(value.toFixed(4)));
+    };
     const skins = [];
     const groomBounds = [];
     let wardrobeSkin = null;
@@ -1703,6 +1711,11 @@ class ThreeAvatarPerformer {
       lowerarmR: point(this.bodyRig.lowerarmR),
       upperarmR: point(this.bodyRig.upperarmR),
       handR: point(this.bodyRig.handR),
+      palmNormalR: palmNormal(
+        this.bodyRig.handR,
+        this.bodyRig.indexFingerR,
+        this.bodyRig.pinkyFingerR,
+      ),
       headBody: point(this.bodyRig.headBody),
       headFace: point(this.bodyRig.headFace),
       headBodyRotation: rotation(this.bodyRig.headBody),
@@ -1776,9 +1789,14 @@ class ThreeAvatarPerformer {
   }
 
   #syncWardrobePose(state) {
-    const raisedWeight = new Set(["raise-hand", "lower-hand"]).has(state.gesture)
+    // The lowering clip starts from the held pose and blends back to the
+    // seated base. Invert its envelope so the sleeve does not snap to the
+    // resting skin weights while the hand is still visibly raised.
+    const raisedWeight = state.gesture === "raise-hand"
       ? boundedWeight(state.gestureWeight)
-      : 0;
+      : state.gesture === "lower-hand"
+        ? 1 - boundedWeight(state.gestureWeight)
+        : 0;
     const nextMode = wardrobeLimbMode === "stable"
       ? "stable"
       : wardrobeLimbMode === "raised"
@@ -1807,26 +1825,31 @@ class ThreeAvatarPerformer {
   #applyRaisedHandPresentation(state, deltaSeconds) {
     if (raisedHandPresentationMode === "off") return;
     const raised = state.gesture === "raise-hand";
-    const targetWeight = raised ? boundedWeight(state.gestureWeight) : 0;
+    const lowering = state.gesture === "lower-hand";
+    // Keep the same IK pose at the first frame of the lowering take, then
+    // release it with the authored blend envelope. This removes the one-frame
+    // shoulder/wrist pop that previously made the gesture look spasmodic.
+    const targetWeight = raised
+      ? boundedWeight(state.gestureWeight)
+      : lowering
+        ? 1 - boundedWeight(state.gestureWeight)
+        : 0;
     this.raisePresentationWeight = THREE.MathUtils.damp(
       this.raisePresentationWeight,
       targetWeight,
-      raised ? 8 : 12,
+      raised ? 7 : 8,
       Math.max(0, deltaSeconds),
     );
     if (this.raisePresentationWeight < 0.001 || !this.bodyRig.headBody) return;
     this.root.updateMatrixWorld(true);
     const head = this.bodyRig.headBody.getWorldPosition(new THREE.Vector3());
-    // Keep the captured gesture and use a compact two-bone presentation solve
-    // only to place the palm in the visible meeting plane. This prevents a
-    // markerless take from retargeting behind the shoulder while preserving
-    // its authored elbow arc, wrist pose and transition timing.
-    // Keep both joints close to the coronal plane of the torso. A deep
-    // positive Z target pushes the forearm toward a perspective camera and
-    // makes it look enormous; the compact offsets below bring the palm just
-    // in front of the shoulder without changing the meeting-camera scale.
-    const target = head.clone().add(new THREE.Vector3(-0.245, -0.085, 0.025));
-    const elbowHint = head.clone().add(new THREE.Vector3(-0.27, -0.43, -0.10));
+    // A wrist target too close to the shoulder forces every valid two-bone
+    // solution to fold the elbow far outside the silhouette. Put the wrist
+    // beside the temple instead: the forearm can rise naturally, the elbow
+    // stays close to the torso and the negative Z offset keeps the palm from
+    // becoming oversized in the perspective meeting camera.
+    const target = head.clone().add(new THREE.Vector3(-0.285, 0.02, -0.075));
+    const elbowHint = head.clone().add(new THREE.Vector3(-0.18, -0.31, -0.12));
     for (const rig of this.bodyRigs) {
       solveTwoBonePresentation(
         this.root,
@@ -1841,12 +1864,52 @@ class ThreeAvatarPerformer {
       this.root.updateMatrixWorld(true);
       const wrist = rig.handR.getWorldPosition(new THREE.Vector3());
       const middleFinger = rig.middleFingerR.getWorldPosition(new THREE.Vector3());
+      const desiredFingerDirection = new THREE.Vector3(0, 0.985, -0.17).normalize();
       rotateBoneDirectionToward(
         rig.handR,
         middleFinger.sub(wrist),
-        new THREE.Vector3(0, 1, 0),
-        this.raisePresentationWeight * 0.82,
+        desiredFingerDirection,
+        this.raisePresentationWeight * 0.76,
       );
+      // The captured wrist roll can leave the palm edge-on after retargeting.
+      // Roll around the already-upright finger axis until the palm faces the
+      // meeting camera, without changing the arm chain or bending the wrist.
+      if (rig.indexFingerR && rig.pinkyFingerR) {
+        this.root.updateMatrixWorld(true);
+        const solvedWrist = rig.handR.getWorldPosition(new THREE.Vector3());
+        const solvedFingerDirection = rig.middleFingerR
+          .getWorldPosition(new THREE.Vector3())
+          .sub(solvedWrist)
+          .normalize();
+        const indexDirection = rig.indexFingerR
+          .getWorldPosition(new THREE.Vector3())
+          .sub(solvedWrist);
+        const pinkyDirection = rig.pinkyFingerR
+          .getWorldPosition(new THREE.Vector3())
+          .sub(solvedWrist);
+        const currentPalmNormal = indexDirection.cross(pinkyDirection).normalize();
+        const cameraPalmNormal = new THREE.Vector3(0, 0, 1)
+          .addScaledVector(
+            solvedFingerDirection,
+            -solvedFingerDirection.dot(new THREE.Vector3(0, 0, 1)),
+          )
+          .normalize();
+        rotateBoneDirectionToward(
+          rig.handR,
+          currentPalmNormal,
+          cameraPalmNormal,
+          this.raisePresentationWeight * 0.68,
+        );
+        this.root.updateMatrixWorld(true);
+        rotateBoneDirectionToward(
+          rig.handR,
+          rig.middleFingerR.getWorldPosition(new THREE.Vector3()).sub(
+            rig.handR.getWorldPosition(new THREE.Vector3()),
+          ),
+          desiredFingerDirection,
+          this.raisePresentationWeight * 0.32,
+        );
+      }
       this.root.updateMatrixWorld(true);
     }
   }

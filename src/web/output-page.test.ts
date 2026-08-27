@@ -137,6 +137,9 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /Number\(state\.performanceElapsedMs\)/);
   assert.match(output, /performanceElapsedMs: elapsed/);
   assert.match(performer, /solveTwoBonePresentation/);
+  assert.match(performer, /state\.gesture === "lower-hand"[\s\S]*1 - boundedWeight\(state\.gestureWeight\)/);
+  assert.match(performer, /new THREE\.Vector3\(-0\.285, 0\.02, -0\.075\)/);
+  assert.match(performer, /const cameraPalmNormal = new THREE\.Vector3\(0, 0, 1\)/);
   assert.match(performer, /middleFingerL/);
   assert.match(performer, /middleFingerR/);
   assert.match(performer, /retargetPortableClip/);
