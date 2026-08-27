@@ -4,6 +4,32 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 
 const loopingGestures = new Set(["applause"]);
+const disableMotionForDiagnostics = typeof window !== "undefined"
+  && new URLSearchParams(window.location.search).get("conclaviaMotion") === "off";
+const hiddenMeshForDiagnostics = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaHide")
+  : "";
+const inspectSkinForDiagnostics = typeof window !== "undefined"
+  && new URLSearchParams(window.location.search).get("conclaviaDebugSkin") === "1";
+const transformModeForDiagnostics = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaTransformMode") || "full"
+  : "full";
+const wardrobeCorrectionMode = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeCorrection") || "meeting-rig"
+  : "meeting-rig";
+const wardrobeSkeletonMode = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeSkeleton") || "shared"
+  : "shared";
+const wardrobeLimbMode = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeLimb") || "stable"
+  : "stable";
+const skinInfluenceMode = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaInfluenceMode") || "extended"
+  : "extended";
+const hairAlphaThreshold = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairAlpha") || 0.055)
+  : 0.055;
+const retargetDiagnostics = { matched: 0, missing: 0, transformed: 0, samples: [] };
 const gestureWeights = {
   nod: 0.32,
   tilt: 0.24,
@@ -55,6 +81,435 @@ function clipReference(value, defaultLoop = false) {
 function portableMaterials(node) {
   if (!node?.material) return [];
   return Array.isArray(node.material) ? node.material : [node.material];
+}
+
+function isWardrobeMesh(node) {
+  if (!node?.isSkinnedMesh) return false;
+  const names = portableMaterials(node)
+    .map((material) => String(material.name || "").toLowerCase());
+  return String(node.name || "").toLowerCase().includes("outfit")
+    || names.some((name) => name.includes("bodyshapea_"));
+}
+
+function wardrobeCorrectiveTarget(name) {
+  const match = /_(l|r)$/u.exec(name);
+  const side = match?.[1];
+  if (!side) return null;
+  if (/^upperarm_twistcor_01_/u.test(name)) return `upperarm_twist_01_${side}`;
+  if (/^upperarm_(?:twistcor_02|bicep|tricep)_/u.test(name)) {
+    return `upperarm_twist_02_${side}`;
+  }
+  if (/^upperarm_(?:correctiveroot|bck|fwd|in|out)_/u.test(name)) {
+    return `upperarm_${side}`;
+  }
+  if (/^lowerarm_(?:correctiveroot|bck|fwd|in|out)_/u.test(name)) {
+    return `lowerarm_${side}`;
+  }
+  if (/^clavicle_(?:out|scap|pec)_/u.test(name)) return `clavicle_${side}`;
+  if (/^spine_04_latissimus_/u.test(name)) return "spine_05";
+  return null;
+}
+
+function collapseWardrobeCorrectiveJoints(root) {
+  if (wardrobeCorrectionMode === "none") return { meshes: 0, joints: 0 };
+  let meshes = 0;
+  let joints = 0;
+  root.traverse((node) => {
+    if (!isWardrobeMesh(node) || !node.skeleton?.bones?.length) return;
+    const jointByName = new Map(node.skeleton.bones.map((bone, index) => [
+      String(bone.name || "").toLowerCase().replace(/_[1-9]$/u, ""),
+      index,
+    ]));
+    const remap = new Map();
+    node.skeleton.bones.forEach((bone, index) => {
+      const name = String(bone.name || "").toLowerCase().replace(/_[1-9]$/u, "");
+      const target = wardrobeCorrectiveTarget(name);
+      const targetIndex = target ? jointByName.get(target) : undefined;
+      if (targetIndex !== undefined && targetIndex !== index) remap.set(index, targetIndex);
+    });
+    if (!remap.size) return;
+    for (const attributeName of ["skinIndex", "joints_1", "joints_2"]) {
+      const attribute = node.geometry?.getAttribute(attributeName);
+      if (!attribute) continue;
+      for (let vertex = 0; vertex < attribute.count; vertex += 1) {
+        for (let component = 0; component < attribute.itemSize; component += 1) {
+          const source = Math.round(attribute.getComponent(vertex, component));
+          const target = remap.get(source);
+          if (target === undefined) continue;
+          attribute.setComponent(vertex, component, target);
+          joints += 1;
+        }
+      }
+      attribute.needsUpdate = true;
+    }
+    meshes += 1;
+  });
+  return { meshes, joints };
+}
+
+function meetingWardrobeTarget(name) {
+  const side = /_(l|r)$/u.exec(name)?.[1];
+  if (/^spine_04_latissimus_/u.test(name)) return "spine_05";
+  if (side && /^upperarm(?:_|$)/u.test(name)) return `upperarm_${side}`;
+  if (side && /^lowerarm(?:_|$)/u.test(name)) return `lowerarm_${side}`;
+  if (side && /^clavicle(?:_|$)/u.test(name)) return `clavicle_${side}`;
+  return name;
+}
+
+function portableSmoothstep(edge0, edge1, value) {
+  const unit = THREE.MathUtils.clamp((value - edge0) / (edge1 - edge0), 0, 1);
+  return unit * unit * (3 - 2 * unit);
+}
+
+function applyMeetingWardrobeRig(root) {
+  if (wardrobeCorrectionMode !== "meeting-rig") return null;
+  let meshes = 0;
+  let vertices = 0;
+  root.traverse((node) => {
+    if (!isWardrobeMesh(node) || !node.skeleton?.bones?.length) return;
+    const shirt = portableMaterials(node).some((material) => (
+      String(material.name || "").toLowerCase().includes("bodyshapea_shirt")
+    ));
+    if (!shirt) return;
+    const position = node.geometry?.getAttribute("position");
+    const influenceSets = [
+      [node.geometry?.getAttribute("skinIndex"), node.geometry?.getAttribute("skinWeight")],
+      [node.geometry?.getAttribute("joints_1"), node.geometry?.getAttribute("weights_1")],
+      [node.geometry?.getAttribute("joints_2"), node.geometry?.getAttribute("weights_2")],
+    ].filter(([joints, weights]) => joints && weights);
+    if (!position || !influenceSets.length) return;
+    const jointByName = new Map(node.skeleton.bones.map((bone, index) => [
+      String(bone.name || "").toLowerCase().replace(/_[1-9]$/u, ""),
+      index,
+    ]));
+    const required = [
+      "spine_05",
+      "spine_04",
+      "clavicle_l",
+      "clavicle_r",
+      "upperarm_l",
+      "upperarm_r",
+      "lowerarm_l",
+      "lowerarm_r",
+    ];
+    if (required.some((name) => !jointByName.has(name))) return;
+    for (let vertex = 0; vertex < position.count; vertex += 1) {
+      const collapsed = new Map();
+      // Start from Epic's authored garment masks. Only collapse joints whose
+      // deformation normally comes from MetaHuman's post-process/cloth graph;
+      // those drivers do not exist in Three.js. This keeps the exact sleeve,
+      // collar and torso boundaries instead of guessing them from coordinates.
+      for (const [joints, weights] of influenceSets) {
+        for (let component = 0; component < joints.itemSize; component += 1) {
+          const sourceIndex = Math.round(joints.getComponent(vertex, component));
+          const weight = weights.getComponent(vertex, component);
+          if (weight <= 0) continue;
+          const sourceName = String(node.skeleton.bones[sourceIndex]?.name || "")
+            .toLowerCase()
+            .replace(/_[1-9]$/u, "");
+          let targetName = meetingWardrobeTarget(sourceName);
+          if (wardrobeLimbMode === "adaptive") {
+            const side = /_(l|r)$/u.exec(targetName)?.[1];
+            if (side && (/^clavicle_/u.test(targetName) || /^lowerarm_/u.test(targetName))) {
+              targetName = `upperarm_${side}`;
+            }
+          }
+          const targetIndex = jointByName.get(targetName) ?? sourceIndex;
+          collapsed.set(targetIndex, (collapsed.get(targetIndex) || 0) + weight);
+        }
+      }
+      // MetaHuman garments intentionally leave large parts of the hem on arm
+      // and clavicle correctives because Unreal's cloth pass resolves them.
+      // Without that pass the bottom corners fly with a raised arm. Fade those
+      // limb weights out below the armpit and return them to the upper torso;
+      // authored sleeve and collar masks remain untouched above the blend.
+      const verticalGate = wardrobeLimbMode === "adaptive"
+        ? portableSmoothstep(1.08, 1.2, position.getY(vertex))
+        : 0;
+      const horizontal = Math.abs(position.getX(vertex));
+      const limbGates = new Map([
+        [jointByName.get("clavicle_l"), verticalGate * portableSmoothstep(0.14, 0.22, horizontal)],
+        [jointByName.get("clavicle_r"), verticalGate * portableSmoothstep(0.14, 0.22, horizontal)],
+        [jointByName.get("upperarm_l"), verticalGate * portableSmoothstep(0.14, 0.22, horizontal)],
+        [jointByName.get("upperarm_r"), verticalGate * portableSmoothstep(0.14, 0.22, horizontal)],
+        [jointByName.get("lowerarm_l"), 0],
+        [jointByName.get("lowerarm_r"), 0],
+      ]);
+      let torsoTransfer = 0;
+      for (const [joint, limbGate] of limbGates) {
+        const weight = collapsed.get(joint) || 0;
+        if (weight <= 0) continue;
+        const retained = weight * limbGate;
+        collapsed.set(joint, retained);
+        torsoTransfer += weight - retained;
+      }
+      const spine = jointByName.get("spine_04");
+      collapsed.set(spine, (collapsed.get(spine) || 0) + torsoTransfer);
+      const influences = [...collapsed.entries()]
+        .filter(([, weight]) => weight > 0.00001)
+        .sort((left, right) => right[1] - left[1])
+        .slice(0, 4);
+      const total = influences.reduce((sum, [, weight]) => sum + weight, 0) || 1;
+      const [baseJoints, baseWeights] = influenceSets[0];
+      for (let component = 0; component < 4; component += 1) {
+        const influence = influences[component]
+          || [influences[0]?.[0] || 0, 0];
+        baseJoints.setComponent(vertex, component, influence[0]);
+        baseWeights.setComponent(vertex, component, influence[1] / total);
+      }
+      for (const [extraJoints, extraWeights] of influenceSets.slice(1)) {
+        for (let component = 0; component < extraJoints.itemSize; component += 1) {
+          extraJoints.setComponent(vertex, component, 0);
+          extraWeights.setComponent(vertex, component, 0);
+        }
+      }
+    }
+    for (const [joints, weights] of influenceSets) {
+      joints.needsUpdate = true;
+      weights.needsUpdate = true;
+    }
+    meshes += 1;
+    vertices += position.count;
+  });
+  return { meshes, vertices };
+}
+
+function bodyTransferredWardrobeRig(root) {
+  if (wardrobeCorrectionMode !== "body-transfer") return null;
+  let body = null;
+  const garments = [];
+  root.traverse((node) => {
+    if (!node.isSkinnedMesh || !node.skeleton?.bones?.length) return;
+    const names = portableMaterials(node)
+      .map((material) => String(material.name || "").toLowerCase());
+    if (!body && names.some((name) => name.includes("mi_body_baked"))) body = node;
+    if (names.some((name) => name.includes("bodyshapea_shirt"))) garments.push(node);
+  });
+  const bodyPosition = body?.geometry?.getAttribute("position");
+  const bodyInfluences = body ? [
+    [body.geometry.getAttribute("skinIndex"), body.geometry.getAttribute("skinWeight")],
+    [body.geometry.getAttribute("joints_1"), body.geometry.getAttribute("weights_1")],
+    [body.geometry.getAttribute("joints_2"), body.geometry.getAttribute("weights_2")],
+  ].filter(([joints, weights]) => joints && weights) : [];
+  if (!body || !bodyPosition || !bodyInfluences.length || !garments.length) return null;
+
+  const cellSize = 0.035;
+  const cellKey = (x, y, z) => `${x}:${y}:${z}`;
+  const cells = new Map();
+  for (let vertex = 0; vertex < bodyPosition.count; vertex += 1) {
+    const key = cellKey(
+      Math.floor(bodyPosition.getX(vertex) / cellSize),
+      Math.floor(bodyPosition.getY(vertex) / cellSize),
+      Math.floor(bodyPosition.getZ(vertex) / cellSize),
+    );
+    const bucket = cells.get(key) || [];
+    bucket.push(vertex);
+    cells.set(key, bucket);
+  }
+
+  let transferredVertices = 0;
+  for (const garment of garments) {
+    const targetPosition = garment.geometry.getAttribute("position");
+    const targetInfluences = [
+      [garment.geometry.getAttribute("skinIndex"), garment.geometry.getAttribute("skinWeight")],
+      [garment.geometry.getAttribute("joints_1"), garment.geometry.getAttribute("weights_1")],
+      [garment.geometry.getAttribute("joints_2"), garment.geometry.getAttribute("weights_2")],
+    ].filter(([joints, weights]) => joints && weights);
+    if (!targetPosition || !targetInfluences.length) continue;
+    const targetJoints = new Map(garment.skeleton.bones.map((bone, index) => [
+      normalizedNodeName(bone.name),
+      index,
+    ]));
+    const targetJointsByRigName = new Map(garment.skeleton.bones.map((bone, index) => [
+      String(bone.name || "").toLowerCase().replace(/_[1-9]$/u, ""),
+      index,
+    ]));
+    const torsoJoint = targetJointsByRigName.get("spine_04");
+    const bodyJointMap = body.skeleton.bones.map((bone) => (
+      targetJoints.get(normalizedNodeName(bone.name))
+    ));
+    for (let vertex = 0; vertex < targetPosition.count; vertex += 1) {
+      const x = targetPosition.getX(vertex);
+      const y = targetPosition.getY(vertex);
+      const z = targetPosition.getZ(vertex);
+      const centerX = Math.floor(x / cellSize);
+      const centerY = Math.floor(y / cellSize);
+      const centerZ = Math.floor(z / cellSize);
+      const nearest = [];
+      for (let radius = 0; radius <= 3 && nearest.length < 4; radius += 1) {
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          for (let dy = -radius; dy <= radius; dy += 1) {
+            for (let dz = -radius; dz <= radius; dz += 1) {
+              if (radius > 0 && Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)) !== radius) {
+                continue;
+              }
+              const candidates = cells.get(cellKey(centerX + dx, centerY + dy, centerZ + dz));
+              if (!candidates) continue;
+              for (const candidate of candidates) {
+                const deltaX = bodyPosition.getX(candidate) - x;
+                const deltaY = bodyPosition.getY(candidate) - y;
+                const deltaZ = bodyPosition.getZ(candidate) - z;
+                nearest.push({
+                  vertex: candidate,
+                  distanceSquared: deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ,
+                });
+              }
+            }
+          }
+        }
+      }
+      nearest.sort((left, right) => left.distanceSquared - right.distanceSquared);
+      const samples = nearest.slice(0, 4);
+      if (!samples.length) continue;
+      const aggregate = new Map();
+      for (const sample of samples) {
+        const proximity = 1 / Math.max(0.0000001, sample.distanceSquared);
+        for (const [joints, weights] of bodyInfluences) {
+          for (let component = 0; component < joints.itemSize; component += 1) {
+            const sourceJoint = Math.round(joints.getComponent(sample.vertex, component));
+            const targetJoint = bodyJointMap[sourceJoint];
+            const weight = weights.getComponent(sample.vertex, component);
+            if (targetJoint === undefined || weight <= 0) continue;
+            aggregate.set(targetJoint, (aggregate.get(targetJoint) || 0) + weight * proximity);
+          }
+        }
+      }
+      // A nearest-surface lookup alone can mistake the forearm for the shirt
+      // hem around the waist. Collapse MetaHuman corrective families first,
+      // then apply an anatomical sleeve gate: below the armpit garment points
+      // belong to the torso even when an arm happens to be spatially closer.
+      const anatomical = new Map();
+      for (const [joint, weight] of aggregate) {
+        const sourceName = String(garment.skeleton.bones[joint]?.name || "")
+          .toLowerCase()
+          .replace(/_[1-9]$/u, "");
+        const targetName = meetingWardrobeTarget(sourceName);
+        const targetJoint = targetJointsByRigName.get(targetName) ?? joint;
+        anatomical.set(targetJoint, (anatomical.get(targetJoint) || 0) + weight);
+      }
+      const verticalGate = portableSmoothstep(1.0, 1.18, y);
+      const horizontal = Math.abs(x);
+      let torsoTransfer = 0;
+      for (const [joint, weight] of [...anatomical]) {
+        const name = String(garment.skeleton.bones[joint]?.name || "")
+          .toLowerCase()
+          .replace(/_[1-9]$/u, "");
+        let limbGate = null;
+        if (name.startsWith("clavicle_")) {
+          limbGate = verticalGate * portableSmoothstep(0.14, 0.22, horizontal);
+        } else if (name.startsWith("upperarm_") || name.startsWith("lowerarm_")) {
+          limbGate = verticalGate * portableSmoothstep(0.1, 0.18, horizontal);
+        }
+        if (limbGate === null) continue;
+        anatomical.set(joint, weight * limbGate);
+        torsoTransfer += weight * (1 - limbGate);
+      }
+      if (torsoJoint !== undefined && torsoTransfer > 0) {
+        anatomical.set(torsoJoint, (anatomical.get(torsoJoint) || 0) + torsoTransfer);
+      }
+      const influences = [...anatomical.entries()]
+        .filter(([, weight]) => weight > 0.00001)
+        .sort((left, right) => right[1] - left[1])
+        .slice(0, targetInfluences.length * 4);
+      const total = influences.reduce((sum, [, weight]) => sum + weight, 0) || 1;
+      for (let setIndex = 0; setIndex < targetInfluences.length; setIndex += 1) {
+        const [joints, weights] = targetInfluences[setIndex];
+        for (let component = 0; component < joints.itemSize; component += 1) {
+          const influence = influences[setIndex * 4 + component]
+            || [influences[0]?.[0] || 0, 0];
+          joints.setComponent(vertex, component, influence[0]);
+          weights.setComponent(vertex, component, influence[1] / total);
+        }
+      }
+      transferredVertices += 1;
+    }
+    for (const [joints, weights] of targetInfluences) {
+      joints.needsUpdate = true;
+      weights.needsUpdate = true;
+    }
+  }
+  return { meshes: garments.length, vertices: transferredVertices, source: body.name };
+}
+
+function prepareWardrobeRig(root) {
+  if (wardrobeCorrectionMode === "body-transfer") return bodyTransferredWardrobeRig(root);
+  if (wardrobeCorrectionMode === "meeting-rig") return applyMeetingWardrobeRig(root);
+  return collapseWardrobeCorrectiveJoints(root);
+}
+
+function extendedSkinDiagnostics(node, limit = 12) {
+  if (!node?.isSkinnedMesh || !node.skeleton || !node.geometry) return null;
+  const position = node.geometry.getAttribute("position");
+  const influenceSets = [
+    [node.geometry.getAttribute("skinIndex"), node.geometry.getAttribute("skinWeight")],
+    [node.geometry.getAttribute("joints_1"), node.geometry.getAttribute("weights_1")],
+    [node.geometry.getAttribute("joints_2"), node.geometry.getAttribute("weights_2")],
+  ].filter(([joints, weights]) => joints && weights);
+  if (!position || !influenceSets.length) return null;
+  node.skeleton.update();
+  const source = new THREE.Vector4();
+  const transformed = new THREE.Vector4();
+  const result = new THREE.Vector4();
+  const matrix = new THREE.Matrix4();
+  const candidates = [];
+  for (let vertex = 0; vertex < position.count; vertex += 1) {
+    source.set(position.getX(vertex), position.getY(vertex), position.getZ(vertex), 1)
+      .applyMatrix4(node.bindMatrix);
+    result.set(0, 0, 0, 0);
+    let total = 0;
+    const influences = [];
+    for (const [joints, weights] of influenceSets) {
+      for (let component = 0; component < 4; component += 1) {
+        const joint = Math.round(joints.getComponent(vertex, component));
+        const weight = weights.getComponent(vertex, component);
+        if (weight <= 0) continue;
+        matrix.fromArray(node.skeleton.boneMatrices, joint * 16);
+        transformed.copy(source).applyMatrix4(matrix).multiplyScalar(weight);
+        result.add(transformed);
+        total += weight;
+        influences.push({
+          joint,
+          bone: node.skeleton.bones[joint]?.name || String(joint),
+          weight: Number(weight.toFixed(5)),
+        });
+      }
+    }
+    if (total <= 0) continue;
+    result.multiplyScalar(1 / total).applyMatrix4(node.bindMatrixInverse);
+    const rest = new THREE.Vector3(position.getX(vertex), position.getY(vertex), position.getZ(vertex));
+    const posed = new THREE.Vector3(result.x, result.y, result.z);
+    candidates.push({
+      vertex,
+      distance: posed.distanceTo(rest),
+      rest,
+      posed,
+      influences,
+    });
+  }
+  candidates.sort((left, right) => right.distance - left.distance);
+  return {
+    vertices: position.count,
+    largestDisplacements: candidates.slice(0, limit).map((candidate) => ({
+      vertex: candidate.vertex,
+      distance: Number(candidate.distance.toFixed(5)),
+      rest: candidate.rest.toArray().map((value) => Number(value.toFixed(5))),
+      posed: candidate.posed.toArray().map((value) => Number(value.toFixed(5))),
+      influences: candidate.influences.map((influence) => {
+        const bindPivot = new THREE.Vector3().setFromMatrixPosition(
+          node.skeleton.boneInverses[influence.joint].clone().invert(),
+        );
+        const currentPivot = new THREE.Vector3().setFromMatrixPosition(
+          node.skeleton.bones[influence.joint].matrixWorld,
+        );
+        return {
+          bone: influence.bone,
+          weight: influence.weight,
+          bindPivot: bindPivot.toArray().map((value) => Number(value.toFixed(5))),
+          currentPivot: currentPivot.toArray().map((value) => Number(value.toFixed(5))),
+        };
+      }),
+    })),
+  };
 }
 
 function enableExtendedSkinning(material, influenceSets) {
@@ -180,20 +635,21 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
   const cardSurface = name.includes("hair_cards")
     || /^WEB_Showcase(?:Hair|Eyebrows)Cards_/u.test(node.name);
   if (cardSurface) {
-    // The HQ GLB embeds Epic's native Groom Cards Attribute atlas. Coverage is
-    // stored in red rather than alpha, so retain only that data channel and
-    // let the material's authored constant color drive the shaded strands.
-    // This avoids both the opaque polygon ribbons produced by glTF's Simple
-    // material bake and the bald result produced by testing its flat alpha.
-    material.alphaTest = 0.065;
+    const eyebrowSurface = /eyebrow/iu.test(`${node.name} ${material.name || ""}`);
+    // The HQ GLB embeds Epic's native Groom Cards Compact Attribute atlas.
+    // The Showcase card entries use the Compact layout, where Coverage is
+    // authored in red. Green and blue contain non-opacity attributes and must
+    // never be merged into the silhouette.
+    material.alphaTest = THREE.MathUtils.clamp(hairAlphaThreshold, 0.01, 0.2);
     material.alphaHash = false;
     material.alphaToCoverage = true;
     material.transparent = false;
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
-    material.envMapIntensity = 0.52;
+    material.color = new THREE.Color(eyebrowSurface ? 0x2b1b19 : 0x3b1c1d);
+    material.envMapIntensity = eyebrowSurface ? 0.26 : 0.4;
     material.metalness = 0;
-    material.roughness = Math.max(0.56, material.roughness || 0);
+    material.roughness = Math.max(eyebrowSurface ? 0.68 : 0.62, material.roughness || 0);
     if (material.map) {
       material.map.colorSpace = THREE.NoColorSpace;
       const previousCompile = material.onBeforeCompile?.bind(material);
@@ -202,13 +658,16 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
         previousCompile?.(shader, activeRenderer);
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <map_fragment>",
-          `vec4 conclaviaGroomAttributes = texture2D(map, vMapUv);
-          diffuseColor.a *= conclaviaGroomAttributes.r;`,
+          `vec4 conclaviaGroomCompactAttributes = texture2D(map, vMapUv);
+          float conclaviaGroomCoverage = conclaviaGroomCompactAttributes.r;
+          diffuseColor.a *= conclaviaGroomCoverage;
+          float conclaviaStrandTone = smoothstep(0.08, 0.96, conclaviaGroomCoverage);
+          diffuseColor.rgb *= mix(0.74, 1.12, conclaviaStrandTone);`,
         );
       };
       material.customProgramCacheKey = () => [
         previousCacheKey?.() || "",
-        "conclavia-native-groom-coverage-red-v1",
+        `conclavia-native-groom-compact-v4-${eyebrowSurface ? "brow" : "hair"}`,
       ].join(":");
     }
     if ("specularIntensity" in material) material.specularIntensity = 0.28;
@@ -286,7 +745,7 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
   } else if (material.isMeshStandardMaterial) {
     material.envMapIntensity = 0.62;
   }
-  enableExtendedSkinning(material, influenceSets);
+  enableExtendedSkinning(material, skinInfluenceMode === "top4" ? 1 : influenceSets);
   material.needsUpdate = true;
 }
 
@@ -316,6 +775,53 @@ function stabilizePortableHair(root) {
   const anchor = head || faceComponent;
   for (const group of cardGroups) anchor.attach(group);
   root.updateMatrixWorld(true);
+}
+
+function shareWardrobeSkeleton(root) {
+  if (wardrobeSkeletonMode === "original") return 0;
+  let leader = null;
+  const wardrobe = [];
+  root.traverse((node) => {
+    if (!node.isSkinnedMesh || !node.skeleton?.bones?.length) return;
+    const materialNames = portableMaterials(node)
+      .map((material) => String(material.name || "").toLowerCase());
+    if (materialNames.some((name) => name.includes("mi_body_baked"))) {
+      leader ||= node;
+    } else if (isWardrobeMesh(node)) {
+      wardrobe.push(node);
+    }
+  });
+  if (!leader || !wardrobe.length) return 0;
+  const leaderBones = new Map();
+  leader.skeleton.bones.forEach((bone, index) => {
+    const normalized = normalizedNodeName(bone.name);
+    if (!normalized || leaderBones.has(normalized)) return;
+    leaderBones.set(normalized, {
+      bone,
+      inverse: leader.skeleton.boneInverses[index],
+    });
+  });
+  let shared = 0;
+  for (const garment of wardrobe) {
+    const mapped = garment.skeleton.bones.map((bone) => (
+      leaderBones.get(normalizedNodeName(bone.name)) || null
+    ));
+    const mappedBones = mapped.map((entry) => entry?.bone || null);
+    if (mappedBones.some((bone) => !bone)) continue;
+    // This is the browser equivalent of Unreal's leader-pose component. Once
+    // the garment references the live body bones, its inverse bind matrices
+    // must come from those same bones as well. Retaining the garment copy's
+    // inverse matrices looks correct only in bind pose; as soon as a shoulder
+    // rotates it uses a different pivot and throws sleeve vertices across the
+    // torso.
+    const skeleton = new THREE.Skeleton(
+      mappedBones,
+      mapped.map((entry) => entry.inverse.clone()),
+    );
+    garment.bind(skeleton, garment.bindMatrix.clone());
+    shared += 1;
+  }
+  return shared;
 }
 
 function componentNodes(component, excludedRoots = new Set()) {
@@ -359,13 +865,7 @@ function portableRigNodes(root) {
       // hand raise and applause.
       if (!facial) {
         bodyPositions.push(...node.skeleton.bones);
-        // MetaHuman's animated muscle scale belongs to the exposed body. The
-        // garment is already authored against those deformations; replaying
-        // the same scale on its duplicate skeleton over-corrects the sleeve
-        // and produces detached wedges around the shoulder.
-        if (!String(node.name || "").toLowerCase().includes("outfit")) {
-          bodyScales.push(...node.skeleton.bones);
-        }
+        bodyScales.push(...node.skeleton.bones);
       }
     }
     if (facial) face.push(...node.skeleton.bones);
@@ -417,8 +917,74 @@ function trackHasMotion(track, property) {
   return maximumDelta > threshold;
 }
 
-function retargetPortableClip(clip, components) {
+function sourceAnimationNodes(root) {
+  const nodes = [];
+  root?.traverse?.((node) => nodes.push(node));
+  return {
+    exact: nodesByName(nodes),
+    normalized: nodesByNormalizedName(nodes),
+  };
+}
+
+function retargetTransformTrack(track, property, sourceNode, targetNode, clipName = "") {
+  const clone = track.clone();
+  if (!sourceNode || !targetNode || property === "morphTargetInfluences") return clone;
+  retargetDiagnostics.transformed += 1;
+  const values = clone.values;
+  const size = clone.getValueSize();
+  if (property === "position" && size === 3) {
+    for (let offset = 0; offset < values.length; offset += size) {
+      values[offset] = targetNode.position.x + values[offset] - sourceNode.position.x;
+      values[offset + 1] = targetNode.position.y + values[offset + 1] - sourceNode.position.y;
+      values[offset + 2] = targetNode.position.z + values[offset + 2] - sourceNode.position.z;
+    }
+  } else if (property === "scale" && size === 3) {
+    const source = sourceNode.scale;
+    const target = targetNode.scale;
+    for (let offset = 0; offset < values.length; offset += size) {
+      values[offset] = target.x * values[offset] / Math.max(0.000001, source.x);
+      values[offset + 1] = target.y * values[offset + 1] / Math.max(0.000001, source.y);
+      values[offset + 2] = target.z * values[offset + 2] / Math.max(0.000001, source.z);
+    }
+  } else if (property === "quaternion" && size === 4) {
+    const sourceInverse = sourceNode.quaternion.clone().invert();
+    const animated = new THREE.Quaternion();
+    const delta = new THREE.Quaternion();
+    const result = new THREE.Quaternion();
+    for (let offset = 0; offset < values.length; offset += size) {
+      animated.fromArray(values, offset).normalize();
+      delta.copy(sourceInverse).multiply(animated);
+      result.copy(targetNode.quaternion).multiply(delta).normalize().toArray(values, offset);
+    }
+    if (
+      inspectSkinForDiagnostics
+      && normalizedNodeName(sourceNode.name) === "upperarmtwistcor02r"
+      && retargetDiagnostics.samples.length < 64
+    ) {
+      retargetDiagnostics.samples.push({
+        clip: clipName,
+        track: track.name,
+        sourceRest: sourceNode.quaternion.toArray().map((value) => Number(value.toFixed(6))),
+        targetRest: targetNode.quaternion.toArray().map((value) => Number(value.toFixed(6))),
+        authoredFirst: Array.from(track.values.slice(0, 4)).map((value) => Number(value.toFixed(6))),
+        retargetedFirst: Array.from(values.slice(0, 4)).map((value) => Number(value.toFixed(6))),
+        authoredMaximumAngleDegrees: Number(Array.from(
+          { length: Math.floor(track.values.length / 4) },
+          (_, index) => {
+            const offset = index * 4;
+            const w = THREE.MathUtils.clamp(Math.abs(track.values[offset + 3]), 0, 1);
+            return THREE.MathUtils.radToDeg(2 * Math.acos(w));
+          },
+        ).reduce((maximum, value) => Math.max(maximum, value), 0).toFixed(3)),
+      });
+    }
+  }
+  return clone;
+}
+
+function retargetPortableClip(clip, components, sourceRoot = null) {
   const facial = /^asweb(?:mood|viseme)/u.test(normalizedName(clip.name));
+  const sourceNodes = sourceAnimationNodes(sourceRoot);
   const tracks = [];
   for (const track of clip.tracks) {
     const match = /^(.*)\.(position|quaternion|scale|morphTargetInfluences)$/u.exec(track.name);
@@ -427,6 +993,13 @@ function retargetPortableClip(clip, components) {
       continue;
     }
     const [, sourceName, property] = match;
+    const sourceNode = (
+      sourceNodes.exact.get(sourceName)?.[0]
+      || sourceNodes.normalized.get(normalizedNodeName(sourceName))?.[0]
+      || null
+    );
+    if (sourceNode) retargetDiagnostics.matched += 1;
+    else retargetDiagnostics.missing += 1;
     if (facial && !normalizedNodeName(sourceName).startsWith("facial")) {
       // UE facial bakes contain a reference copy of every body track. Playing
       // those tracks as a facial layer fights the live body idle/gesture and
@@ -453,6 +1026,7 @@ function retargetPortableClip(clip, components) {
     // applying them to the duplicate body chain inside Face would move the
     // head twice and reintroduce the neck/camera regression.
     const bodyCorrection = !facial && (property === "position" || property === "scale");
+    if (bodyCorrection && transformModeForDiagnostics === "rotation") continue;
     if (bodyCorrection && !trackHasMotion(track, property)) continue;
     const bodyCorrectionIndex = property === "scale"
       ? components.bodyScales
@@ -477,7 +1051,12 @@ function retargetPortableClip(clip, components) {
     for (const node of candidates) {
       if (seen.has(node.uuid)) continue;
       seen.add(node.uuid);
-      const clone = track.clone();
+      // Animation GLBs store absolute local transforms in the source rig's
+      // reference pose. MetaHuman body, face and wardrobe duplicate the same
+      // named joints but not always the same local rest transform. Replaying
+      // source values verbatim tears the garment at corrective joints. Apply
+      // the authored delta to each target rest pose instead.
+      const clone = retargetTransformTrack(track, property, sourceNode, node, clip.name);
       clone.name = `${node.uuid}.${property}`;
       tracks.push(clone);
     }
@@ -581,6 +1160,8 @@ class ThreeAvatarPerformer {
       "YXZ",
     );
     this.scene.add(this.root);
+    this.wardrobeCorrection = prepareWardrobeRig(this.root);
+    this.sharedWardrobeMeshes = shareWardrobeSkeleton(this.root);
     stabilizePortableHair(this.root);
     const rigNodes = portableRigNodes(this.root);
     const bodyComponent = this.root.getObjectByName("Body");
@@ -620,7 +1201,7 @@ class ThreeAvatarPerformer {
     };
     this.mixer = new THREE.AnimationMixer(this.root);
     this.clips = new Map();
-    this.#addAnimationClips(gltf.animations);
+    this.#addAnimationClips(gltf.animations, gltf.scene);
     this.morphBindings = [];
     this.root.traverse((node) => {
       if (node.isMesh) {
@@ -629,6 +1210,17 @@ class ThreeAvatarPerformer {
         if (portableMaterials(node).some((material) => (
           String(material.name || "").toLowerCase().includes("bodyshapea_short")
         ))) {
+          node.visible = false;
+        }
+        if (
+          hiddenMeshForDiagnostics === "body"
+          && portableMaterials(node).some((material) => (
+            String(material.name || "").toLowerCase().includes("mi_body_baked")
+          ))
+        ) {
+          node.visible = false;
+        }
+        if (hiddenMeshForDiagnostics === "wardrobe" && isWardrobeMesh(node)) {
           node.visible = false;
         }
         const influenceSets = [0, 1, 2]
@@ -684,8 +1276,18 @@ class ThreeAvatarPerformer {
       ? node.getWorldPosition(new THREE.Vector3()).toArray().map((value) => Number(value.toFixed(4)))
       : null;
     const skins = [];
+    let wardrobeSkin = null;
     this.root.traverse((node) => {
       if (!node.isSkinnedMesh) return;
+      if (
+        inspectSkinForDiagnostics
+        && !wardrobeSkin
+        && portableMaterials(node).some((material) => (
+          String(material.name || "").toLowerCase().includes("bodyshapea_shirt")
+        ))
+      ) {
+        wardrobeSkin = extendedSkinDiagnostics(node);
+      }
       skins.push({
         name: node.name,
         parent: node.parent?.name || null,
@@ -721,6 +1323,10 @@ class ThreeAvatarPerformer {
       currentClipTime: this.currentAction
         ? Number(this.currentAction.time.toFixed(3))
         : null,
+      retarget: { ...retargetDiagnostics },
+      wardrobeCorrection: this.wardrobeCorrection,
+      sharedWardrobeMeshes: this.sharedWardrobeMeshes,
+      wardrobeSkin,
       skins,
     };
   }
@@ -728,7 +1334,7 @@ class ThreeAvatarPerformer {
   addAnimationGltfs(animationGltfs) {
     if (this.disposed) return;
     for (const animationGltf of animationGltfs) {
-      this.#addAnimationClips(animationGltf.animations);
+      this.#addAnimationClips(animationGltf.animations, animationGltf.scene);
     }
   }
 
@@ -745,7 +1351,7 @@ class ThreeAvatarPerformer {
 
   update(state, deltaSeconds) {
     this.#applyMorphs(state, deltaSeconds);
-    this.#applyAnimation(state);
+    if (!disableMotionForDiagnostics) this.#applyAnimation(state);
     this.#applyFacialAnimation(state);
     this.mixer.update(Math.min(0.1, deltaSeconds));
     this.#enforceClipSegments();
@@ -768,10 +1374,10 @@ class ThreeAvatarPerformer {
     // Apply a tiny runtime contact constraint only in the closing phase. It
     // preserves the captured arc while preventing fingers from passing through
     // each other, and softly aligns the two palms in depth at the clap.
-    const influence = THREE.MathUtils.smoothstep(0.155 - horizontalGap, 0, 0.095);
+    const influence = 1 - THREE.MathUtils.smoothstep(horizontalGap, 0.31, 0.39);
     if (influence <= 0) return;
     const midpoint = left.clone().add(right).multiplyScalar(0.5);
-    const targetGap = 0.088;
+    const targetGap = 0.285;
     const leftSide = left.x >= right.x ? 1 : -1;
     const leftTarget = left.clone();
     const rightTarget = right.clone();
@@ -932,11 +1538,11 @@ class ThreeAvatarPerformer {
     layer.segment = segment;
   }
 
-  #addAnimationClips(clips) {
+  #addAnimationClips(clips, sourceRoot) {
     for (const clip of clips) {
       this.clips.set(
         normalizedName(clip.name),
-        retargetPortableClip(clip, this.animationComponents),
+        retargetPortableClip(clip, this.animationComponents, sourceRoot),
       );
     }
   }

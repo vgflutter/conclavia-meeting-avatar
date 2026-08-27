@@ -4,7 +4,8 @@ The stock glTF exporter cannot evaluate the Hair Attributes material node on
 its Simple bake quad.  It consequently emits a flat burgundy texture whose
 alpha contains no usable strand coverage.  The generated card meshes already
 carry the correct UV0/UV1 coordinates, so the Web pipeline can consume Epic's
-source tangent and attribute atlases directly.
+source tangent and compact attribute atlases directly. In the Compact layout,
+the authored coverage mask is packed in the attribute atlas red channel.
 """
 
 from __future__ import annotations

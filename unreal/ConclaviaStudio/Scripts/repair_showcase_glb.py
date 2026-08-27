@@ -540,14 +540,14 @@ def _repair_hair_cards_materials(
             document,
             chunks,
             hair_attribute_path,
-            "Conclavia_HairCards_Attribute",
+            "Conclavia_HairCards_CompactAttribute",
         )
     if eyebrow_attribute_path is not None:
         source_textures["eyebrows"] = _embedded_png_texture(
             document,
             chunks,
             eyebrow_attribute_path,
-            "Conclavia_EyebrowsCards_Attribute",
+            "Conclavia_EyebrowsCards_CompactAttribute",
         )
 
     repaired = 0
@@ -563,10 +563,10 @@ def _repair_hair_cards_materials(
             continue
 
         # Unreal's Simple glTF bake cannot evaluate the Hair Attributes node on
-        # its quad and produces a flat burgundy card. Epic's source attribute
-        # atlas stores per-strand coverage in red. Embed that data texture in
-        # the GLB; the Web shader consumes only its red channel and retains a
-        # deterministic opaque/depth-writing card silhouette.
+        # its quad and produces a flat burgundy card. This MetaHuman uses the
+        # Groom Compact layout: its card entry owns Tangent plus Attribute,
+        # with Coverage packed into Attribute.r. Embed that source data texture
+        # so the Web shader preserves the authored strand silhouette.
         texture_index = source_textures.get(role)
         pbr = material.setdefault("pbrMetallicRoughness", {})
         if not isinstance(pbr, dict):
