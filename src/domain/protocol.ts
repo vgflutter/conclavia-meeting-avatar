@@ -36,6 +36,7 @@ export const chatCommandKinds = [
   "raise-hand",
   "lower-hand",
   "applaud",
+  "preview-moods",
   "summarize-in-chat",
   "reply-in-chat",
   "speak",
@@ -48,6 +49,7 @@ export interface ChatCommandAliases {
   raiseHand: string[];
   lowerHand: string[];
   applaud: string[];
+  previewMoods: string[];
   summarizeInChat: string[];
   replyInChat: string[];
   speak: string[];
@@ -163,6 +165,8 @@ export interface ActivationDecision {
     | "conversation-observed"
     | "autonomous-request"
     | "autonomous-applause"
+    | "spoken-command"
+    | "social-greeting"
     | "collective-farewell"
     | "audio-echo"
     | "stale-segment"

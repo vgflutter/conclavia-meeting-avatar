@@ -22,6 +22,7 @@ import {
   type SpeechLanguage,
   type TranscriptSegment,
 } from "../domain/protocol.js";
+import { resolveSpeechLanguage } from "../core/speech-language.js";
 
 const maxReplySentences = 2;
 const maxSentenceLength = 360;
@@ -48,21 +49,46 @@ export function maxOutputTokensForLane(lane: ParticipationLane): number {
   return 400;
 }
 
+export function requiresCompleteMeetingContext(latestText: string): boolean {
+  const normalized = latestText.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase("it-IT");
+  return /\b(?:riassum\w*|resocont\w*|recap|summar\w*|verbale|minutes|action items?|azioni da fare|decisioni|decision made|cosa (?:abbiamo|avete) detto|quanto detto|intera riunione|tutta (?:la )?(?:riunione|discussione|conversazione)|meeting so far|scaletta|agenda|ordine del giorno|storico (?:del )?meeting)\b/u
+    .test(normalized);
+}
+
+export function maxOutputTokensForTurn(
+  lane: ParticipationLane,
+  latestText: string,
+): number {
+  if (lane !== "direct" || requiresCompleteMeetingContext(latestText)) {
+    return maxOutputTokensForLane(lane);
+  }
+  // A normal spoken answer should be one concise sentence. A smaller cap
+  // reduces generation time while summaries retain the wider direct budget.
+  return 220;
+}
+
+function directQuestionNeedsWeb(latestText: string): boolean {
+  const normalized = latestText.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase("it-IT");
+  if (/https?:\/\/|www\./u.test(normalized)) return true;
+  return /\b(?:cerca|search|online|internet|web|verifica|controlla|browse|look up|aggiornat\w*|attual\w*|adesso|ora|oggi|latest|current|recent\w*|ultim[oaie]|prezzo|quotazione|price|meteo|weather|notizi\w*|news|risultato|score|classifica|standings|programma|schedule|versione|release|presidente|prime minister|premier|ministro|ceo|sindaco|governatore|papa|bitcoin|borsa|stock|azione|exchange rate|tasso di cambio)\b/u
+    .test(normalized);
+}
+
 /**
- * Every direct turn may use web search with tool_choice=auto. This keeps Mary
- * from claiming that she lacks external data merely because a question did
- * not contain a brittle keyword such as "online". The model still skips the
- * tool for self-contained questions. Listening-only reactions stay on the
- * lowest-latency path; autonomous corrections may verify material claims.
+ * Hosted tools add orchestration time even when the model ultimately skips
+ * them. Keep Internet access available for explicit/current questions while
+ * self-contained direct answers stay on the low-latency path. Autonomous
+ * factual verification remains tool-enabled because correctness dominates
+ * latency before Mary asks for the floor.
  */
 export function shouldOfferWebSearch(
   enabled: boolean,
   lane: ParticipationLane,
   latestText: string,
 ): boolean {
-  void latestText;
   if (!enabled || lane === "observer-listening") return false;
-  return lane === "direct" || lane === "observer-autonomy";
+  if (lane === "observer-autonomy") return true;
+  return directQuestionNeedsWeb(latestText);
 }
 
 export interface ParsedMaryTurn {
@@ -178,16 +204,7 @@ export function hasSufficientAutonomousApplauseContext(
 }
 
 function sentenceLanguage(value: unknown, text: string): SpeechLanguage {
-  if (
-    typeof value === "string" &&
-    (speechLanguages as readonly string[]).includes(value)
-  ) {
-    return value as SpeechLanguage;
-  }
-  const englishSignals = text.match(
-    /\b(?:the|and|that|this|with|from|have|will|would|should|what|when|where|why|how|is|are|can)\b/giu,
-  )?.length ?? 0;
-  return englishSignals >= 2 ? "en-US" : "it-IT";
+  return resolveSpeechLanguage(value, text);
 }
 
 function stripMarkdownFence(value: string): string {
@@ -318,6 +335,43 @@ export function parseMaryReply(value: string): AvatarSpeechSentence[] {
   return parseMaryTurn(value, "direct").sentences;
 }
 
+export function firstStreamedSpeechSentence(value: string): AvatarSpeechSentence | null {
+  const sentencesMarker = /"sentences"\s*:\s*\[/u.exec(value);
+  if (!sentencesMarker) return null;
+  const tail = value.slice(sentencesMarker.index + sentencesMarker[0].length);
+  const textMarker = /"text"\s*:\s*/u.exec(tail);
+  if (!textMarker) return null;
+  const jsonString = tail.slice(textMarker.index + textMarker[0].length);
+  if (!jsonString.startsWith('"')) return null;
+
+  let escaped = false;
+  for (let index = 1; index < jsonString.length; index += 1) {
+    const character = jsonString[index];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (character === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (character !== '"') continue;
+    try {
+      const text = cleanSentence(JSON.parse(jsonString.slice(0, index + 1)));
+      if (!text) return null;
+      return {
+        text,
+        mood: "neutral",
+        level: 1,
+        language: resolveSpeechLanguage(undefined, text),
+      };
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export interface MeetingContextBudget {
   maximumCharacters: number;
   maximumSegments: number;
@@ -328,18 +382,18 @@ export function meetingContextBudget(
   lane: ParticipationLane,
   latestText: string,
 ): MeetingContextBudget {
-  void latestText;
   if (lane === "observer-listening") {
     return { maximumCharacters: 1_800, maximumSegments: 12, maximumAgeMs: 60_000 };
   }
   if (lane === "observer-autonomy") {
     return { maximumCharacters: 8_000, maximumSegments: 48, maximumAgeMs: 60_000 };
   }
-  // A direct invocation must be answered with the meeting in mind, not as an
-  // isolated last utterance. The server retains at most 200 segments, so this
-  // budget exposes that complete retained transcript to the response lane.
-  // Listening-only reactions remain deliberately compact above.
-  return { maximumCharacters: 48_000, maximumSegments: 200, maximumAgeMs: null };
+  if (requiresCompleteMeetingContext(latestText)) {
+    return { maximumCharacters: 48_000, maximumSegments: 200, maximumAgeMs: null };
+  }
+  // Ordinary questions still see enough recent dialogue for follow-ups, but
+  // do not pay the latency cost of resending the complete retained meeting.
+  return { maximumCharacters: 8_000, maximumSegments: 32, maximumAgeMs: null };
 }
 
 export function transcriptSegmentsForModel(
@@ -559,6 +613,7 @@ export class MeetingIntelligence {
     mode: ParticipationMode,
     responseChannel: "voice" | "chat" = "voice",
     allowAutonomousIntervention = true,
+    onFirstSentence?: (sentence: AvatarSpeechSentence) => void,
   ): Promise<MaryTurnDecision> {
     const controller = this.#requestController();
     const lane = participationLane(mode, allowAutonomousIntervention);
@@ -575,47 +630,72 @@ export class MeetingIntelligence {
       webSearchAvailable ? "web" : "fast",
       this.#options.avatarName.toLocaleLowerCase("it-IT").replace(/[^\p{L}\p{N}]+/gu, "-"),
     ].join(":").slice(0, 64);
+    const request = {
+      model: this.responseModel,
+      store: false as const,
+      max_output_tokens: maxOutputTokensForTurn(lane, latestSegment.text),
+      reasoning: { effort: "none" as const },
+      text: {
+        verbosity: "low" as const,
+        format: responseFormatForLane(lane),
+      },
+      service_tier: "priority" as const,
+      prompt_cache_key: promptCacheKey,
+      ...(webSearchAvailable
+        ? {
+            tools: [{
+              type: "web_search" as const,
+              search_context_size: "low" as const,
+              user_location: {
+                type: "approximate" as const,
+                country: "IT",
+                timezone: "Europe/Rome",
+              },
+            }],
+            tool_choice: "auto" as const,
+            include: ["web_search_call.action.sources" as const],
+          }
+        : {}),
+      instructions: this.#instructions(lane, webSearchAvailable, responseChannel),
+      input: [
+        "CONTESTO RECENTE DELLA RIUNIONE:",
+        transcriptForModel(
+          history,
+          latestSegment,
+          contextBudget,
+        ),
+        "",
+        `ULTIMO INTERVENTO (speaker: ${latestSegment.speakerName}):`,
+        latestSegment.text,
+      ].join("\n"),
+    };
     let response;
     try {
-      response = await this.#client.responses.create({
-        model: this.responseModel,
-        store: false,
-        max_output_tokens: maxOutputTokensForLane(lane),
-        reasoning: { effort: "none" },
-        text: {
-          verbosity: "low",
-          format: responseFormatForLane(lane),
-        },
-        service_tier: "priority",
-        prompt_cache_key: promptCacheKey,
-        ...(webSearchAvailable
-          ? {
-              tools: [{
-                type: "web_search" as const,
-                search_context_size: "low" as const,
-                user_location: {
-                  type: "approximate" as const,
-                  country: "IT",
-                  timezone: "Europe/Rome",
-                },
-              }],
-              tool_choice: "auto" as const,
-              include: ["web_search_call.action.sources" as const],
-            }
-          : {}),
-        instructions: this.#instructions(lane, webSearchAvailable, responseChannel),
-        input: [
-          "CONTESTO RECENTE DELLA RIUNIONE:",
-          transcriptForModel(
-            history,
-            latestSegment,
-            contextBudget,
-          ),
-          "",
-          `ULTIMO INTERVENTO (speaker: ${latestSegment.speakerName}):`,
-          latestSegment.text,
-        ].join("\n"),
-      }, { signal: controller.signal });
+      if (
+        lane === "direct" &&
+        responseChannel === "voice" &&
+        !webSearchAvailable &&
+        onFirstSentence
+      ) {
+        const stream = this.#client.responses.stream({
+          ...request,
+          stream_options: { include_obfuscation: false },
+        }, { signal: controller.signal });
+        let partialText = "";
+        let sentencePublished = false;
+        for await (const event of stream) {
+          if (event.type !== "response.output_text.delta") continue;
+          partialText += event.delta;
+          if (sentencePublished) continue;
+          const sentence = firstStreamedSpeechSentence(partialText);
+          if (!sentence) continue;
+          sentencePublished = true;
+          onFirstSentence(sentence);
+        }
+        response = await stream.finalResponse();
+      } else {
+        response = await this.#client.responses.create(request, { signal: controller.signal });
+      }
     } finally {
       this.#activeControllers.delete(controller);
     }

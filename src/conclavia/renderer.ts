@@ -1,8 +1,11 @@
 import type {
+  avatarMoods,
   AvatarInterventionRequest,
   AvatarListeningReaction,
+  AvatarSpeechSentence,
   AvatarSpeechCue,
 } from "../domain/protocol.js";
+import { resolveSpeechLanguage } from "../core/speech-language.js";
 import type {
   EnglishVoiceId,
   ItalianVoiceId,
@@ -10,6 +13,8 @@ import type {
 } from "../config/avatar-config.js";
 import {
   listeningMoodIntensity,
+  moodPreviewMoods,
+  moodPreviewStepMs,
   performanceBeatsForCue,
   performanceProfileForMood,
   speechTextForCue,
@@ -77,6 +82,7 @@ function configuredBaseUrl(value: string | undefined): string | null {
 export class ConclaviaRenderer {
   readonly #baseUrl: string | null;
   #pendingController = new AbortController();
+  #moodPreviewGeneration = 0;
 
   constructor(baseUrl: string | undefined) {
     this.#baseUrl = configuredBaseUrl(baseUrl);
@@ -177,6 +183,7 @@ export class ConclaviaRenderer {
   }
 
   async applaud(speakerName: string, targetName?: string): Promise<void> {
+    this.#cancelMoodPreview();
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -196,6 +203,7 @@ export class ConclaviaRenderer {
   }
 
   async raiseHand(speakerName: string): Promise<void> {
+    this.#cancelMoodPreview();
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -225,6 +233,7 @@ export class ConclaviaRenderer {
     // Cancel synthesis or delivery still in flight, then tell Unreal to stop
     // any PCM that has already been accepted for playback.
     this.abortPending();
+    this.#cancelMoodPreview();
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -241,7 +250,7 @@ export class ConclaviaRenderer {
     reaction: StableListeningReaction,
     speakerName: string,
   ): Promise<void> {
-    const profile = performanceProfileForMood(reaction.mood);
+    this.#cancelMoodPreview();
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -251,13 +260,90 @@ export class ConclaviaRenderer {
       intent: "listen-react",
       bodyGesture: "none",
       listenerSemanticMood: reaction.mood,
-      listenerMood: profile.facialMood,
+      // The vendor presets are not identity-neutral on Showcase and several
+      // converge on the same worried face. Start from its neutral solve and
+      // let Unreal apply semantic MetaHuman curves with a stable envelope.
+      listenerMood: "neutral",
       listenerMoodIntensity: listeningMoodIntensity(reaction.mood, reaction.level),
       expectedDurationMs: reaction.holdMs,
     });
   }
 
+  async previewMoods(
+    speakerName: string,
+    voice: ConclaviaVoiceConfig = {
+      voiceStyle: "lively",
+      italianVoice: "Bianca",
+      englishVoice: "Danielle",
+    },
+    options: { stepMs?: number; waitForCompletion?: boolean } = {},
+  ): Promise<void> {
+    // The diagnostic is deliberately silent. Tying each pose to a one-word
+    // TTS clip reduced the useful hold to a few hundred milliseconds and made
+    // the twelve moods look like the same neutral face with twitching brows.
+    void voice;
+    const stepMs = Math.max(1, options.stepMs ?? moodPreviewStepMs);
+    const generation = ++this.#moodPreviewGeneration;
+    const continuation = this.#continueHeldMoodPreview(
+      speakerName,
+      moodPreviewMoods,
+      stepMs,
+      generation,
+    );
+    if (options.waitForCompletion) {
+      await continuation;
+    } else {
+      void continuation.catch((error: unknown) => {
+        console.error("Conclavia Unreal mood preview failed:", error);
+      });
+    }
+  }
+
+  async #continueHeldMoodPreview(
+    speakerName: string,
+    moods: readonly (typeof avatarMoods)[number][],
+    stepMs: number,
+    generation: number,
+  ): Promise<void> {
+    for (const mood of moods) {
+      if (generation !== this.#moodPreviewGeneration) return;
+      const profile = performanceProfileForMood(mood);
+      const intensity = mood === "neutral"
+        ? 0
+        : Math.min(0.76, Math.max(0.58, listeningMoodIntensity(mood, 5) * 1.45));
+      await this.#postJson("/api/unreal/cue", {
+        speakerId: "participant-1",
+        targetId: "meeting-participant",
+        speakerName,
+        shot: "reaction",
+        intent: "listen-react",
+        bodyGesture: "none",
+        listenerSemanticMood: mood,
+        // Use the neutral vendor base and the identity-safe semantic pose.
+        // This is the same curve-only principle that keeps applause smiling
+        // without the commercial preset's tense mouth and worried brows.
+        listenerMood: "neutral",
+        listenerMoodIntensity: intensity,
+        expectedDurationMs: Math.max(2_400, stepMs - 120),
+        performanceBeats: [{
+          atMs: 0,
+          semanticMood: mood,
+          mood: profile.facialMood,
+          intensity,
+          focus: profile.focus,
+          gesture: "none",
+        }],
+      });
+      await new Promise<void>((resolve) => setTimeout(resolve, stepMs));
+    }
+  }
+
+  #cancelMoodPreview(): void {
+    this.#moodPreviewGeneration += 1;
+  }
+
   async lowerHand(speakerName: string): Promise<void> {
+    this.#cancelMoodPreview();
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -280,11 +366,20 @@ export class ConclaviaRenderer {
   async deliver(
     cue: AvatarSpeechCue,
     voice: ConclaviaVoiceConfig = {
-      voiceStyle: "lively",
-      italianVoice: "Bianca",
-      englishVoice: "Danielle",
-    },
+    voiceStyle: "lively",
+    italianVoice: "Bianca",
+    englishVoice: "Danielle",
+  },
   ): Promise<ConclaviaDelivery> {
+    return this.#deliver(cue, voice, true);
+  }
+
+  async #deliver(
+    cue: AvatarSpeechCue,
+    voice: ConclaviaVoiceConfig,
+    cancelMoodPreview: boolean,
+  ): Promise<ConclaviaDelivery> {
+    if (cancelMoodPreview) this.#cancelMoodPreview();
     const baseUrl = this.#requireBaseUrl();
     const text = speechTextForCue(cue);
     if (!text) throw new Error("La risposta di Mary è vuota");
@@ -292,15 +387,16 @@ export class ConclaviaRenderer {
     const deliveryStartedAt = performance.now();
     const sentencePcm = await Promise.all(cue.sentences.map(async (sentence) => {
       const requestStartedAt = performance.now();
+      const language = resolveSpeechLanguage(sentence.language, sentence.text);
       const speechResponse = await fetch(`${baseUrl}/api/unreal/speech`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           text: sentence.text,
-          voice: sentence.language === "en-US"
+          voice: language === "en-US"
             ? voice.englishVoice
             : voice.italianVoice,
-          languageCode: sentence.language,
+          languageCode: language,
           direction: voiceDirections[voice.voiceStyle],
         }),
         signal: this.#signal(30_000),
@@ -388,6 +484,30 @@ export class ConclaviaRenderer {
       timeToFirstAudioMs: Math.round(performance.now() - deliveryStartedAt),
       voiceEngines: [...new Set(sentencePcm.map((sentence) => sentence.engine))],
     };
+  }
+
+  async prefetchSpeech(
+    sentence: AvatarSpeechSentence,
+    voice: ConclaviaVoiceConfig,
+  ): Promise<void> {
+    const baseUrl = this.#requireBaseUrl();
+    const language = resolveSpeechLanguage(sentence.language, sentence.text);
+    const response = await fetch(`${baseUrl}/api/unreal/speech`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        text: sentence.text,
+        voice: language === "en-US" ? voice.englishVoice : voice.italianVoice,
+        languageCode: language,
+        direction: voiceDirections[voice.voiceStyle],
+      }),
+      signal: this.#signal(30_000),
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as JsonError;
+      throw new Error(payload.error || `Precaricamento voce HTTP ${response.status}`);
+    }
+    await response.arrayBuffer();
   }
 
   #requireBaseUrl(): string {

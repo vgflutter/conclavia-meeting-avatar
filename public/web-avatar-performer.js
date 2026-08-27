@@ -21,14 +21,14 @@ const wardrobeSkeletonMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaWardrobeSkeleton") || "shared"
   : "shared";
 const wardrobeLimbMode = typeof window !== "undefined"
-  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeLimb") || "stable"
-  : "stable";
+  ? new URLSearchParams(window.location.search).get("conclaviaWardrobeLimb") || "dynamic"
+  : "dynamic";
 const skinInfluenceMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaInfluenceMode") || "extended"
   : "extended";
 const hairAlphaThreshold = typeof window !== "undefined"
-  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairAlpha") || 0.12)
-  : 0.12;
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaHairAlpha") || 0.14)
+  : 0.14;
 const hairHelmetAlphaThreshold = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("conclaviaHairHelmetAlpha") || 0.18)
   : 0.18;
@@ -39,8 +39,11 @@ const eyebrowForwardOffset = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("conclaviaEyebrowForward") || 0.018)
   : 0.018;
 const hairCardPresentationMode = typeof window !== "undefined"
-  ? new URLSearchParams(window.location.search).get("conclaviaHairCards") || "crown"
-  : "crown";
+  ? new URLSearchParams(window.location.search).get("conclaviaHairCards") || "all"
+  : "all";
+const hairHelmetPresentationMode = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("conclaviaHairHelmet") || "off"
+  : "off";
 const hairCrownMinimumY = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("conclaviaHairCrownY") || 1.61)
   : 1.61;
@@ -57,8 +60,8 @@ const raisedHandPresentationMode = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("conclaviaRaisedHandIK") || "on"
   : "on";
 const cameraDolly = typeof window !== "undefined"
-  ? Number(new URLSearchParams(window.location.search).get("conclaviaCameraDolly") || 0.82)
-  : 0.82;
+  ? Number(new URLSearchParams(window.location.search).get("conclaviaCameraDolly") || 0.88)
+  : 0.88;
 const retargetDiagnostics = { matched: 0, missing: 0, transformed: 0, samples: [] };
 const gestureWeights = {
   nod: 0.32,
@@ -736,7 +739,9 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.depthWrite = true;
     // Preserve the baked auburn base color instead of multiplying it by a
     // second near-black tint.
-    material.color = new THREE.Color(0x3f292d);
+    // Keep the opaque coverage shell darker than the strand cards. Matching
+    // both layers in value made the whole groom read as one plastic cap.
+    material.color = new THREE.Color(0x24191c);
     material.envMapIntensity = 0.32;
     material.metalness = 0;
     material.roughness = THREE.MathUtils.clamp(material.roughness || 0.72, 0.68, 0.78);
@@ -769,7 +774,7 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
     material.transparent = false;
     material.depthWrite = true;
     material.side = THREE.DoubleSide;
-    material.color = new THREE.Color(eyebrowSurface ? 0x2c1b19 : 0x4b282f);
+    material.color = new THREE.Color(eyebrowSurface ? 0x2c1b19 : 0x3f262b);
     material.envMapIntensity = eyebrowSurface ? 0.24 : 0.48;
     material.metalness = 0;
     material.roughness = THREE.MathUtils.clamp(
@@ -882,7 +887,7 @@ function preparePortableMaterial(node, material, renderer, influenceSets = 1) {
   } else if (name.includes("bodyshapea_shirt") || name.includes("shirt")) {
     // Cloth should read as soft fabric, not as a glossy white polygon shell.
     // The authored color/normal/occlusion maps remain untouched.
-    material.side = THREE.DoubleSide;
+    material.side = THREE.FrontSide;
     material.envMapIntensity = 0.24;
     material.metalness = 0;
     material.roughness = Math.max(0.76, material.roughness || 0);
@@ -946,7 +951,46 @@ function stabilizePortableHair(root) {
   // Keep rigid hair cards welded to the animated face skeleton. Object3D.attach
   // preserves the authored world pose while adopting the live head transform.
   const anchor = head || faceComponent;
-  for (const group of cardGroups) anchor.attach(group);
+  for (const group of cardGroups) {
+    if (!/Eyebrows/u.test(group.name) && group.geometry) {
+      // The compact Unreal fallback is unusually wide and shallow in WebGL,
+      // which makes its fringe and coverage shell read as a helmet. Preserve
+      // the authored hairline while giving the crown and gathered back cards
+      // a little more vertical separation. Scaling in geometry space keeps
+      // every layer welded to the same animated head anchor.
+      const coverageLayer = /Group1_LOD/u.test(group.name);
+      const shaped = group.geometry.clone();
+      shaped.translate(0, -1.61, 0.06);
+      // Pull the dense inner coverage closer to the skull while preserving a
+      // wider, taller outline for the authored flyaways and gathered crown.
+      // Applying one scale to both layers made the inner cards read as a wig.
+      shaped.scale(coverageLayer ? 0.93 : 0.99, coverageLayer ? 1.04 : 1.06, 1);
+      // A perfectly concentric inner and outer shell exposes the repeating
+      // card edge and reads as a manufactured cap. This millimetric offset
+      // keeps the authored parting irregular without moving the hairline.
+      if (coverageLayer) shaped.translate(0.006, 0.004, 0);
+      if (!coverageLayer) {
+        // The gathered/braided portion occupies the upper vertices of Group0.
+        // The compact export flattens that authored volume until it is almost
+        // indistinguishable from the fringe. Restore a restrained crown only
+        // above the hairline: lower cards and therefore identity stay fixed.
+        const positions = shaped.getAttribute("position");
+        for (let vertex = 0; vertex < positions.count; vertex += 1) {
+          const x = positions.getX(vertex);
+          const y = positions.getY(vertex);
+          const crown = THREE.MathUtils.smoothstep(y, 1.675, 1.76);
+          positions.setX(vertex, 0.008 + (x - 0.008) * (1 + crown * 0.22));
+          positions.setY(vertex, y + crown * 0.018);
+        }
+        positions.needsUpdate = true;
+      }
+      shaped.translate(0, 1.61, -0.06);
+      shaped.computeBoundingBox();
+      shaped.computeBoundingSphere();
+      group.geometry = shaped;
+    }
+    anchor.attach(group);
+  }
   const eyebrowGroups = cardGroups.filter((group) => /Eyebrows/u.test(group.name));
   if (eyebrowGroups.length) {
     // Card brows sit almost exactly on the MetaHuman skin. Unreal resolves
@@ -1442,7 +1486,7 @@ class ThreeAvatarPerformer {
         THREE.MathUtils.clamp(cameraDolly, 0.72, 1.2),
       ),
     );
-    this.camera.lookAt(cameraTarget.clone().add(new THREE.Vector3(0, 0.035, 0)));
+    this.camera.lookAt(cameraTarget.clone().add(new THREE.Vector3(0, 0.045, 0)));
 
     RectAreaLightUniformsLib.init();
     const hemisphere = new THREE.HemisphereLight(
@@ -1577,8 +1621,20 @@ class ThreeAvatarPerformer {
           node.visible = false;
         }
         if (
+          hairHelmetPresentationMode === "off"
+          && /^WEB_ShowcaseHairHelmetCards_Group\d+_LOD\d+$/u.test(node.name)
+        ) {
+          node.visible = false;
+        }
+        if (
           hairCardPresentationMode === "accent"
           && /^WEB_ShowcaseHairCards_Group0_LOD\d+$/u.test(node.name)
+        ) {
+          node.visible = false;
+        }
+        if (
+          hairCardPresentationMode === "detail"
+          && /^WEB_ShowcaseHairCards_Group1_LOD\d+$/u.test(node.name)
         ) {
           node.visible = false;
         }
@@ -1908,16 +1964,28 @@ class ThreeAvatarPerformer {
     // stays close to the torso and the negative Z offset keeps the palm from
     // becoming oversized in the perspective meeting camera.
     const target = head.clone().add(new THREE.Vector3(-0.275, -0.055, -0.085));
-    const elbowHint = head.clone().add(new THREE.Vector3(-0.17, -0.3, -0.13));
+    const elbowHint = head.clone().add(new THREE.Vector3(-0.12, -0.3, -0.13));
+    // Interpolating the final upper/lower-arm rotations makes the elbow cross
+    // a straight, shoulder-heavy pose halfway through the gesture. That pose
+    // is anatomically awkward and also stretches the garment across the
+    // armpit. Move the wrist and elbow targets instead, then solve the chain
+    // completely at every frame. The arm now follows one continuous path and
+    // the shoulder remains seated throughout both raising and lowering.
+    const pathWeight = portableSmoothstep(0, 1, this.raisePresentationWeight);
     for (const rig of this.bodyRigs) {
+      this.root.updateMatrixWorld(true);
+      const restWrist = rig.handR.getWorldPosition(new THREE.Vector3());
+      const restElbow = rig.lowerarmR.getWorldPosition(new THREE.Vector3());
+      const pathTarget = restWrist.clone().lerp(target, pathWeight);
+      const pathElbowHint = restElbow.clone().lerp(elbowHint, pathWeight);
       solveTwoBonePresentation(
         this.root,
         rig.upperarmR,
         rig.lowerarmR,
         rig.handR,
-        target,
-        elbowHint,
-        this.raisePresentationWeight * 0.82,
+        pathTarget,
+        pathElbowHint,
+        1,
       );
       if (!rig.middleFingerR) continue;
       this.root.updateMatrixWorld(true);
@@ -1928,7 +1996,7 @@ class ThreeAvatarPerformer {
         rig.handR,
         middleFinger.sub(wrist),
         desiredFingerDirection,
-        this.raisePresentationWeight * 0.76,
+        pathWeight * 0.76,
       );
       // The captured wrist roll can leave the palm edge-on after retargeting.
       // Roll around the already-upright finger axis until the palm faces the
@@ -1957,7 +2025,7 @@ class ThreeAvatarPerformer {
           rig.handR,
           currentPalmNormal,
           cameraPalmNormal,
-          this.raisePresentationWeight * 0.68,
+          pathWeight * 0.68,
         );
         this.root.updateMatrixWorld(true);
         rotateBoneDirectionToward(
@@ -1966,7 +2034,7 @@ class ThreeAvatarPerformer {
             rig.handR.getWorldPosition(new THREE.Vector3()),
           ),
           desiredFingerDirection,
-          this.raisePresentationWeight * 0.32,
+          pathWeight * 0.32,
         );
       }
       this.root.updateMatrixWorld(true);

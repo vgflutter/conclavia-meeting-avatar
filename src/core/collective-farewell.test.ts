@@ -54,6 +54,17 @@ await test("does not mistake opening greetings for a closing wave", () => {
   assert.equal(tracker.consider([first, second], second, "Mary"), null);
 });
 
+await test("does not turn a named entrance greeting followed by ciao a tutti into a farewell", () => {
+  const tracker = new CollectiveFarewellTracker();
+  const namedGreeting = segment("3", "Vincenzo", "Ciao Stefano.", 20_000);
+  const roomGreeting = segment("4", "Giulia", "Ciao a tutti.", 24_000);
+
+  assert.equal(
+    tracker.consider([...discussion, namedGreeting, roomGreeting], roomGreeting, "Mary"),
+    null,
+  );
+});
+
 await test("does not treat an ordinary group thank-you as the end of the meeting", () => {
   const tracker = new CollectiveFarewellTracker();
   const thanks = segment("3", "Vincenzo", "Grazie a tutti per il contributo, passiamo al prossimo punto.", 20_000);

@@ -4,16 +4,20 @@ import test from "node:test";
 import {
   canSpeculateAddressedTurn,
   canSpeculateTurn,
+  clientVadSilenceChunksForPartial,
   fileTranscriptionGuidance,
   ignoredTranscriptionReason,
+  isPriorityTranscript,
   isTranscriptionPromptEcho,
   isMeetingSpeechRms,
   meetingAudioFilter,
   meetingTranscriptionPrompt,
   pcm16MonoToWav,
   pcm16Rms,
+  preserveWakeWordFromPartial,
   realtimeNoiseReduction,
   realtimeTranscriptionGuidance,
+  requiresClientVad,
 } from "./meeting-listener.js";
 
 await test("measures digital silence as zero", () => {
@@ -61,6 +65,8 @@ await test("guides Italian meeting transcription without correcting factual mist
   assert.match(prompt, /tre più tre fa nove/iu);
   assert.match(prompt, /non .*fan nove/iu);
   assert.match(prompt, /nome esatto .* Mary/iu);
+  assert.match(prompt, /nome Mary .*all'inizio o alla fine/iu);
+  assert.match(prompt, /alfabeto latino/iu);
 });
 
 await test("uses high-accuracy multilingual hints for gpt-transcribe", () => {
@@ -95,10 +101,46 @@ await test("uses high-accuracy multilingual hints for gpt-transcribe", () => {
   });
 });
 
-await test("uses medium delay for balanced live-transcription accuracy", () => {
+await test("uses bilingual guidance and wake-word keywords for live transcription", () => {
   const guidance = realtimeTranscriptionGuidance("gpt-live-transcribe", "Mary");
-  assert.equal(guidance.delay, "medium");
   assert.deepEqual(guidance.languages, ["it", "en"]);
+  assert.deepEqual(guidance.keywords, [
+    "Mary",
+    "Conclavia",
+    "MetaHuman",
+    "Microsoft Teams",
+    "Google Meet",
+    "AWS",
+    "Unreal Engine",
+    "OpenAI",
+  ]);
+});
+
+await test("preserves a wake word heard in a partial result when the final result drops it", () => {
+  assert.equal(
+    preserveWakeWordFromPartial(
+      "Qual è il prezzo di Bitcoin adesso?",
+      "Mary, qual è il prezzo di Bitcoin adesso?",
+      "Mary",
+    ),
+    "Mary, Qual è il prezzo di Bitcoin adesso?",
+  );
+  assert.equal(
+    preserveWakeWordFromPartial(
+      "Mary, quanto fa due più due?",
+      "Mary, quanto fa due più due?",
+      "Mary",
+    ),
+    "Mary, quanto fa due più due?",
+  );
+  assert.equal(
+    preserveWakeWordFromPartial(
+      "Qual è il prezzo di Bitcoin adesso?",
+      "Qual è il prezzo di Bitcoin adesso?",
+      "Mary",
+    ),
+    "Qual è il prezzo di Bitcoin adesso?",
+  );
 });
 
 await test("does not double-denoise a BlackHole virtual meeting bus", () => {
@@ -120,6 +162,26 @@ await test("speculates only when a useful partial turn addresses Mary", () => {
 await test("recognizes partial turns long enough for speculative processing", () => {
   assert.equal(canSpeculateTurn("E perché no?"), true);
   assert.equal(canSpeculateTurn("Perché?"), false);
+});
+
+await test("closes a complete Mary question faster without splitting a bare wake word", () => {
+  assert.equal(clientVadSilenceChunksForPartial("Mary", "Mary"), 7);
+  assert.equal(clientVadSilenceChunksForPartial("Mary, quanto fa due più due?", "Mary"), 5);
+  assert.equal(clientVadSilenceChunksForPartial("Quanto fa due più due, Mary?", "Mary"), 5);
+  assert.equal(clientVadSilenceChunksForPartial("Stiamo ancora discutendo", "Mary"), 7);
+});
+
+await test("prioritizes direct invocations and active-dialogue follow-ups", () => {
+  assert.equal(isPriorityTranscript("Cosa ne pensi, Mary?", "Mary", false), true);
+  assert.equal(isPriorityTranscript("E invece sul secondo punto?", "Mary", true), true);
+  assert.equal(isPriorityTranscript("Kubernetes è una buona soluzione", "Mary", false), false);
+});
+
+await test("uses fast client VAD for realtime transcription-only models", () => {
+  assert.equal(requiresClientVad("gpt-live-transcribe"), true);
+  assert.equal(requiresClientVad("gpt-transcribe"), true);
+  assert.equal(requiresClientVad("gpt-4o-mini-transcribe"), true);
+  assert.equal(requiresClientVad("gpt-realtime-whisper"), false);
 });
 
 await test("filters the transcription prompt when silence echoes it back", () => {
@@ -155,7 +217,17 @@ await test("filters the transcription prompt when silence echoes it back", () =>
 });
 
 await test("filters recurring silent-buffer hallucinations without losing short invocations", () => {
-  for (const hallucination of ["이", "어", "當場", "Apa?", "Čau", "Dziękuję", "Iya iya", "Sampai jumpa"]) {
+  for (const hallucination of [
+    "이",
+    "어",
+    "當場",
+    "それ tenga cosa",
+    "Apa?",
+    "Čau",
+    "Dziękuję",
+    "Iya iya",
+    "Sampai jumpa",
+  ]) {
     assert.equal(ignoredTranscriptionReason(hallucination, "Mary"), "noise", hallucination);
   }
   assert.equal(ignoredTranscriptionReason("Mary?", "Mary"), null);

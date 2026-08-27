@@ -130,8 +130,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /Roughness Adjust[\s\S]*1\.16f/);
   assert.match(moduleSource, /Config\.IntraOpThreads = 2;[\s\S]*40 ms audio cadence/);
   assert.doesNotMatch(moduleSource, /Config\.IntraOpThreads = 4;/);
-  assert.match(moduleSource, /ue58-commercial-lipsync-v29-smooth-speech/);
-  assert.match(rendererManifest, /ue58-commercial-lipsync-v29-smooth-speech/);
+  assert.match(moduleSource, /ue58-commercial-lipsync-v32-held-semantic-moods/);
+  assert.match(rendererManifest, /ue58-commercial-lipsync-v32-held-semantic-moods/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
   assert.match(supervisor, /performanceSemanticMood/);

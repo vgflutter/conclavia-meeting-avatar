@@ -5,14 +5,17 @@ import type { TranscriptSegment } from "../domain/protocol.js";
 
 import {
   canOpenAutonomousRequest,
+  firstStreamedSpeechSentence,
   hasSufficientAutonomousApplauseContext,
   maxOutputTokensForLane,
+  maxOutputTokensForTurn,
   meetingContextBudget,
   parseMaryReply,
   parseMaryTurn,
   participationLane,
   qualifiesAutonomousApplause,
   qualifiesAutonomousIntervention,
+  requiresCompleteMeetingContext,
   shouldOfferWebSearch,
   transcriptForModel,
 } from "./meeting-intelligence.js";
@@ -29,13 +32,14 @@ await test("uses a compact LLM lane when Mary only needs to react while listenin
   );
 });
 
-await test("offers optional web search to every direct question", () => {
-  assert.equal(shouldOfferWebSearch(true, "direct", "Mary, quanto fa due più due?"), true);
+await test("keeps self-contained direct questions on the fast path", () => {
+  assert.equal(shouldOfferWebSearch(true, "direct", "Mary, quanto fa due più due?"), false);
   assert.equal(
     shouldOfferWebSearch(true, "direct", "Mary, spiegami perché una coda riduce la latenza."),
-    true,
+    false,
   );
   assert.equal(shouldOfferWebSearch(false, "direct", "Mary, cerca online le ultime notizie."), false);
+  assert.equal(maxOutputTokensForTurn("direct", "Mary, quanto fa due più due?"), 220);
 });
 
 await test("offers web search for explicit or time-sensitive direct questions", () => {
@@ -59,7 +63,7 @@ await test("preserves web verification for material autonomous decisions", () =>
   assert.equal(shouldOfferWebSearch(true, "observer-listening", "Ultime notizie."), false);
 });
 
-await test("gives direct answers the complete retained meeting transcript", () => {
+await test("uses compact direct context except for meeting-wide requests", () => {
   const listening = meetingContextBudget("observer-listening", "Continuiamo.");
   const direct = meetingContextBudget("direct", "Mary, cosa suggerisci?");
   const autonomy = meetingContextBudget("observer-autonomy", "Questo dato cambia la decisione.");
@@ -67,17 +71,23 @@ await test("gives direct answers the complete retained meeting transcript", () =
 
   assert.ok(listening.maximumCharacters < direct.maximumCharacters);
   assert.ok(listening.maximumSegments < direct.maximumSegments);
-  assert.ok(autonomy.maximumCharacters < direct.maximumCharacters);
-  assert.ok(autonomy.maximumSegments < direct.maximumSegments);
+  assert.ok(direct.maximumSegments < autonomy.maximumSegments);
   assert.deepEqual(direct, {
+    maximumCharacters: 8_000,
+    maximumSegments: 32,
+    maximumAgeMs: null,
+  });
+  assert.deepEqual(summary, {
     maximumCharacters: 48_000,
     maximumSegments: 200,
     maximumAgeMs: null,
   });
-  assert.deepEqual(summary, direct);
+  assert.equal(requiresCompleteMeetingContext("Mary, fammi il resoconto"), true);
+  assert.equal(requiresCompleteMeetingContext("Mary, quanto fa due più due?"), false);
+  assert.equal(maxOutputTokensForTurn("direct", "Mary, riassumi la riunione"), 320);
 });
 
-await test("keeps complete direct memory but bounds observer context to recent phrases", () => {
+await test("keeps recent direct memory but bounds observer context by age", () => {
   const oldSegment: TranscriptSegment = {
     id: "old",
     speakerName: "Vincenzo",
@@ -113,6 +123,24 @@ await test("keeps complete direct memory but bounds observer context to recent p
   assert.match(observerContext, /recente/u);
   assert.match(directContext, /vecchia/u);
   assert.match(directContext, /recente/u);
+});
+
+await test("extracts the first spoken sentence before streamed mood metadata completes", () => {
+  assert.deepEqual(
+    firstStreamedSpeechSentence(
+      '{"action":"speak","sentences":[{"text":"Nevis è un’isola caraibica.","mood":"neu',
+    ),
+    {
+      text: "Nevis è un’isola caraibica.",
+      mood: "neutral",
+      level: 1,
+      language: "it-IT",
+    },
+  );
+  assert.equal(
+    firstStreamedSpeechSentence('{"action":"speak","sentences":[{"text":"Ancora incompleta'),
+    null,
+  );
 });
 
 await test("parses sentence-level moods from Mary JSON", () => {

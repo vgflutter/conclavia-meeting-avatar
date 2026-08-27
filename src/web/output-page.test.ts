@@ -33,6 +33,8 @@ await test("keeps the OBS output free of meeting-console overlays", async () => 
   assert.match(managementScript, /fallback fotografico/);
   assert.match(managementScript, /non supera l’audit/);
   assert.match(managementScript, /Web avatar 3D pronto/);
+  assert.match(managementScript, /const MOOD_PREVIEW_STAGE_MS = 37_000/);
+  assert.doesNotMatch(managementScript, /settleStageAfter\(23_000\)/);
 });
 
 await test("publishes decoded-frame heartbeats from the clean Unreal player", async () => {
@@ -102,10 +104,11 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /gltfs = await Promise\.all/);
   assert.match(performer, /const \[gltf, \.\.\.animationGltfs\] = gltfs/);
   assert.match(performer, /THREE\.MathUtils\.clamp\(hairAlphaThreshold, 0\.01, 0\.5\)/);
-  assert.match(performer, /conclaviaHairAlpha["']\) \|\| 0\.12/);
+  assert.match(performer, /conclaviaHairAlpha["']\) \|\| 0\.14/);
   assert.match(performer, /conclaviaEyebrowAlpha["']\) \|\| 0\.14/);
   assert.match(performer, /conclaviaEyebrowForward["']\) \|\| 0\.018/);
-  assert.match(performer, /conclaviaHairCards["']\) \|\| ["']crown["']/);
+  assert.match(performer, /conclaviaHairCards["']\) \|\| ["']all["']/);
+  assert.match(performer, /conclaviaHairHelmet["']\) \|\| ["']off["']/);
   assert.match(performer, /function trimPortableHairCrown\(node\)/);
   assert.match(performer, /#advanceLifeLayer\(state, deltaSeconds\)/);
   assert.match(performer, /FACIAL_L_EyelidUpperA/);
@@ -130,8 +133,12 @@ await test("loads a rigged Web performer while retaining a diagnostic fallback",
   assert.match(performer, /conclaviaHairHelmetAlpha/);
   assert.match(performer, /conclaviaWardrobeVariants/);
   assert.match(performer, /authoredInfluenceSets/);
-  assert.match(performer, /conclaviaWardrobeLimb["']\) \|\| "stable"/);
-  assert.match(performer, /material\.color = new THREE\.Color\(0x3f292d\)/);
+  assert.match(performer, /conclaviaWardrobeLimb["']\) \|\| "dynamic"/);
+  assert.match(performer, /material\.color = new THREE\.Color\(0x24191c\)/);
+  assert.match(performer, /coverageLayer \? 0\.93 : 0\.99/);
+  assert.match(performer, /THREE\.MathUtils\.smoothstep\(y, 1\.675, 1\.76\)/);
+  assert.match(performer, /material\.side = THREE\.FrontSide/);
+  assert.match(performer, /const pathTarget = restWrist\.clone\(\)\.lerp\(target, pathWeight\)/);
   assert.match(performer, /conclaviaGroomCoverage = conclaviaGroomCompactAttributes\.r/);
   assert.match(performer, /material\.alphaToCoverage = false/);
   assert.match(performer, /transformed \+= objectNormal \* 0\.004/);

@@ -1202,6 +1202,157 @@ private:
         return true;
     }
 
+    // The commercial solver is excellent at speech anatomy, but its mood
+    // presets are not identity-neutral. On Showcase, for example, Happiness
+    // can drive both inner brows above 0.65 and reads as anxiety. Keep the
+    // vendor solve for jaw, lips, tongue and timing, then replace only the
+    // expression controls with restrained MetaHuman-authored recipes. These
+    // values mirror the official facial-pose curves baked for the portable
+    // renderer, so Unreal and Web share the same semantic performance language.
+    static void ApplySemanticFaceOverlay(
+        TMap<FString, float>& Controls,
+        const FString& SemanticMood,
+        const float Intensity)
+    {
+        auto Set = [&Controls](const TCHAR* Name, const float Value)
+        {
+            if (float* Existing = Controls.Find(Name))
+            {
+                *Existing = FMath::Clamp(Value, -1.0f, 1.0f);
+            }
+        };
+        auto SetPair = [&Set](
+            const TCHAR* Left,
+            const TCHAR* Right,
+            const float LeftValue,
+            const float RightValue)
+        {
+            Set(Left, LeftValue);
+            Set(Right, RightValue);
+        };
+
+        // Remove only affective controls. Central mouth, lip articulation,
+        // jaw and tongue remain untouched and continue to come from the
+        // commercial audio solver.
+        static const TCHAR* ExpressionControls[] = {
+            TEXT("CTRL_L_brow_down.ty"), TEXT("CTRL_R_brow_down.ty"),
+            TEXT("CTRL_L_brow_lateral.ty"), TEXT("CTRL_R_brow_lateral.ty"),
+            TEXT("CTRL_L_brow_raiseIn.ty"), TEXT("CTRL_R_brow_raiseIn.ty"),
+            TEXT("CTRL_L_brow_raiseOut.ty"), TEXT("CTRL_R_brow_raiseOut.ty"),
+            TEXT("CTRL_L_eye_cheekRaise.ty"), TEXT("CTRL_R_eye_cheekRaise.ty"),
+            TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"),
+            TEXT("CTRL_L_nose.ty"), TEXT("CTRL_R_nose.ty"),
+            TEXT("CTRL_L_nose.tx"), TEXT("CTRL_R_nose.tx"),
+            TEXT("CTRL_L_nose_nasolabialDeepen.ty"),
+            TEXT("CTRL_R_nose_nasolabialDeepen.ty"),
+            TEXT("CTRL_L_mouth_cornerPull.ty"),
+            TEXT("CTRL_R_mouth_cornerPull.ty"),
+            TEXT("CTRL_L_mouth_cornerDepress.ty"),
+            TEXT("CTRL_R_mouth_cornerDepress.ty"),
+            TEXT("CTRL_L_mouth_dimple.ty"), TEXT("CTRL_R_mouth_dimple.ty"),
+            TEXT("CTRL_L_mouth_sharpCornerPull.ty"),
+            TEXT("CTRL_R_mouth_sharpCornerPull.ty")
+        };
+        for (const TCHAR* Name : ExpressionControls)
+        {
+            Set(Name, 0.0f);
+        }
+
+        FString Mood = SemanticMood.ToLower();
+        // Backward-compatible fallback for cues produced before semanticMood
+        // was added to the performance packet.
+        if (Mood == TEXT("happiness")) Mood = TEXT("confident");
+        else if (Mood == TEXT("playfulness")) Mood = TEXT("amused");
+        else if (Mood == TEXT("excitement")) Mood = TEXT("attentive");
+        else if (Mood == TEXT("confusion")) Mood = TEXT("curious");
+        else if (Mood == TEXT("disgust")) Mood = TEXT("skeptical");
+        else if (Mood == TEXT("fear")) Mood = TEXT("concerned");
+        else if (Mood == TEXT("sadness")) Mood = TEXT("empathetic");
+        else if (Mood == TEXT("anger")) Mood = TEXT("frustrated");
+        else if (Mood == TEXT("boredom")) Mood = TEXT("reflective");
+        else if (Mood == TEXT("confidence")) Mood = TEXT("assertive");
+        else if (Mood == TEXT("surprise")) Mood = TEXT("surprised");
+
+        const float S = FMath::Clamp(Intensity / 0.55f, 0.0f, 1.20f);
+        if (S <= KINDA_SMALL_NUMBER || Mood == TEXT("neutral"))
+        {
+            return;
+        }
+
+        if (Mood == TEXT("attentive"))
+        {
+            SetPair(TEXT("CTRL_L_brow_raiseIn.ty"), TEXT("CTRL_R_brow_raiseIn.ty"), 0.045f * S, 0.045f * S);
+            SetPair(TEXT("CTRL_L_brow_raiseOut.ty"), TEXT("CTRL_R_brow_raiseOut.ty"), 0.040f * S, 0.040f * S);
+            SetPair(TEXT("CTRL_L_eye_cheekRaise.ty"), TEXT("CTRL_R_eye_cheekRaise.ty"), 0.032f * S, 0.032f * S);
+        }
+        else if (Mood == TEXT("curious"))
+        {
+            SetPair(TEXT("CTRL_L_brow_raiseIn.ty"), TEXT("CTRL_R_brow_raiseIn.ty"), 0.165f * S, 0.042f * S);
+            SetPair(TEXT("CTRL_L_brow_raiseOut.ty"), TEXT("CTRL_R_brow_raiseOut.ty"), 0.150f * S, 0.032f * S);
+            SetPair(TEXT("CTRL_L_brow_lateral.ty"), TEXT("CTRL_R_brow_lateral.ty"), 0.050f * S, 0.010f * S);
+        }
+        else if (Mood == TEXT("amused"))
+        {
+            SetPair(TEXT("CTRL_L_mouth_cornerPull.ty"), TEXT("CTRL_R_mouth_cornerPull.ty"), 0.300f * S, 0.300f * S);
+            SetPair(TEXT("CTRL_L_mouth_dimple.ty"), TEXT("CTRL_R_mouth_dimple.ty"), 0.115f * S, 0.115f * S);
+            SetPair(TEXT("CTRL_L_eye_cheekRaise.ty"), TEXT("CTRL_R_eye_cheekRaise.ty"), 0.195f * S, 0.195f * S);
+            SetPair(TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"), 0.072f * S, 0.072f * S);
+            SetPair(TEXT("CTRL_L_nose_nasolabialDeepen.ty"), TEXT("CTRL_R_nose_nasolabialDeepen.ty"), 0.075f * S, 0.075f * S);
+        }
+        else if (Mood == TEXT("confident"))
+        {
+            SetPair(TEXT("CTRL_L_brow_down.ty"), TEXT("CTRL_R_brow_down.ty"), 0.018f * S, 0.018f * S);
+            SetPair(TEXT("CTRL_L_mouth_cornerPull.ty"), TEXT("CTRL_R_mouth_cornerPull.ty"), 0.180f * S, 0.180f * S);
+            SetPair(TEXT("CTRL_L_mouth_dimple.ty"), TEXT("CTRL_R_mouth_dimple.ty"), 0.065f * S, 0.065f * S);
+            SetPair(TEXT("CTRL_L_eye_cheekRaise.ty"), TEXT("CTRL_R_eye_cheekRaise.ty"), 0.100f * S, 0.100f * S);
+            SetPair(TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"), 0.030f * S, 0.030f * S);
+        }
+        else if (Mood == TEXT("skeptical"))
+        {
+            SetPair(TEXT("CTRL_L_brow_down.ty"), TEXT("CTRL_R_brow_down.ty"), 0.105f * S, 0.035f * S);
+            SetPair(TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"), 0.065f * S, 0.020f * S);
+            SetPair(TEXT("CTRL_L_nose_nasolabialDeepen.ty"), TEXT("CTRL_R_nose_nasolabialDeepen.ty"), 0.035f * S, 0.012f * S);
+        }
+        else if (Mood == TEXT("concerned"))
+        {
+            SetPair(TEXT("CTRL_L_brow_raiseIn.ty"), TEXT("CTRL_R_brow_raiseIn.ty"), 0.105f * S, 0.105f * S);
+            SetPair(TEXT("CTRL_L_brow_raiseOut.ty"), TEXT("CTRL_R_brow_raiseOut.ty"), 0.042f * S, 0.042f * S);
+            SetPair(TEXT("CTRL_L_brow_lateral.ty"), TEXT("CTRL_R_brow_lateral.ty"), 0.030f * S, 0.030f * S);
+            SetPair(TEXT("CTRL_L_mouth_cornerDepress.ty"), TEXT("CTRL_R_mouth_cornerDepress.ty"), 0.028f * S, 0.028f * S);
+        }
+        else if (Mood == TEXT("surprised"))
+        {
+            SetPair(TEXT("CTRL_L_brow_raiseIn.ty"), TEXT("CTRL_R_brow_raiseIn.ty"), 0.215f * S, 0.215f * S);
+            SetPair(TEXT("CTRL_L_brow_raiseOut.ty"), TEXT("CTRL_R_brow_raiseOut.ty"), 0.245f * S, 0.245f * S);
+        }
+        else if (Mood == TEXT("empathetic"))
+        {
+            SetPair(TEXT("CTRL_L_brow_raiseIn.ty"), TEXT("CTRL_R_brow_raiseIn.ty"), 0.082f * S, 0.082f * S);
+            SetPair(TEXT("CTRL_L_brow_lateral.ty"), TEXT("CTRL_R_brow_lateral.ty"), 0.042f * S, 0.042f * S);
+            SetPair(TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"), 0.025f * S, 0.025f * S);
+            SetPair(TEXT("CTRL_L_mouth_cornerDepress.ty"), TEXT("CTRL_R_mouth_cornerDepress.ty"), 0.020f * S, 0.020f * S);
+        }
+        else if (Mood == TEXT("assertive"))
+        {
+            SetPair(TEXT("CTRL_L_brow_down.ty"), TEXT("CTRL_R_brow_down.ty"), 0.085f * S, 0.085f * S);
+            SetPair(TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"), 0.045f * S, 0.045f * S);
+            SetPair(TEXT("CTRL_L_mouth_cornerPull.ty"), TEXT("CTRL_R_mouth_cornerPull.ty"), 0.060f * S, 0.060f * S);
+        }
+        else if (Mood == TEXT("frustrated"))
+        {
+            SetPair(TEXT("CTRL_L_brow_down.ty"), TEXT("CTRL_R_brow_down.ty"), 0.135f * S, 0.135f * S);
+            SetPair(TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"), 0.075f * S, 0.075f * S);
+            SetPair(TEXT("CTRL_L_nose_nasolabialDeepen.ty"), TEXT("CTRL_R_nose_nasolabialDeepen.ty"), 0.048f * S, 0.048f * S);
+            SetPair(TEXT("CTRL_L_nose.ty"), TEXT("CTRL_R_nose.ty"), 0.025f * S, 0.025f * S);
+        }
+        else if (Mood == TEXT("reflective"))
+        {
+            SetPair(TEXT("CTRL_L_brow_raiseIn.ty"), TEXT("CTRL_R_brow_raiseIn.ty"), 0.050f * S, 0.030f * S);
+            SetPair(TEXT("CTRL_L_brow_lateral.ty"), TEXT("CTRL_R_brow_lateral.ty"), 0.032f * S, 0.018f * S);
+            SetPair(TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"), 0.018f * S, 0.012f * S);
+        }
+    }
+
     static void ParsePerformanceBeats(
         const TSharedPtr<FJsonObject>& Payload,
         TArray<FPerformanceBeat>& OutBeats)
@@ -2980,10 +3131,34 @@ private:
         }
 
         const double Now = FPlatformTime::Seconds();
-        if (bListeningReactionActive && Now >= ListeningReactionExpiresAt)
+        if (bListeningReactionActive && Now < ListeningReactionExpiresAt)
         {
-            // Let the vendor model return to neutral instead of snapping or
-            // layering a hand-written facial pose over its 81 controls.
+            // A listening reaction is a held performance, not a one-frame mood
+            // impulse. The 200 ms offset aligns this envelope with the first
+            // visible frame after the listening solver has finished priming.
+            const float Duration = FMath::Max(
+                static_cast<float>(ListeningReactionExpiresAt - ListeningReactionStartedAt),
+                0.2f);
+            const float Elapsed = static_cast<float>(Now - ListeningReactionStartedAt);
+            const float Remaining = static_cast<float>(ListeningReactionExpiresAt - Now);
+            const float FadeInSeconds = FMath::Min(0.52f, Duration * 0.24f);
+            const float FadeOutSeconds = FMath::Min(0.62f, Duration * 0.26f);
+            auto Ease = [](const float Value)
+            {
+                const float T = FMath::Clamp(Value, 0.0f, 1.0f);
+                return T * T * (3.0f - 2.0f * T);
+            };
+            const float FadeInAlpha = Ease(Elapsed / FMath::Max(FadeInSeconds, 0.01f));
+            const float FadeOutAlpha = Ease(Remaining / FMath::Max(FadeOutSeconds, 0.01f));
+            const float Envelope = FMath::Min(FadeInAlpha, FadeOutAlpha);
+            PerformanceCurrentIntensity = ListeningReactionTargetIntensity * Envelope;
+            ActiveMoodIntensity = PerformanceCurrentIntensity;
+            Generator->SetMoodIntensity(PerformanceCurrentIntensity);
+        }
+        else if (bListeningReactionActive)
+        {
+            // The envelope has reached zero before returning to the neutral
+            // generator, so the face no longer snaps at the end of a mood.
             Generator->SetMood(ERealisticMetaHumanLipSyncMood::Neutral);
             Generator->SetMoodIntensity(0.0f);
             ActiveMoodName = TEXT("neutral");
@@ -3031,6 +3206,10 @@ private:
                 Control.Value = 0.0f;
             }
         }
+        ApplySemanticFaceOverlay(
+            ListeningControls,
+            ActiveSemanticMoodName,
+            ActiveMoodIntensity);
         Generator->SetControlValues(ListeningControls);
         if (ListeningPrimingTicksRemaining <= 0)
         {
@@ -3063,17 +3242,20 @@ private:
         if (URealisticMetaHumanLipSyncGenerator* Generator = ListeningGenerator.Get())
         {
             Generator->SetMood(Mood);
-            Generator->SetMoodIntensity(FMath::Clamp(Intensity, 0.0f, 0.85f));
+            Generator->SetMoodIntensity(0.0f);
         }
+        const double Now = FPlatformTime::Seconds();
+        const float DurationSeconds = FMath::Clamp(ExpectedDurationSeconds, 2.0f, 15.0f);
         ActiveMoodName = Name;
         ActiveSemanticMoodName = SemanticName.IsEmpty() ? Name : SemanticName;
-        ActiveMoodIntensity = FMath::Clamp(Intensity, 0.0f, 0.85f);
-        PerformanceCurrentIntensity = ActiveMoodIntensity;
-        PerformanceTargetIntensity = ActiveMoodIntensity;
+        ListeningReactionTargetIntensity = FMath::Clamp(Intensity, 0.0f, 0.85f);
+        ActiveMoodIntensity = 0.0f;
+        PerformanceCurrentIntensity = 0.0f;
+        PerformanceTargetIntensity = ListeningReactionTargetIntensity;
         ActivePerformanceFocus = TEXT("target");
         ActivePerformanceGesture = TEXT("listen");
-        ListeningReactionExpiresAt = FPlatformTime::Seconds()
-            + FMath::Clamp(ExpectedDurationSeconds, 2.0f, 15.0f);
+        ListeningReactionStartedAt = Now + 0.20;
+        ListeningReactionExpiresAt = Now + DurationSeconds;
         ListeningVisualEndsAt = ListeningReactionExpiresAt + 0.72;
         bListeningReactionActive = true;
         bListeningVisualActive = true;
@@ -3227,11 +3409,16 @@ private:
         }
 
         UAnimInstance* FaceAnim = Face->GetAnimInstance();
-        const TMap<FString, float> Controls = Generator->GetControlValues();
+        TMap<FString, float> Controls = Generator->GetControlValues();
         if (Controls.IsEmpty())
         {
             return;
         }
+        ApplySemanticFaceOverlay(
+            Controls,
+            ActiveSemanticMoodName,
+            ActiveMoodIntensity);
+        Generator->SetControlValues(Controls);
 
         // Exposed AnimBP pins are evaluated on the animation thread and can
         // overwrite a runtime assignment. Refresh the exact anim-node pointer
@@ -4342,7 +4529,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v29-smooth-speech")
+            ? TEXT("ue58-commercial-lipsync-v32-held-semantic-moods")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -5095,8 +5282,10 @@ private:
     int32 BodyIdleSwitchCount = 0;
     double CommercialModelDeadline = 0.0;
     double ListeningModelDeadline = 0.0;
+    double ListeningReactionStartedAt = 0.0;
     double ListeningReactionExpiresAt = 0.0;
     double ListeningVisualEndsAt = 0.0;
+    float ListeningReactionTargetIntensity = 0.0f;
     bool bCommercialFaceReady = false;
     bool bCommercialModelReady = false;
     bool bCommercialModelRouteReady = false;

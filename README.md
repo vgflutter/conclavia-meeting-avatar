@@ -52,7 +52,27 @@ Conclavia is intentionally conservative in a room with five or ten people:
 The 12 supported moods are `neutral`, `attentive`, `curious`, `amused`,
 `confident`, `skeptical`, `concerned`, `surprised`, `empathetic`, `assertive`,
 `frustrated`, and `reflective`. Every spoken sentence carries its own mood and
-intensity, so facial performance can change naturally within one answer.
+intensity, so facial performance can change naturally within one answer. While
+Mary is silent, recent speech can drive the same semantic layer through a
+slower, held listening reaction; it then eases back to neutral instead of
+snapping or looping.
+
+### Live interaction checks
+
+These commands provide a quick end-to-end check before joining a real meeting:
+
+| Say | Expected result |
+| --- | --- |
+| `Mary, mi ascolti?` | Immediate local acknowledgement; no LLM round trip |
+| `Mary, alza la mano` / `Mary, abbassa la mano` | Authored seated request-to-speak gesture |
+| `Mary, applaudi` | Authored applause with a restrained positive expression |
+| `Mary, prova tutte le espressioni` | Silent sequence of all 12 held facial moods |
+| `Mary, riassumi la discussione` | Concise summary based on recent meeting memory |
+| `Mary, elenca le tue funzionalità` | Immediate explanation of the available controls |
+
+The mood preview holds each expression for about three seconds. During normal
+speech, mood boundaries follow the synthesized sentence timing and the audio is
+the playback clock for lip sync.
 
 ## What is ready today
 
@@ -62,7 +82,7 @@ intensity, so facial performance can change naturally within one answer.
 | OBS Virtual Camera video for Teams and Meet | Validated |
 | BlackHole meeting capture and avatar microphone routing | Validated on macOS |
 | Continuous transcription, meeting memory, direct answers | Validated |
-| Request-to-speak, seated hand gesture, applause, moods | Validated and configurable |
+| Request-to-speak, seated hand gesture, applause, 12 listening/speaking moods | Validated and configurable |
 | Showcase, Aera, Ada, Vivian, and Jelena profiles | Selectable |
 | Browser test room and full control surface | Available |
 | GPU-independent Web Performance Runtime | Experimental |

@@ -46,6 +46,29 @@ await test("answers presence and greeting checks locally", () => {
   );
 });
 
+await test("describes real meeting capabilities locally and with sentence moods", () => {
+  const cue = immediateResponseFor(
+    segment("Ciao Mary, puoi elencare le tue funzionalità?"),
+    "Mary",
+  );
+
+  assert.equal(cue?.provider, "system");
+  assert.equal(cue?.sentences.length, 3);
+  assert.match(cue?.sentences[0]?.text ?? "", /contesto della riunione/u);
+  assert.match(cue?.sentences[1]?.text ?? "", /alzare o abbassare la mano/u);
+  assert.match(cue?.sentences[2]?.text ?? "", /scaletta con i tempi/u);
+  assert.deepEqual(
+    cue?.sentences.map(({ mood }) => mood),
+    ["confident", "assertive", "amused"],
+  );
+});
+
+await test("accepts concise variants of the capabilities question", () => {
+  assert.ok(immediateResponseFor(segment("Mary, cosa sai fare?"), "Mary"));
+  assert.ok(immediateResponseFor(segment("Mary, quali sono le tue capacità?"), "Mary"));
+  assert.ok(immediateResponseFor(segment("Mary, descrivi le tue funzioni"), "Mary"));
+});
+
 await test("never shortcuts a substantive request", () => {
   assert.equal(
     immediateResponseFor(

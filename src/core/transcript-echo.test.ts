@@ -25,6 +25,17 @@ await test("filters a fuzzy transcription of Mary's recent virtual-bus playback"
   assert.equal(isLikelyAvatarSpeechEcho(echoed, [marySpeech], "Mary"), true);
 });
 
+await test("filters legacy local-listener echoes whose speech source was omitted", () => {
+  const echoed: TranscriptSegment = {
+    id: "participant-legacy",
+    speakerName: "Partecipante meeting",
+    text: "Sto bene grazie, pronta a seguire la riunione.",
+    isFinal: true,
+    capturedAt: "2026-08-26T12:00:06.000Z",
+  };
+  assert.equal(isLikelyAvatarSpeechEcho(echoed, [marySpeech], "Mary"), true);
+});
+
 await test("does not suppress short acknowledgements or old and chat messages", () => {
   const shortReply = {
     ...marySpeech,
@@ -46,6 +57,30 @@ await test("does not suppress short acknowledgements or old and chat messages", 
     isLikelyAvatarSpeechEcho(
       { ...shortReply, text: marySpeech.text, source: "chat" },
       [marySpeech],
+      "Mary",
+    ),
+    false,
+  );
+});
+
+await test("filters an exact short replay of Mary's recent greeting", () => {
+  const greeting: TranscriptSegment = {
+    ...marySpeech,
+    id: "mary-greeting",
+    text: "Ciao a tutti!",
+  };
+  const echo: TranscriptSegment = {
+    ...greeting,
+    id: "participant-greeting-echo",
+    speakerName: "Partecipante meeting",
+    capturedAt: "2026-08-26T12:00:02.000Z",
+  };
+
+  assert.equal(isLikelyAvatarSpeechEcho(echo, [greeting], "Mary"), true);
+  assert.equal(
+    isLikelyAvatarSpeechEcho(
+      { ...echo, capturedAt: "2026-08-26T12:00:12.000Z" },
+      [greeting],
       "Mary",
     ),
     false,

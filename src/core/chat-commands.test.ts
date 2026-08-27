@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { defaultChatCommandAliases } from "../config/avatar-config.js";
-import { chatResponseChannel, matchChatCommand } from "./chat-commands.js";
+import {
+  chatResponseChannel,
+  matchChatCommand,
+  matchSpokenGestureCommand,
+} from "./chat-commands.js";
 
 await test("matches configurable commands only when the avatar is addressed first", () => {
   assert.deepEqual(
@@ -45,6 +49,14 @@ await test("supports multilingual aliases and a configurable avatar name", () =>
   );
   assert.equal(
     matchChatCommand(
+      "Mary, prova tutte le espressioni",
+      "Mary",
+      defaultChatCommandAliases,
+    )?.kind,
+    "preview-moods",
+  );
+  assert.equal(
+    matchChatCommand(
       "Mary, scaletta\n00:00 Apertura\n10:00 Fine",
       "Mary",
       defaultChatCommandAliases,
@@ -54,6 +66,37 @@ await test("supports multilingual aliases and a configurable avatar name", () =>
   assert.equal(
     matchChatCommand("Mary, annulla scaletta", "Mary", defaultChatCommandAliases)?.kind,
     "cancel-agenda",
+  );
+});
+
+await test("executes only addressed physical commands directly from speech", () => {
+  assert.equal(
+    matchSpokenGestureCommand("Mary, applaudi.", "Mary", defaultChatCommandAliases)?.kind,
+    "applaud",
+  );
+  assert.equal(
+    matchSpokenGestureCommand("Mary, alza la mano", "Mary", defaultChatCommandAliases)?.kind,
+    "raise-hand",
+  );
+  assert.equal(
+    matchSpokenGestureCommand("Mary, abbassa la mano", "Mary", defaultChatCommandAliases)?.kind,
+    "lower-hand",
+  );
+  assert.equal(
+    matchSpokenGestureCommand(
+      "Mary, mostra tutti i mood",
+      "Mary",
+      defaultChatCommandAliases,
+    )?.kind,
+    "preview-moods",
+  );
+  assert.equal(
+    matchSpokenGestureCommand("Mary, riassumi in chat", "Mary", defaultChatCommandAliases),
+    null,
+  );
+  assert.equal(
+    matchSpokenGestureCommand("Secondo me Mary dovrebbe applaudire", "Mary", defaultChatCommandAliases),
+    null,
   );
 });
 

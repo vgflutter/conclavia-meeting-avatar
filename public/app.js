@@ -1,5 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const MOOD_PREVIEW_STAGE_MS = 37_000;
 
 const elements = {
   providerStatus: $("#provider-status"),
@@ -82,6 +83,7 @@ const elements = {
   commandRaiseHand: $("#command-raise-hand"),
   commandLowerHand: $("#command-lower-hand"),
   commandApplaud: $("#command-applaud"),
+  commandPreviewMoods: $("#command-preview-moods"),
   commandSummarizeChat: $("#command-summarize-chat"),
   commandReplyChat: $("#command-reply-chat"),
   commandSpeak: $("#command-speak"),
@@ -106,6 +108,7 @@ let liveTranscript = "";
 let liveRecognitionFinished = Promise.resolve();
 let finishLiveRecognition = null;
 let lastListenerSegmentId = null;
+let listenerEventSource = null;
 let stageModeTimer = null;
 let meetingStartedAt = Date.now();
 let activeAvatarProfile = null;
@@ -291,6 +294,7 @@ function renderConfig(payload) {
   renderCommandAliases(elements.commandRaiseHand, config.chatCommandAliases.raiseHand);
   renderCommandAliases(elements.commandLowerHand, config.chatCommandAliases.lowerHand);
   renderCommandAliases(elements.commandApplaud, config.chatCommandAliases.applaud);
+  renderCommandAliases(elements.commandPreviewMoods, config.chatCommandAliases.previewMoods);
   renderCommandAliases(elements.commandSummarizeChat, config.chatCommandAliases.summarizeInChat);
   renderCommandAliases(elements.commandReplyChat, config.chatCommandAliases.replyInChat);
   renderCommandAliases(elements.commandSpeak, config.chatCommandAliases.speak);
@@ -497,7 +501,9 @@ function renderTurn(result) {
   renderMaryResponse(result.decision);
   renderParticipationRequest(result.decision?.request ?? result.llmContext?.participationRequest ?? null);
 
-  if (result.decision?.reason === "collective-farewell") {
+  if (result.decision?.reason === "social-greeting") {
+    setDecision(`${avatarName} si unisce al saluto.`, "responding");
+  } else if (result.decision?.reason === "collective-farewell") {
     setDecision(`${avatarName} ha riconosciuto la chiusura del meeting e saluta il gruppo.`, "responding");
   } else if (result.decision?.activated && result.decision.cue?.provider === "openai") {
     setDecision(`${avatarName} ha letto la conversazione e sta rispondendo${result.usedWebSearch ? " con ricerca web" : ""}.`, "responding");
@@ -511,6 +517,22 @@ function renderTurn(result) {
     setDecision(`${avatarName} ha riconosciuto una conclusione eccezionale e applaude.`, "responding");
     setStageMode("applauding", "Apprezzamento del contributo");
     settleStageAfter(5_000);
+  } else if (result.decision?.reason === "spoken-command") {
+    if (result.physicalAction?.kind === "mood-preview") {
+      setDecision(`${avatarName} prova in sequenza tutti i 12 mood.`, "responding");
+      setStageMode("listening", "Test dei 12 mood in corso");
+      settleStageAfter(MOOD_PREVIEW_STAGE_MS);
+    } else if (result.physicalAction?.kind === "applause") {
+      setDecision(`${avatarName} esegue immediatamente il comando vocale di applauso.`, "responding");
+      setStageMode("applauding", "Comando vocale");
+      settleStageAfter(5_000);
+    } else if (result.physicalAction?.kind === "raise-hand") {
+      setDecision(`${avatarName} alza la mano su comando vocale.`, "requesting");
+      setStageMode("requesting", "In attesa del permesso");
+    } else {
+      setDecision(`${avatarName} abbassa la mano su comando vocale.`, "listening");
+      setStageMode("listening", "Partecipante virtuale");
+    }
   } else {
     setDecision(`Intervento acquisito. ${avatarName} continua ad ascoltare senza rispondere.`, "listening");
   }
@@ -569,6 +591,7 @@ function describeChatResult(result) {
   if (result.action === "raise-hand") return `${avatarName} ha chiesto la parola.`;
   if (result.action === "lower-hand") return `${avatarName} ha abbassato la mano.`;
   if (result.action === "applaud") return `${avatarName} applaude.`;
+  if (result.action === "preview-moods") return `${avatarName} prova in sequenza tutti i 12 mood.`;
   if (result.reason === "agenda-activated") return `${avatarName} ha attivato la scaletta temporale.`;
   if (result.reason === "agenda-cancelled") return `${avatarName} ha annullato la scaletta.`;
   if (result.reason === "agenda-invalid") return `${avatarName} ha segnalato un errore nella scaletta.`;
@@ -593,11 +616,16 @@ async function submitMeetingMessage(channel, text) {
           ? "requesting"
           : result.action === "applaud"
             ? "responding"
+            : result.action === "preview-moods"
+              ? "responding"
             : "listening";
         setDecision(describeChatResult(result), decisionState);
         if (result.action === "applaud") {
           setStageMode("applauding", "Comando dalla chat");
           settleStageAfter(5_000);
+        } else if (result.action === "preview-moods") {
+          setStageMode("listening", "Test dei 12 mood in corso");
+          settleStageAfter(MOOD_PREVIEW_STAGE_MS);
         }
         renderDebug(result, "EVENTO CHAT");
       }
@@ -798,9 +826,12 @@ function renderListenerStatus(status) {
   elements.listenerPill.className = `status-pill ${active ? "live" : ""}`;
   if (status.phase === "running") {
     elements.listenerPill.textContent = status.speechDetected ? "Ascolto: voce" : "Ascolto: live";
+    const latency = Number.isFinite(status.lastTranscriptionLatencyMs)
+      ? ` · STT ${status.lastTranscriptionLatencyMs} ms`
+      : "";
     elements.listenerStatus.textContent = status.speechDetected
       ? "Voce rilevata, trascrizione in corso."
-      : `${avatarName} legge ${status.resolvedAudioDevice || status.audioDevice}.`;
+      : `${avatarName} legge ${status.resolvedAudioDevice || status.audioDevice}.${latency}`;
   } else if (status.phase === "starting") {
     elements.listenerPill.textContent = "Ascolto: avvio";
     elements.listenerStatus.textContent = "Connessione Realtime e apertura del bus audio.";
@@ -834,6 +865,18 @@ async function refreshListenerStatus() {
     elements.listenerPill.textContent = "Ascolto: offline";
     elements.listenerStatus.textContent = `Controllo fallito: ${error.message}`;
   }
+}
+
+function connectListenerEvents() {
+  if (!("EventSource" in window) || listenerEventSource) return;
+  listenerEventSource = new EventSource("/api/listener/events");
+  listenerEventSource.addEventListener("listener", (event) => {
+    try {
+      renderListenerStatus(JSON.parse(event.data));
+    } catch {
+      // A malformed status update must not stop the browser's SSE reconnect.
+    }
+  });
 }
 
 elements.listenerStartButton.addEventListener("click", async () => {
@@ -1357,6 +1400,7 @@ elements.configForm.addEventListener("submit", async (event) => {
           raiseHand: parseCommandAliases(elements.commandRaiseHand),
           lowerHand: parseCommandAliases(elements.commandLowerHand),
           applaud: parseCommandAliases(elements.commandApplaud),
+          previewMoods: parseCommandAliases(elements.commandPreviewMoods),
           summarizeInChat: parseCommandAliases(elements.commandSummarizeChat),
           replyInChat: parseCommandAliases(elements.commandReplyChat),
           speak: parseCommandAliases(elements.commandSpeak),
@@ -1410,9 +1454,12 @@ function updateMeetingClock() {
 
 await refreshConfig();
 await Promise.all([refreshHealth(), refreshContext(), refreshRendererStatus(), refreshListenerStatus()]);
+connectListenerEvents();
 updateMeetingClock();
 window.setInterval(updateMeetingClock, 1_000);
-window.setInterval(refreshListenerStatus, 900);
+// SSE carries speech and partial-transcript updates immediately. This slow
+// poll is only a safety net for browsers or proxies that interrupt the stream.
+window.setInterval(refreshListenerStatus, 5_000);
 window.setInterval(refreshContext, 1_500);
 window.setInterval(pollOutboundChat, 1_500);
 window.setInterval(refreshRendererStatus, 4_000);

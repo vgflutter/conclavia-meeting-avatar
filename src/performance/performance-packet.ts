@@ -267,6 +267,47 @@ export function listeningPerformancePacket(input: {
   };
 }
 
+export function moodPreviewPerformancePacket(input: {
+  avatarId: string;
+  avatarName: string;
+  beats: readonly PerformanceBeat[];
+  durationMs: number;
+}): PerformancePacketDraft {
+  const performanceId = randomUUID();
+  return {
+    schema: performancePacketSchema,
+    version: performancePacketVersion,
+    performanceId,
+    avatar: {
+      id: input.avatarId,
+      name: input.avatarName,
+      assetVersion: "web-lod-pending",
+    },
+    kind: "listening",
+    priority: 55,
+    interruptible: true,
+    clock: { source: "timeline", durationMs: input.durationMs },
+    tracks: {
+      visemes: [],
+      expressions: input.beats.map((beat) => ({
+        atMs: beat.atMs,
+        semanticMood: beat.semanticMood,
+        rendererMood: beat.mood,
+        level: beat.intensity,
+      })),
+      gaze: input.beats.map((beat) => ({
+        atMs: beat.atMs,
+        target: beat.focus,
+        blendMs: 360,
+      })),
+      gestures: [],
+    },
+    events: [],
+    metadata: {},
+    createdAt: new Date().toISOString(),
+  };
+}
+
 export function gesturePerformancePacket(input: {
   avatarId: string;
   avatarName: string;

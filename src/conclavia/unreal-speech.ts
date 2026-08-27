@@ -36,6 +36,59 @@ const speechCache = new Map<string, {
 const speechMarksCache = new Map<string, SpeechMark[]>();
 const maxCachedSpeechItems = 16;
 const maxCachedSpeechBytesPerItem = 2 * 1024 * 1024;
+const englishPronunciationTerms = [
+  "Amazon Web Services",
+  "artificial intelligence",
+  "continuous deployment",
+  "continuous integration",
+  "large language model",
+  "machine learning",
+  "Microsoft Teams",
+  "pull request",
+  "Unreal Engine",
+  "Google Meet",
+  "MetaHuman",
+  "OpenAI",
+  "Kubernetes",
+  "JavaScript",
+  "TypeScript",
+  "frontend",
+  "backend",
+  "framework",
+  "deployment",
+  "repository",
+  "roadmap",
+  "deadline",
+  "feedback",
+  "follow-up",
+  "stand-up",
+  "browser",
+  "meeting",
+  "prompt",
+  "Docker",
+  "GitHub",
+  "cloud",
+  "server",
+  "release",
+  "sprint",
+  "token",
+  "Open Source",
+  "API",
+  "AWS",
+  "LLM",
+] as const;
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+const englishPronunciationPattern = new RegExp(
+  `\\b(?:${[...englishPronunciationTerms]
+    .sort((left, right) => right.length - left.length)
+    .map(escapeRegExp)
+    .join("|")})\\b`,
+  "giu",
+);
 
 function pollyClient(): PollyClient {
   const config = getUnrealStudioConfig();
@@ -70,6 +123,15 @@ export function preferredPollyEngine(voice: SupportedVoice): PollySpeechEngine {
   return neuralVoices.has(voice) ? "neural" : "generative";
 }
 
+export function speechRateFor(
+  languageCode: "it-IT" | "en-US",
+  direction: string,
+): string {
+  if (direction.includes("vivace")) return languageCode === "it-IT" ? "104%" : "102%";
+  if (direction.includes("autorevole")) return "98%";
+  return "100%";
+}
+
 function cleanText(value: unknown): string {
   return typeof value === "string"
     ? value.replace(/[*_#]/gu, "").replace(/\s+/gu, " ").trim()
@@ -83,6 +145,25 @@ function escapeSsml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
+}
+
+export function speechSsmlForText(
+  text: string,
+  languageCode: "it-IT" | "en-US",
+  allowInlineLanguage = true,
+): string {
+  if (languageCode !== "it-IT" || !allowInlineLanguage) return escapeSsml(text);
+
+  let cursor = 0;
+  let result = "";
+  for (const match of text.matchAll(englishPronunciationPattern)) {
+    const index = match.index;
+    if (index === undefined) continue;
+    result += escapeSsml(text.slice(cursor, index));
+    result += `<lang xml:lang="en-US">${escapeSsml(match[0])}</lang>`;
+    cursor = index + match[0].length;
+  }
+  return result + escapeSsml(text.slice(cursor));
 }
 
 interface NormalizedSpeechRequest {
@@ -116,17 +197,15 @@ function normalizeSpeechRequest(input: {
   }
 
   const direction = cleanText(input.direction);
-  const rate = direction.includes("vivace")
-    ? "114%"
-    : direction.includes("autorevole")
-      ? "110%"
-      : "112%";
+  const engine = preferredPollyEngine(voice);
+  const rate = speechRateFor(languageCode, direction);
+  const ssmlText = speechSsmlForText(text, languageCode, engine !== "generative");
   return {
     text,
     voice,
     languageCode,
-    engine: preferredPollyEngine(voice),
-    ssml: `<speak><prosody rate="${rate}">${escapeSsml(text)}</prosody></speak>`,
+    engine,
+    ssml: `<speak><prosody rate="${rate}">${ssmlText}</prosody></speak>`,
     cacheKey: JSON.stringify([text, voice, languageCode, direction]),
   };
 }

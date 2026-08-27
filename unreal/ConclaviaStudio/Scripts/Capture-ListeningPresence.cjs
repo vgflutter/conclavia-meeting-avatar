@@ -85,7 +85,10 @@ async function health() {
       shot: "reaction",
       intent: "listen-react",
       bodyGesture: "none",
-      listenerMood: "surprise",
+      listenerSemanticMood: "surprised",
+      // Keep the commercial solve identity-neutral. The semantic MetaHuman
+      // layer supplies the visible listening reaction and its eased hold.
+      listenerMood: "neutral",
       listenerMoodIntensity: 0.52,
       expectedDurationMs: 6_000,
       performanceBeats: [],

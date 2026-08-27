@@ -13,6 +13,7 @@ import {
 } from "./core/activation.js";
 import { CollectiveFarewellTracker } from "./core/collective-farewell.js";
 import { ListeningReactionStabilizer } from "./core/listening-reaction.js";
+import { SocialGreetingTracker } from "./core/social-greeting.js";
 import { DialogueLease } from "./core/dialogue-lease.js";
 import { immediateResponseFor } from "./core/immediate-response.js";
 import { isLikelyAvatarSpeechEcho } from "./core/transcript-echo.js";
@@ -21,7 +22,11 @@ import {
   createInterventionRequest,
   grantedInterventionCue,
 } from "./core/intervention-request.js";
-import { chatResponseChannel, matchChatCommand } from "./core/chat-commands.js";
+import {
+  chatResponseChannel,
+  matchChatCommand,
+  matchSpokenGestureCommand,
+} from "./core/chat-commands.js";
 import { formatAgendaOffset, MeetingAgendaManager } from "./core/meeting-agenda.js";
 import { OutboundChatQueue } from "./core/outbound-chat-queue.js";
 import { dialogueParticipantKey } from "./core/participant-identity.js";
@@ -80,7 +85,10 @@ import {
   publicWebAvatarStatus,
   WebAvatarRegistry,
 } from "./performance/web-avatar-registry.js";
-import { MeetingListener } from "./teams/meeting-listener.js";
+import {
+  MeetingListener,
+  type MeetingListenerStatus,
+} from "./teams/meeting-listener.js";
 
 const publicDirectory = join(dirname(fileURLToPath(import.meta.url)), "../public");
 const staticFiles: ReadonlyMap<string, readonly [string, string]> = new Map([
@@ -499,6 +507,7 @@ export function startServer(options: ServerOptions): Promise<void> {
   let avatarHandRaised = false;
   const listeningReactions = new ListeningReactionStabilizer();
   const collectiveFarewells = new CollectiveFarewellTracker();
+  const socialGreetings = new SocialGreetingTracker();
 
   const markRendererReady = (playerUrl?: string): void => {
     const wasRendererArmed = rendererArmed;
@@ -762,23 +771,99 @@ export function startServer(options: ServerOptions): Promise<void> {
       runtimeConfig.name,
       participantKey !== null && dialogueLease.isActiveFor(participantKey),
     );
+    // A direct invocation must never wait behind an observer analysis. The
+    // listener gives it a priority lane and this abort releases any model call
+    // still evaluating an older, non-addressed meeting turn.
+    if (decision.activated) intelligence?.abortPending();
     if (decision.ingested) retainSegment(segment);
 
     let warning: string | null = null;
     let delivery: Awaited<ReturnType<ConclaviaRenderer["deliver"]>> | null = null;
+    const speechPrefetch: {
+      sentenceText: string | null;
+      promise: Promise<void> | null;
+    } = { sentenceText: null, promise: null };
+    const voiceConfig = {
+      voiceStyle: runtimeConfig.voiceStyle,
+      italianVoice: runtimeConfig.italianVoice,
+      englishVoice: runtimeConfig.englishVoice,
+    };
     let physicalAction: {
-      kind: "applause";
+      kind: "applause" | "raise-hand" | "lower-hand" | "mood-preview";
       reason: string;
       importance: number;
       confidence: number;
     } | null = null;
     const currentRequest = participationSnapshot();
+    const spokenGestureCommand = responseChannel === "voice"
+      ? matchSpokenGestureCommand(
+          segment.text,
+          runtimeConfig.name,
+          runtimeConfig.chatCommandAliases,
+        )
+      : null;
 
     const collectiveFarewell = decision.ingested
       ? collectiveFarewells.consider(transcriptHistory, segment, runtimeConfig.name)
       : null;
+    const socialGreeting = responseChannel === "voice" && decision.ingested
+      ? socialGreetings.consider(segment, runtimeConfig.name)
+      : null;
 
-    if (collectiveFarewell) {
+    if (spokenGestureCommand) {
+      // Explicit spoken gestures are deterministic controls, not content
+      // generation. Execute immediately and never spend an LLM round trip.
+      const action = spokenGestureCommand.kind;
+      if (action === "raise-hand") {
+        avatarHandRaised = true;
+      } else if (action === "lower-hand") {
+        avatarHandRaised = false;
+        pendingRequest = null;
+      }
+      decision = {
+        ingested: decision.ingested,
+        activated: false,
+        reason: "spoken-command",
+      };
+      physicalAction = {
+        kind: action === "applaud"
+          ? "applause"
+          : action === "preview-moods"
+            ? "mood-preview"
+            : action,
+        reason: "Comando vocale esplicito.",
+        importance: 5,
+        confidence: 5,
+      };
+      if (rendererArmed) {
+        try {
+          const rendererStartedAt = performance.now();
+          if (action === "raise-hand") {
+            await renderer.raiseHand(runtimeConfig.name);
+          } else if (action === "lower-hand") {
+            await renderer.lowerHand(runtimeConfig.name);
+          } else if (action === "applaud") {
+            await renderer.applaud(runtimeConfig.name, segment.speakerName);
+          } else {
+            await renderer.previewMoods(runtimeConfig.name, voiceConfig);
+          }
+          rendererMs = Math.round(performance.now() - rendererStartedAt);
+        } catch (error: unknown) {
+          console.error("Conclavia spoken gesture cue failed:", error);
+          warning = `Il comando vocale è stato riconosciuto, ma il gesto ${action} non è riuscito.`;
+        }
+      } else {
+        warning = "Il comando vocale è stato riconosciuto, ma il renderer non è armato.";
+      }
+    } else if (socialGreeting) {
+      decision = {
+        ingested: true,
+        activated: true,
+        reason: "social-greeting",
+        cue: socialGreeting.cue,
+      };
+      retainAvatarCue(socialGreeting.cue, "speech", segment);
+    } else if (collectiveFarewell) {
       const shouldLowerHand = avatarHandRaised;
       intelligence?.abortPending();
       pendingRequest = null;
@@ -898,6 +983,19 @@ export function startServer(options: ServerOptions): Promise<void> {
             direct ? "direct" : "observer",
             responseChannel,
             evaluateAutonomousRequest || allowAutonomousApplause,
+            direct && responseChannel === "voice" && rendererArmed
+              ? (sentence) => {
+                  speechPrefetch.sentenceText = sentence.text;
+                  speechPrefetch.promise = renderer.prefetchSpeech(sentence, voiceConfig).catch(
+                    (error: unknown) => {
+                      console.warn(
+                        "Conclavia speculative voice warm-up skipped:",
+                        error instanceof Error ? error.message : error,
+                      );
+                    },
+                  );
+                }
+              : undefined,
           );
           llmMs = Math.round(performance.now() - llmStartedAt);
           usedWebSearch = turn.usedWebSearch;
@@ -1045,12 +1143,14 @@ export function startServer(options: ServerOptions): Promise<void> {
       decision.cue.provider !== "diagnostic"
     ) {
       try {
+        if (
+          speechPrefetch.promise &&
+          decision.cue.sentences[0]?.text === speechPrefetch.sentenceText
+        ) {
+          await speechPrefetch.promise;
+        }
         const rendererStartedAt = performance.now();
-        delivery = await renderer.deliver(decision.cue, {
-          voiceStyle: runtimeConfig.voiceStyle,
-          italianVoice: runtimeConfig.italianVoice,
-          englishVoice: runtimeConfig.englishVoice,
-        });
+        delivery = await renderer.deliver(decision.cue, voiceConfig);
         rendererMs = (rendererMs ?? 0) + Math.round(performance.now() - rendererStartedAt);
       } catch (error: unknown) {
         console.error("Conclavia MetaHuman delivery failed:", error);
@@ -1178,20 +1278,30 @@ export function startServer(options: ServerOptions): Promise<void> {
 
     if (
       command?.kind === "raise-hand" || command?.kind === "lower-hand" ||
-      command?.kind === "applaud"
+      command?.kind === "applaud" || command?.kind === "preview-moods"
     ) {
       retainSegment(segment);
       let warning: string | null = null;
-      if (command.kind === "lower-hand") pendingRequest = null;
-      if (command.kind !== "applaud") avatarHandRaised = command.kind === "raise-hand";
+      if (command.kind === "lower-hand") {
+        pendingRequest = null;
+        avatarHandRaised = false;
+      } else if (command.kind === "raise-hand") {
+        avatarHandRaised = true;
+      }
       if (rendererArmed) {
         try {
           if (command.kind === "raise-hand") {
             await renderer.raiseHand(runtimeConfig.name);
           } else if (command.kind === "lower-hand") {
             await renderer.lowerHand(runtimeConfig.name);
-          } else {
+          } else if (command.kind === "applaud") {
             await renderer.applaud(runtimeConfig.name, input.speakerName);
+          } else {
+            await renderer.previewMoods(runtimeConfig.name, {
+              voiceStyle: runtimeConfig.voiceStyle,
+              italianVoice: runtimeConfig.italianVoice,
+              englishVoice: runtimeConfig.englishVoice,
+            });
           }
         } catch (error: unknown) {
           warning = error instanceof Error ? error.message : "Comando gesto non riuscito.";
@@ -1274,6 +1384,10 @@ export function startServer(options: ServerOptions): Promise<void> {
   }, 60_000);
   rendererLeaseTimer.unref();
 
+  const listenerStatusSubscribers = new Set<(status: MeetingListenerStatus) => void>();
+  const publishListenerStatus = (status: MeetingListenerStatus): void => {
+    for (const subscriber of listenerStatusSubscribers) subscriber(status);
+  };
   const createListener = () => runtimeConfig.apiKey
     ? new MeetingListener({
         apiKey: runtimeConfig.apiKey,
@@ -1281,7 +1395,9 @@ export function startServer(options: ServerOptions): Promise<void> {
         speakerName: runtimeConfig.meetingSpeakerName,
         transcriptionModel: options.realtimeTranscriptionModel,
         wakeWord: runtimeConfig.name,
+        isConversationActive: () => dialogueLease.snapshot().active,
         onSegment: processSegment,
+        onStatusChange: publishListenerStatus,
       })
     : null;
   let listener = createListener();
@@ -1608,6 +1724,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         lastAutonomousRequestAt = 0;
         lastAutonomousApplauseAt = 0;
         collectiveFarewells.reset();
+        socialGreetings.reset();
         dialogueLease.close();
 
         let listenerWarning: string | null = null;
@@ -1709,6 +1826,47 @@ export function startServer(options: ServerOptions): Promise<void> {
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/listener/events") {
+        response.writeHead(200, {
+          "content-type": "text/event-stream; charset=utf-8",
+          "cache-control": "no-cache, no-transform",
+          connection: "keep-alive",
+          "x-accel-buffering": "no",
+        });
+        response.write("retry: 1000\n\n");
+        let lastResultSegmentId: string | null = null;
+        const writeStatus = (status: MeetingListenerStatus): void => {
+          const resultRecord = status.lastResult as {
+            segment?: { id?: unknown };
+          } | null;
+          const resultSegmentId = typeof resultRecord?.segment?.id === "string"
+            ? resultRecord.segment.id
+            : null;
+          const includesNewResult = resultSegmentId !== null &&
+            resultSegmentId !== lastResultSegmentId;
+          if (includesNewResult) lastResultSegmentId = resultSegmentId;
+          const payload = includesNewResult
+            ? status
+            : { ...status, lastResult: null };
+          response.write("event: listener\n");
+          response.write(`data: ${JSON.stringify(payload)}\n\n`);
+        };
+        if (listener) {
+          writeStatus(listener.status);
+        } else {
+          response.write("event: listener\n");
+          response.write('data: {"phase":"unavailable","running":false,"lastError":"OpenAI non configurato."}\n\n');
+        }
+        listenerStatusSubscribers.add(writeStatus);
+        const heartbeat = setInterval(() => response.write(": keep-alive\n\n"), 15_000);
+        heartbeat.unref();
+        request.once("close", () => {
+          clearInterval(heartbeat);
+          listenerStatusSubscribers.delete(writeStatus);
+        });
+        return;
+      }
+
       if (request.method === "POST" && url.pathname === "/api/listener/start") {
         if (!listener) {
           sendJson(response, 503, {
@@ -1754,6 +1912,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         lastAutonomousRequestAt = 0;
         lastAutonomousApplauseAt = 0;
         collectiveFarewells.reset();
+        socialGreetings.reset();
         dialogueLease.close();
         agendas.reset();
         outboundChat.clear();

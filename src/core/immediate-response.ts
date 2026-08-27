@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 
-import type { AvatarSpeechCue, TranscriptSegment } from "../domain/protocol.js";
+import type {
+  AvatarSpeechCue,
+  AvatarSpeechSentence,
+  TranscriptSegment,
+} from "../domain/protocol.js";
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -24,6 +28,20 @@ function normalizedIntent(value: string): string {
     .trim();
 }
 
+function isCapabilitiesIntent(intent: string): boolean {
+  return /^(?:(?:puoi|potresti|mi puoi|mi potresti)\s+)?(?:elencare|elenca|spiegare|spiega|descrivere|descrivi|raccontare|racconta)\s+(?:brevemente\s+)?(?:le\s+)?(?:tue\s+)?(?:funzionalit[àa]|funzioni|capacit[àa]|possibilit[àa])$/u.test(intent) ||
+    /^(?:quali sono|dimmi)\s+(?:le\s+)?(?:tue\s+)?(?:funzionalit[àa]|funzioni|capacit[àa]|possibilit[àa])$/u.test(intent) ||
+    /^(?:cosa|che cosa)\s+(?:sai|puoi)\s+fare$/u.test(intent);
+}
+
+function sentence(
+  text: string,
+  mood: AvatarSpeechSentence["mood"] = "attentive",
+  level: AvatarSpeechSentence["level"] = 2,
+): AvatarSpeechSentence {
+  return { text, mood, level, language: "it-IT" };
+}
+
 /**
  * Resolve tiny presence checks locally. These phrases do not need meeting
  * context or factual reasoning, so sending them to the LLM only adds latency.
@@ -38,31 +56,41 @@ export function immediateResponseFor(
   if (remainder === null) return null;
 
   const intent = normalizedIntent(remainder);
-  let text: string | null = null;
+  let sentences: AvatarSpeechSentence[] | null = null;
 
   if (/^(?:mi ascolti|stai ascoltando)(?: bene| ora| adesso)?$/u.test(intent)) {
-    text = "Sì, ti ascolto.";
+    sentences = [sentence("Sì, ti ascolto.")];
   } else if (/^(?:mi senti|riesci a sentirmi)(?: bene| ora| adesso)?$/u.test(intent)) {
-    text = "Sì, ti sento.";
+    sentences = [sentence("Sì, ti sento.")];
   } else if (/^(?:ci sei|sei (?:qui|lì|li|pronta|attiva|collegata|online))$/u.test(intent)) {
-    text = "Sì, sono qui e sono pronta.";
+    sentences = [sentence("Sì, sono qui e sono pronta.")];
   } else if (/^(?:(?:ciao|buongiorno|buonasera|salve|ehi|hey)(?:\s+|$)){0,3}$/u.test(intent)) {
-    text = "Ciao! Sono qui.";
+    sentences = [sentence("Ciao! Sono qui.")];
+  } else if (isCapabilitiesIntent(intent)) {
+    sentences = [
+      sentence(
+        "Posso ascoltare e ricordare il contesto della riunione, rispondere quando mi chiamate e verificare informazioni sul web quando serve.",
+        "confident",
+      ),
+      sentence(
+        "Posso chiedere la parola davanti a errori od omissioni importanti, alzare o abbassare la mano, applaudire e reagire con espressioni coerenti mentre ascolto e parlo.",
+        "assertive",
+      ),
+      sentence(
+        "Posso anche riassumere la discussione, seguire una scaletta con i tempi e salutare i partecipanti.",
+        "amused",
+      ),
+    ];
   }
 
-  if (!text) return null;
+  if (!sentences) return null;
   return {
     id: randomUUID(),
     kind: "speak",
     provider: "system",
     model: null,
     speakerName: avatarName,
-    sentences: [{
-      text,
-      mood: "attentive",
-      level: 2,
-      language: "it-IT",
-    }],
+    sentences,
     addressedTo: segment.speakerName,
     sourceSegmentIds: [segment.id],
     createdAt: new Date().toISOString(),

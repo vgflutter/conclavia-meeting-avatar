@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 
-import type { AvatarInterventionRequest, AvatarSpeechCue } from "../domain/protocol.js";
+import type {
+  AvatarInterventionRequest,
+  AvatarSpeechCue,
+  AvatarSpeechSentence,
+} from "../domain/protocol.js";
+import { resolveSpeechLanguage } from "../core/speech-language.js";
 import { synthesizePerformanceSpeech } from "../conclavia/unreal-speech.js";
 import type {
   ConclaviaDelivery,
@@ -11,6 +16,8 @@ import type {
 } from "../conclavia/renderer.js";
 import {
   listeningMoodIntensity,
+  moodPreviewBeats,
+  moodPreviewStepMs,
   performanceBeatsForCue,
   performanceProfileForMood,
   speechTextForCue,
@@ -20,6 +27,7 @@ import {
   controlPerformancePacket,
   gesturePerformancePacket,
   listeningPerformancePacket,
+  moodPreviewPerformancePacket,
   pcm16MonoToWav,
   speechPerformancePacket,
   type PerformanceAudioTrack,
@@ -181,6 +189,21 @@ export class WebPerformanceRenderer {
     return Promise.resolve();
   }
 
+  previewMoods(
+    speakerName: string,
+    options: { stepMs?: number; waitForCompletion?: boolean } = {},
+  ): Promise<void> {
+    this.#requireArmed();
+    const stepMs = Math.max(1, options.stepMs ?? moodPreviewStepMs);
+    this.#hub.publish(moodPreviewPerformancePacket({
+      avatarId: this.#avatarProfile,
+      avatarName: speakerName,
+      beats: moodPreviewBeats(stepMs),
+      durationMs: 12 * stepMs + 900,
+    }));
+    return Promise.resolve();
+  }
+
   async deliver(
     cue: AvatarSpeechCue,
     voice: ConclaviaVoiceConfig = {
@@ -196,12 +219,13 @@ export class WebPerformanceRenderer {
     const generation = ++this.#deliveryGeneration;
     const deliveryStartedAt = performance.now();
     const sentencePromises = cue.sentences.map(async (sentence) => {
+      const language = resolveSpeechLanguage(sentence.language, sentence.text);
       const speech = await this.#synthesize({
         text: sentence.text,
-        voice: sentence.language === "en-US"
+        voice: language === "en-US"
           ? voice.englishVoice
           : voice.italianVoice,
-        languageCode: sentence.language,
+        languageCode: language,
         direction: voiceDirections[voice.voiceStyle],
       });
       return speech;
@@ -294,6 +318,19 @@ export class WebPerformanceRenderer {
       timeToFirstAudioMs,
       voiceEngines: [...new Set(sentenceSpeech.map((sentence) => sentence.engine))],
     };
+  }
+
+  async prefetchSpeech(
+    sentence: AvatarSpeechSentence,
+    voice: ConclaviaVoiceConfig,
+  ): Promise<void> {
+    const language = resolveSpeechLanguage(sentence.language, sentence.text);
+    await this.#synthesize({
+      text: sentence.text,
+      voice: language === "en-US" ? voice.englishVoice : voice.italianVoice,
+      languageCode: language,
+      direction: voiceDirections[voice.voiceStyle],
+    });
   }
 
   abortPending(): void {

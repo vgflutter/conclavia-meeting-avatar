@@ -17,14 +17,23 @@ import {
 
 const pcmChunkBytes = 4_800; // 100 ms of mono PCM16 at 24 kHz.
 const connectionTimeoutMs = 15_000;
+const serverVadSilenceMs = 450;
+const listenerStatusThrottleMs = 50;
 // BlackHole is a digital meeting bus: values below roughly -44 dBFS are usually
 // codec residue, notifications or routing noise rather than a remote speaker.
 // Keeping this above the previous -52 dBFS floor prevents tiny artifacts from
 // opening a transcription turn and being hallucinated as speech.
 const clientVadSpeechThreshold = 0.006;
 const clientVadHoldThreshold = 0.0015;
-const clientVadSilenceChunks = 9; // 900 ms keeps natural pauses inside one utterance.
-const clientVadPrerollChunks = 4; // Preserve 400 ms before the first detected syllable.
+// A spoken wake word is commonly short, quieter than the following question and
+// followed by a small pause ("Mary, ..."). Five chunks caused that pause to
+// split the invocation from its question. Keep one natural pause in the turn.
+const clientVadDefaultSilenceChunks = 7; // 700 ms keeps a wake-word pause inside the same turn.
+const clientVadAddressedSilenceChunks = 5; // A complete addressed question can close after 500 ms.
+// If the wake word itself stays below the opening threshold, the louder first
+// word of the question opens the turn. A generous rolling prefix recovers it
+// without adding end-of-turn latency.
+const clientVadPrerollChunks = 12; // Preserve 1.2 s before the first detected syllable.
 const clientVadMaxTurnChunks = 120; // Never leave a noisy meeting turn open beyond 12 seconds.
 const reconnectInitialDelayMs = 1_000;
 const reconnectMaxDelayMs = 30_000;
@@ -68,6 +77,38 @@ export function canSpeculateTurn(text: string): boolean {
   return text.trim().split(/\s+/u).filter(Boolean).length >= 3;
 }
 
+/**
+ * Keep a generous pause after a bare wake word, then close a useful addressed
+ * question sooner once Realtime has already heard enough text to process it.
+ * This removes 400 ms from the common “Mary, …?” path without splitting
+ * “Mary” from the question that follows it.
+ */
+export function clientVadSilenceChunksForPartial(
+  text: string,
+  wakeWord: string,
+): number {
+  return canSpeculateAddressedTurn(text, wakeWord)
+    ? clientVadAddressedSilenceChunks
+    : clientVadDefaultSilenceChunks;
+}
+
+export function isPriorityTranscript(
+  text: string,
+  wakeWord: string,
+  conversationActive: boolean,
+): boolean {
+  return isAddressedToAvatar(text, wakeWord) ||
+    (conversationActive && isDialogueFollowUpCandidate(text));
+}
+
+export function requiresClientVad(model: string): boolean {
+  return [
+    "gpt-live-transcribe",
+    "gpt-transcribe",
+    "gpt-4o-mini-transcribe",
+  ].includes(model);
+}
+
 export function isMeetingSpeechRms(rms: number): boolean {
   return Number.isFinite(rms) && rms >= clientVadSpeechThreshold;
 }
@@ -78,8 +119,10 @@ export function meetingTranscriptionPrompt(wakeWord: string): string {
     "Riunione di lavoro reale, prevalentemente in italiano, con possibili termini tecnici in inglese.",
     "Trascrivi fedelmente ciò che viene pronunciato, senza completare frasi, aggiungere parole o correggere affermazioni fattualmente errate.",
     "Conserva esattamente numeri, operatori e negazioni.",
+    "Scrivi italiano e termini inglesi usando soltanto l'alfabeto latino; non inventare parole in altri alfabeti quando l'audio e incerto.",
     'Nelle espressioni aritmetiche separa le parole: per esempio “tre più tre fa nove”, non “tre più tre fan nove”.',
     `Il nome esatto dell'assistente virtuale è ${assistantName}.`,
+    `Se il nome ${assistantName} viene pronunciato all'inizio o alla fine di una frase, includilo sempre nella trascrizione.`,
     "Possibili termini: Conclavia, MetaHuman, Microsoft Teams, Google Meet, AWS, Unreal Engine, OpenAI.",
   ].join(" ");
 }
@@ -105,12 +148,11 @@ export function realtimeTranscriptionGuidance(
   if (model === "gpt-live-transcribe") {
     return {
       model,
+      // Meetings are predominantly Italian but routinely contain English
+      // product names. These models support plural language hints directly.
       languages: ["it", "en"],
       prompt,
       keywords: meetingTranscriptionKeywords(wakeWord),
-      // The official guidance recommends medium as the balanced
-      // latency/accuracy point. `minimal` was too eager for meeting speech.
-      delay: "medium",
     };
   }
   if (model === "gpt-transcribe") {
@@ -170,6 +212,25 @@ function normalizedTranscript(value: string): string {
     .trim();
 }
 
+export function preserveWakeWordFromPartial(
+  finalTranscript: string,
+  partialTranscript: string,
+  wakeWord: string,
+): string {
+  const finalText = finalTranscript.trim();
+  const partialText = partialTranscript.trim();
+  const name = wakeWord.trim();
+  if (!finalText || !partialText || !name) return finalText;
+  if (isAddressedToAvatar(finalText, name)) return finalText;
+  if (!isAddressedToAvatar(partialText, name)) return finalText;
+
+  // Deltas and the completed event belong to the same Realtime item. If an
+  // earlier delta heard the configured name but the final pass dropped it,
+  // preserve the deterministic activation signal instead of silently turning
+  // a direct question into meeting background.
+  return `${name}, ${finalText}`;
+}
+
 export function isTranscriptionPromptEcho(text: string, wakeWord: string): boolean {
   const normalized = normalizedTranscript(text);
   const name = normalizedTranscript(wakeWord);
@@ -195,6 +256,15 @@ export function isTranscriptionPromptEcho(text: string, wakeWord: string): boole
 
 export type IgnoredTranscriptionReason = "empty" | "prompt-echo" | "noise";
 
+export function containsUnexpectedWritingSystem(text: string): boolean {
+  for (const character of text) {
+    if (/\p{L}/u.test(character) && !/\p{Script=Latin}/u.test(character)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function ignoredTranscriptionReason(
   text: string,
   wakeWord: string,
@@ -202,6 +272,11 @@ export function ignoredTranscriptionReason(
   const trimmed = text.trim();
   if (!trimmed) return "empty";
   if (isTranscriptionPromptEcho(trimmed, wakeWord)) return "prompt-echo";
+
+  // Conclavia meetings currently support Italian with English terminology.
+  // A sudden non-Latin fragment on the clean virtual bus is a recurring
+  // no-speech hallucination, not useful meeting context.
+  if (containsUnexpectedWritingSystem(trimmed)) return "noise";
 
   // A short wake-word utterance is still a valid invocation and must win over
   // every noise heuristic below.
@@ -250,6 +325,13 @@ export interface MeetingListenerStatus {
   lastRawTranscript: string | null;
   ignoredTranscriptionTurns: number;
   lastIgnoredTranscriptReason: IgnoredTranscriptionReason | null;
+  lastSpeechStartedAt: string | null;
+  lastSpeechStoppedAt: string | null;
+  lastTranscriptAt: string | null;
+  lastFirstDeltaLatencyMs: number | null;
+  lastTranscriptionLatencyMs: number | null;
+  lastDecisionLatencyMs: number | null;
+  pendingDecisionTurns: number;
   completedTurns: number;
   lastSegment: TranscriptSegment | null;
   lastResult: unknown;
@@ -264,6 +346,7 @@ export interface MeetingListenerOptions {
   wakeWord: string;
   isConversationActive?: () => boolean;
   onSegment: (segment: TranscriptSegment) => Promise<unknown>;
+  onStatusChange?: (status: MeetingListenerStatus) => void;
 }
 
 function errorMessage(error: unknown): string {
@@ -307,6 +390,13 @@ export class MeetingListener {
   #lastRawTranscript: string | null = null;
   #ignoredTranscriptionTurns = 0;
   #lastIgnoredTranscriptReason: IgnoredTranscriptionReason | null = null;
+  #lastSpeechStartedAt: string | null = null;
+  #lastSpeechStoppedAt: string | null = null;
+  #lastTranscriptAt: string | null = null;
+  #lastFirstDeltaLatencyMs: number | null = null;
+  #lastTranscriptionLatencyMs: number | null = null;
+  #lastDecisionLatencyMs: number | null = null;
+  #pendingDecisionTurns = 0;
   #completedTurns = 0;
   #lastSegment: TranscriptSegment | null = null;
   #lastResult: unknown = null;
@@ -324,13 +414,20 @@ export class MeetingListener {
   #activePartialItemId: string | null = null;
   #partialByItem = new Map<string, string>();
   #speculativeByItem = new Map<string, TranscriptSegment>();
+  #speechStoppedAtByItem = new Map<string, number>();
+  #firstDeltaSeen = new Set<string>();
+  #manualSpeechStartedAt: number | null = null;
+  #manualSpeechStoppedAt: number | null = null;
   #turnQueue: Promise<void> = Promise.resolve();
+  #latestResultCapturedAt = 0;
+  #statusEmitTimer: ReturnType<typeof setTimeout> | null = null;
   #desiredRunning = false;
   #reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   #reconnectDelayMs = reconnectInitialDelayMs;
 
   constructor(options: MeetingListenerOptions) {
     this.#options = options;
+    this.#manualTurnDetection = requiresClientVad(options.transcriptionModel);
   }
 
   get status(): MeetingListenerStatus {
@@ -342,8 +439,8 @@ export class MeetingListener {
       speakerName: this.#options.speakerName,
       model: this.#options.transcriptionModel,
       turnDetection: this.#manualTurnDetection
-        ? `client-vad-${clientVadSilenceChunks * 100}ms`
-        : "server-vad-350ms",
+        ? `client-vad-adaptive-${clientVadAddressedSilenceChunks * 100}-${clientVadDefaultSilenceChunks * 100}ms`
+        : `server-vad-${serverVadSilenceMs}ms`,
       connectedAt: this.#connectedAt,
       speechDetected: this.#speechDetected,
       partialTranscript: this.#partialTranscript,
@@ -358,6 +455,13 @@ export class MeetingListener {
       lastRawTranscript: this.#lastRawTranscript,
       ignoredTranscriptionTurns: this.#ignoredTranscriptionTurns,
       lastIgnoredTranscriptReason: this.#lastIgnoredTranscriptReason,
+      lastSpeechStartedAt: this.#lastSpeechStartedAt,
+      lastSpeechStoppedAt: this.#lastSpeechStoppedAt,
+      lastTranscriptAt: this.#lastTranscriptAt,
+      lastFirstDeltaLatencyMs: this.#lastFirstDeltaLatencyMs,
+      lastTranscriptionLatencyMs: this.#lastTranscriptionLatencyMs,
+      lastDecisionLatencyMs: this.#lastDecisionLatencyMs,
+      pendingDecisionTurns: this.#pendingDecisionTurns,
       completedTurns: this.#completedTurns,
       lastSegment: this.#lastSegment,
       lastResult: this.#lastResult,
@@ -386,6 +490,14 @@ export class MeetingListener {
     this.#lastRawTranscript = null;
     this.#ignoredTranscriptionTurns = 0;
     this.#lastIgnoredTranscriptReason = null;
+    this.#lastSpeechStartedAt = null;
+    this.#lastSpeechStoppedAt = null;
+    this.#lastTranscriptAt = null;
+    this.#lastFirstDeltaLatencyMs = null;
+    this.#lastTranscriptionLatencyMs = null;
+    this.#lastDecisionLatencyMs = null;
+    this.#pendingDecisionTurns = 0;
+    this.#emitStatus(true);
 
     try {
       const devices = await listAvfoundationAudioDevices();
@@ -411,29 +523,59 @@ export class MeetingListener {
           this.#fail("La sessione OpenAI Realtime si è chiusa; riconnessione automatica in corso.");
         }
       });
-      realtime.on("input_audio_buffer.speech_started", () => {
+      realtime.on("input_audio_buffer.speech_started", (event) => {
         this.#speechDetected = true;
+        this.#lastSpeechStartedAt = new Date().toISOString();
+        this.#speechStoppedAtByItem.delete(event.item_id);
+        this.#firstDeltaSeen.delete(event.item_id);
+        this.#emitStatus(true);
       });
-      realtime.on("input_audio_buffer.speech_stopped", () => {
+      realtime.on("input_audio_buffer.speech_stopped", (event) => {
         this.#speechDetected = false;
+        this.#committedAudioTurns += 1;
+        this.#lastSpeechStoppedAt = new Date().toISOString();
+        this.#speechStoppedAtByItem.set(event.item_id, performance.now());
+        this.#emitStatus(true);
       });
       realtime.on("conversation.item.input_audio_transcription.delta", (event) => {
         if (!event.delta) return;
+        if (!this.#firstDeltaSeen.has(event.item_id)) {
+          this.#firstDeltaSeen.add(event.item_id);
+          const stoppedAt = this.#speechStoppedAtByItem.get(event.item_id);
+          const baseline = stoppedAt ?? this.#manualSpeechStartedAt;
+          this.#lastFirstDeltaLatencyMs = baseline === undefined || baseline === null
+            ? null
+            : Math.max(0, Math.round(performance.now() - baseline));
+        }
         const current = `${this.#partialByItem.get(event.item_id) ?? ""}${event.delta}`;
         this.#partialByItem.set(event.item_id, current);
         this.#activePartialItemId = event.item_id;
         this.#partialTranscript = current.trimStart();
+        this.#emitStatus();
       });
       realtime.on("conversation.item.input_audio_transcription.completed", (event) => {
+        const partialTranscript = this.#partialByItem.get(event.item_id) ?? "";
         this.#partialByItem.delete(event.item_id);
         if (this.#activePartialItemId === event.item_id) this.#activePartialItemId = null;
         this.#partialTranscript = "";
-        const transcript = event.transcript.trim();
+        const stoppedAt = this.#speechStoppedAtByItem.get(event.item_id);
+        this.#speechStoppedAtByItem.delete(event.item_id);
+        this.#firstDeltaSeen.delete(event.item_id);
+        this.#lastTranscriptAt = new Date().toISOString();
+        this.#lastTranscriptionLatencyMs = stoppedAt === undefined
+          ? null
+          : Math.max(0, Math.round(performance.now() - stoppedAt));
+        const transcript = preserveWakeWordFromPartial(
+          event.transcript,
+          partialTranscript,
+          this.#options.wakeWord,
+        );
         this.#lastRawTranscript = transcript;
         const ignoredReason = ignoredTranscriptionReason(transcript, this.#options.wakeWord);
         if (ignoredReason) {
           this.#ignoredTranscriptionTurns += 1;
           this.#lastIgnoredTranscriptReason = ignoredReason;
+          this.#emitStatus(true);
           return;
         }
         this.#lastIgnoredTranscriptReason = null;
@@ -442,16 +584,27 @@ export class MeetingListener {
           speculative.text = transcript;
           this.#lastSegment = speculative;
           this.#speculativeByItem.delete(event.item_id);
+          this.#emitStatus(true);
           return;
         }
         this.#enqueueTranscript(transcript, event.item_id);
+        this.#emitStatus(true);
       });
-      realtime.on("input_audio_buffer.committed", () => {
+      realtime.on("input_audio_buffer.committed", (event) => {
         this.#confirmedAudioTurns += 1;
+        if (!this.#speechStoppedAtByItem.has(event.item_id)) {
+          this.#speechStoppedAtByItem.set(
+            event.item_id,
+            this.#manualSpeechStoppedAt ?? performance.now(),
+          );
+        }
+        this.#manualSpeechStoppedAt = null;
+        this.#emitStatus();
       });
       realtime.on("conversation.item.input_audio_transcription.failed", (event) => {
         this.#transcriptionFailures += 1;
         this.#lastError = `Trascrizione Realtime: ${event.error.message}`;
+        this.#emitStatus(true);
       });
 
       await withTimeout(
@@ -464,16 +617,12 @@ export class MeetingListener {
       );
 
       const updated = realtime.emitted("session.updated");
-      this.#manualTurnDetection = [
-        "gpt-live-transcribe",
-        "gpt-transcribe",
-        "gpt-4o-mini-transcribe",
-      ].includes(
-        this.#options.transcriptionModel,
-      );
-      this.#localFileTranscription = ["gpt-transcribe", "gpt-4o-mini-transcribe"].includes(
-        this.#options.transcriptionModel,
-      );
+      // GPT transcription models consume the continuous Realtime stream, but
+      // transcription-only sessions do not currently accept server VAD for
+      // these models. Local VAD only commits the already-streamed buffer; it no
+      // longer creates and uploads a serialized WAV request.
+      this.#manualTurnDetection = requiresClientVad(this.#options.transcriptionModel);
+      this.#localFileTranscription = false;
       const inputNoiseReduction = realtimeNoiseReduction(this.#options.audioDevice);
       realtime.send({
         type: "session.update",
@@ -493,9 +642,9 @@ export class MeetingListener {
                 type: "server_vad",
                 create_response: false,
                 interrupt_response: false,
-                threshold: 0.12,
-                prefix_padding_ms: 600,
-                silence_duration_ms: 350,
+                threshold: 0.18,
+                prefix_padding_ms: 500,
+                silence_duration_ms: serverVadSilenceMs,
               },
             },
           },
@@ -557,6 +706,7 @@ export class MeetingListener {
       this.#connectedAt = new Date().toISOString();
       this.#lastError = null;
       this.#reconnectDelayMs = reconnectInitialDelayMs;
+      this.#emitStatus(true);
       return this.status;
     } catch (error: unknown) {
       this.#fail(errorMessage(error));
@@ -569,6 +719,7 @@ export class MeetingListener {
     this.#clearReconnectTimer();
     if (this.#phase === "stopped") return this.status;
     this.#phase = "stopping";
+    this.#emitStatus(true);
     this.#cleanup();
     await Promise.race([
       Promise.all([
@@ -581,6 +732,7 @@ export class MeetingListener {
     this.#connectedAt = null;
     this.#speechDetected = false;
     this.#partialTranscript = "";
+    this.#emitStatus(true);
     return this.status;
   }
 
@@ -620,6 +772,9 @@ export class MeetingListener {
       this.#clientVadTurnChunks = 1;
       this.#clientVadPeakRms = rms;
       this.#speechDetected = true;
+      this.#manualSpeechStartedAt = performance.now();
+      this.#lastSpeechStartedAt = new Date().toISOString();
+      this.#emitStatus(true);
       for (const prefix of this.#clientVadPreroll) {
         this.#appendTurnAudio(prefix, realtime);
       }
@@ -639,8 +794,14 @@ export class MeetingListener {
       if (this.#clientVadTurnChunks < clientVadMaxTurnChunks) return;
     } else {
       this.#clientVadSilentChunks += 1;
+      const itemId = this.#activePartialItemId;
+      const partial = itemId ? this.#partialByItem.get(itemId)?.trim() : undefined;
+      const requiredSilentChunks = clientVadSilenceChunksForPartial(
+        partial ?? "",
+        this.#options.wakeWord,
+      );
       if (
-        this.#clientVadSilentChunks < clientVadSilenceChunks
+        this.#clientVadSilentChunks < requiredSilentChunks
         && this.#clientVadTurnChunks < clientVadMaxTurnChunks
       ) return;
     }
@@ -659,6 +820,8 @@ export class MeetingListener {
       this.#speculativeByItem.set(itemId, this.#enqueueTranscript(partial, itemId));
     }
     this.#committedAudioTurns += 1;
+    this.#manualSpeechStoppedAt = performance.now();
+    this.#lastSpeechStoppedAt = new Date().toISOString();
     if (this.#localFileTranscription) {
       const audio = Buffer.concat(this.#localAudioChunks);
       this.#localAudioChunks = [];
@@ -673,6 +836,7 @@ export class MeetingListener {
     this.#clientVadTurnChunks = 0;
     this.#clientVadPeakRms = 0;
     this.#speechDetected = false;
+    this.#emitStatus(true);
   }
 
   #appendTurnAudio(pcm: Buffer, realtime: OpenAIRealtimeWS): void {
@@ -722,17 +886,47 @@ export class MeetingListener {
       text,
       isFinal: true,
       capturedAt: new Date().toISOString(),
+      // The local BlackHole capture is meeting speech. Keeping the source
+      // explicit is required by the downstream TTS echo suppressor; without
+      // it, Mary's playback can re-enter memory as a participant turn.
+      source: "speech",
     };
-    this.#turnQueue = this.#turnQueue
-      .then(async () => {
-        if (this.#phase !== "running") return;
-        this.#lastSegment = segment;
-        this.#completedTurns += 1;
-        this.#lastResult = await this.#options.onSegment(segment);
-      })
-      .catch((error: unknown) => {
+    this.#lastSegment = segment;
+    this.#completedTurns += 1;
+    this.#pendingDecisionTurns += 1;
+    this.#emitStatus(true);
+
+    const processTurn = async (): Promise<void> => {
+      if (this.#phase !== "running") return;
+      const startedAt = performance.now();
+      const result = await this.#options.onSegment(segment);
+      this.#lastDecisionLatencyMs = Math.max(0, Math.round(performance.now() - startedAt));
+      const capturedAt = Date.parse(segment.capturedAt);
+      if (!Number.isFinite(capturedAt) || capturedAt >= this.#latestResultCapturedAt) {
+        this.#latestResultCapturedAt = Number.isFinite(capturedAt) ? capturedAt : Date.now();
+        this.#lastResult = result;
+      }
+    };
+    const isPriorityTurn = isPriorityTranscript(
+      text,
+      this.#options.wakeWord,
+      this.#options.isConversationActive?.() === true,
+    );
+    const executeTurn = async (): Promise<void> => {
+      try {
+        await processTurn();
+      } catch (error: unknown) {
         this.#lastError = `Elaborazione frase: ${errorMessage(error)}`;
-      });
+      } finally {
+        this.#pendingDecisionTurns = Math.max(0, this.#pendingDecisionTurns - 1);
+        this.#emitStatus(true);
+      }
+    };
+    if (isPriorityTurn) {
+      void executeTurn();
+    } else {
+      this.#turnQueue = this.#turnQueue.then(executeTurn, executeTurn);
+    }
     return segment;
   }
 
@@ -741,6 +935,7 @@ export class MeetingListener {
     if (this.#phase === "error" && this.#reconnectTimer) return;
     this.#lastError = message;
     this.#phase = "error";
+    this.#emitStatus(true);
     this.#cleanup();
     this.#scheduleReconnect();
   }
@@ -783,7 +978,7 @@ export class MeetingListener {
       realtime.socket.terminate();
     }
     this.#pendingAudio = Buffer.alloc(0);
-    this.#manualTurnDetection = false;
+    this.#manualTurnDetection = requiresClientVad(this.#options.transcriptionModel);
     this.#clientVadSpeechSeen = false;
     this.#clientVadSilentChunks = 0;
     this.#clientVadPreroll = [];
@@ -794,5 +989,29 @@ export class MeetingListener {
     this.#activePartialItemId = null;
     this.#partialByItem.clear();
     this.#speculativeByItem.clear();
+    this.#speechStoppedAtByItem.clear();
+    this.#firstDeltaSeen.clear();
+    this.#manualSpeechStartedAt = null;
+    this.#manualSpeechStoppedAt = null;
+    if (this.#statusEmitTimer) {
+      clearTimeout(this.#statusEmitTimer);
+      this.#statusEmitTimer = null;
+    }
+  }
+
+  #emitStatus(immediate = false): void {
+    if (!this.#options.onStatusChange) return;
+    if (immediate) {
+      if (this.#statusEmitTimer) clearTimeout(this.#statusEmitTimer);
+      this.#statusEmitTimer = null;
+      this.#options.onStatusChange(this.status);
+      return;
+    }
+    if (this.#statusEmitTimer) return;
+    this.#statusEmitTimer = setTimeout(() => {
+      this.#statusEmitTimer = null;
+      this.#options.onStatusChange?.(this.status);
+    }, listenerStatusThrottleMs);
+    this.#statusEmitTimer.unref();
   }
 }

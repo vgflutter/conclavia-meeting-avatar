@@ -4,6 +4,17 @@ import type {
   AvatarSpeechCue,
   AvatarSpeechSentence,
 } from "../domain/protocol.js";
+import { avatarMoods } from "../domain/protocol.js";
+
+// A diagnostic expression must remain readable after its eased entrance and
+// exit. Short spoken labels made the old preview flash for less than a second.
+export const moodPreviewStepMs = 3_000;
+// Start with a visible reaction. Beginning the diagnostic with neutral made a
+// correctly accepted command look broken for almost two seconds.
+export const moodPreviewMoods: readonly AvatarMood[] = [
+  ...avatarMoods.filter((mood) => mood !== "neutral"),
+  "neutral",
+];
 
 export type RendererMood =
   | "neutral"
@@ -108,8 +119,38 @@ export function listeningMoodIntensity(
 ): number {
   const profile = moodProfiles[semanticMood];
   if (semanticMood === "neutral") return 0;
-  const base = [0, 0.12, 0.22, 0.34, 0.48, 0.62][level] ?? 0.22;
-  return Math.round(base * profile.listeningScale * 100) / 100;
+  // Meeting video needs low-level reactions to remain legible after WebRTC
+  // compression. Keep a visible floor, while bounding strong reactions below
+  // the exaggerated expressions that read as grimaces on a close-up.
+  const base = [0, 0.26, 0.38, 0.50, 0.62, 0.74][level] ?? 0.38;
+  const intensity = base * profile.listeningScale;
+  return Math.round(Math.min(0.58, Math.max(0.14, intensity)) * 100) / 100;
+}
+
+/** A body-neutral timeline that exposes every semantic facial mood once. */
+export function moodPreviewBeats(stepMs = moodPreviewStepMs): PerformanceBeat[] {
+  const beats = moodPreviewMoods.map((semanticMood, index) => {
+    const profile = performanceProfileForMood(semanticMood);
+    return {
+      atMs: index * stepMs,
+      semanticMood,
+      mood: profile.facialMood,
+      intensity: listeningMoodIntensity(semanticMood, 3),
+      focus: profile.focus,
+      gesture: "none" as const,
+    };
+  });
+  return [
+    ...beats,
+    {
+      atMs: moodPreviewMoods.length * stepMs,
+      semanticMood: "neutral",
+      mood: "neutral",
+      intensity: 0,
+      focus: "camera",
+      gesture: "none",
+    },
+  ];
 }
 
 function sentenceWeight(sentence: AvatarSpeechSentence): number {
@@ -124,9 +165,8 @@ function moodIntensity(
   if (semanticMood === "neutral") return 0;
   const base = [0, 0.28, 0.46, 0.66, 0.84, 1][level] ?? 0.66;
   const cadenceScale = sentenceIndex % 2 === 0 ? 1 : 0.96;
-  return Math.round(
-    base * moodProfiles[semanticMood].speakingScale * cadenceScale * 100,
-  ) / 100;
+  const intensity = base * moodProfiles[semanticMood].speakingScale * cadenceScale;
+  return Math.round(Math.min(0.75, Math.max(0.20, intensity)) * 100) / 100;
 }
 
 function moodDirection(

@@ -142,9 +142,12 @@ export class CollectiveFarewellTracker {
     const enoughIndependentSignals = uniqueParticipants.size >= 2 || uniquePhrases.size >= 2;
 
     const closesCollectively = hasCollectiveClose && hasMeetingContext;
-    const formsFarewellWave = signals.length >= 2 && enoughIndependentSignals && (
-      hasMeetingContext || clearSignals.length >= 2
-    );
+    // Plain "ciao" is ambiguous at both ends of a meeting. It may support a
+    // farewell wave, but can never establish one without at least one explicit
+    // closing phrase such as "a presto" or "buona serata".
+    const formsFarewellWave = signals.length >= 2 &&
+      enoughIndependentSignals &&
+      clearSignals.length >= 1;
     if (!closesCollectively && !formsFarewellWave) return null;
 
     this.#lastFarewellByMeeting.set(key, now);

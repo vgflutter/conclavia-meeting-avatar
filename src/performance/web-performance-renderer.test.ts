@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { AvatarSpeechCue } from "../domain/protocol.js";
+import { avatarMoods, type AvatarSpeechCue } from "../domain/protocol.js";
 import { PerformanceHub } from "./performance-hub.js";
+import { moodPreviewMoods } from "./performance-plan.js";
 import { WebPerformanceRenderer } from "./web-performance-renderer.js";
 
 const cue: AvatarSpeechCue = {
@@ -144,4 +145,21 @@ await test("publishes physical gestures and interrupt events", async () => {
   assert.equal(packets.some((packet) => packet.events[0]?.type === "raise-hand"), true);
   assert.equal(packets.some((packet) => packet.events[0]?.type === "applause"), true);
   assert.equal(packets.at(-1)?.events[0]?.type, "interrupt");
+});
+
+await test("publishes all twelve mood previews as one browser timeline", async () => {
+  const hub = new PerformanceHub();
+  const renderer = new WebPerformanceRenderer(hub, "http://127.0.0.1:4310");
+  await renderer.start("showcase");
+  await renderer.previewMoods("Mary");
+
+  const preview = hub.since(0).at(-1);
+  assert.equal(preview?.kind, "listening");
+  assert.deepEqual(
+    preview?.tracks.expressions.slice(0, avatarMoods.length)
+      .map((expression) => expression.semanticMood),
+    [...moodPreviewMoods],
+  );
+  assert.equal(preview?.tracks.expressions.at(-1)?.semanticMood, "neutral");
+  assert.deepEqual(preview?.tracks.gestures, []);
 });

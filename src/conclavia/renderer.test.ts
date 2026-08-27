@@ -7,6 +7,7 @@ import {
   speechTextForCue,
 } from "./renderer.js";
 import { avatarMoods, type AvatarSpeechCue } from "../domain/protocol.js";
+import { moodPreviewMoods } from "../performance/performance-plan.js";
 
 const cue: AvatarSpeechCue = {
   id: "cue-1",
@@ -145,7 +146,7 @@ await test("uses a clearly visible intensity for a single non-neutral mood", () 
       atMs: 0,
       semanticMood: "surprised",
       mood: "surprise",
-      intensity: 1,
+      intensity: 0.75,
       focus: "camera",
       gesture: "emphasis",
     }],
@@ -215,8 +216,8 @@ await test("sends a bounded silent listening reaction to Unreal", async () => {
       intent: "listen-react",
       bodyGesture: "none",
       listenerSemanticMood: "concerned",
-      listenerMood: "fear",
-      listenerMoodIntensity: 0.23,
+      listenerMood: "neutral",
+      listenerMoodIntensity: 0.34,
       expectedDurationMs: 7_100,
     },
   }]);
@@ -254,11 +255,61 @@ await test("routes all twelve moods to Unreal while Mary listens silently", asyn
     [...avatarMoods],
   );
   assert.ok(cues.every((value) => value.intent === "listen-react"));
-  assert.equal(new Set(cues.map((value) => value.listenerMood)).size, avatarMoods.length);
+  assert.deepEqual(new Set(cues.map((value) => value.listenerMood)), new Set(["neutral"]));
   assert.equal(new Set(cues.map((value) => JSON.stringify({
-    facialMood: value.listenerMood,
+    semanticMood: value.listenerSemanticMood,
     intensity: value.listenerMoodIntensity,
   }))).size, avatarMoods.length);
+});
+
+await test("previews all twelve moods as held silent full-face poses", async () => {
+  const cues: Array<Record<string, unknown>> = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (input, init) => {
+    const url = input instanceof Request ? input.url : input.toString();
+    assert.match(url, /\/api\/unreal\/cue$/u);
+    if (typeof init?.body !== "string") throw new Error("Expected cue JSON");
+    cues.push(JSON.parse(init.body) as Record<string, unknown>);
+    return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+  };
+  try {
+    await new ConclaviaRenderer("http://renderer.test").previewMoods(
+      "Mary",
+      undefined,
+      { stepMs: 1, waitForCompletion: true },
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(cues.length, avatarMoods.length);
+  assert.deepEqual(
+    cues.map((request) =>
+      (request.performanceBeats as Array<{ semanticMood: string }>)[0]?.semanticMood
+    ),
+    [...moodPreviewMoods],
+  );
+  assert.ok(cues.every((request) => request.intent === "listen-react"));
+  assert.ok(cues.every((request) => request.bodyGesture === "none"));
+  assert.ok(cues.every((request) => request.listenerMood === "neutral"));
+  assert.deepEqual(
+    cues.map((request) => request.listenerSemanticMood),
+    [...moodPreviewMoods],
+  );
+  assert.ok(cues.slice(0, -1).every((request) =>
+    typeof request.listenerMoodIntensity === "number" &&
+    request.listenerMoodIntensity >= 0.58
+  ));
+  assert.equal(cues.at(-1)?.listenerMoodIntensity, 0);
+  assert.equal(
+    new Set(cues.map((request) =>
+      (request.performanceBeats as Array<{ mood: string }>)[0]?.mood
+    )).size,
+    avatarMoods.length,
+  );
 });
 
 await test("sends a high-priority interrupt cue to stop accepted speech", async () => {

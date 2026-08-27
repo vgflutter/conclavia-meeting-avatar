@@ -1,6 +1,7 @@
 import type { TranscriptSegment } from "../domain/protocol.js";
 
 const echoWindowMs = 30_000;
+const exactShortEchoWindowMs = 8_000;
 
 function normalizedWords(text: string): string[] {
   return text
@@ -52,13 +53,16 @@ export function isLikelyAvatarSpeechEcho(
   history: readonly TranscriptSegment[],
   avatarName: string,
 ): boolean {
-  if (!segment.isFinal || segment.source !== "speech") return false;
+  // Older local-listener segments did not set `source`. Treat an omitted
+  // source as speech for backwards compatibility, while still excluding
+  // explicit manual/chat events from acoustic echo suppression.
+  if (!segment.isFinal || (segment.source && segment.source !== "speech")) return false;
   if (segment.speakerName.localeCompare(avatarName, undefined, { sensitivity: "accent" }) === 0) {
     return false;
   }
 
   const candidate = normalizedWords(segment.text);
-  if (candidate.length < 4) return false;
+  if (candidate.length < 2) return false;
   const capturedAt = Date.parse(segment.capturedAt);
   const referenceTime = Number.isFinite(capturedAt) ? capturedAt : Date.now();
 
@@ -76,8 +80,14 @@ export function isLikelyAvatarSpeechEcho(
     }
 
     const reference = normalizedWords(prior.text);
-    if (reference.length < 4) return false;
-    if (candidate.join(" ") === reference.join(" ")) return true;
+    const exactMatch = candidate.join(" ") === reference.join(" ");
+    if (candidate.length < 4 || reference.length < 4) {
+      return exactMatch && (
+        !Number.isFinite(priorCapturedAt) ||
+        Math.abs(referenceTime - priorCapturedAt) <= exactShortEchoWindowMs
+      );
+    }
+    if (exactMatch) return true;
     return overlapRatio(candidate, reference) >= 0.7 &&
       orderedOverlapRatio(candidate, reference) >= 0.45;
   });

@@ -68,11 +68,26 @@ async function cue(testCase) {
 }
 
 async function speak(pcm) {
-  return requestJson("/audio/speech", {
-    method: "POST",
-    headers: { ...headers, "Content-Type": "application/octet-stream" },
-    body: pcm,
-  });
+  let lastError;
+  // A mood switch creates a fresh commercial generator. On a cold model the
+  // route can correctly answer commercial_model_warming for a short period;
+  // production TTS naturally hides that warm-up, while the direct-PCM audit
+  // used to fail immediately. Retry the same immutable PCM instead of turning
+  // a transient solver state into a false regression.
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    try {
+      return await requestJson("/audio/speech", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/octet-stream" },
+        body: pcm,
+      });
+    } catch (error) {
+      lastError = error;
+      if (!String(error).includes("commercial_model_warming")) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
+  throw lastError;
 }
 
 async function observePerformance(video, previousCompletedCount, testCase) {

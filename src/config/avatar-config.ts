@@ -43,6 +43,12 @@ export const defaultChatCommandAliases: ChatCommandAliases = {
   raiseHand: ["alza la mano", "chiedi la parola", "raise your hand", "request to speak"],
   lowerHand: ["abbassa la mano", "ritira la richiesta", "lower your hand"],
   applaud: ["applaudi", "fai un applauso", "batti le mani", "clap", "applaud"],
+  previewMoods: [
+    "prova tutte le espressioni",
+    "mostra tutti i mood",
+    "testa i dodici mood",
+    "preview moods",
+  ],
   summarizeInChat: ["riassumi in chat", "scrivi un riassunto", "summarize in chat"],
   replyInChat: ["rispondi in chat", "scrivi in chat", "reply in chat"],
   speak: ["intervieni", "parla", "rispondi a voce", "speak"],
@@ -146,6 +152,7 @@ function commandAliases(
       raiseHand: [...fallback.raiseHand],
       lowerHand: [...fallback.lowerHand],
       applaud: [...fallback.applaud],
+      previewMoods: [...fallback.previewMoods],
       summarizeInChat: [...fallback.summarizeInChat],
       replyInChat: [...fallback.replyInChat],
       speak: [...fallback.speak],
@@ -161,6 +168,11 @@ function commandAliases(
     raiseHand: commandAliasList(record.raiseHand, fallback.raiseHand, "Comandi alza mano"),
     lowerHand: commandAliasList(record.lowerHand, fallback.lowerHand, "Comandi abbassa mano"),
     applaud: commandAliasList(record.applaud, fallback.applaud, "Comandi applauso"),
+    previewMoods: commandAliasList(
+      record.previewMoods,
+      fallback.previewMoods,
+      "Comandi anteprima mood",
+    ),
     summarizeInChat: commandAliasList(
       record.summarizeInChat,
       fallback.summarizeInChat,

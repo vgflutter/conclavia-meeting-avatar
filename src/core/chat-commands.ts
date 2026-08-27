@@ -9,6 +9,7 @@ const commandKeys: ReadonlyArray<readonly [keyof ChatCommandAliases, ChatCommand
   ["raiseHand", "raise-hand"],
   ["lowerHand", "lower-hand"],
   ["applaud", "applaud"],
+  ["previewMoods", "preview-moods"],
   ["summarizeInChat", "summarize-in-chat"],
   ["replyInChat", "reply-in-chat"],
   ["speak", "speak"],
@@ -62,6 +63,29 @@ export function matchChatCommand(
     };
   }
   return null;
+}
+
+/**
+ * Voice transcription shares the configurable command vocabulary, but only
+ * physical gestures and the explicit mood diagnostic are safe to execute
+ * immediately. Content-producing chat commands keep their existing
+ * channel-specific behavior.
+ */
+export function matchSpokenGestureCommand(
+  text: string,
+  avatarName: string,
+  aliases: ChatCommandAliases,
+): (MatchedChatCommand & {
+  kind: "raise-hand" | "lower-hand" | "applaud" | "preview-moods";
+}) | null {
+  const command = matchChatCommand(text, avatarName, aliases);
+  if (
+    command?.kind !== "raise-hand" && command?.kind !== "lower-hand" &&
+    command?.kind !== "applaud" && command?.kind !== "preview-moods"
+  ) return null;
+  return command as MatchedChatCommand & {
+    kind: "raise-hand" | "lower-hand" | "applaud" | "preview-moods";
+  };
 }
 
 export function chatResponseChannel(
