@@ -170,6 +170,8 @@ await test("rejects a twelve-mood audit when the rendered faces look alike", asy
   assert.match(audit, /expressiveFacesVisiblyDifferFromNeutral/);
   assert.match(audit, /allFacesVisiblyDistinct/);
   assert.match(audit, /visualDeltaFromClosestMood/);
+  assert.match(audit, /const visualComparisons = results\.map/);
+  assert.match(audit, /Object\.assign\(result, visualComparisons\[index\]\);[\s\S]*delete result\.visualSignature/);
   assert.match(audit, /visualDeltaFromNeutral >= 0\.0025/);
   assert.match(audit, /listenerSemanticMood: testCase\.mood/);
   assert.match(audit, /listenerMood: testCase\.rendererMood/);

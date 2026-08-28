@@ -292,10 +292,10 @@ async function observePerformance(video, previousCompletedCount, testCase) {
 
     const neutralSignature = results.find((result) => result.mood === "neutral")
       ?.visualSignature;
-    for (const result of results) {
-      result.visualDeltaFromNeutral = result.mood === "neutral"
-        ? 0
-        : meanAbsoluteDifference(neutralSignature, result.visualSignature);
+    // Calculate the complete distance matrix before stripping the large image
+    // signatures from the JSON report. Deleting one signature inside this
+    // loop used to turn every later comparison with that mood into a false 0.
+    const visualComparisons = results.map((result) => {
       const neighbours = results
         .filter((candidate) => candidate !== result)
         .map((candidate) => ({
@@ -306,8 +306,16 @@ async function observePerformance(video, previousCompletedCount, testCase) {
           ),
         }))
         .sort((left, right) => left.delta - right.delta);
-      result.closestVisualMood = neighbours[0]?.mood;
-      result.visualDeltaFromClosestMood = neighbours[0]?.delta ?? 0;
+      return {
+        visualDeltaFromNeutral: result.mood === "neutral"
+          ? 0
+          : meanAbsoluteDifference(neutralSignature, result.visualSignature),
+        closestVisualMood: neighbours[0]?.mood,
+        visualDeltaFromClosestMood: neighbours[0]?.delta ?? 0,
+      };
+    });
+    for (const [index, result] of results.entries()) {
+      Object.assign(result, visualComparisons[index]);
       delete result.visualSignature;
     }
 
