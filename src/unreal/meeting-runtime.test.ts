@@ -86,11 +86,10 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
     moduleSource,
     /Generator->SetMood\(Mood\);[\s\S]*Generator->SetMoodIntensity\(FMath::Clamp\(Intensity,[\s\S]*ListeningPrimingTicksRemaining = 6/,
   );
-  assert.equal(
-    moduleSource.match(/ApplySemanticFaceOverlay\(/gu)?.length,
-    1,
-    "the legacy semantic overlay may remain as an unused helper but must never be applied",
-  );
+  assert.equal(moduleSource.match(/ApplySemanticFaceAccent\(/gu)?.length, 3);
+  assert.match(moduleSource, /\*Existing \+ Value/);
+  assert.doesNotMatch(moduleSource, /ExpressionControls\[\]/);
+  assert.match(moduleSource, /if \(bSolvedListeningFrame\)/);
   assert.match(moduleSource, /const bool bAffectiveMouthControl/);
   assert.match(moduleSource, /mouth_corner/);
   assert.match(moduleSource, /mouth_dimple/);
@@ -142,8 +141,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /Roughness Adjust[\s\S]*1\.16f/);
   assert.match(moduleSource, /Config\.IntraOpThreads = 2;[\s\S]*40 ms audio cadence/);
   assert.doesNotMatch(moduleSource, /Config\.IntraOpThreads = 4;/);
-  assert.match(moduleSource, /ue58-commercial-lipsync-v33-native-full-face-moods/);
-  assert.match(rendererManifest, /ue58-commercial-lipsync-v33-native-full-face-moods/);
+  assert.match(moduleSource, /ue58-commercial-lipsync-v34-semantic-face-accents/);
+  assert.match(rendererManifest, /ue58-commercial-lipsync-v34-semantic-face-accents/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
   assert.match(supervisor, /performanceSemanticMood/);
@@ -169,6 +168,8 @@ await test("rejects a twelve-mood audit when the rendered faces look alike", asy
   assert.match(audit, /meanAbsoluteDifference/);
   assert.match(audit, /visualDeltaFromNeutral/);
   assert.match(audit, /expressiveFacesVisiblyDifferFromNeutral/);
+  assert.match(audit, /allFacesVisiblyDistinct/);
+  assert.match(audit, /visualDeltaFromClosestMood/);
   assert.match(audit, /visualDeltaFromNeutral >= 0\.0025/);
   assert.match(audit, /listenerSemanticMood: testCase\.mood/);
   assert.match(audit, /listenerMood: testCase\.rendererMood/);

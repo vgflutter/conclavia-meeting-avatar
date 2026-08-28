@@ -1202,61 +1202,30 @@ private:
         return true;
     }
 
-    // The commercial solver is excellent at speech anatomy, but its mood
-    // presets are not identity-neutral. On Showcase, for example, Happiness
-    // can drive both inner brows above 0.65 and reads as anxiety. Keep the
-    // vendor solve for jaw, lips, tongue and timing, then replace only the
-    // expression controls with restrained MetaHuman-authored recipes. These
-    // values mirror the official facial-pose curves baked for the portable
-    // renderer, so Unreal and Web share the same semantic performance language.
-    static void ApplySemanticFaceOverlay(
+    // Preserve the native full-face solve and add a restrained semantic
+    // accent once per newly solved frame. The old replacement overlay erased
+    // vendor nuance and collapsed several moods into the same face.
+    static void ApplySemanticFaceAccent(
         TMap<FString, float>& Controls,
         const FString& SemanticMood,
         const float Intensity)
     {
-        auto Set = [&Controls](const TCHAR* Name, const float Value)
+        auto Add = [&Controls](const TCHAR* Name, const float Value)
         {
             if (float* Existing = Controls.Find(Name))
             {
-                *Existing = FMath::Clamp(Value, -1.0f, 1.0f);
+                *Existing = FMath::Clamp(*Existing + Value, -1.0f, 1.0f);
             }
         };
-        auto SetPair = [&Set](
+        auto SetPair = [&Add](
             const TCHAR* Left,
             const TCHAR* Right,
             const float LeftValue,
             const float RightValue)
         {
-            Set(Left, LeftValue);
-            Set(Right, RightValue);
+            Add(Left, LeftValue);
+            Add(Right, RightValue);
         };
-
-        // Remove only affective controls. Central mouth, lip articulation,
-        // jaw and tongue remain untouched and continue to come from the
-        // commercial audio solver.
-        static const TCHAR* ExpressionControls[] = {
-            TEXT("CTRL_L_brow_down.ty"), TEXT("CTRL_R_brow_down.ty"),
-            TEXT("CTRL_L_brow_lateral.ty"), TEXT("CTRL_R_brow_lateral.ty"),
-            TEXT("CTRL_L_brow_raiseIn.ty"), TEXT("CTRL_R_brow_raiseIn.ty"),
-            TEXT("CTRL_L_brow_raiseOut.ty"), TEXT("CTRL_R_brow_raiseOut.ty"),
-            TEXT("CTRL_L_eye_cheekRaise.ty"), TEXT("CTRL_R_eye_cheekRaise.ty"),
-            TEXT("CTRL_L_eye_squintInner.ty"), TEXT("CTRL_R_eye_squintInner.ty"),
-            TEXT("CTRL_L_nose.ty"), TEXT("CTRL_R_nose.ty"),
-            TEXT("CTRL_L_nose.tx"), TEXT("CTRL_R_nose.tx"),
-            TEXT("CTRL_L_nose_nasolabialDeepen.ty"),
-            TEXT("CTRL_R_nose_nasolabialDeepen.ty"),
-            TEXT("CTRL_L_mouth_cornerPull.ty"),
-            TEXT("CTRL_R_mouth_cornerPull.ty"),
-            TEXT("CTRL_L_mouth_cornerDepress.ty"),
-            TEXT("CTRL_R_mouth_cornerDepress.ty"),
-            TEXT("CTRL_L_mouth_dimple.ty"), TEXT("CTRL_R_mouth_dimple.ty"),
-            TEXT("CTRL_L_mouth_sharpCornerPull.ty"),
-            TEXT("CTRL_R_mouth_sharpCornerPull.ty")
-        };
-        for (const TCHAR* Name : ExpressionControls)
-        {
-            Set(Name, 0.0f);
-        }
 
         FString Mood = SemanticMood.ToLower();
         // Backward-compatible fallback for cues produced before semanticMood
@@ -1273,7 +1242,7 @@ private:
         else if (Mood == TEXT("confidence")) Mood = TEXT("assertive");
         else if (Mood == TEXT("surprise")) Mood = TEXT("surprised");
 
-        const float S = FMath::Clamp(Intensity / 0.55f, 0.0f, 1.20f);
+        const float S = FMath::Clamp(Intensity / 0.68f, 0.0f, 1.08f);
         if (S <= KINDA_SMALL_NUMBER || Mood == TEXT("neutral"))
         {
             return;
@@ -3174,12 +3143,14 @@ private:
             ListeningVisualEndsAt = Now + 0.72;
         }
 
+        bool bSolvedListeningFrame = false;
         if (ListeningPrimingTicksRemaining > 2)
         {
             TArray<float> RoomTone;
             RoomTone.SetNumZeroed(640);
             Generator->ProcessAudioData(MoveTemp(RoomTone), 16000, 1);
             ++ListeningSolverChunksSubmitted;
+            bSolvedListeningFrame = true;
         }
         if (ListeningPrimingTicksRemaining > 0)
         {
@@ -3209,6 +3180,13 @@ private:
             {
                 Control.Value = 0.0f;
             }
+        }
+        if (bSolvedListeningFrame)
+        {
+            ApplySemanticFaceAccent(
+                ListeningControls,
+                ActiveSemanticMoodName,
+                ListeningReactionTargetIntensity);
         }
         Generator->SetControlValues(ListeningControls);
         if (ListeningPrimingTicksRemaining <= 0)
@@ -3359,6 +3337,12 @@ private:
 
         AdvanceCommercialPerformance(CommercialSolverCursor);
         Generator->ProcessAudioData(MoveTemp(FloatingPoint), 16000, 1);
+        TMap<FString, float> SolvedControls = Generator->GetControlValues();
+        ApplySemanticFaceAccent(
+            SolvedControls,
+            ActiveSemanticMoodName,
+            ActiveMoodIntensity);
+        Generator->SetControlValues(SolvedControls);
         ++CommercialSolverChunksSubmitted;
     }
 
@@ -4525,7 +4509,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v33-native-full-face-moods")
+            ? TEXT("ue58-commercial-lipsync-v34-semantic-face-accents")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");
@@ -4849,7 +4833,7 @@ private:
         const FString CueListenerSemanticMoodName = ListenerSemanticMoodName;
         const FString CueListenerMoodName = ListenerMoodName;
         const float CueListenerMoodIntensity = FMath::Clamp(
-            static_cast<float>(ListenerMoodIntensity), 0.0f, 0.68f);
+            static_cast<float>(ListenerMoodIntensity), 0.0f, 0.85f);
         const TArray<FPerformanceBeat> CuePerformanceBeats =
             MoveTemp(ParsedPerformanceBeats);
         AsyncTask(ENamedThreads::GameThread, [

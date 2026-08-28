@@ -16,6 +16,24 @@ export const moodPreviewMoods: readonly AvatarMood[] = [
   "neutral",
 ];
 
+// Production listening reactions stay restrained. The explicit diagnostic
+// must instead expose the whole vocabulary at a glance, without twelve
+// near-neutral poses or close-up grimaces.
+export const moodPreviewIntensity: Readonly<Record<AvatarMood, number>> = {
+  neutral: 0,
+  attentive: 0.66,
+  curious: 0.76,
+  amused: 0.72,
+  confident: 0.68,
+  skeptical: 0.72,
+  concerned: 0.72,
+  surprised: 0.82,
+  empathetic: 0.68,
+  assertive: 0.74,
+  frustrated: 0.78,
+  reflective: 0.66,
+};
+
 export type RendererMood =
   | "neutral"
   | "happiness"

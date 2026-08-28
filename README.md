@@ -72,7 +72,11 @@ These commands provide a quick end-to-end check before joining a real meeting:
 
 The mood preview holds each expression for about three seconds. During normal
 speech, mood boundaries follow the synthesized sentence timing and the audio is
-the playback clock for lip sync.
+the playback clock for lip sync. The production Unreal renderer preserves the
+commercial solver's native full-face performance and adds restrained semantic
+accents to the brows, eyes, cheeks, nose, and mouth corners. The same layer is
+used while Mary listens, so a mood changes the whole face rather than briefly
+twitching only the mouth.
 
 ## What is ready today
 

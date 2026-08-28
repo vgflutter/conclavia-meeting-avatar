@@ -13,6 +13,7 @@ import type {
 } from "../config/avatar-config.js";
 import {
   listeningMoodIntensity,
+  moodPreviewIntensity,
   moodPreviewMoods,
   moodPreviewStepMs,
   performanceBeatsForCue,
@@ -308,9 +309,7 @@ export class ConclaviaRenderer {
     for (const mood of moods) {
       if (generation !== this.#moodPreviewGeneration) return;
       const profile = performanceProfileForMood(mood);
-      const intensity = mood === "neutral"
-        ? 0
-        : Math.min(0.76, Math.max(0.58, listeningMoodIntensity(mood, 5) * 1.45));
+      const intensity = moodPreviewIntensity[mood];
       await this.#postJson("/api/unreal/cue", {
         speakerId: "participant-1",
         targetId: "meeting-participant",

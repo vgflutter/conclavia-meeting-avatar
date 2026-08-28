@@ -18,17 +18,17 @@ const authorization = process.env.CONCLAVIA_CONTROL_TOKEN;
 const headers = authorization ? { Authorization: `Bearer ${authorization}` } : {};
 const cases = [
   { mood: "neutral", rendererMood: "neutral", intensity: 0.00, intent: "argument" },
-  { mood: "attentive", rendererMood: "excitement", intensity: 0.58, intent: "answer" },
-  { mood: "curious", rendererMood: "confusion", intensity: 0.68, intent: "question" },
-  { mood: "amused", rendererMood: "playfulness", intensity: 0.64, intent: "react" },
-  { mood: "confident", rendererMood: "happiness", intensity: 0.62, intent: "answer" },
-  { mood: "skeptical", rendererMood: "disgust", intensity: 0.60, intent: "challenge" },
-  { mood: "concerned", rendererMood: "fear", intensity: 0.62, intent: "warn" },
-  { mood: "surprised", rendererMood: "surprise", intensity: 0.72, intent: "react" },
-  { mood: "empathetic", rendererMood: "sadness", intensity: 0.58, intent: "reflect" },
-  { mood: "assertive", rendererMood: "confidence", intensity: 0.68, intent: "answer" },
-  { mood: "frustrated", rendererMood: "anger", intensity: 0.66, intent: "challenge" },
-  { mood: "reflective", rendererMood: "boredom", intensity: 0.54, intent: "reflect" },
+  { mood: "attentive", rendererMood: "excitement", intensity: 0.66, intent: "answer" },
+  { mood: "curious", rendererMood: "confusion", intensity: 0.76, intent: "question" },
+  { mood: "amused", rendererMood: "playfulness", intensity: 0.72, intent: "react" },
+  { mood: "confident", rendererMood: "happiness", intensity: 0.68, intent: "answer" },
+  { mood: "skeptical", rendererMood: "disgust", intensity: 0.72, intent: "challenge" },
+  { mood: "concerned", rendererMood: "fear", intensity: 0.72, intent: "warn" },
+  { mood: "surprised", rendererMood: "surprise", intensity: 0.82, intent: "react" },
+  { mood: "empathetic", rendererMood: "sadness", intensity: 0.68, intent: "reflect" },
+  { mood: "assertive", rendererMood: "confidence", intensity: 0.74, intent: "answer" },
+  { mood: "frustrated", rendererMood: "anger", intensity: 0.78, intent: "challenge" },
+  { mood: "reflective", rendererMood: "boredom", intensity: 0.66, intent: "reflect" },
 ];
 
 function meanAbsoluteDifference(left, right) {
@@ -296,6 +296,18 @@ async function observePerformance(video, previousCompletedCount, testCase) {
       result.visualDeltaFromNeutral = result.mood === "neutral"
         ? 0
         : meanAbsoluteDifference(neutralSignature, result.visualSignature);
+      const neighbours = results
+        .filter((candidate) => candidate !== result)
+        .map((candidate) => ({
+          mood: candidate.mood,
+          delta: meanAbsoluteDifference(
+            result.visualSignature,
+            candidate.visualSignature
+          ),
+        }))
+        .sort((left, right) => left.delta - right.delta);
+      result.closestVisualMood = neighbours[0]?.mood;
+      result.visualDeltaFromClosestMood = neighbours[0]?.delta ?? 0;
       delete result.visualSignature;
     }
 
@@ -320,6 +332,9 @@ async function observePerformance(video, previousCompletedCount, testCase) {
       ).size >= 4,
       expressiveFacesVisiblyDifferFromNeutral: expressive.every(
         (result) => result.visualDeltaFromNeutral >= 0.0025
+      ),
+      allFacesVisiblyDistinct: results.every(
+        (result) => result.visualDeltaFromClosestMood >= 0.0015
       ),
     };
     const report = {
