@@ -3151,9 +3151,13 @@ private:
             const float FadeInAlpha = Ease(Elapsed / FMath::Max(FadeInSeconds, 0.01f));
             const float FadeOutAlpha = Ease(Remaining / FMath::Max(FadeOutSeconds, 0.01f));
             const float Envelope = FMath::Min(FadeInAlpha, FadeOutAlpha);
+            // The native solver bakes the mood into the control frame during
+            // ProcessAudioData. Updating only SetMoodIntensity afterwards does
+            // not recompute the face and was the reason held moods stayed
+            // visually neutral. Keep this envelope for state/telemetry; the
+            // plugin's control filtering handles the visible transition.
             PerformanceCurrentIntensity = ListeningReactionTargetIntensity * Envelope;
             ActiveMoodIntensity = PerformanceCurrentIntensity;
-            Generator->SetMoodIntensity(PerformanceCurrentIntensity);
         }
         else if (bListeningReactionActive)
         {
@@ -3182,20 +3186,20 @@ private:
             --ListeningPrimingTicksRemaining;
         }
 
-        // The listening model is intentionally full-face because that is the
-        // only vendor output that contains emotion. Silence is nevertheless
-        // still interpreted by the lip-sync model as speech posture and can
-        // briefly drive lips, jaw, tongue, teeth and throat. That reads as a
-        // grimace (or as Mary trying to speak) while somebody else has the
-        // floor. Keep the vendor-authored eyes, brows, cheeks and nose, but
-        // explicitly neutralize speech anatomy before the official AnimBP node
-        // consumes this listening frame. Spoken cues continue to use the
-        // untouched full-face generator.
+        // Keep the native full-face mood solve. Silence can still drive
+        // articulation, so strip jaw/viseme anatomy while preserving affective
+        // corners and dimples. Removing every mouth control collapsed all
+        // listening moods into nearly the same upper-face expression.
         TMap<FString, float> ListeningControls = Generator->GetControlValues();
         for (TPair<FString, float>& Control : ListeningControls)
         {
+            const bool bAffectiveMouthControl =
+                Control.Key.Contains(TEXT("mouth_corner"), ESearchCase::IgnoreCase)
+                || Control.Key.Contains(TEXT("mouth_dimple"), ESearchCase::IgnoreCase)
+                || Control.Key.Contains(TEXT("mouth_sharpCornerPull"), ESearchCase::IgnoreCase);
             const bool bSpeechAnatomy =
-                Control.Key.Contains(TEXT("mouth"), ESearchCase::IgnoreCase)
+                (!bAffectiveMouthControl
+                    && Control.Key.Contains(TEXT("mouth"), ESearchCase::IgnoreCase))
                 || Control.Key.Contains(TEXT("jaw"), ESearchCase::IgnoreCase)
                 || Control.Key.Contains(TEXT("tongue"), ESearchCase::IgnoreCase)
                 || Control.Key.Contains(TEXT("teeth"), ESearchCase::IgnoreCase)
@@ -3206,10 +3210,6 @@ private:
                 Control.Value = 0.0f;
             }
         }
-        ApplySemanticFaceOverlay(
-            ListeningControls,
-            ActiveSemanticMoodName,
-            ActiveMoodIntensity);
         Generator->SetControlValues(ListeningControls);
         if (ListeningPrimingTicksRemaining <= 0)
         {
@@ -3242,19 +3242,21 @@ private:
         if (URealisticMetaHumanLipSyncGenerator* Generator = ListeningGenerator.Get())
         {
             Generator->SetMood(Mood);
-            Generator->SetMoodIntensity(0.0f);
+            // Set this before the silent inference chunks. Mood changes made
+            // only after ProcessAudioData do not alter the baked face controls.
+            Generator->SetMoodIntensity(FMath::Clamp(Intensity, 0.0f, 0.85f));
         }
         const double Now = FPlatformTime::Seconds();
         const float DurationSeconds = FMath::Clamp(ExpectedDurationSeconds, 2.0f, 15.0f);
         ActiveMoodName = Name;
         ActiveSemanticMoodName = SemanticName.IsEmpty() ? Name : SemanticName;
         ListeningReactionTargetIntensity = FMath::Clamp(Intensity, 0.0f, 0.85f);
-        ActiveMoodIntensity = 0.0f;
-        PerformanceCurrentIntensity = 0.0f;
+        ActiveMoodIntensity = ListeningReactionTargetIntensity;
+        PerformanceCurrentIntensity = ListeningReactionTargetIntensity;
         PerformanceTargetIntensity = ListeningReactionTargetIntensity;
         ActivePerformanceFocus = TEXT("target");
         ActivePerformanceGesture = TEXT("listen");
-        ListeningReactionStartedAt = Now + 0.20;
+        ListeningReactionStartedAt = Now;
         ListeningReactionExpiresAt = Now + DurationSeconds;
         ListeningVisualEndsAt = ListeningReactionExpiresAt + 0.72;
         bListeningReactionActive = true;
@@ -3414,12 +3416,6 @@ private:
         {
             return;
         }
-        ApplySemanticFaceOverlay(
-            Controls,
-            ActiveSemanticMoodName,
-            ActiveMoodIntensity);
-        Generator->SetControlValues(Controls);
-
         // Exposed AnimBP pins are evaluated on the animation thread and can
         // overwrite a runtime assignment. Refresh the exact anim-node pointer
         // while speech is active so the worker-thread copy always sees the
@@ -4529,7 +4525,7 @@ private:
             }
         }
         const FString RuntimeRevision = bMeetingAvatar
-            ? TEXT("ue58-commercial-lipsync-v32-held-semantic-moods")
+            ? TEXT("ue58-commercial-lipsync-v33-native-full-face-moods")
             : bLipSyncLab
                 ? TEXT("ue58-commercial-lipsync-v14-attentive-idle")
                 : TEXT("commercial-lipsync-v9");

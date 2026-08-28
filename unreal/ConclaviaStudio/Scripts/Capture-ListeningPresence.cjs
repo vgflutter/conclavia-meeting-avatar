@@ -86,9 +86,8 @@ async function health() {
       intent: "listen-react",
       bodyGesture: "none",
       listenerSemanticMood: "surprised",
-      // Keep the commercial solve identity-neutral. The semantic MetaHuman
-      // layer supplies the visible listening reaction and its eased hold.
-      listenerMood: "neutral",
+      // Exercise the same native full-face preset used by the companion.
+      listenerMood: "surprise",
       listenerMoodIntensity: 0.52,
       expectedDurationMs: 6_000,
       performanceBeats: [],

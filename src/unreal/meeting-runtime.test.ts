@@ -82,6 +82,18 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /Clamp\(Intensity, 0\.0f, 0\.85f\)/);
   assert.match(moduleSource, /TMap<FString, float> ListeningControls/);
   assert.match(moduleSource, /Generator->SetControlValues\(ListeningControls\)/);
+  assert.match(
+    moduleSource,
+    /Generator->SetMood\(Mood\);[\s\S]*Generator->SetMoodIntensity\(FMath::Clamp\(Intensity,[\s\S]*ListeningPrimingTicksRemaining = 6/,
+  );
+  assert.equal(
+    moduleSource.match(/ApplySemanticFaceOverlay\(/gu)?.length,
+    1,
+    "the legacy semantic overlay may remain as an unused helper but must never be applied",
+  );
+  assert.match(moduleSource, /const bool bAffectiveMouthControl/);
+  assert.match(moduleSource, /mouth_corner/);
+  assert.match(moduleSource, /mouth_dimple/);
   assert.match(moduleSource, /ListeningPrimingTicksRemaining = 6/);
   assert.match(moduleSource, /ListeningPrimingTicksRemaining > 2/);
   assert.match(moduleSource, /bListeningGeneratorVisible/);
@@ -130,8 +142,8 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(moduleSource, /Roughness Adjust[\s\S]*1\.16f/);
   assert.match(moduleSource, /Config\.IntraOpThreads = 2;[\s\S]*40 ms audio cadence/);
   assert.doesNotMatch(moduleSource, /Config\.IntraOpThreads = 4;/);
-  assert.match(moduleSource, /ue58-commercial-lipsync-v32-held-semantic-moods/);
-  assert.match(rendererManifest, /ue58-commercial-lipsync-v32-held-semantic-moods/);
+  assert.match(moduleSource, /ue58-commercial-lipsync-v33-native-full-face-moods/);
+  assert.match(rendererManifest, /ue58-commercial-lipsync-v33-native-full-face-moods/);
   assert.match(startScript, /build_meeting_attentive_idle\.py/);
   assert.match(startScript, /\$meetingIdleFiles = @\(/);
   assert.match(supervisor, /performanceSemanticMood/);
@@ -145,6 +157,21 @@ await test("keeps legacy podcast body assets out of the meeting runtime", async 
   assert.match(stageBuilder, /MEETING_Chair_Seat/);
   assert.match(stageBuilder, /MEETING_Chair_Back/);
   assert.doesNotMatch(stageBuilder, /save_directory/);
+});
+
+await test("rejects a twelve-mood audit when the rendered faces look alike", async () => {
+  const audit = await readFile(
+    repositoryFile("unreal/ConclaviaStudio/Scripts/Audit-TwelveMoods.cjs"),
+    "utf8",
+  );
+
+  assert.match(audit, /captureFaceSignature/);
+  assert.match(audit, /meanAbsoluteDifference/);
+  assert.match(audit, /visualDeltaFromNeutral/);
+  assert.match(audit, /expressiveFacesVisiblyDifferFromNeutral/);
+  assert.match(audit, /visualDeltaFromNeutral >= 0\.0025/);
+  assert.match(audit, /listenerSemanticMood: testCase\.mood/);
+  assert.match(audit, /listenerMood: testCase\.rendererMood/);
 });
 
 await test("keeps a live meeting from being cut off by the GPU watchdog", async () => {
@@ -165,7 +192,9 @@ await test("keeps a live meeting from being cut off by the GPU watchdog", async 
   assert.match(supervisor, /POST[\s\S]*\/session\/lease/);
   assert.match(supervisor, /auto-stop-lease\.json/);
   assert.match(server, /rendererLeaseTimer/);
-  assert.match(server, /if \(!rendererArmed \|\| options\.rendererMode !== "unreal"\) return/);
+  assert.match(server, /rendererLeaseActivityWindowMs = 10 \* 60_000/);
+  assert.match(server, /Date\.now\(\) - lastMeetingActivityAt <= rendererLeaseActivityWindowMs/);
+  assert.match(server, /if \(!rendererArmed \|\| !recentlyActive \|\| options\.rendererMode !== "unreal"\) return/);
   assert.match(studio, /renewUnrealStudioLease/);
   assert.match(studio, /\/session\/lease/);
 });

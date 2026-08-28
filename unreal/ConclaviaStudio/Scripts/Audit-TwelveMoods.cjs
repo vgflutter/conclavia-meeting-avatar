@@ -17,19 +17,93 @@ const baseControlUrl = controlUrl.replace(/\/$/u, "");
 const authorization = process.env.CONCLAVIA_CONTROL_TOKEN;
 const headers = authorization ? { Authorization: `Bearer ${authorization}` } : {};
 const cases = [
-  { mood: "neutral", intensity: 0.00, intent: "argument" },
-  { mood: "happiness", intensity: 0.54, intent: "answer" },
-  { mood: "sadness", intensity: 0.48, intent: "reflect" },
-  { mood: "disgust", intensity: 0.46, intent: "challenge" },
-  { mood: "anger", intensity: 0.50, intent: "challenge" },
-  { mood: "surprise", intensity: 0.52, intent: "react" },
-  { mood: "fear", intensity: 0.44, intent: "warn" },
-  { mood: "confidence", intensity: 0.50, intent: "answer" },
-  { mood: "excitement", intensity: 0.52, intent: "answer" },
-  { mood: "boredom", intensity: 0.38, intent: "reflect" },
-  { mood: "playfulness", intensity: 0.48, intent: "react" },
-  { mood: "confusion", intensity: 0.48, intent: "question" },
+  { mood: "neutral", rendererMood: "neutral", intensity: 0.00, intent: "argument" },
+  { mood: "attentive", rendererMood: "excitement", intensity: 0.58, intent: "answer" },
+  { mood: "curious", rendererMood: "confusion", intensity: 0.68, intent: "question" },
+  { mood: "amused", rendererMood: "playfulness", intensity: 0.64, intent: "react" },
+  { mood: "confident", rendererMood: "happiness", intensity: 0.62, intent: "answer" },
+  { mood: "skeptical", rendererMood: "disgust", intensity: 0.60, intent: "challenge" },
+  { mood: "concerned", rendererMood: "fear", intensity: 0.62, intent: "warn" },
+  { mood: "surprised", rendererMood: "surprise", intensity: 0.72, intent: "react" },
+  { mood: "empathetic", rendererMood: "sadness", intensity: 0.58, intent: "reflect" },
+  { mood: "assertive", rendererMood: "confidence", intensity: 0.68, intent: "answer" },
+  { mood: "frustrated", rendererMood: "anger", intensity: 0.66, intent: "challenge" },
+  { mood: "reflective", rendererMood: "boredom", intensity: 0.54, intent: "reflect" },
 ];
+
+function meanAbsoluteDifference(left, right) {
+  if (!left || !right || left.length !== right.length || left.length === 0) {
+    return 0;
+  }
+  let total = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    total += Math.abs(left[index] - right[index]);
+  }
+  return total / left.length / 255;
+}
+
+function medianSignature(signatures) {
+  if (signatures.length === 0) return [];
+  return signatures[0].map((_, index) => {
+    const values = signatures
+      .map((signature) => signature[index])
+      .sort((left, right) => left - right);
+    return values[Math.floor(values.length / 2)];
+  });
+}
+
+async function captureFaceSignature(page) {
+  const samples = [];
+  for (let sample = 0; sample < 3; sample += 1) {
+    samples.push(await page.evaluate(() => {
+      const video = [...document.querySelectorAll("video")].find(
+        (candidate) => candidate.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+          && candidate.videoWidth > 0
+          && candidate.videoHeight > 0
+      );
+      if (!video) throw new Error("No active Pixel Streaming video found.");
+
+      const cropWidth = Math.round(video.videoWidth * 0.34);
+      const cropHeight = Math.round(video.videoHeight * 0.58);
+      const cropX = Math.round((video.videoWidth - cropWidth) * 0.50);
+      const cropY = Math.round(video.videoHeight * 0.12);
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 128;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      context.drawImage(
+        video,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      const signature = [];
+      // Brows/eyes and mouth carry the affective signal. Sampling only those
+      // regions rejects background, breathing and hand-gesture noise.
+      const regions = [
+        [20, 25, 108, 68],
+        [30, 78, 98, 112],
+      ];
+      for (const [left, top, right, bottom] of regions) {
+        for (let y = top; y < bottom; y += 2) {
+          for (let x = left; x < right; x += 2) {
+            const offset = (y * canvas.width + x) * 4;
+            signature.push(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
+          }
+        }
+      }
+      return signature;
+    }));
+    await new Promise((resolve) => setTimeout(resolve, 180));
+  }
+  return medianSignature(samples);
+}
 
 async function requestJson(route, init = {}) {
   const response = await fetch(`${baseControlUrl}${route}`, init);
@@ -53,12 +127,15 @@ async function cue(testCase) {
       speakerId: "mood-audit",
       speakerName: "Mary",
       shot: "close-up",
-      intent: testCase.intent,
-      expectedDurationMs: 6_000,
+      intent: "listen-react",
+      listenerSemanticMood: testCase.mood,
+      listenerMood: testCase.rendererMood,
+      listenerMoodIntensity: testCase.intensity,
+      expectedDurationMs: 4_500,
       performanceBeats: [{
         atMs: 0,
         semanticMood: testCase.mood,
-        mood: testCase.mood,
+        mood: testCase.rendererMood,
         intensity: testCase.intensity,
         focus: "camera",
         gesture: "none",
@@ -172,7 +249,13 @@ async function observePerformance(video, previousCompletedCount, testCase) {
     const results = [];
     for (const testCase of cases) {
       const cueResult = await cue(testCase);
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      const listeningFrame = path.join(
+        outputDirectory,
+        `${testCase.mood}-listening.jpg`
+      );
+      await video.screenshot({ path: listeningFrame, type: "jpeg", quality: 96 });
+      const visualSignature = await captureFaceSignature(page);
       const speechResult = await speak(pcm);
       const observed = await observePerformance(
         video,
@@ -183,12 +266,14 @@ async function observePerformance(video, previousCompletedCount, testCase) {
       const active = observed.samples.filter((sample) => sample.active);
       const applied = [...active].reverse().find(
         (sample) => sample.semanticMood === testCase.mood
-          || sample.mood === testCase.mood
+          || sample.mood === testCase.rendererMood
       ) || active.at(-1) || observed.samples.at(-1);
       results.push({
         ...testCase,
         cueAccepted: cueResult.ok !== false,
         speechAccepted: speechResult.ok !== false,
+        listeningFrame,
+        visualSignature,
         peakFrame: observed.peakFrame,
         appliedMood: applied?.mood,
         appliedSemanticMood: applied?.semanticMood,
@@ -205,6 +290,15 @@ async function observePerformance(video, previousCompletedCount, testCase) {
       await new Promise((resolve) => setTimeout(resolve, 450));
     }
 
+    const neutralSignature = results.find((result) => result.mood === "neutral")
+      ?.visualSignature;
+    for (const result of results) {
+      result.visualDeltaFromNeutral = result.mood === "neutral"
+        ? 0
+        : meanAbsoluteDifference(neutralSignature, result.visualSignature);
+      delete result.visualSignature;
+    }
+
     const expressive = results.filter((result) => result.mood !== "neutral");
     const validation = {
       allTwelveCovered: results.length === 12
@@ -215,7 +309,7 @@ async function observePerformance(video, previousCompletedCount, testCase) {
       allBeatsApplied: results.every((result) => result.appliedBeatCount >= 1),
       correctSemanticMoods: results.every(
         (result) => result.appliedSemanticMood === result.mood
-          || result.appliedMood === result.mood
+          || result.appliedMood === result.rendererMood
       ),
       lipSyncPreserved: results.every((result) => result.peakMouth >= 0.10),
       expressiveUpperFaceActive: expressive.every(
@@ -224,6 +318,9 @@ async function observePerformance(video, previousCompletedCount, testCase) {
       variedUpperFaceResponse: new Set(
         expressive.flatMap((result) => result.upperFaceControls)
       ).size >= 4,
+      expressiveFacesVisiblyDifferFromNeutral: expressive.every(
+        (result) => result.visualDeltaFromNeutral >= 0.0025
+      ),
     };
     const report = {
       ok: Object.values(validation).every(Boolean),

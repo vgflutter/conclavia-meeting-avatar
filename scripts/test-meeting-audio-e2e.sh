@@ -13,6 +13,11 @@ QUESTION_AUDIO="$RUNTIME_DIR/mary-two-plus-two-padded.wav"
 COREAUDIO_PLAYER="$RUNTIME_DIR/coreaudio-play"
 mkdir -p "$RUNTIME_DIR"
 
+cleanup_listener() {
+  curl --silent --request DELETE "$COMPANION_URL/api/listener/session" >/dev/null 2>&1 || true
+}
+trap cleanup_listener EXIT
+
 for command in curl ffmpeg jq say xcrun; do
   command -v "$command" >/dev/null || {
     echo "Comando richiesto non trovato: $command" >&2

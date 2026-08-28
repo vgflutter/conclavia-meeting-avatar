@@ -251,6 +251,7 @@ export class ConclaviaRenderer {
     speakerName: string,
   ): Promise<void> {
     this.#cancelMoodPreview();
+    const profile = performanceProfileForMood(reaction.mood);
     await this.#postJson("/api/unreal/cue", {
       speakerId: "participant-1",
       targetId: "meeting-participant",
@@ -260,10 +261,9 @@ export class ConclaviaRenderer {
       intent: "listen-react",
       bodyGesture: "none",
       listenerSemanticMood: reaction.mood,
-      // The vendor presets are not identity-neutral on Showcase and several
-      // converge on the same worried face. Start from its neutral solve and
-      // let Unreal apply semantic MetaHuman curves with a stable envelope.
-      listenerMood: "neutral",
+      // Use the native full-face solve. The former neutral base plus a small
+      // hand-authored overlay made distinct moods look like the same face.
+      listenerMood: profile.facialMood,
       listenerMoodIntensity: listeningMoodIntensity(reaction.mood, reaction.level),
       expectedDurationMs: reaction.holdMs,
     });
@@ -319,10 +319,7 @@ export class ConclaviaRenderer {
         intent: "listen-react",
         bodyGesture: "none",
         listenerSemanticMood: mood,
-        // Use the neutral vendor base and the identity-safe semantic pose.
-        // This is the same curve-only principle that keeps applause smiling
-        // without the commercial preset's tense mouth and worried brows.
-        listenerMood: "neutral",
+        listenerMood: profile.facialMood,
         listenerMoodIntensity: intensity,
         expectedDurationMs: Math.max(2_400, stepMs - 120),
         performanceBeats: [{

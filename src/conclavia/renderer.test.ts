@@ -7,7 +7,10 @@ import {
   speechTextForCue,
 } from "./renderer.js";
 import { avatarMoods, type AvatarSpeechCue } from "../domain/protocol.js";
-import { moodPreviewMoods } from "../performance/performance-plan.js";
+import {
+  moodPreviewMoods,
+  performanceProfileForMood,
+} from "../performance/performance-plan.js";
 
 const cue: AvatarSpeechCue = {
   id: "cue-1",
@@ -216,7 +219,7 @@ await test("sends a bounded silent listening reaction to Unreal", async () => {
       intent: "listen-react",
       bodyGesture: "none",
       listenerSemanticMood: "concerned",
-      listenerMood: "neutral",
+      listenerMood: "fear",
       listenerMoodIntensity: 0.34,
       expectedDurationMs: 7_100,
     },
@@ -255,7 +258,10 @@ await test("routes all twelve moods to Unreal while Mary listens silently", asyn
     [...avatarMoods],
   );
   assert.ok(cues.every((value) => value.intent === "listen-react"));
-  assert.deepEqual(new Set(cues.map((value) => value.listenerMood)), new Set(["neutral"]));
+  assert.deepEqual(
+    cues.map((value) => value.listenerMood),
+    avatarMoods.map((mood) => performanceProfileForMood(mood).facialMood),
+  );
   assert.equal(new Set(cues.map((value) => JSON.stringify({
     semanticMood: value.listenerSemanticMood,
     intensity: value.listenerMoodIntensity,
@@ -294,7 +300,10 @@ await test("previews all twelve moods as held silent full-face poses", async () 
   );
   assert.ok(cues.every((request) => request.intent === "listen-react"));
   assert.ok(cues.every((request) => request.bodyGesture === "none"));
-  assert.ok(cues.every((request) => request.listenerMood === "neutral"));
+  assert.deepEqual(
+    cues.map((request) => request.listenerMood),
+    moodPreviewMoods.map((mood) => performanceProfileForMood(mood).facialMood),
+  );
   assert.deepEqual(
     cues.map((request) => request.listenerSemanticMood),
     [...moodPreviewMoods],

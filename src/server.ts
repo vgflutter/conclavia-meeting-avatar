@@ -497,6 +497,11 @@ export function startServer(options: ServerOptions): Promise<void> {
   let rendererStartError: string | null = null;
   let rendererStartGeneration = 0;
   let rendererPlayerUrl: string | undefined;
+  // An armed renderer is only a technical connection, not proof that a
+  // meeting is still active. Bound lease renewal to recent real interaction
+  // so a forgotten companion cannot keep the paid GPU alive indefinitely.
+  const rendererLeaseActivityWindowMs = 10 * 60_000;
+  let lastMeetingActivityAt = Date.now();
   const dialogueLease = new DialogueLease(
     options.dialogueTimeoutMs,
     options.dialogueMaxFollowUps,
@@ -517,6 +522,7 @@ export function startServer(options: ServerOptions): Promise<void> {
     rendererStarting = false;
     rendererTargetProfile = null;
     rendererStartError = null;
+    lastMeetingActivityAt = Date.now();
     if (!wasRendererArmed && options.rendererMode === "unreal") {
       void renewUnrealStudioLease().catch((error: unknown) => {
         console.warn(
@@ -707,6 +713,7 @@ export function startServer(options: ServerOptions): Promise<void> {
     segment: TranscriptSegment,
     responseChannel: "voice" | "chat" = "voice",
   ) => {
+    lastMeetingActivityAt = Date.now();
     const startedAt = performance.now();
     let llmMs: number | null = null;
     let rendererMs: number | null = null;
@@ -1370,11 +1377,12 @@ export function startServer(options: ServerOptions): Promise<void> {
   }, 1_000);
   agendaTimer.unref();
 
-  // Renew only while the renderer is armed. If the companion or active
-  // meeting disappears, the Windows watchdog sees the lease expire and still
-  // shuts the paid GPU down automatically.
+  // Renew only while an armed renderer has recent meeting activity. Merely
+  // leaving the companion or renderer open is not an active session.
   const rendererLeaseTimer = setInterval(() => {
-    if (!rendererArmed || options.rendererMode !== "unreal") return;
+    const recentlyActive =
+      Date.now() - lastMeetingActivityAt <= rendererLeaseActivityWindowMs;
+    if (!rendererArmed || !recentlyActive || options.rendererMode !== "unreal") return;
     void renewUnrealStudioLease().catch((error: unknown) => {
       console.warn(
         "Conclavia GPU session lease was not renewed:",
