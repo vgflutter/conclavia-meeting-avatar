@@ -16,7 +16,8 @@ use an OBS virtual camera and a virtual audio device.
 
 ## What Mary can do
 
-- Listen continuously and retain the recent meeting context.
+- Listen continuously, retain the recent context, and optionally remember
+  verified decisions, actions, facts, risks, and open questions across meetings.
 - Answer when her name appears anywhere in a sentence, not only at the start.
 - Continue a natural dialogue for two speaker-scoped follow-ups without
   requiring the wake word again.
@@ -46,8 +47,10 @@ Conclavia is intentionally conservative in a room with five or ten people:
    important correction or omission, but does not interrupt the room.
 4. **Exceptional appreciation:** Mary may applaud a strong conclusion or
    completed complex result; ordinary agreement is not enough.
-5. **Passive presence:** all final utterances still reach the meeting memory and
-   can influence Mary's listening mood even when she remains silent.
+5. **Passive presence:** all final utterances still reach the current meeting
+   context and can influence Mary's listening mood even when she remains silent.
+   With MongoDB configured, durable memories are shared only inside the selected
+   workspace and project.
 
 The 12 supported moods are `neutral`, `attentive`, `curious`, `amused`,
 `confident`, `skeptical`, `concerned`, `surprised`, `empathetic`, `assertive`,
@@ -67,7 +70,9 @@ These commands provide a quick end-to-end check before joining a real meeting:
 | `Mary, alza la mano` / `Mary, abbassa la mano` | Authored seated request-to-speak gesture |
 | `Mary, applaudi` | Authored applause with a restrained positive expression |
 | `Mary, prova tutte le espressioni` | Silent sequence of all 12 held facial moods |
-| `Mary, riassumi la discussione` | Concise summary based on recent meeting memory |
+| `Mary, riassumi la discussione` | Concise summary of the current meeting |
+| `Mary, cosa avevamo deciso su Kubernetes?` | Relevant prior decisions with meeting provenance |
+| `Mary, quali azioni sono rimaste aperte?` | Recent open actions from shared project memory |
 | `Mary, elenca le tue funzionalità` | Immediate explanation of the available controls |
 
 The mood preview holds each expression for about three seconds. During normal
@@ -85,7 +90,8 @@ twitching only the mouth.
 | Unreal Engine 5.8 + MetaHuman cinematic renderer | Validated production path |
 | OBS Virtual Camera video for Teams and Meet | Validated |
 | BlackHole meeting capture and avatar microphone routing | Validated on macOS |
-| Continuous transcription, meeting memory, direct answers | Validated |
+| Continuous transcription, current context, direct answers | Validated |
+| MongoDB shared memory across meetings | Available and optional |
 | Request-to-speak, seated hand gesture, applause, 12 listening/speaking moods | Validated and configurable |
 | Showcase, Aera, Ada, Vivian, and Jelena profiles | Selectable |
 | Browser test room and full control surface | Available |
@@ -103,7 +109,8 @@ and the appropriate Microsoft APIs.
 meeting audio
     |
     v
-realtime transcription -> recent meeting memory -> meeting intelligence
+realtime transcription -> current context ------> meeting intelligence
+                    \----> MongoDB shared memory --/
                                                 |  direct answer
                                                 |  listening mood
                                                 |  request to speak
@@ -126,6 +133,11 @@ The renderer is deliberately separated from meeting intelligence. Both Unreal
 and the Web Runtime consume the same performance semantics. This is the path
 toward scaling Conclavia by transmitting a performance, not a permanent cloud
 video stream.
+
+Shared memory is also independent of the renderer. Every final transcript
+segment is persisted immediately; when a session ends, Conclavia extracts a
+compact, provenance-backed record instead of sending the complete history to
+every future prompt. See [Shared meeting memory](docs/meeting-memory.md).
 
 ## Quick start
 
@@ -208,6 +220,7 @@ are versioned here; Epic binaries, MetaHuman packages, and licensed plugins are
 external prerequisites.
 
 - [Architecture](docs/architecture.md)
+- [Shared meeting memory](docs/meeting-memory.md)
 - [AWS and Unreal rebuild guide](docs/aws-rebuild.md)
 - [Web avatar runtime](docs/web-avatar-runtime.md)
 - [Transcript adapter contract](docs/transcript-adapter-contract.md)

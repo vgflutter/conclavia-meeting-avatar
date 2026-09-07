@@ -77,7 +77,9 @@ stop_companion() {
   fi
 
   kill -TERM "$pid" 2>/dev/null || true
-  for _ in $(seq 1 30); do
+  # Give the companion enough time to flush the transcript and compact the
+  # shared meeting memory before considering shutdown stuck.
+  for _ in $(seq 1 180); do
     if ! kill -0 "$pid" 2>/dev/null; then
       break
     fi

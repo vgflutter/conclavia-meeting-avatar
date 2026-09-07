@@ -93,6 +93,7 @@ const elements = {
   preflightResults: $("#preflight-results"),
   simulationResult: $("#simulation-result"),
   chatTestResultLabel: $("#chat-test-result-label"),
+  memoryStatus: $("#memory-status"),
 };
 
 let avatarName = "Mary";
@@ -418,6 +419,19 @@ function renderContext(context) {
     elements.stageMood.hidden = true;
   }
   renderParticipationRequest(context.participationRequest ?? null);
+  if (context.memory?.enabled) {
+    elements.memoryStatus.textContent = [
+      `MongoDB attiva · ${context.memory.workspaceId}/${context.memory.projectId}`,
+      `${context.memory.persistedSegmentCount ?? 0} segmenti nella sessione`,
+      context.memory.pendingCompactions
+        ? `${context.memory.pendingCompactions} consolidamento in corso`
+        : "sincronizzata",
+    ].join(" · ");
+  } else {
+    elements.memoryStatus.textContent = context.memory?.lastError
+      ? `Non disponibile · ${context.memory.lastError}`
+      : "Non configurata · il contesto resta soltanto nella sessione corrente";
+  }
   renderSidePanel();
 }
 
@@ -809,7 +823,12 @@ elements.resetMeetingButton.addEventListener("click", async () => {
     elements.simulationResult.textContent = "Nuova sessione avviata.";
     renderContext(context);
     setStageMode("listening", "Partecipante virtuale");
-    setDecision("Nuova sessione pronta. La memoria del meeting è vuota.", "listening");
+    setDecision(
+      context.memory?.enabled
+        ? "Nuova sessione pronta. Il contesto corrente è vuoto; la memoria condivisa è conservata."
+        : "Nuova sessione pronta. Il contesto del meeting è vuoto.",
+      "listening",
+    );
   } catch (error) {
     setDecision(`Reset non riuscito: ${error.message}`, "listening");
   } finally {

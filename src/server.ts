@@ -77,6 +77,16 @@ import {
   MeetingIntelligence,
   qualifiesAutonomousApplause,
 } from "./openai/meeting-intelligence.js";
+import {
+  DisabledMeetingMemoryStore,
+  isSharedMeetingMemoryQuery,
+  normalizeMemoryScopeId,
+  recalledMemoryAsSegments,
+  type MeetingMemorySession,
+  type MeetingMemoryStore,
+} from "./memory/meeting-memory.js";
+import { MeetingMemoryCompactor } from "./memory/meeting-memory-compactor.js";
+import { MongoMeetingMemoryStore } from "./memory/mongodb-meeting-memory-store.js";
 import { runMacosPreflight } from "./preflight/macos.js";
 import { PerformanceHub } from "./performance/performance-hub.js";
 import type { PerformancePacket } from "./performance/performance-packet.js";
@@ -405,9 +415,14 @@ export interface ServerOptions {
   rendererUrl: string | undefined;
   rendererMode: "unreal" | "web";
   webAvatarDirectory: string;
+  memoryMongoUri: string | undefined;
+  memoryMongoDatabase: string | undefined;
+  memoryWorkspaceId: string;
+  memoryProjectId: string;
+  memoryRetentionDays: number;
 }
 
-export function startServer(options: ServerOptions): Promise<void> {
+export async function startServer(options: ServerOptions): Promise<void> {
   const transcriptHistory: TranscriptSegment[] = [];
   const seenChatMessageKeys = new Set<string>();
   const activeChatMessageKeys = new Set<string>();
@@ -440,6 +455,61 @@ export function startServer(options: ServerOptions): Promise<void> {
     meetingSpeakerName: options.meetingSpeakerName,
   });
   let runtimeConfig = configStore.current;
+  const memoryScope = {
+    workspaceId: normalizeMemoryScopeId(options.memoryWorkspaceId, "default"),
+    projectId: normalizeMemoryScopeId(options.memoryProjectId, "general"),
+  };
+  let memoryStore: MeetingMemoryStore = new DisabledMeetingMemoryStore();
+  let memoryLastError: string | null = null;
+  if (options.memoryMongoUri?.trim()) {
+    try {
+      memoryStore = new MongoMeetingMemoryStore({
+        uri: options.memoryMongoUri.trim(),
+        ...(options.memoryMongoDatabase?.trim()
+          ? { database: options.memoryMongoDatabase.trim() }
+          : {}),
+        retentionDays: options.memoryRetentionDays,
+      });
+      await memoryStore.initialize();
+    } catch (error: unknown) {
+      memoryLastError = error instanceof Error ? error.message : String(error);
+      console.warn(`Conclavia shared memory disabled: ${memoryLastError}`);
+      await memoryStore.close().catch(() => undefined);
+      memoryStore = new DisabledMeetingMemoryStore();
+    }
+  }
+  const createMemorySession = (): MeetingMemorySession => {
+    const startedAt = new Date().toISOString();
+    return {
+      id: randomUUID(),
+      ...memoryScope,
+      title: `Meeting ${runtimeConfig.meetingPlatform} · ${startedAt.slice(0, 16)}`,
+      startedAt,
+      endedAt: null,
+    };
+  };
+  let activeMemorySession = createMemorySession();
+  let persistedMemorySegments = 0;
+  let recalledMemoryCount = 0;
+  let pendingMemoryCompactions = 0;
+  let memoryWriteQueue = Promise.resolve();
+  const createMemoryCompactor = (config: AvatarConfig) =>
+    memoryStore.enabled && config.apiKey
+      ? new MeetingMemoryCompactor({
+          apiKey: config.apiKey,
+          model: config.responseModel,
+        })
+      : null;
+  let memoryCompactor = createMemoryCompactor(runtimeConfig);
+  const recordMemoryFailure = (error: unknown): void => {
+    memoryLastError = error instanceof Error ? error.message : String(error);
+    console.warn(`Conclavia shared memory write failed: ${memoryLastError}`);
+  };
+  const queueMemoryWrite = (operation: () => Promise<void>): Promise<void> => {
+    memoryWriteQueue = memoryWriteQueue.then(operation).catch(recordMemoryFailure);
+    return memoryWriteQueue;
+  };
+  await memoryStore.beginSession(activeMemorySession).catch(recordMemoryFailure);
   const webAvatarRegistry = new WebAvatarRegistry(options.webAvatarDirectory);
   const prewarmImmediateSpeech = (config: AvatarConfig): void => {
     if (!options.rendererUrl) return;
@@ -640,6 +710,61 @@ export function startServer(options: ServerOptions): Promise<void> {
     return pendingRequest;
   };
 
+  const memoryStatusSnapshot = () => ({
+    enabled: memoryStore.enabled,
+    backend: memoryStore.backend,
+    workspaceId: memoryScope.workspaceId,
+    projectId: memoryScope.projectId,
+    activeSession: activeMemorySession,
+    persistedSegmentCount: persistedMemorySegments,
+    recalledMemoryCount,
+    pendingCompactions: pendingMemoryCompactions,
+    retentionDays: options.memoryRetentionDays,
+    lastError: memoryLastError
+      ? "Memoria condivisa non disponibile; controlla il log locale."
+      : null,
+  });
+
+  const compactAndFinalizeMemorySession = async (
+    session: MeetingMemorySession,
+    history: readonly TranscriptSegment[],
+  ): Promise<void> => {
+    if (!memoryStore.enabled) return;
+    pendingMemoryCompactions += 1;
+    try {
+      await memoryWriteQueue;
+      const persistedHistory = await memoryStore.sessionSegments(session.id);
+      const completeHistory = persistedHistory.length > 0 ? persistedHistory : history;
+      if (
+        memoryCompactor &&
+        completeHistory.some((segment) => segment.isFinal && segment.text.trim())
+      ) {
+        const snapshot = await memoryCompactor.compact(completeHistory);
+        await memoryStore.saveSnapshot(session, snapshot);
+      }
+      await memoryStore.finalizeSession(session, new Date().toISOString());
+    } catch (error: unknown) {
+      recordMemoryFailure(error);
+      // Raw transcript writes are independent from semantic compaction. Mark
+      // the meeting closed even if the model cannot create a snapshot.
+      await memoryStore.finalizeSession(session, new Date().toISOString())
+        .catch(recordMemoryFailure);
+    } finally {
+      pendingMemoryCompactions -= 1;
+    }
+  };
+
+  const memoryRecoveryPromise = memoryStore.enabled
+    ? memoryStore.unfinishedSessions(memoryScope, activeMemorySession.id).then(
+      async (sessions) => {
+        for (const session of sessions) {
+          await compactAndFinalizeMemorySession(session, []);
+        }
+      },
+      recordMemoryFailure,
+    )
+    : Promise.resolve();
+
   const retainSegment = (segment: TranscriptSegment) => {
     transcriptHistory.push(segment);
     transcriptHistory.sort((left, right) => {
@@ -650,6 +775,13 @@ export function startServer(options: ServerOptions): Promise<void> {
     });
     if (transcriptHistory.length > maxRetainedSegments) {
       transcriptHistory.splice(0, transcriptHistory.length - maxRetainedSegments);
+    }
+    if (memoryStore.enabled && segment.isFinal) {
+      const session = activeMemorySession;
+      void queueMemoryWrite(async () => {
+        await memoryStore.appendSegment(session, segment);
+        persistedMemorySegments += 1;
+      });
     }
   };
 
@@ -678,6 +810,7 @@ export function startServer(options: ServerOptions): Promise<void> {
     avatarHandRaised,
     listeningReaction: listeningReactions.snapshot,
     agendas: agendas.snapshots(),
+    memory: memoryStatusSnapshot(),
   });
 
   const createOutboundChatMessage = (input: {
@@ -978,6 +1111,35 @@ export function startServer(options: ServerOptions): Promise<void> {
         );
       }
 
+      let intelligenceHistory: readonly TranscriptSegment[] = transcriptHistory;
+      if (
+        direct &&
+        memoryStore.enabled &&
+        isSharedMeetingMemoryQuery(segment.text)
+      ) {
+        try {
+          await memoryWriteQueue;
+          const recalled = await memoryStore.recall(
+            memoryScope,
+            segment.text,
+            activeMemorySession.id,
+            8,
+          );
+          recalledMemoryCount = recalled.length;
+          if (recalled.length > 0) {
+            intelligenceHistory = [
+              ...transcriptHistory,
+              ...recalledMemoryAsSegments(recalled, segment.capturedAt),
+            ];
+          }
+        } catch (error: unknown) {
+          recordMemoryFailure(error);
+          recalledMemoryCount = 0;
+        }
+      } else {
+        recalledMemoryCount = 0;
+      }
+
       // Every finalized participant turn reaches the meeting intelligence.
       // Small turns still inform Mary's listening reaction, but cannot trigger
       // an autonomous request to speak unless they pass the stricter gate.
@@ -985,7 +1147,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         try {
           const llmStartedAt = performance.now();
           const turn = await intelligence.evaluateTurn(
-            transcriptHistory,
+            intelligenceHistory,
             segment,
             direct ? "direct" : "observer",
             responseChannel,
@@ -1726,6 +1888,7 @@ export function startServer(options: ServerOptions): Promise<void> {
         runtimeConfig = nextConfig;
         prewarmImmediateSpeech(runtimeConfig);
         intelligence = createIntelligence(runtimeConfig);
+        memoryCompactor = createMemoryCompactor(runtimeConfig);
         listener = createListener();
         pendingRequest = null;
         avatarHandRaised = false;
@@ -1913,7 +2076,44 @@ export function startServer(options: ServerOptions): Promise<void> {
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/memory/status") {
+        sendJson(response, 200, memoryStatusSnapshot());
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/memory/search") {
+        const query = url.searchParams.get("q")?.trim() ?? "";
+        const requestedLimit = Number.parseInt(url.searchParams.get("limit") ?? "8", 10);
+        if (!query || query.length > 1_000) {
+          sendJson(response, 400, { error: "Parametro q non valido." });
+          return;
+        }
+        if (!memoryStore.enabled) {
+          sendJson(response, 503, {
+            error: "Memoria condivisa non configurata.",
+            status: memoryStatusSnapshot(),
+          });
+          return;
+        }
+        await memoryWriteQueue;
+        const memories = await memoryStore.recall(
+          memoryScope,
+          query,
+          activeMemorySession.id,
+          Number.isFinite(requestedLimit) ? requestedLimit : 8,
+        );
+        sendJson(response, 200, { query, memories });
+        return;
+      }
+
       if (request.method === "DELETE" && url.pathname === "/api/context") {
+        const completedMemorySession = activeMemorySession;
+        const completedHistory = [...transcriptHistory];
+        await compactAndFinalizeMemorySession(completedMemorySession, completedHistory);
+        activeMemorySession = createMemorySession();
+        persistedMemorySegments = 0;
+        recalledMemoryCount = 0;
+        await memoryStore.beginSession(activeMemorySession).catch(recordMemoryFailure);
         transcriptHistory.length = 0;
         pendingRequest = null;
         avatarHandRaised = false;
@@ -2291,15 +2491,33 @@ export function startServer(options: ServerOptions): Promise<void> {
   const server = createServer((request, response) => {
     void handleRequest(request, response);
   });
+  let shutdownInProgress = false;
   const shutdown = () => {
-    const forceExit = setTimeout(() => process.exit(0), 2_500);
+    if (shutdownInProgress) return;
+    shutdownInProgress = true;
+    const forceExit = setTimeout(() => process.exit(0), 15_000);
     void (async () => {
-      intelligence?.abortPending();
-      clearInterval(agendaTimer);
-      renderer.abortPending();
-      await listener?.stop();
-      server.closeAllConnections();
-      server.close(() => clearTimeout(forceExit));
+      try {
+        server.close();
+        intelligence?.abortPending();
+        clearInterval(agendaTimer);
+        clearInterval(rendererLeaseTimer);
+        renderer.abortPending();
+        await listener?.stop();
+        await memoryRecoveryPromise;
+        await compactAndFinalizeMemorySession(
+          activeMemorySession,
+          [...transcriptHistory],
+        );
+        await memoryWriteQueue;
+        await memoryStore.close();
+      } catch (error: unknown) {
+        recordMemoryFailure(error);
+        await memoryStore.close().catch(() => undefined);
+      } finally {
+        server.closeAllConnections();
+        clearTimeout(forceExit);
+      }
     })();
   };
   process.once("SIGINT", shutdown);

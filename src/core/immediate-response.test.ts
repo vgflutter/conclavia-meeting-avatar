@@ -53,13 +53,15 @@ await test("describes real meeting capabilities locally and with sentence moods"
   );
 
   assert.equal(cue?.provider, "system");
-  assert.equal(cue?.sentences.length, 3);
-  assert.match(cue?.sentences[0]?.text ?? "", /contesto della riunione/u);
-  assert.match(cue?.sentences[1]?.text ?? "", /alzare o abbassare la mano/u);
-  assert.match(cue?.sentences[2]?.text ?? "", /scaletta con i tempi/u);
+  assert.equal(cue?.sentences.length, 5);
+  assert.match(cue?.sentences[0]?.text ?? "", /contesto recente della riunione/u);
+  assert.match(cue?.sentences[1]?.text ?? "", /informazioni aggiornate/u);
+  assert.match(cue?.sentences[2]?.text ?? "", /attendere il permesso/u);
+  assert.match(cue?.sentences[3]?.text ?? "", /dodici espressioni/u);
+  assert.match(cue?.sentences[4]?.text ?? "", /segnalare i tempi/u);
   assert.deepEqual(
     cue?.sentences.map(({ mood }) => mood),
-    ["confident", "assertive", "amused"],
+    ["confident", "curious", "assertive", "amused", "amused"],
   );
 });
 
@@ -67,6 +69,7 @@ await test("accepts concise variants of the capabilities question", () => {
   assert.ok(immediateResponseFor(segment("Mary, cosa sai fare?"), "Mary"));
   assert.ok(immediateResponseFor(segment("Mary, quali sono le tue capacità?"), "Mary"));
   assert.ok(immediateResponseFor(segment("Mary, descrivi le tue funzioni"), "Mary"));
+  assert.ok(immediateResponseFor(segment("Mary, elenca le due funzionalità"), "Mary"));
 });
 
 await test("never shortcuts a substantive request", () => {

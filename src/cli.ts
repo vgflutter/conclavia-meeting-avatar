@@ -125,6 +125,10 @@ async function main(): Promise<void> {
     process.env.CONCLAVIA_DIALOGUE_MAX_FOLLOW_UPS ?? "2",
     10,
   );
+  const memoryRetentionDays = Number.parseInt(
+    process.env.CONCLAVIA_MEMORY_RETENTION_DAYS ?? "365",
+    10,
+  );
   const host = process.env.HOST?.trim() || "127.0.0.1";
   const rendererMode = process.env.CONCLAVIA_RENDERER_MODE?.trim() === "web"
     ? "web"
@@ -141,6 +145,13 @@ async function main(): Promise<void> {
     dialogueMaxFollowUps > 5
   ) {
     throw new Error("CONCLAVIA_DIALOGUE_MAX_FOLLOW_UPS must be between 1 and 5");
+  }
+  if (
+    !Number.isInteger(memoryRetentionDays) ||
+    memoryRetentionDays < 0 ||
+    memoryRetentionDays > 3_650
+  ) {
+    throw new Error("CONCLAVIA_MEMORY_RETENTION_DAYS must be between 0 and 3650");
   }
 
   await startServer({
@@ -171,6 +182,15 @@ async function main(): Promise<void> {
     webAvatarDirectory:
       process.env.CONCLAVIA_WEB_AVATAR_DIRECTORY?.trim()
       || ".conclavia/web-avatars",
+    memoryMongoUri:
+      process.env.CONCLAVIA_MEMORY_MONGODB_URI?.trim()
+      || process.env.MONGODB_URI?.trim(),
+    memoryMongoDatabase: process.env.CONCLAVIA_MEMORY_MONGODB_DATABASE?.trim(),
+    memoryWorkspaceId:
+      process.env.CONCLAVIA_MEMORY_WORKSPACE_ID?.trim() || "default",
+    memoryProjectId:
+      process.env.CONCLAVIA_MEMORY_PROJECT_ID?.trim() || "general",
+    memoryRetentionDays,
   });
 }
 

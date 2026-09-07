@@ -29,8 +29,8 @@ function normalizedIntent(value: string): string {
 }
 
 function isCapabilitiesIntent(intent: string): boolean {
-  return /^(?:(?:puoi|potresti|mi puoi|mi potresti)\s+)?(?:elencare|elenca|spiegare|spiega|descrivere|descrivi|raccontare|racconta)\s+(?:brevemente\s+)?(?:le\s+)?(?:tue\s+)?(?:funzionalit[àa]|funzioni|capacit[àa]|possibilit[àa])$/u.test(intent) ||
-    /^(?:quali sono|dimmi)\s+(?:le\s+)?(?:tue\s+)?(?:funzionalit[àa]|funzioni|capacit[àa]|possibilit[àa])$/u.test(intent) ||
+  return /^(?:(?:puoi|potresti|mi puoi|mi potresti)\s+)?(?:elencare|elenca|spiegare|spiega|descrivere|descrivi|raccontare|racconta)\s+(?:brevemente\s+)?(?:le\s+)?(?:(?:tue|due)\s+)?(?:funzionalit[àa]|funzioni|capacit[àa]|possibilit[àa])$/u.test(intent) ||
+    /^(?:quali sono|dimmi)\s+(?:le\s+)?(?:(?:tue|due)\s+)?(?:funzionalit[àa]|funzioni|capacit[àa]|possibilit[àa])$/u.test(intent) ||
     /^(?:cosa|che cosa)\s+(?:sai|puoi)\s+fare$/u.test(intent);
 }
 
@@ -69,15 +69,23 @@ export function immediateResponseFor(
   } else if (isCapabilitiesIntent(intent)) {
     sentences = [
       sentence(
-        "Posso ascoltare e ricordare il contesto della riunione, rispondere quando mi chiamate e verificare informazioni sul web quando serve.",
+        "Posso ascoltare e ricordare il contesto recente della riunione, rispondere quando mi chiamate e continuare per brevi domande successive senza farvi ripetere sempre il mio nome.",
         "confident",
       ),
       sentence(
-        "Posso chiedere la parola davanti a errori od omissioni importanti, alzare o abbassare la mano, applaudire e reagire con espressioni coerenti mentre ascolto e parlo.",
+        "Posso cercare e verificare sul web informazioni aggiornate quando la domanda lo richiede.",
+        "curious",
+      ),
+      sentence(
+        "Davanti a errori, rischi od omissioni importanti posso alzare la mano, chiedere la parola e attendere il permesso prima di intervenire.",
         "assertive",
       ),
       sentence(
-        "Posso anche riassumere la discussione, seguire una scaletta con i tempi e salutare i partecipanti.",
+        "Posso alzare o abbassare la mano su comando, applaudire su richiesta o autonomamente dopo una conclusione eccezionale, e usare dodici espressioni coerenti mentre ascolto e parlo.",
+        "amused",
+      ),
+      sentence(
+        "Posso infine riassumere la discussione, ricordare decisioni e azioni, seguire una scaletta, segnalare i tempi e salutare i partecipanti.",
         "amused",
       ),
     ];
