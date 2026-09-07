@@ -1,238 +1,194 @@
-# Conclavia Meeting Avatar
-
 <p align="center">
-  <img src="public/assets/conclavia-logo.png" alt="Conclavia" width="420" />
+  <img src="public/conclavia-logo.png" alt="Conclavia" width="520" />
 </p>
 
-**A lifelike AI participant for real meetings.** Conclavia listens to the room,
-understands the discussion, responds when invited, and uses voice, facial
-expression, gaze, and authored body gestures to feel present rather than merely
-connected.
+<p align="center">
+  A digital colleague for Microsoft Teams that follows the agenda, answers in the meeting, and carries memory into the next appointment.
+</p>
 
-It works with Microsoft Teams, Google Meet, and any meeting application that can
-use an OBS virtual camera and a virtual audio device.
+# Conclavia Meeting Assistant
 
-![Mary participating in Microsoft Teams](docs/images/mary-in-microsoft-teams.jpg)
+Conclavia is a focused, single-workspace meeting assistant. The product contains three areas only:
 
-## What Mary can do
+- **Meetings** for one appointment or a series of Microsoft Teams meetings.
+- **Memory** for remembered facts, decisions, actions, questions, and summaries.
+- **Avatar** for the digital colleague's identity, personality, voice, expressions, and hand raise.
 
-- Listen continuously, retain the recent context, and optionally remember
-  verified decisions, actions, facts, risks, and open questions across meetings.
-- Answer when her name appears anywhere in a sentence, not only at the start.
-- Continue a natural dialogue for two speaker-scoped follow-ups without
-  requiring the wake word again.
-- Raise her hand when she detects a material factual error, critical omission,
-  decisive risk, or necessary addition. She waits for permission before speaking.
-- Applaud only genuinely significant positive conclusions, with a positive mood.
-- React while listening and speaking with 12 semantic moods and graded intensity.
-- Use web search for explicit browsing requests, time-sensitive questions, and
-  important factual verification.
-- Summarize the discussion and help keep a timestamped agenda on schedule.
-- Adapt her name, voice, model, system purpose, personality, participation style,
-  and MetaHuman profile from the control room.
+The management interface works without a meeting provider. Automatic Teams entry is fail-closed and becomes available only after every required integration setting is present.
 
-| Request to speak | Listening reaction |
-| --- | --- |
-| ![Mary raising her hand](docs/images/mary-request-to-speak.jpg) | ![Mary reacting while listening](docs/images/mary-listening-playfulness.jpg) |
+## Product tour
 
-## Interaction model
+### Avatar and voice test
 
-Conclavia is intentionally conservative in a room with five or ten people:
+The avatar can be tested independently from a meeting, including Italian and English voice, facial mood, audio-driven lip sync, and hand raise.
 
-1. **Direct invocation:** say `Mary, what are the main risks?` or mention Mary
-   naturally anywhere in the sentence.
-2. **Short dialogue lease:** the same identified speaker can ask up to two
-   relevant follow-ups within 45 seconds without repeating `Mary`.
-3. **Autonomous participation:** Mary may raise her hand for a high-confidence,
-   important correction or omission, but does not interrupt the room.
-4. **Exceptional appreciation:** Mary may applaud a strong conclusion or
-   completed complex result; ordinary agreement is not enough.
-5. **Passive presence:** all final utterances still reach the current meeting
-   context and can influence Mary's listening mood even when she remains silent.
-   With MongoDB configured, durable memories are shared only inside the selected
-   workspace and project.
+![Conclavia avatar test](docs/images/avatar-test.png)
 
-The 12 supported moods are `neutral`, `attentive`, `curious`, `amused`,
-`confident`, `skeptical`, `concerned`, `surprised`, `empathetic`, `assertive`,
-`frustrated`, and `reflective`. Every spoken sentence carries its own mood and
-intensity, so facial performance can change naturally within one answer. While
-Mary is silent, recent speech can drive the same semantic layer through a
-slower, held listening reaction; it then eases back to neutral instead of
-snapping or looping.
+### One meeting or a series
 
-### Live interaction checks
+Every meeting has an objective, a Teams link, a date, and an agenda whose items can be mandatory or optional. A series can contain up to 24 appointments with different Teams links.
 
-These commands provide a quick end-to-end check before joining a real meeting:
+![Create a Conclavia meeting](docs/images/new-meeting.png)
 
-| Say | Expected result |
-| --- | --- |
-| `Mary, mi ascolti?` | Immediate local acknowledgement; no LLM round trip |
-| `Mary, alza la mano` / `Mary, abbassa la mano` | Authored seated request-to-speak gesture |
-| `Mary, applaudi` | Authored applause with a restrained positive expression |
-| `Mary, prova tutte le espressioni` | Silent sequence of all 12 held facial moods |
-| `Mary, riassumi la discussione` | Concise summary of the current meeting |
-| `Mary, cosa avevamo deciso su Kubernetes?` | Relevant prior decisions with meeting provenance |
-| `Mary, quali azioni sono rimaste aperte?` | Recent open actions from shared project memory |
-| `Mary, elenca le tue funzionalità` | Immediate explanation of the available controls |
+### Shared meeting memory
 
-The mood preview holds each expression for about three seconds. During normal
-speech, mood boundaries follow the synthesized sentence timing and the audio is
-the playback clock for lip sync. The production Unreal renderer preserves the
-commercial solver's native full-face performance and adds restrained semantic
-accents to the brows, eyes, cheeks, nose, and mouth corners. The same layer is
-used while Mary listens, so a mood changes the whole face rather than briefly
-twitching only the mouth.
+Completed appointments contribute their summary, remembered facts, decisions, open actions, and questions to the next appointment in the same series.
 
-## What is ready today
+![Conclavia meeting series and shared memory](docs/images/meeting-series.png)
 
-| Capability | Status |
-| --- | --- |
-| Unreal Engine 5.8 + MetaHuman cinematic renderer | Validated production path |
-| OBS Virtual Camera video for Teams and Meet | Validated |
-| BlackHole meeting capture and avatar microphone routing | Validated on macOS |
-| Continuous transcription, current context, direct answers | Validated |
-| MongoDB shared memory across meetings | Available and optional |
-| Request-to-speak, seated hand gesture, applause, 12 listening/speaking moods | Validated and configurable |
-| Showcase, Aera, Ada, Vivian, and Jelena profiles | Selectable |
-| Browser test room and full control surface | Available |
-| GPU-independent Web Performance Runtime | Experimental |
-| Native Teams/Meet chat read and write | Planned platform integration |
+## Meeting behavior
 
-The browser chat bridges are development tools, not a production integration.
-The reliable meeting path today is audio in, then OBS video and BlackHole voice
-out. A native Teams agent will require application registration, tenant consent,
-and the appropriate Microsoft APIs.
+The participant name configured in **Avatar** is also its wake phrase. If the name is changed to “Nora”, for example, the colleague responds to **“Nora…”** and future Teams participants use that name. Five commands are supported in Italian and English:
 
-## Architecture
+- **Remember** stores an explicit fact in the current meeting memory.
+- **Summarize** creates a spoken summary and stores it as the meeting overview.
+- **Agenda** identifies the next open item and can mark an item as complete.
+- **Answer** responds from the current transcript and shared series memory.
+- **Verify** checks a statement against known meeting facts and decisions.
+
+When proactive contributions are enabled, the colleague checks substantive statements for material errors and for reliable stored information that would advance the current objective or agenda. It raises its hand and prepares the contribution, but does not speak yet. A participant must grant the floor using its configured name, for example **“Nora, go ahead”** or **“Nora, vai pure”**. Because the answer is prepared while the hand is raised, playback can begin without a second model request.
+
+At the end of a meeting, the transcript is condensed into an overview, facts, decisions, actions and open questions. Those items become the continuity briefing for later appointments in the same series.
+
+The assistant personality has two deliberately simple controls: response length and attitude. Those choices are included in the meeting prompt.
+
+## Runtime architecture
 
 ```text
-meeting audio
-    |
-    v
-realtime transcription -> current context ------> meeting intelligence
-                    \----> MongoDB shared memory --/
-                                                |  direct answer
-                                                |  listening mood
-                                                |  request to speak
-                                                |  applause
-                                                v
-                                      performance plan
-                                      audio + visemes + mood
-                                      gaze + gesture + interrupt
-                                                |
-                           +--------------------+--------------------+
-                           |                                         |
-                    Unreal 5.8 + MetaHuman                 Web Runtime (experimental)
-                           |                                         |
-                           +--------------> OBS + BlackHole ----------+
-                                                   |
-                                             Teams / Meet
+Microsoft Teams meeting
+        │
+        ▼
+Attendee anonymous participant + native Teams captions
+        │
+        ▼
+Conclavia meeting output page
+        ├── wake phrase and command routing
+        ├── prepared request-to-speak and explicit permission
+        ├── MongoDB transcript and series memory
+        ├── OpenAI Responses API for meeting intelligence (optional)
+        └── local Supertonic voice + lip sync + expressions
+        │
+        ▼
+Avatar video and spoken response returned to Teams
 ```
 
-The renderer is deliberately separated from meeting intelligence. Both Unreal
-and the Web Runtime consume the same performance semantics. This is the path
-toward scaling Conclavia by transmitting a performance, not a permanent cloud
-video stream.
+Attendee loads the protected `/meeting-room/[token]` page inside an isolated meeting container and streams that page as the participant camera and audio. Bot-level webhooks deliver state changes, participants, and native Teams captions to Conclavia; the page then speaks new answers back into the meeting. No virtual microphone, virtual camera, browser extension, client-side Teams plugin, or manually operated Mac is required.
 
-Shared memory is also independent of the renderer. Every final transcript
-segment is persisted immediately; when a session ends, Conclavia extracts a
-compact, provenance-backed record instead of sending the complete history to
-every future prompt. See [Shared meeting memory](docs/meeting-memory.md).
+## Cost controls
 
-## Quick start
+- Speech is generated on the meeting device with Supertonic 3. There is no per-character voice API charge.
+- Teams captions are used for live transcription, so no separate speech-to-text provider is required.
+- ChatGPT-backed intelligence is opt-in through `MEETING_AI_ENABLED=true`. Remembering facts and the deterministic memory fallback work without it.
+- The default model is `gpt-5.4-mini`; it can be changed with `OPENAI_MEETING_MODEL`.
+- Audio is not stored. The live transcript and selected memory are stored in MongoDB.
+- No external meeting participant is created while `MEETING_BOT_PROVIDER=preview`.
 
-### Requirements
+Latency-sensitive paths are deliberately short: presence checks, explicit memory and agenda commands run locally; meeting output polls for a prepared response every 650 ms; model requests use no reasoning phase, low verbosity and small output limits. Only the recent transcript window and a bounded set of relevant memory are sent, with stable instructions kept separate from changing meeting context to improve prompt caching.
 
-- macOS and Node.js 22+
-- `ffmpeg`
-- OBS Studio with Virtual Camera
-- BlackHole 16ch for meeting capture and BlackHole 2ch for Mary's voice
-- an OpenAI API key
-- AWS Roles Anywhere credentials for the Unreal renderer path
+The Supertonic model is downloaded on first voice use and cached by the browser. Review [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before distribution.
 
-### Start the production renderer
+## Requirements
+
+- Node.js 22 recommended; Node.js 20.9 or newer is supported.
+- MongoDB.
+- Google Chrome for the Playwright browser suite.
+- For automatic entry as an anonymous guest: an Attendee workspace and a public HTTPS deployment. No Teams account is required.
+- The current integration targets meetings that allow anonymous guests. Signed-in Teams identities are not part of this release.
+- For generated answers and semantic verification: an OpenAI API project.
+
+## Local setup
 
 ```bash
-npm install
-cp .env.example .env
-npm run studio:3d:start
+npm ci
+cp .env.example .env.local
+npm run dev
 ```
 
-Then open [http://127.0.0.1:4310](http://127.0.0.1:4310) in Chrome. Configure the
-OpenAI key once in **Configuration**, select an avatar and voice, and start the
-avatar and meeting listener from **Test room**.
+Set `MONGODB_URI`, then open [http://localhost:3000/meetings](http://localhost:3000/meetings). Local mode stores meetings and memory, runs all manual commands, and tests the avatar without joining an external call.
 
-`studio:3d:start` starts or reconnects to the AWS GPU, refreshes the protected
-renderer connection, launches the local companion, and extends the GPU watchdog
-while an active meeting session remains armed.
+## Environment variables
 
-Stop the complete studio when finished:
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `MONGODB_URI` | Yes | MongoDB connection string. |
+| `MEETING_AI_ENABLED` | No | Set to `true` to use OpenAI for summaries, answers, and verification. |
+| `OPENAI_API_KEY` | With meeting AI | Server-side OpenAI API credential. |
+| `OPENAI_MEETING_MODEL` | No | Responses API model; defaults to `gpt-5.4-mini`. |
+| `MEETING_BOT_PROVIDER` | No | Keep `preview` locally; set `attendee` for automatic Teams entry. |
+| `CONCLAVIA_PUBLIC_URL` | With Attendee | Stable public HTTPS origin serving this application. |
+| `ATTENDEE_API_BASE_URL` | No | Attendee API origin; defaults to `https://app.attendee.dev/api/v1`. |
+| `ATTENDEE_API_KEY` | With Attendee | Server-side Attendee API credential. |
+| `ATTENDEE_WEBHOOK_SECRET` | Recommended | Base64 webhook signing secret from Attendee Settings. A private per-meeting callback token is used when it is absent. |
+| `TEAMS_ACCESS_MODE` | No | Use `anonymous_guest` for the supported unattended flow. |
+| `TEAMS_GUEST_ACCOUNT_EMAIL` | Legacy signed-in mode | Dedicated Microsoft identity used by older provider deployments. |
+| `TEAMS_GUEST_DISPLAY_NAME` | No | Fallback participant name; the name saved under Avatar normally takes precedence. |
+| `TEAMS_SIGNED_IN_CONFIRMED` | Legacy signed-in mode | Retained for older provider deployments. |
+
+Never commit real credentials. Inject them through the deployment platform's secret store.
+
+## Microsoft Teams setup
+
+For the first test, use a Personal Teams meeting created from Hotmail and keep `TEAMS_ACCESS_MODE=anonymous_guest`. The participant joins with the name configured under Avatar and must be admitted if the meeting uses a lobby.
+
+1. Create an Attendee API key and store it as `ATTENDEE_API_KEY`.
+2. Deploy Conclavia at a stable public HTTPS origin and set that origin as `CONCLAVIA_PUBLIC_URL`.
+3. Set `MEETING_BOT_PROVIDER=attendee` and `TEAMS_ACCESS_MODE=anonymous_guest`.
+4. Recommended before production: copy the signing secret from Attendee **Settings → Webhooks** into `ATTENDEE_WEBHOOK_SECRET`. Conclavia creates the bot-level webhook automatically for each meeting; no project webhook needs to be created manually.
+5. Create a meeting with **Entra ora** or schedule a future appointment. Admit the configured digital colleague from the Teams lobby when prompted.
+
+The organizer's Teams policy must allow anonymous guests and captions. If company policy blocks either feature, the meeting detail page reports the failed entry or missing transcription instead of silently pretending the assistant is active.
+
+## Verification
 
 ```bash
-npm run studio:3d:stop
+npm run verify
 ```
 
-### Run without the cloud GPU
+This runs ESLint, TypeScript, a production build, and eight Playwright scenarios covering:
+
+- single-meeting creation, agenda, commands, memory, and cleanup;
+- series creation and continuity across two appointments;
+- avatar navigation, facial mood, and hand raise;
+- dynamic Italian and English wake-phrase command parsing;
+- deterministic correction detection and explicit permission to speak;
+- local command response-time thresholds;
+- Recall legacy transcript parsing and Attendee signed-webhook parsing;
+- database health and protected meeting-output behavior.
+
+Tests run on an isolated local port with meeting AI and the external participant disabled. They create uniquely named records and remove them even after a failed scenario, so verification never creates paid external usage.
+
+## Production deployment
+
+The repository includes a multi-stage, non-root Docker image using the Next.js standalone output:
 
 ```bash
-npm run studio:web:start
+docker build -t conclavia .
+docker run --env-file .env.production -p 3000:3000 conclavia
 ```
 
-The Web Runtime starts immediately, but it is still an experimental scaling
-path and does not yet match the Unreal renderer's visual fidelity.
+Use `GET /api/health` for readiness checks. Terminate TLS before the application and set `CONCLAVIA_PUBLIC_URL` to the final HTTPS origin.
 
-## Meeting setup
+This release is designed as a private, single-workspace application and does not include end-user authentication. Place the entire management interface and API behind the company's SSO, identity-aware proxy, or equivalent access control before exposing it to the internet. The random meeting-output token acts as a bearer capability and must not be logged or shared.
 
-1. Route meeting speaker output to a macOS Multi-Output Device that includes
-   **BlackHole 16ch** and your headphones or speakers.
-2. In OBS, use a Browser Source pointed at
-   `http://127.0.0.1:4310/output` and enable OBS Virtual Camera.
-3. Select **OBS Virtual Camera** as the camera in Teams or Meet.
-4. Route the renderer audio to **BlackHole 2ch** and select **BlackHole 2ch** as
-   the meeting microphone.
-5. In the Conclavia test room, start the avatar and select **Start listening**.
+## Main routes
 
-The mixed BlackHole capture cannot identify individual speakers. It still feeds
-the complete recent context, but speaker-scoped follow-ups require an attributed
-caption/transcript adapter with stable speaker IDs. Direct `Mary, ...`
-invocations work on either path.
+| Route | Purpose |
+| --- | --- |
+| `/meetings` | Dashboard for meetings and series. |
+| `/meetings/new` | Create one Teams meeting or a multi-appointment series. |
+| `/meetings/series/[id]` | Manage appointments, shared agenda, and continuity. |
+| `/meetings/[id]` | Run commands, follow the agenda, view transcript, and save the outcome. |
+| `/memory` | Review meeting and series memory. |
+| `/avatar` | Manage identity, personality, and voice. |
+| `/avatar/test` | Test voice, expressions, lip sync, and gestures without a meeting. |
+| `/meeting-room/[token]` | Minimal 16:9 output consumed by the meeting participant. |
 
-## Useful commands
+## Technology
 
-```bash
-npm run dev                         # local companion with hot reload
-npm run preflight                   # verify macOS audio, OBS, and ffmpeg
-npm run studio:3d:start             # production Unreal path
-npm run studio:3d:stop              # stop companion and GPU studio
-npm run studio:web:start            # experimental browser renderer
-npm run test:e2e:meeting-audio      # exercise the real audio pipeline
-npm run lint
-npm run typecheck
-npm test
-npm run build
-```
-
-## Rebuilding and extending
-
-The repository is the source of truth. AWS is a disposable build and render
-host: Conclavia-owned Unreal source, automation, infrastructure, and manifests
-are versioned here; Epic binaries, MetaHuman packages, and licensed plugins are
-external prerequisites.
-
-- [Architecture](docs/architecture.md)
-- [Shared meeting memory](docs/meeting-memory.md)
-- [AWS and Unreal rebuild guide](docs/aws-rebuild.md)
-- [Web avatar runtime](docs/web-avatar-runtime.md)
-- [Transcript adapter contract](docs/transcript-adapter-contract.md)
-- [Chat adapter contract](docs/chat-adapter-contract.md)
-
-## Privacy and security
-
-Tell participants when the avatar is listening or recording. Never commit API
-keys, AWS credentials, meeting transcripts, audio recordings, generated voice
-files, certificates, or licensed Unreal assets. Local secrets and rotating
-renderer endpoints belong in the ignored `.env` and `.conclavia` paths.
-
-## License
-
-[MIT](LICENSE)
+- Next.js 16.3, React 19, and TypeScript.
+- Tailwind CSS 4.
+- MongoDB with Mongoose.
+- Attendee meeting bots, voice-agent output, and native Teams captions.
+- OpenAI Responses API for optional meeting intelligence.
+- Supertonic 3 and ONNX Runtime Web for local speech.
+- Playwright for end-to-end verification.

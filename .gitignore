@@ -1,18 +1,21 @@
-node_modules/
-dist/
-.env
-.conclavia/
+# dependencies
+/node_modules
+
+# Next.js output
+/.next
+/.next-e2e
+/out
+
+# local environment files
+.env*
+!.env.example
+
+# logs and local tooling
+npm-debug.log*
 .DS_Store
-*.log
-.idea/
-.vscode/
-*.zip
-*.tar.gz
-__pycache__/
-*.pyc
-unreal/ConclaviaStudio/Binaries/
-unreal/ConclaviaStudio/DerivedDataCache/
-unreal/ConclaviaStudio/Intermediate/
-unreal/ConclaviaStudio/Saved/
-unreal/ConclaviaStudio/Capture/
-unreal/ConclaviaStudio/Plugins/RuntimeMetaHumanLipSync/
+*.tsbuildinfo
+next-env.d.ts
+/playwright-report
+/test-results
+/dist
+/.conclavia
