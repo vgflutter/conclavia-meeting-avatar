@@ -110,13 +110,21 @@ The Supertonic model is downloaded on first voice use and cached by the browser.
 
 ## Local setup
 
+`conclavia-meeting-avatar` is the single working directory for the application. Open this repository in your editor and run all development, test, and build commands here. The former `conclavia-frontend` directory is a historical backup and is no longer synchronized.
+
+For a new installation:
+
 ```bash
+git clone https://github.com/vgflutter/conclavia-meeting-avatar.git
+cd conclavia-meeting-avatar
 npm ci
-cp .env.example .env.local
+[ -f .env.local ] || cp .env.example .env.local
 npm run dev
 ```
 
 Set `MONGODB_URI`, then open [http://localhost:3000/meetings](http://localhost:3000/meetings). Local mode stores meetings and memory, runs all manual commands, and tests the avatar without joining an external call.
+
+For an existing installation, open `conclavia-meeting-avatar` and run `npm run dev`. Keep the existing `.env.local`: it contains the connection to your saved meetings, memory, and avatar profile, together with the configured integrations. Git updates do not include or replace this file.
 
 ## Environment variables
 

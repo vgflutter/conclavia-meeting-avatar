@@ -8,6 +8,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+# Working directory
+
+- This repository, `conclavia-meeting-avatar`, is the single working copy of the meeting assistant. Run development, tests, builds, and Git operations from this repository.
+- `../conclavia-frontend` is a historical local backup, not a source or mirror. Do not synchronize changes back to it.
+- The local runtime configuration is `.env.local` at this repository root. Preserve it when updating or installing dependencies; `.env.example` is only a template for new installations.
+- Meetings, series, memory, and the avatar profile remain in the MongoDB database configured by the local environment. Do not create an empty replacement database during setup.
+
 # AWS Guidance
 
 - Prefer the AWS MCP Server for AWS interactions — it provides sandboxed
