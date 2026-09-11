@@ -4,6 +4,7 @@
 # Next.js output
 /.next
 /.next-e2e
+/.next-build-verify
 /out
 
 # local environment files

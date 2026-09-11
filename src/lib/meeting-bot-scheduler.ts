@@ -6,6 +6,7 @@ import {
 import { getMeetingBotRuntimeConfig } from "@/lib/meeting-bot-config";
 import { serializeMeeting } from "@/lib/serialize-meeting";
 import { MeetingModel, type MeetingDocument } from "@/models/Meeting";
+import { startAttendeeEntry, requestAttendeeExit, MeetingEntryConflictError } from "@/lib/meeting-entry";
 
 const CUSTOMER_SCHEDULING_ERROR =
   "Non siamo riusciti a programmare l’ingresso. Controlla il collegamento Teams e riprova.";
@@ -20,7 +21,28 @@ export async function scheduleMeetingBot(
   meeting: MeetingDocument,
 ): Promise<MeetingDocument> {
   const config = getMeetingBotRuntimeConfig();
-  if (!meeting.autoJoin || !config.ready) return meeting;
+  if (meeting.archivedAt || !meeting.autoJoin || !config.ready) return meeting;
+  if (config.provider === "attendee") {
+    if (!["not_scheduled", "failed", "left"].includes(meeting.bot.status)) return meeting;
+    try {
+      const updated = await startAttendeeEntry(meeting, {
+        scheduled: meeting.scheduledStart.getTime() - Date.now() > 2 * 60_000,
+      });
+      meeting.set(updated.toObject());
+    } catch (error) {
+      if (!(error instanceof MeetingEntryConflictError)) throw error;
+      // Do not overwrite an in-flight attempt when another request won the claim.
+      const current = await MeetingModel.findById(meeting._id).exec();
+      if (current) meeting.set(current.toObject());
+      if (["not_scheduled", "failed", "left"].includes(meeting.bot.status) && !meeting.bot.activeRoomKey) {
+        meeting.status = "failed";
+        meeting.bot.status = "failed";
+        meeting.bot.lastError = "Il collega digitale è già impegnato in questo meeting o sta completando il tentativo precedente.";
+        await meeting.save();
+      }
+    }
+    return meeting;
+  }
 
   if (meeting.platform !== "microsoft_teams") {
     meeting.status = "failed";
@@ -39,6 +61,7 @@ export async function scheduleMeetingBot(
   const claim = await MeetingModel.updateOne(
     {
       _id: meeting._id,
+      archivedAt: null,
       "bot.status": { $in: ["not_scheduled", "failed"] },
     },
     {
@@ -117,7 +140,8 @@ export async function scheduleMeetingBot(
   } catch (error) {
     console.error("Unable to schedule meeting bot", error);
     meeting.status = "failed";
-    meeting.bot.provider = config.provider === "attendee" ? "attendee" : "recall";
+    // The Attendee branch above returns before this legacy Recall error handler.
+    meeting.bot.provider = "recall";
     meeting.bot.accessMode = config.accessMode;
     meeting.bot.status = "failed";
     meeting.bot.accountEmail = config.accountEmail;
@@ -131,6 +155,26 @@ export async function scheduleMeetingBot(
 }
 
 export async function cancelMeetingBot(meeting: MeetingDocument): Promise<void> {
+  if (meeting.bot.provider === "attendee" && !meeting.bot.leftAt &&
+      (meeting.bot.externalBotId || meeting.bot.activeRoomKey || meeting.bot.failureCode === "create_uncertain")) {
+    if (meeting.bot.status === "scheduled" && meeting.bot.externalBotId && meeting.scheduledStart > new Date()) {
+      const adapter = getMeetingBotAdapter("attendee");
+      if (!adapter.live) throw new MeetingEntryConflictError("Automatic entry is unavailable");
+      try {
+        await adapter.cancel(meeting.bot.externalBotId);
+        meeting.bot.status = "left";
+        meeting.bot.leftAt = new Date();
+        meeting.bot.providerStatusCode = "cancelled";
+        meeting.bot.activeRoomKey = undefined;
+        await meeting.save();
+        return;
+      } catch (error) {
+        if (!(error instanceof MeetingBotProviderError) || ![400, 405].includes(error.status || 0)) throw error;
+      }
+    }
+    await requestAttendeeExit(meeting);
+    throw new MeetingEntryConflictError("Wait for confirmed exit before removing this meeting");
+  }
   if (
     !meeting.bot.externalBotId ||
     !["recall", "attendee"].includes(meeting.bot.provider)

@@ -32,6 +32,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   }
 
   cache.promise ??= mongoose.connect(getMongoUri(), {
+    ...(process.env.MONGODB_DB_NAME ? { dbName: process.env.MONGODB_DB_NAME } : {}),
     bufferCommands: false,
     serverSelectionTimeoutMS: 10_000,
   });

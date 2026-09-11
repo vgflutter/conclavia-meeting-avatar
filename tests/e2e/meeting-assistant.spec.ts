@@ -13,6 +13,7 @@ import {
   parseMeetingVoiceCommand,
 } from "../../src/lib/meeting-command";
 import { parseRecallOutputTranscript } from "../../src/lib/recall-transcript";
+import { installVoiceProbe, voiceProbeStats } from "./voice-probe";
 
 const teamLink =
   "https://teams.microsoft.com/l/meetup-join/19%3ameeting_conclavia-e2e%40thread.v2/0?context=%7B%7D";
@@ -48,6 +49,18 @@ async function safeDelete(
   id: string | undefined,
 ) {
   if (!id) return;
+  if (resource === "meetings") {
+    const current = await request.get(`/api/meetings/${id}`);
+    const meeting = current.ok() ? (await current.json()).meeting : undefined;
+    if (meeting?.bot.externalBotId && !meeting.bot.leftAt) {
+      // Fixtures use simulated provider callbacks; confirm exit instead of fabricating it in an outcome.
+      await request.post(`/api/webhooks/attendee?meeting_token=${meeting.bot.outputToken}`, { data: {
+        idempotency_key: crypto.randomUUID(), bot_id: meeting.bot.externalBotId,
+        trigger: "bot.state_change", data: { new_state: "ended", created_at: new Date().toISOString() },
+      }});
+      await expect.poll(async () => (await (await request.get(`/api/meetings/${id}`)).json()).meeting.status).toBe("completed");
+    }
+  }
   const response = await request.delete(`/api/${resource}/${id}`);
   expect([200, 404]).toContain(response.status());
 }
@@ -114,7 +127,12 @@ test("meeting singolo: creazione, comandi, memoria e cancellazione", async ({
         `/api/meeting-room/${outputToken}/state`,
       );
       expect(outputResponse.ok()).toBeTruthy();
-      expect(Object.keys(await outputResponse.json()).sort()).toEqual(["status"]);
+      const outputState = await outputResponse.json();
+      expect(Object.keys(outputState).sort()).toEqual(["appearance", "status", "voice"]);
+      expect(["business_clay", "business_clay_female"]).toContain(outputState.appearance);
+      // The capability exposes readiness and provider selection, never credentials or voice secrets.
+      expect(Object.keys(outputState.voice).sort()).toEqual(["model", "provider", "ready"]);
+      expect(outputState.voice.provider).toBe("inworld");
 
       const protectedTranscript = await request.post(
         `/api/meeting-room/${outputToken}/transcript`,
@@ -193,6 +211,13 @@ test("meeting singolo: creazione, comandi, memoria e cancellazione", async ({
     });
 
     await test.step("salva l'esito e lo ritrova nella memoria", async () => {
+      const current = (await (await request.get(`/api/meetings/${meetingId}`)).json()).meeting;
+      await request.post(`/api/webhooks/attendee?meeting_token=${outputToken}`, { data: {
+        idempotency_key: crypto.randomUUID(), bot_id: current.bot.externalBotId,
+        trigger: "bot.state_change", data: { new_state: "ended", created_at: new Date().toISOString() },
+      }});
+      await expect.poll(async () => (await (await request.get(`/api/meetings/${meetingId}`)).json()).meeting.status).toBe("completed");
+      await page.reload();
       await page.getByText(/^(Completa|Modifica) il riepilogo$/).click();
       await page.getByLabel("Riepilogo").fill(`Riepilogo E2E ${marker}`);
       await page.getByLabel("Da ricordare · uno per riga").fill(rememberedFact);
@@ -293,7 +318,7 @@ test("serie: due appuntamenti condividono la memoria", async ({ page, request })
   }
 });
 
-test("dashboard: limita il centro attività e apre la vista completa", async ({
+test("dashboard: riepiloghi nello storico compatto, vista completa e ricerca", async ({
   page,
   request,
 }) => {
@@ -303,7 +328,7 @@ test("dashboard: limita il centro attività e apre la vista completa", async ({
   const titles: string[] = [];
 
   try {
-    for (let index = 0; index < 4; index += 1) {
+    for (let index = 0; index < 6; index += 1) {
       const title = `E2E Attività ${marker}-${index + 1}`;
       const createResponse = await request.post("/api/meetings", {
         data: {
@@ -347,11 +372,12 @@ test("dashboard: limita il centro attività e apre la vista completa", async ({
 
     await page.goto("/meetings");
     const activityCenter = page.locator("section").filter({
-      has: page.getByRole("heading", { name: "Da gestire" }),
+      has: page.getByRole("heading", { name: /^Storico/ }),
     });
-    await expect(activityCenter.locator('a[href^="/meetings/"]')).toHaveCount(3);
-    await activityCenter.getByRole("link", { name: "Vedi tutti" }).click();
-    await page.waitForURL(/\/meetings\?view=attention/);
+    await expect(activityCenter.getByTestId("meeting-row")).toHaveCount(5);
+    await expect(page.getByTestId("attention-inbox")).toHaveCount(0);
+    await activityCenter.getByRole("link", { name: /Vedi tutti/ }).click();
+    await page.waitForURL(/\/meetings\?view=history/);
     await expect(page.getByRole("link", { name: "Torna alla panoramica" })).toBeVisible();
     for (const title of titles) {
       await expect(page.getByText(title, { exact: true })).toBeVisible();
@@ -360,11 +386,11 @@ test("dashboard: limita il centro attività e apre la vista completa", async ({
 
     await page.getByLabel("Cerca meeting").fill(titles[3]);
     await page.getByRole("button", { name: "Cerca", exact: true }).click();
-    await expect(page).toHaveURL(/view=attention.*q=E2E/);
+    await expect(page).toHaveURL(/view=history.*q=E2E/);
     await expect(page.getByText(titles[3], { exact: true })).toBeVisible();
     await expect(page.getByText(titles[0], { exact: true })).toHaveCount(0);
     await page.getByRole("link", { name: "Azzera ricerca" }).click();
-    await expect(page).toHaveURL(/view=attention(?!.*q=)/);
+    await expect(page).toHaveURL(/view=history(?!.*q=)/);
     await expect(page.getByLabel("Cerca meeting")).toHaveValue("");
 
     await page
@@ -374,7 +400,7 @@ test("dashboard: limita il centro attività e apre la vista completa", async ({
     await expect(page).toHaveURL(/view=history/);
     await page.getByLabel("Cerca meeting").fill(`Nessun risultato ${marker}`);
     await page.getByRole("button", { name: "Cerca", exact: true }).click();
-    await expect(page.getByText("Nessun meeting concluso corrisponde alla ricerca.")).toBeVisible();
+    await expect(page.getByText("Nessun meeting corrisponde ai filtri.")).toBeVisible();
   } finally {
     await Promise.all(
       meetingIds.map(async (meetingId) => {
@@ -423,14 +449,16 @@ test("dashboard: un meeting con data trascorsa non appare tra i prossimi", async
 
     await page.goto(`/meetings?view=upcoming&q=${encodeURIComponent(title)}`);
     await expect(page.getByText(title, { exact: true })).toHaveCount(0);
-    await expect(page.getByText("Nessun meeting corrisponde alla ricerca.")).toBeVisible();
+    await expect(page.getByText("Nessun meeting corrisponde ai filtri.")).toBeVisible();
 
     await page.goto(`/meetings?view=attention&q=${encodeURIComponent(title)}`);
+    await expect(page.getByText(title, { exact: true })).toHaveCount(0);
+    await page.goto(`/meetings?view=history&q=${encodeURIComponent(title)}`);
     await expect(page.getByText(title, { exact: true })).toBeVisible();
-    await expect(page.getByText("Data superata", { exact: true })).toBeVisible();
+    await expect(page.getByText("Non svolto", { exact: true })).toBeVisible();
     await page.getByText(title, { exact: true }).click();
     await expect(page.getByRole("heading", { name: title })).toBeVisible();
-    await expect(page.getByText("Data superata", { exact: true })).toBeVisible();
+    await expect(page.getByText("Non svolto", { exact: true })).toBeVisible();
     await expect(page.getByText(/L.orario è già passato e il meeting non risulta avviato/)).toBeVisible();
   } finally {
     await safeDelete(request, "meetings", meetingId);
@@ -473,47 +501,24 @@ test("interfaccia mobile: navigazione e azioni principali restano utilizzabili",
   await expectNoHorizontalOverflow();
 });
 
-test("l'avatar si prova senza creare un meeting", async ({ page }) => {
-  test.slow();
+test("l'avatar si prova in streaming senza creare un meeting", async ({ page }) => {
+  await installVoiceProbe(page);
   await useItalian(page);
   await page.goto("/avatar");
-  await page.getByRole("link", { name: "Prova avatar" }).click();
-  await page.waitForURL(/\/avatar\/test$/);
-  await expect(
-    page.getByRole("heading", { name: "Prova il collega digitale" }),
-  ).toBeVisible();
-  await expect(page.getByText("Prova voce, espressioni e gesti", { exact: false })).toBeVisible();
-
-  await waitForClientReady(page);
-  await expect(page.getByRole("button", { name: "Ascolta la voce" })).toBeVisible();
-
-  await page.getByTestId("mood-focused").click();
-  await expect(page.locator("svg[data-mood='focused']")).toBeVisible();
-
-  await page.getByTestId("hand-raise-toggle").click();
+  await page.getByRole("navigation", { name: "Configurazione avatar" }).getByRole("link", { name: "Prova avatar · voce e movimenti", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Ascolta, regola, scegli" })).toBeVisible();
+  await page.getByRole("button", { name: "Alza / abbassa la mano" }).click();
   await expect(page.locator("svg[data-gesture='hand_raise']")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Abbassa la mano" })).toBeVisible();
-
-  await page.getByTestId("hand-raise-toggle").click();
-  await expect(page.locator("svg[data-gesture='rest']")).toBeVisible();
-
-  await test.step("genera e riproduce la voce italiana sul dispositivo", async () => {
-    await page.getByLabel("Frase da provare").fill("Ciao, sono il collega digitale.");
+  for (const language of ["it", "en"]) {
+    await page.getByLabel("Lingua", { exact: true }).selectOption(language);
     await page.getByRole("button", { name: "Ascolta la voce" }).click();
-    await expect(page.locator('[data-preview-state="speaking"]')).toBeVisible({ timeout: 180_000 });
-    await expect(page.getByText("IN VOCE", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Ferma la voce" }).click();
-    await expect(page.locator('[data-preview-state="ready"]')).toBeVisible();
-  });
-
-  await test.step("genera e riproduce anche la voce inglese", async () => {
-    await page.getByRole("button", { name: "English" }).click();
-    await page.getByLabel("Frase da provare").fill("Hello, I am your digital colleague.");
-    await page.getByRole("button", { name: "Ascolta la voce" }).click();
-    await expect(page.locator('[data-preview-state="speaking"]')).toBeVisible({ timeout: 180_000 });
-    await page.getByRole("button", { name: "Ferma la voce" }).click();
-    await expect(page.locator('[data-preview-state="ready"]')).toBeVisible();
-  });
+    await expect(page.locator('[data-streaming-voice-state="speaking"]')).toBeVisible();
+    await expect(page.locator('svg[data-audio-driven="true"]:not([data-viseme="rest"])')).toBeVisible();
+    await page.getByRole("button", { name: "Ferma la voce", exact: true }).click();
+    await expect(page.locator('[data-streaming-voice-state="ready"]')).toBeVisible();
+    await expect(page.locator('svg[data-audio-driven="true"]')).toHaveAttribute("data-viseme", "rest");
+  }
+  expect((await voiceProbeStats(page)).playbacks).toHaveLength(2);
 });
 
 test("comandi vocali: riconosce italiano e inglese dopo la parola di attivazione", () => {
@@ -547,6 +552,19 @@ test("interventi: riconosce una correzione certa e attende il permesso rivolto a
   expect(meetingPermissionDecision("Nora, vai pure.", "Nora")).toBe("grant");
   expect(meetingPermissionDecision("Nora, non ora.", "Nora")).toBe("decline");
   expect(meetingPermissionDecision("Conclavia, vai pure.", "Nora")).toBeUndefined();
+});
+
+test("saluti: risponde al nome dinamico anche con doppie perse nei sottotitoli", () => {
+  for (const greeting of ["Ciao Riccardo", "Ciao, Riccardo!", "Chao Chao, Ricardo.", "Riccardo, ciao"]) {
+    expect(parseMeetingVoiceCommand(greeting, "Riccardo")).toEqual({kind: "ask", prompt: expect.stringMatching(/^ciao$/iu)});
+  }
+  expect(parseMeetingVoiceCommand("Hello Nora", "Nora")).toEqual({kind: "ask", prompt: "Hello"});
+  expect(parseMeetingVoiceCommand("Ciao Francesca", "Francesca")).toEqual({kind: "ask", prompt: "Ciao"});
+  expect(isMeetingWakePhrase("Ciao, Ricardo!", "Riccardo")).toBe(true);
+  expect(parseMeetingVoiceCommand("Riccardo", "Riccardo")).toBeUndefined();
+  expect(parseMeetingVoiceCommand("Ciao Mario", "Riccardo")).toBeUndefined();
+  expect(parseMeetingVoiceCommand("Charlie cardo.", "Riccardo")).toBeUndefined();
+  expect(parseMeetingVoiceCommand("Lo ha detto Riccardo", "Riccardo")).toBeUndefined();
 });
 
 test("servizio: espone uno stato di salute senza cache", async ({ request }) => {

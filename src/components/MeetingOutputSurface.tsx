@@ -7,19 +7,15 @@ import {
   type AvatarGesture,
   type AvatarMood,
 } from "@/components/BusinessAvatar";
+import type { AssistantAppearance } from "@/types/assistant-profile";
 import type { Locale } from "@/i18n/locale";
-import {
-  avatarVisemeAt,
-  avatarVoiceLevelAt,
-  buildAvatarLipSync,
-} from "@/lib/avatar-lipsync";
 import type { AvatarViseme } from "@/lib/avatar-visemes";
-import { generateLocalSpeech, prepareLocalVoice } from "@/lib/local-tts";
+import { createMeetingVoicePlayer, type MeetingVoiceState } from "@/lib/meeting-voice-player";
 import {
   parseRecallOutputTranscript,
   type RecallOutputTranscript,
 } from "@/lib/recall-transcript";
-import type { AssistantVoiceStyle } from "@/types/assistant-profile";
+import type { MeetingTtsProvider } from "@/lib/meeting-tts-config";
 import type {
   MeetingBotProvider,
   MeetingCommandKind,
@@ -46,30 +42,30 @@ function performanceFor(kind: MeetingCommandKind): {
 
 export function MeetingOutputSurface({
   outputToken,
+  outputAttemptId,
   initialStatus,
   initialCommandId,
   initialInterventionId,
   displayName,
+  appearance,
   role,
   locale,
-  speechLanguage,
-  voiceStyle,
-  speakingRate,
   inMeeting,
   meetingProvider,
+  tts,
 }: {
   outputToken: string;
+  outputAttemptId?: string;
   initialStatus: MeetingStatus;
   initialCommandId?: string;
   initialInterventionId?: string;
   displayName: string;
+  appearance: AssistantAppearance;
   role: string;
   locale: Locale;
-  speechLanguage: "it" | "en";
-  voiceStyle: AssistantVoiceStyle;
-  speakingRate: number;
   inMeeting: boolean;
   meetingProvider: MeetingBotProvider;
+  tts: { provider: MeetingTtsProvider; ready: boolean };
 }) {
   const [status, setStatus] = useState(initialStatus);
   const [viseme, setViseme] = useState<AvatarViseme>("rest");
@@ -78,99 +74,108 @@ export function MeetingOutputSurface({
   const [gesture, setGesture] = useState<AvatarGesture>(
     initialInterventionId ? "hand_raise" : "rest",
   );
-  const [speaking, setSpeaking] = useState(false);
+  const [voiceState, setVoiceState] = useState<MeetingVoiceState>("ready");
+  const [voicePrepared, setVoicePrepared] = useState(!inMeeting);
+  const [connected, setConnected] = useState(false);
+  const voiceReadyRef = useRef(false);
+  const voiceStateRef = useRef(voiceState);
+  useEffect(() => { voiceStateRef.current = voiceState; }, [voiceState]);
+  const [participantAppearance, setParticipantAppearance] = useState(appearance);
+  const [participantName, setParticipantName] = useState(displayName);
+  const [completedCommandId, setCompletedCommandId] = useState<string>();
+  const speaking = voiceState === "speaking";
   const pendingInterventionRef = useRef(initialInterventionId);
-  const lastSpokenCommandRef = useRef(initialCommandId);
-  const isPresent = ["joining", "waiting_room", "live"].includes(status);
+  const lastReceivedCommandRef = useRef(initialCommandId);
+  const isPresent = status === "live" && voicePrepared && connected && voiceState !== "error";
   const isItalian = locale === "it";
 
   useEffect(() => {
     let active = true;
-    let speechRun = 0;
-    let audio: HTMLAudioElement | undefined;
-    let audioUrl: string | undefined;
-    let animation: number | undefined;
     let polling = false;
     let transcriptSocket: WebSocket | undefined;
     let reconnectTimer: number | undefined;
     let utteranceTimer: number | undefined;
     let bufferedTranscript: RecallOutputTranscript | undefined;
     let meetingAudioStream: MediaStream | undefined;
+    let lastHeartbeat = 0;
+    let lastConnectedAt = Date.now();
+    let currentVoiceCommandId: string | undefined;
+    let playback: { commandId: string; state: "speaking" | "completed" | "error" } | undefined;
+    let reporting = Promise.resolve();
 
-    function resetPerformance() {
-      if (animation) window.cancelAnimationFrame(animation);
-      audio?.pause();
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
-      animation = undefined;
-      audio = undefined;
-      audioUrl = undefined;
-      if (!active) return;
-      setViseme("rest");
-      setVoiceLevel(0);
-      setMood("friendly");
-      setGesture("rest");
-      setSpeaking(false);
-    }
-
-    async function speak(command: SpokenCommand) {
-      speechRun += 1;
-      const run = speechRun;
-      resetPerformance();
-      const performance = performanceFor(command.kind);
-      setMood(performance.mood);
-      setGesture(performance.gesture);
-
-      try {
-        const result = await generateLocalSpeech({
-          text: command.response,
-          language: speechLanguage,
-          voiceStyle,
-          speakingRate,
+    function reportReadiness() {
+      if (!active || !inMeeting || !outputAttemptId) return;
+      const report = { attemptId: outputAttemptId, voiceReady: voiceReadyRef.current && voiceStateRef.current !== "error", playback };
+      // Serialize reports so a delayed "speaking" event cannot overtake "completed".
+      reporting = reporting.then(async () => {
+        if (!active) return;
+        await fetch(`/api/meeting-room/${encodeURIComponent(outputToken)}/state`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(report), signal: AbortSignal.timeout(5_000),
         });
-        if (!active || run !== speechRun) return;
-
-        const frames = buildAvatarLipSync(command.response);
-        audioUrl = URL.createObjectURL(result.audio);
-        audio = new Audio(audioUrl);
-        audio.preload = "auto";
-        audio.onended = () => {
-          resetPerformance();
-        };
-        await audio.play();
-        if (!active || run !== speechRun) return;
-        setSpeaking(true);
-
-        const animate = () => {
-          if (!active || run !== speechRun || !audio || audio.paused || audio.ended) return;
-          const duration = Number.isFinite(audio.duration) && audio.duration > 0
-            ? audio.duration
-            : result.durationSeconds;
-          const progress = duration > 0 ? audio.currentTime / duration : 0;
-          setViseme(avatarVisemeAt(frames, progress));
-          setVoiceLevel(avatarVoiceLevelAt(result.samples, progress));
-          animation = window.requestAnimationFrame(animate);
-        };
-        animation = window.requestAnimationFrame(animate);
-      } catch {
-        if (active && run === speechRun) resetPerformance();
-      }
+      }).catch(() => undefined);
     }
+
+    const voicePlayer = createMeetingVoicePlayer({
+      remote: {
+        endpoint: `/api/meeting-room/${encodeURIComponent(outputToken)}/speech`,
+        attemptId: outputAttemptId || "",
+      },
+      onState: (nextState) => {
+        setVoiceState(nextState);
+        voiceStateRef.current = nextState;
+        if (currentVoiceCommandId && (nextState === "speaking" || nextState === "error")) {
+          playback = { commandId: currentVoiceCommandId, state: nextState };
+          reportReadiness();
+        }
+      },
+      onFrame: (nextViseme, level) => { setViseme(nextViseme); setVoiceLevel(level); },
+      onCommand: (command) => {
+        currentVoiceCommandId = command.id;
+        setMood(performanceFor(command.kind).mood);
+        setGesture("rest");
+      },
+      onComplete: (id) => {
+        playback = { commandId: id, state: "completed" };
+        reportReadiness();
+        setCompletedCommandId(id);
+        setMood(pendingInterventionRef.current ? "focused" : "friendly");
+        setGesture(pendingInterventionRef.current ? "hand_raise" : "rest");
+      },
+    });
 
     async function pollMeeting() {
       if (polling) return;
       polling = true;
       try {
         const response = await fetch(
-          `/api/meeting-room/${encodeURIComponent(outputToken)}/state`,
-          { cache: "no-store" },
+          `/api/meeting-room/${encodeURIComponent(outputToken)}/state?after=${encodeURIComponent(lastReceivedCommandRef.current || "")}`,
+          { cache: "no-store", signal: AbortSignal.timeout(5_000) },
         );
         const payload = (await response.json()) as {
           status?: MeetingStatus;
           command?: SpokenCommand;
-          pendingIntervention?: { id: string };
+          commands?: SpokenCommand[];
+          displayName?: string;
+          appearance?: AssistantAppearance;
+          pendingIntervention?: { id: string; response?: string };
         };
-        if (!active || !response.ok || !payload.status) return;
+        if (!active) return;
+        if (!response.ok || !payload.status) throw new Error("Output state unavailable");
+        lastConnectedAt = Date.now();
+        setConnected(true);
         setStatus(payload.status);
+        if (inMeeting && outputAttemptId && Date.now() - lastHeartbeat >= 5_000) {
+          lastHeartbeat = Date.now();
+          // Only a mounted meeting renderer reports readiness; previews and HTTP probes never do.
+          reportReadiness();
+        }
+        if (payload.appearance) setParticipantAppearance(payload.appearance);
+        if (payload.displayName) setParticipantName(payload.displayName);
+        if (inMeeting && payload.status !== "live") {
+          if (["failed", "processing", "completed", "cancelled"].includes(payload.status)) voicePlayer.dispose();
+          return;
+        }
         const nextInterventionId = payload.pendingIntervention?.id;
         if (nextInterventionId !== pendingInterventionRef.current) {
           pendingInterventionRef.current = nextInterventionId;
@@ -182,13 +187,13 @@ export function MeetingOutputSurface({
             setGesture("rest");
           }
         }
-        const latest = payload.command;
-        if (latest && latest.id !== lastSpokenCommandRef.current) {
-          lastSpokenCommandRef.current = latest.id;
-          void speak(latest);
+        const commands = payload.commands || (payload.command ? [payload.command] : []);
+        for (const command of commands) {
+          voicePlayer.enqueue(command);
+          lastReceivedCommandRef.current = command.id;
         }
       } catch {
-        // Keep the last known state while the connection recovers.
+        if (active && Date.now() - lastConnectedAt >= 5_000) setConnected(false);
       } finally {
         polling = false;
       }
@@ -212,10 +217,7 @@ export function MeetingOutputSurface({
         );
         const payload = (await response.json()) as { command?: SpokenCommand };
         if (!active || !response.ok || !payload.command) return;
-        if (payload.command.id !== lastSpokenCommandRef.current) {
-          lastSpokenCommandRef.current = payload.command.id;
-          void speak(payload.command);
-        }
+        voicePlayer.enqueue(payload.command);
       } catch {
         // The next finalized utterance will retry through the active meeting connection.
       }
@@ -261,7 +263,9 @@ export function MeetingOutputSurface({
     }
 
     if (inMeeting) {
-      void prepareLocalVoice(voiceStyle).catch(() => undefined);
+      void (tts.ready ? Promise.resolve() : Promise.reject(new Error("Voice not configured")))
+        .then(() => { if (active) { voiceReadyRef.current = true; setVoicePrepared(true); } })
+        .catch(() => { if (active) setVoiceState("error"); });
       if (meetingProvider === "recall") connectTranscript();
       if (meetingProvider === "attendee" && navigator.mediaDevices?.getUserMedia) {
         void navigator.mediaDevices
@@ -281,23 +285,34 @@ export function MeetingOutputSurface({
 
     return () => {
       active = false;
-      speechRun += 1;
+      voicePlayer.dispose();
       window.clearInterval(timer);
       if (reconnectTimer) window.clearTimeout(reconnectTimer);
       if (utteranceTimer) window.clearTimeout(utteranceTimer);
       transcriptSocket?.close();
       meetingAudioStream?.getTracks().forEach((track) => track.stop());
-      if (animation) window.cancelAnimationFrame(animation);
-      audio?.pause();
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
-  }, [inMeeting, meetingProvider, outputToken, speakingRate, speechLanguage, voiceStyle]);
+  }, [inMeeting, meetingProvider, outputToken, outputAttemptId, tts.provider, tts.ready]);
 
   const stageStyle = {
     "--voice-level": voiceLevel,
   } as CSSProperties;
 
-  const statusLabel = speaking
+  const statusLabel = !connected
+    ? isItalian ? "COLLEGAMENTO…" : "CONNECTING…"
+    : inMeeting && status !== "live"
+    ? ["joining", "scheduled"].includes(status)
+      ? isItalian ? "INGRESSO IN CORSO" : "JOINING"
+      : status === "waiting_room"
+        ? isItalian ? "IN SALA D’ATTESA" : "IN THE LOBBY"
+        : isItalian ? "NON OPERATIVO" : "INACTIVE"
+    : voiceState === "error"
+    ? isItalian ? "VOCE NON DISPONIBILE" : "VOICE UNAVAILABLE"
+    : inMeeting && !voicePrepared
+      ? isItalian ? "PREPARAZIONE…" : "PREPARING…"
+    : voiceState === "preparing"
+      ? isItalian ? "PREPARA LA RISPOSTA" : "PREPARING RESPONSE"
+      : speaking
     ? isItalian
       ? "STA PARLANDO"
       : "SPEAKING"
@@ -318,14 +333,14 @@ export function MeetingOutputSurface({
           : "READY";
 
   return (
-    <div className={styles.output} style={stageStyle} data-live={isPresent} data-speaking={speaking}>
+    <div className={styles.output} style={stageStyle} data-output-runtime="conclavia-v1" data-in-meeting={inMeeting} data-live={isPresent} data-speaking={speaking} data-voice-state={voiceState} data-spoken-command={completedCommandId}>
       <div className={styles.grid} />
-      <div className={styles.glow} />
       <div className={styles.statusBadge} data-testid="meeting-status-badge">
         <i /> {statusLabel}
       </div>
       <div className={styles.avatarWrap}>
         <BusinessAvatar
+          appearance={participantAppearance}
           viseme={viseme}
           mood={mood}
           gesture={gesture}
@@ -334,7 +349,7 @@ export function MeetingOutputSurface({
         />
       </div>
       <div className={styles.lowerThird} data-testid="meeting-identity">
-        <span>{displayName}</span>
+        <span>{participantName}</span>
         <strong>{role}</strong>
       </div>
       {!inMeeting && (

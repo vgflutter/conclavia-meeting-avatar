@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { connectToDatabase } from "@/lib/mongodb";
 import { cancelMeetingBot } from "@/lib/meeting-bot-scheduler";
+import { MeetingEntryConflictError } from "@/lib/meeting-entry";
 import { serializeMeeting } from "@/lib/serialize-meeting";
 import { MeetingModel } from "@/models/Meeting";
 
@@ -53,6 +54,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
     await meeting.deleteOne();
     return NextResponse.json({ deleted: true });
   } catch (error) {
+    if (error instanceof MeetingEntryConflictError) {
+      return NextResponse.json({ error: "Attendi la conferma dell’uscita prima di eliminare il meeting." }, { status: 409 });
+    }
     console.error("Unable to delete meeting", error);
     return NextResponse.json({ error: "Unable to delete meeting" }, { status: 500 });
   }

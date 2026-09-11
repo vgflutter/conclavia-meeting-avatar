@@ -4,7 +4,7 @@ import { type FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useTranslations } from "@/i18n/I18nProvider";
-import type { CorrectionPolicy, MeetingLanguage } from "@/types/meeting";
+import type { CorrectionPolicy, MeetingLanguage, MeetingCreateInput } from "@/types/meeting";
 import type { MeetingAutomationPublicConfig } from "@/types/meeting-automation";
 
 type MeetingMode = "single" | "series";
@@ -37,35 +37,38 @@ function initialAppointment(key: string): AppointmentDraft {
 export function MeetingCreateForm({
   automation,
   assistantName,
+  initialMeeting,
 }: {
   automation: MeetingAutomationPublicConfig;
   assistantName: string;
+  initialMeeting?: Pick<MeetingCreateInput, "title" | "objective" | "meetingUrl" | "durationMinutes" | "timezone" | "language" | "agenda" | "correctionPolicy" | "seriesLabel">;
 }) {
   const router = useRouter();
   const { locale } = useTranslations();
   const isItalian = locale === "it";
   const nextAppointmentKey = useRef(2);
-  const nextAgendaKey = useRef(2);
+  const nextAgendaKey = useRef((initialMeeting?.agenda.length || 1) + 1);
   const automaticEntryReady = automation.state === "ready";
   const [mode, setMode] = useState<MeetingMode>("single");
   const [timing, setTiming] = useState<MeetingTiming>(
-    automaticEntryReady ? "now" : "scheduled",
+    automaticEntryReady && !initialMeeting ? "now" : "scheduled",
   );
-  const [title, setTitle] = useState("");
-  const [objective, setObjective] = useState("");
+  const [title, setTitle] = useState(initialMeeting?.title || "");
+  const [objective, setObjective] = useState(initialMeeting?.objective || "");
   const [appointments, setAppointments] = useState<AppointmentDraft[]>([
-    initialAppointment("appointment-1"),
+    { ...initialAppointment("appointment-1"), meetingUrl: initialMeeting?.meetingUrl || "", durationMinutes: initialMeeting?.durationMinutes || 60 },
   ]);
-  const [language, setLanguage] = useState<MeetingLanguage>("auto");
-  const [autoJoin, setAutoJoin] = useState(automaticEntryReady);
-  const [agenda, setAgenda] = useState<AgendaDraft[]>([
+  const usesTeamsCaptions = automation.provider === "attendee";
+  const [language, setLanguage] = useState<MeetingLanguage>(initialMeeting?.language && initialMeeting.language !== "auto" ? initialMeeting.language : usesTeamsCaptions ? locale : "auto");
+  const [autoJoin, setAutoJoin] = useState(automaticEntryReady && !initialMeeting);
+  const [agenda, setAgenda] = useState<AgendaDraft[]>(initialMeeting?.agenda.length ? initialMeeting.agenda.map((item, index) => ({...item, key: `agenda-${index + 1}`})) : [
     { key: "agenda-1", title: "", mandatory: true },
   ]);
   const [correctionPolicy, setCorrectionPolicy] =
-    useState<CorrectionPolicy>("important_only");
+    useState<CorrectionPolicy>(initialMeeting?.correctionPolicy || "important_only");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
-  const timezone = "Europe/Rome";
+  const timezone = initialMeeting?.timezone || "Europe/Rome";
 
   function selectMode(nextMode: MeetingMode) {
     setMode(nextMode);
@@ -163,6 +166,7 @@ export function MeetingCreateForm({
                   agenda: normalizedAgenda,
                   correctionPolicy,
                   ...normalizedAppointments[0],
+                  seriesLabel: initialMeeting?.seriesLabel,
                 },
           ),
         },
@@ -533,7 +537,7 @@ export function MeetingCreateForm({
               {isItalian ? "Lingua e interventi" : "Language and contributions"}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              {isItalian ? "Automatico IT/EN · interviene solo per inesattezze importanti" : "Automatic IT/EN · contributes only for important inaccuracies"}
+              {isItalian ? "Lingua e modalità di intervento" : "Language and intervention preferences"}
             </p>
           </div>
           <span aria-hidden="true" className="text-lg text-slate-400 transition-transform group-open:rotate-180">⌄</span>
@@ -549,10 +553,13 @@ export function MeetingCreateForm({
               value={language}
               onChange={(event) => setLanguage(event.target.value as MeetingLanguage)}
             >
-              <option value="auto">{isItalian ? "Automatica · IT/EN" : "Automatic · IT/EN"}</option>
+              {!usesTeamsCaptions && <option value="auto">{isItalian ? "Automatica · IT/EN" : "Automatic · IT/EN"}</option>}
               <option value="it">Italiano</option>
               <option value="en">English</option>
             </select>
+            {usesTeamsCaptions && <p className="mt-2 text-sm text-slate-500">
+              {isItalian ? "Scegli la lingua parlata nel meeting: viene usata anche per i sottotitoli di Teams." : "Choose the language spoken in the meeting. It is also used for Teams captions."}
+            </p>}
           </div>
           <div>
             <label className="label" htmlFor="meeting-correction-policy">

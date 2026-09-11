@@ -1,5 +1,5 @@
 import type { MeetingSeriesDocument } from "@/models/MeetingSeries";
-import { localVoiceConfiguration, meetingAssistantConfiguration } from "@/lib/meeting-factory";
+import { meetingVoiceConfiguration, meetingAssistantConfiguration } from "@/lib/meeting-factory";
 import type { MeetingSeriesResponse } from "@/types/meeting";
 
 export function serializeMeetingSeries(
@@ -25,7 +25,7 @@ export function serializeMeetingSeries(
           correctionPolicy: document.assistant.correctionPolicy || "important_only",
         }
       : meetingAssistantConfiguration("important_only"),
-    voice: localVoiceConfiguration(),
+    voice: meetingVoiceConfiguration(),
     createdAt: document.createdAt.toISOString(),
     updatedAt: document.updatedAt.toISOString(),
   };

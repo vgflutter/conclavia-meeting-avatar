@@ -1,4 +1,5 @@
-import { type HydratedDocument, type Model, Schema, model, models } from "mongoose";
+import { deleteModel, type HydratedDocument, type Model, Schema, model, models } from "mongoose";
+import { hasMeetingLifecycleSchema } from "@/lib/meeting-model-schema";
 
 import type {
   MeetingActionItem,
@@ -58,6 +59,8 @@ const assistantSchema = new Schema<MeetingAssistantConfiguration>(
 
 const commandEventSchema = new Schema<MeetingCommandEvent>(
   {
+    playbackStartedAt: { type: Date },
+    playbackEndedAt: { type: Date },
     id: { type: String, required: true, trim: true },
     kind: {
       type: String,
@@ -99,6 +102,9 @@ const participantNoteSchema = new Schema<MeetingParticipantNote>(
 
 const transcriptSegmentSchema = new Schema<MeetingTranscriptSegment>(
   {
+    segmentId: { type: String },
+    source: { type: String, enum: ["participant", "avatar", "suspected_echo"] },
+    echoCommandId: { type: String },
     sequence: { type: Number, required: true, min: 1, validate: Number.isInteger },
     speakerName: { type: String, required: true, trim: true, maxlength: 160 },
     text: { type: String, required: true, trim: true, maxlength: 10_000 },
@@ -139,7 +145,7 @@ const botSchema = new Schema<MeetingBotConfiguration>(
     },
     status: {
       type: String,
-      enum: ["not_scheduled", "scheduling", "scheduled", "joining", "waiting_room", "joined", "left", "failed"],
+      enum: ["not_scheduled", "scheduling", "scheduled", "joining", "waiting_room", "joined", "leaving", "left", "failed"],
       required: true,
       default: "not_scheduled",
     },
@@ -155,6 +161,23 @@ const botSchema = new Schema<MeetingBotConfiguration>(
     lastCorrectionCheckAt: { type: Date },
     processedWebhookIds: { type: [String], required: true, default: [] },
     lastError: { type: String, trim: true, maxlength: 2_000 },
+    entryAttemptId: { type: String },
+    activeRoomKey: { type: String },
+    joinDeadlineAt: { type: Date },
+    readyAt: { type: Date },
+    outputLastSeenAt: { type: Date },
+    outputVoiceReady: { type: Boolean },
+    outputSpeechCommandId: { type: String },
+    outputSpeechState: { type: String, enum: ["speaking", "completed", "error"] },
+    outputSpeechUpdatedAt: { type: Date },
+    stopRequestedAt: { type: Date },
+    stopAcknowledgedAt: { type: Date },
+    failureCode: { type: String },
+    monitorLeaseUntil: { type: Date },
+    monitorCheckedAt: { type: Date },
+    captionLanguage: { type: String, enum: ["it-it", "en-us"] },
+    captionLanguageAttempts: { type: Number, min: 0 },
+    captionLanguageRequestedAt: { type: Date },
   },
   { _id: false },
 );
@@ -171,6 +194,7 @@ const voiceSchema = new Schema<MeetingVoiceConfiguration>(
 
 const meetingSchema = new Schema<MeetingRecord>(
   {
+    archivedAt: { type: Date },
     seriesId: { type: Schema.Types.ObjectId, ref: "MeetingSeries", index: true },
     title: { type: String, required: true, trim: true, maxlength: 160 },
     meetingUrl: { type: String, required: true, trim: true, maxlength: 2_000 },
@@ -216,9 +240,20 @@ meetingSchema.index({ status: 1, scheduledStart: 1 });
 meetingSchema.index({ seriesKey: 1, scheduledStart: -1 });
 meetingSchema.index({ seriesId: 1, scheduledStart: 1 });
 meetingSchema.index({ "bot.outputToken": 1 }, { unique: true });
+meetingSchema.index({ "bot.activeRoomKey": 1 }, {
+  unique: true,
+  partialFilterExpression: { "bot.activeRoomKey": { $type: "string" } },
+});
+meetingSchema.index({ "bot.joinDeadlineAt": 1, "bot.status": 1 });
 
-export const MeetingModel =
-  (models.Meeting as Model<MeetingRecord> | undefined) ??
-  model<MeetingRecord>("Meeting", meetingSchema);
+export function registerMeetingModel(): Model<MeetingRecord> {
+  const cached = models.Meeting as Model<MeetingRecord> | undefined;
+  if (cached && hasMeetingLifecycleSchema(cached) && cached.schema.path("archivedAt")) return cached;
+  // Remove only the in-process model definition, never the collection or its data.
+  if (cached) deleteModel("Meeting");
+  return model<MeetingRecord>("Meeting", meetingSchema);
+}
+
+export const MeetingModel = registerMeetingModel();
 
 export type MeetingDocument = HydratedDocument<MeetingRecord>;

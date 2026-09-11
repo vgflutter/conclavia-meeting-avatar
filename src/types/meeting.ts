@@ -21,6 +21,7 @@ export type MeetingBotStatus =
   | "joining"
   | "waiting_room"
   | "joined"
+  | "leaving"
   | "left"
   | "failed";
 
@@ -100,6 +101,9 @@ export interface MeetingParticipantNote {
 }
 
 export interface MeetingTranscriptSegment {
+  segmentId?: string;
+  source?: "participant" | "avatar" | "suspected_echo";
+  echoCommandId?: string;
   sequence: number;
   speakerName: string;
   text: string;
@@ -110,6 +114,8 @@ export interface MeetingTranscriptSegment {
 }
 
 export interface MeetingCommandEvent {
+  playbackStartedAt?: Date;
+  playbackEndedAt?: Date;
   id: string;
   kind: MeetingCommandKind;
   prompt?: string;
@@ -154,12 +160,30 @@ export interface MeetingBotConfiguration {
   lastCorrectionCheckAt?: Date;
   processedWebhookIds?: string[];
   lastError?: string;
+  entryAttemptId?: string;
+  activeRoomKey?: string;
+  joinDeadlineAt?: Date;
+  readyAt?: Date;
+  outputLastSeenAt?: Date;
+  outputVoiceReady?: boolean;
+  outputSpeechCommandId?: string;
+  outputSpeechState?: "speaking" | "completed" | "error";
+  outputSpeechUpdatedAt?: Date;
+  stopRequestedAt?: Date;
+  stopAcknowledgedAt?: Date;
+  failureCode?: string;
+  monitorLeaseUntil?: Date;
+  monitorCheckedAt?: Date;
+  captionLanguage?: "it-it" | "en-us";
+  captionLanguageAttempts?: number;
+  // Provider HTTP acknowledgement, not proof of transcription accuracy.
+  captionLanguageRequestedAt?: Date;
 }
 
 export interface MeetingVoiceConfiguration {
-  mode: "local_private";
-  provider: "local";
-  model: "supertonic_3";
+  mode: "streaming";
+  provider: "inworld";
+  model: "inworld-tts-2" | "inworld-tts-2-flash";
   pronunciationProfile: string;
 }
 
@@ -170,6 +194,7 @@ export interface MeetingRetentionConfiguration {
 }
 
 export interface MeetingRecord {
+  archivedAt?: Date;
   seriesId?: Types.ObjectId;
   title: string;
   meetingUrl: string;
@@ -198,6 +223,7 @@ export interface MeetingRecord {
 }
 
 export interface MeetingResponse {
+  archivedAt?: string;
   id: string;
   seriesId?: string;
   title: string;
@@ -214,7 +240,9 @@ export interface MeetingResponse {
   status: MeetingStatus;
   agenda: MeetingAgendaItem[];
   assistant: MeetingAssistantConfiguration;
-  commandHistory: Array<Omit<MeetingCommandEvent, "createdAt"> & { createdAt: string }>;
+  commandHistory: Array<Omit<MeetingCommandEvent, "createdAt" | "playbackStartedAt" | "playbackEndedAt"> & {
+    createdAt: string; playbackStartedAt?: string; playbackEndedAt?: string;
+  }>;
   pendingIntervention?: Omit<MeetingPendingIntervention, "createdAt" | "expiresAt"> & {
     createdAt: string;
     expiresAt: string;
@@ -233,6 +261,19 @@ export interface MeetingResponse {
     providerStatusCode?: string;
     lastStatusAt?: string;
     lastError?: string;
+    joinDeadlineAt?: string;
+    readyAt?: string;
+    outputLastSeenAt?: string;
+    outputVoiceReady?: boolean;
+    outputSpeechCommandId?: string;
+    outputSpeechState?: "speaking" | "completed" | "error";
+    outputSpeechUpdatedAt?: string;
+    stopRequestedAt?: string;
+    failureCode?: string;
+    entryAttemptId?: string;
+    captionLanguage?: "it-it" | "en-us";
+    captionLanguageAttempts?: number;
+    captionLanguageRequestedAt?: string;
   };
   voice: MeetingVoiceConfiguration;
   retention: MeetingRetentionConfiguration;

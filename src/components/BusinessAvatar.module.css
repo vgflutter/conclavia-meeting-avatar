@@ -162,7 +162,25 @@
 .businessAvatar[data-viseme="o"] .mouthO,
 .businessAvatar[data-viseme="u"] .mouthU,
 .businessAvatar[data-viseme="consonant"] .mouthConsonant { opacity: 1; transform: scale(1); }
+/* The PCM envelope is already smoothed. CSS easing would delay the mouth
+   behind the sound and leave an open vowel visible during silence. */
+.businessAvatar[data-audio-driven="true"] .mouthRig,
+.businessAvatar[data-audio-driven="true"] .mouthShape { transition: none; }
+.businessAvatar[data-audio-driven="true"] .mouthA,
+.businessAvatar[data-audio-driven="true"] .mouthE,
+.businessAvatar[data-audio-driven="true"] .mouthO,
+.businessAvatar[data-audio-driven="true"] .mouthU,
+.businessAvatar[data-audio-driven="true"] .mouthConsonant {
+  transform: scaleY(calc(0.2 + 0.65 * var(--jaw-open, 0)));
+}
 .lipUpper { fill: #86534a; }
+.businessAvatar[data-appearance="business_clay_female"] .leftBrow,
+.businessAvatar[data-appearance="business_clay_female"] .rightBrow { stroke-width: 9; }
+.businessAvatar[data-appearance="business_clay_female"] .avatarNose { stroke-width: 6; }
+.businessAvatar[data-appearance="business_clay_female"] .cheekDetail { opacity: 0.45; }
+.businessAvatar[data-appearance="business_clay_female"] .lipUpper { fill: #95544e; }
+.businessAvatar[data-appearance="business_clay_female"] .lipLower { fill: #bc7970; }
+.businessAvatar[data-appearance="business_clay_female"] .pocketSquare { opacity: 0; }
 .lipLower { fill: #a86d5f; }
 .lipLine { fill: none; stroke: #3b2423; stroke-linecap: round; stroke-width: 3; }
 .mouthCavity { fill: #2c1a1c; }

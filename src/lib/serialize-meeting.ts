@@ -1,5 +1,6 @@
 import type { MeetingDocument } from "@/models/Meeting";
-import { localVoiceConfiguration, meetingAssistantConfiguration } from "@/lib/meeting-factory";
+import { classifyTranscriptSource } from "@/lib/meeting-transcript-source";
+import { meetingVoiceConfiguration, meetingAssistantConfiguration } from "@/lib/meeting-factory";
 import type { MeetingResponse } from "@/types/meeting";
 
 function iso(value: Date | undefined): string | undefined {
@@ -13,6 +14,7 @@ export function serializeMeeting(document: MeetingDocument): MeetingResponse {
     : undefined;
   return {
     id: document._id.toString(),
+    archivedAt: iso(document.archivedAt),
     seriesId: document.seriesId?.toString(),
     title: document.title,
     meetingUrl: document.meetingUrl,
@@ -47,6 +49,8 @@ export function serializeMeeting(document: MeetingDocument): MeetingResponse {
       kind: event.kind,
       prompt: event.prompt || undefined,
       response: event.response,
+      playbackStartedAt: iso(event.playbackStartedAt),
+      playbackEndedAt: iso(event.playbackEndedAt),
       createdAt: event.createdAt.toISOString(),
     })),
     pendingIntervention: pendingIntervention
@@ -75,8 +79,21 @@ export function serializeMeeting(document: MeetingDocument): MeetingResponse {
       providerStatusCode: document.bot.providerStatusCode || undefined,
       lastStatusAt: iso(document.bot.lastStatusAt),
       lastError: document.bot.lastError || undefined,
+      joinDeadlineAt: iso(document.bot.joinDeadlineAt),
+      readyAt: iso(document.bot.readyAt),
+      outputLastSeenAt: iso(document.bot.outputLastSeenAt),
+      outputVoiceReady: document.bot.outputVoiceReady,
+      outputSpeechCommandId: document.bot.outputSpeechCommandId,
+      outputSpeechState: document.bot.outputSpeechState,
+      outputSpeechUpdatedAt: iso(document.bot.outputSpeechUpdatedAt),
+      stopRequestedAt: iso(document.bot.stopRequestedAt),
+      failureCode: document.bot.failureCode || undefined,
+      entryAttemptId: document.bot.entryAttemptId || undefined,
+      captionLanguage: document.bot.captionLanguage,
+      captionLanguageAttempts: document.bot.captionLanguageAttempts,
+      captionLanguageRequestedAt: iso(document.bot.captionLanguageRequestedAt),
     },
-    voice: localVoiceConfiguration(),
+    voice: meetingVoiceConfiguration(),
     retention: {
       transcriptDays: document.retention.transcriptDays,
       storeAudio: document.retention.storeAudio,
@@ -84,6 +101,8 @@ export function serializeMeeting(document: MeetingDocument): MeetingResponse {
     },
     participants: [...document.participants],
     transcript: document.transcript.map((segment) => ({
+      ...classifyTranscriptSource(document, segment),
+      segmentId: segment.segmentId,
       sequence: segment.sequence,
       speakerName: segment.speakerName,
       text: segment.text,

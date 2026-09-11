@@ -65,6 +65,7 @@ export async function POST(
       : await processMeetingTranscriptAutomation(
       meeting,
       text,
+      stored.segmentId,
     );
     return NextResponse.json(
       {

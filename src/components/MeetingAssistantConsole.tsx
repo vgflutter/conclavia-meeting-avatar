@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "@/i18n/I18nProvider";
 import type { MeetingCommandEvent, MeetingCommandKind } from "@/types/meeting";
 
-type SerializedCommandEvent = Omit<MeetingCommandEvent, "createdAt"> & { createdAt: string };
+type SerializedCommandEvent = Omit<MeetingCommandEvent, "createdAt" | "playbackStartedAt" | "playbackEndedAt"> & { createdAt: string };
 
 const commandMeta: Record<MeetingCommandKind, { icon: string; it: string; en: string }> = {
   remember: { icon: "◆", it: "Ricorda", en: "Remember" },

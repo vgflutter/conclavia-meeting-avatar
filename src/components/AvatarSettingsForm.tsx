@@ -2,14 +2,15 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { BusinessAvatar } from "@/components/BusinessAvatar";
 import { useTranslations } from "@/i18n/I18nProvider";
 import type {
+  AssistantAppearance,
   AssistantAttitude,
   AssistantProfileResponse,
   AssistantResponseStyle,
-  AssistantVoiceStyle,
 } from "@/types/assistant-profile";
 
 export function AvatarSettingsForm({ profile }: { profile: AssistantProfileResponse }) {
@@ -17,6 +18,7 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
   const { locale } = useTranslations();
   const isItalian = locale === "it";
   const [displayName, setDisplayName] = useState(profile.displayName);
+  const [appearance, setAppearance] = useState<AssistantAppearance>(profile.appearance);
   const [role, setRole] = useState(profile.role);
   const [responseStyle, setResponseStyle] = useState<AssistantResponseStyle>(
     profile.personality.responseStyle,
@@ -24,8 +26,6 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
   const [attitude, setAttitude] = useState<AssistantAttitude>(
     profile.personality.attitude,
   );
-  const [voiceStyle, setVoiceStyle] = useState<AssistantVoiceStyle>(profile.voice.style);
-  const [speakingRate, setSpeakingRate] = useState(profile.voice.speakingRate);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>();
@@ -41,11 +41,11 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           displayName,
+          appearance,
           role,
           responseStyle,
           attitude,
-          voiceStyle,
-          speakingRate,
+          voiceStyle: profile.voice.style,
         }),
       });
       const payload = (await response.json()) as { profile?: unknown };
@@ -64,11 +64,11 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[minmax(20rem,0.9fr)_minmax(0,1.1fr)]">
-      <section className="relative min-h-[34rem] overflow-hidden rounded-[2rem] bg-[#09100d]">
+    <form onSubmit={handleSubmit} onChange={() => setSaved(false)} className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <section className="relative aspect-[4/5] max-h-[36rem] overflow-hidden rounded-[2rem] bg-[#09100d] lg:sticky lg:top-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(79,170,126,0.28),transparent_42%)]" />
         <div className="absolute inset-x-[8%] bottom-0 top-4">
-          <BusinessAvatar ariaLabel={isItalian ? "Avatar del collega digitale in abito business" : "Business-style digital colleague avatar"} />
+          <BusinessAvatar appearance={appearance} ariaLabel={isItalian ? "Avatar del collega digitale in abito business" : "Business-style digital colleague avatar"} />
         </div>
         <div className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-white/10 px-5 py-4 text-[11px] font-bold uppercase tracking-[0.17em] text-white/45">
           <span>{isItalian ? "Anteprima avatar" : "Avatar preview"}</span>
@@ -84,6 +84,14 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
         <section className="card p-5 sm:p-7">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#295c43]">{isItalian ? "Identità" : "Identity"}</p>
           <h2 className="mt-2 text-xl font-semibold">{isItalian ? "Come appare nel meeting" : "How it appears in the meeting"}</h2>
+          <div className="mt-5">
+            <label className="label" htmlFor="avatar-appearance">{isItalian ? "Aspetto dell’avatar" : "Avatar appearance"}</label>
+            <select id="avatar-appearance" className="input" value={appearance} onChange={(event) => setAppearance(event.target.value as AssistantAppearance)}>
+              <option value="business_clay">{isItalian ? "Maschile · Business" : "Male · Business"}</option>
+              <option value="business_clay_female">{isItalian ? "Femminile · Business" : "Female · Business"}</option>
+            </select>
+            <p className="mt-2 text-xs leading-5 text-slate-500">{isItalian ? "Stesso stile e animazioni. Nome e voce si scelgono separatamente." : "Same style and animations. Choose the name and voice separately."}</p>
+          </div>
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             <div>
               <label className="label" htmlFor="avatar-name">{isItalian ? "Nome e parola di richiamo" : "Name and call phrase"}</label>
@@ -177,39 +185,15 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
           </div>
         </section>
 
-        <section className="card p-5 sm:p-7">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#295c43]">{isItalian ? "Voce" : "Voice"}</p>
-              <h2 className="mt-2 text-xl font-semibold">{isItalian ? "Una voce chiara e professionale" : "A clear, professional voice"}</h2>
-            </div>
-            <span className="rounded-full bg-[#e4eee7] px-3 py-1 text-xs font-semibold text-[#295c43]">{isItalian ? "Italiano e inglese" : "Italian and English"}</span>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            {isItalian
-              ? "Scegli il timbro e la velocità con cui il collega digitale parlerà durante i meeting."
-              : "Choose the voice and speaking pace the digital colleague will use during meetings."}
-          </p>
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
-            <div>
-              <label className="label" htmlFor="voice-style">{isItalian ? "Timbro" : "Voice character"}</label>
-              <select id="voice-style" className="input" value={voiceStyle} onChange={(event) => setVoiceStyle(event.target.value as AssistantVoiceStyle)}>
-                <option value="executive_warm">{isItalian ? "Executive caldo" : "Warm executive"}</option>
-                <option value="executive_clear">{isItalian ? "Executive nitido" : "Clear executive"}</option>
-              </select>
-            </div>
-            <div>
-              <label className="label" htmlFor="speaking-rate">{isItalian ? "Velocità" : "Speaking rate"} · {speakingRate.toFixed(2)}×</label>
-              <input id="speaking-rate" type="range" min="0.8" max="1.1" step="0.01" value={speakingRate} onChange={(event) => setSpeakingRate(Number(event.target.value))} className="mt-3 w-full accent-[#295c43]" />
-            </div>
-          </div>
-        </section>
-
         <div className="flex flex-wrap items-center justify-end gap-3">
           {saved && <span className="text-sm font-medium text-emerald-700">{isItalian ? "Avatar aggiornato." : "Avatar updated."}</span>}
           {error && <span className="text-sm text-red-700">{error}</span>}
           <button type="submit" className="button-primary" disabled={pending}>{pending ? (isItalian ? "Salvataggio…" : "Saving…") : (isItalian ? "Salva avatar" : "Save avatar")}</button>
         </div>
+        <p className="text-right text-sm text-slate-500">
+          {isItalian ? "Salva prima di passare a " : "Save before switching to "}
+          <Link href="/avatar/test" className="font-semibold text-[#295c43] underline">{isItalian ? "Prova avatar" : "Test avatar"}</Link>.
+        </p>
       </div>
     </form>
   );

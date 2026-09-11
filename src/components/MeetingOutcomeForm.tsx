@@ -33,6 +33,8 @@ export function MeetingOutcomeForm({ meeting }: { meeting: MeetingResponse }) {
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>();
+  const awaitingExit = meeting.bot.provider === "attendee" && !meeting.bot.leftAt &&
+    Boolean(meeting.bot.externalBotId || meeting.bot.status === "scheduling" || meeting.bot.failureCode === "create_uncertain");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -145,7 +147,12 @@ export function MeetingOutcomeForm({ meeting }: { meeting: MeetingResponse }) {
           </span>
         )}
         {error && <span className="text-sm text-red-700">{error}</span>}
-        <button type="submit" className="button-primary" disabled={pending}>
+        {awaitingExit && (
+          <p className="text-sm text-slate-600">
+            {isItalian ? "Potrai completare il riepilogo dopo l’uscita del collega dal meeting." : "You can complete the summary after the colleague leaves the meeting."}
+          </p>
+        )}
+        <button type="submit" className="button-primary" disabled={pending || awaitingExit}>
           {pending
             ? isItalian
               ? "Salvataggio…"

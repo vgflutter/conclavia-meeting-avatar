@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import type { AssistantAppearance } from "@/types/assistant-profile";
 import type { AvatarViseme } from "@/lib/avatar-visemes";
 
 import styles from "./BusinessAvatar.module.css";
@@ -8,18 +9,24 @@ export type AvatarMood = "neutral" | "friendly" | "focused" | "confident";
 export type AvatarGesture = "rest" | "hand_raise";
 
 export function BusinessAvatar({
+  appearance = "business_clay",
   viseme = "rest",
   mood = "neutral",
   gesture = "rest",
   voiceLevel,
   ariaLabel = "Avatar del collega digitale in abito business",
 }: {
+  appearance?: AssistantAppearance;
   viseme?: AvatarViseme;
   mood?: AvatarMood;
   gesture?: AvatarGesture;
   voiceLevel?: number;
   ariaLabel?: string;
 }) {
+  const female = appearance === "business_clay_female";
+  const facePath = female
+    ? "M209 201c16-90 77-137 135-137 71 0 129 48 141 137l-8 132c-6 77-64 162-136 162-72 0-126-79-132-159V201Z"
+    : "M209 201c16-90 77-137 135-137 71 0 129 48 141 137l-5 138c-5 89-64 161-139 161-77 0-132-67-139-158l7-141Z";
   const avatarStyle = voiceLevel === undefined
     ? undefined
     : ({ "--jaw-open": Math.max(0, Math.min(1, voiceLevel)) } as CSSProperties);
@@ -27,9 +34,11 @@ export function BusinessAvatar({
   return (
     <svg
       className={styles.businessAvatar}
+      data-appearance={appearance}
       data-viseme={viseme}
       data-mood={mood}
       data-gesture={gesture}
+      data-audio-driven={voiceLevel !== undefined ? "true" : undefined}
       style={avatarStyle}
       viewBox="0 0 680 760"
       role="img"
@@ -46,13 +55,22 @@ export function BusinessAvatar({
         <linearGradient id="avatar-ear" x1="0" x2="1"><stop offset="0" stopColor="#8d5a40" /><stop offset="1" stopColor="#c48c63" /></linearGradient>
         <linearGradient id="avatar-hair" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#6b513d" /><stop offset="0.48" stopColor="#34291f" /><stop offset="1" stopColor="#17130f" /></linearGradient>
         <filter id="avatar-shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="24" stdDeviation="22" floodColor="#000" floodOpacity="0.52" /></filter>
-        <filter id="avatar-clay" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.025 0.11" numOctaves="3" seed="12" result="grain" /><feColorMatrix in="grain" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .16 0" result="soft-grain" /><feBlend in="SourceGraphic" in2="soft-grain" mode="soft-light" /></filter>
-        <clipPath id="avatar-face-clip"><path d="M209 201c16-90 77-137 135-137 71 0 129 48 141 137l-5 138c-5 89-64 161-139 161-77 0-132-67-139-158l7-141Z" /></clipPath>
+        <clipPath id="avatar-face-clip"><path d={facePath} /></clipPath>
         <clipPath id="avatar-tie-clip"><path d="m326 589 29 1 27 129-42 34-42-34 28-130Z" /></clipPath>
       </defs>
       <ellipse className={styles.avatarFloorShadow} cx="340" cy="733" rx="254" ry="24" />
       <g className={styles.avatarBody} filter="url(#avatar-shadow)">
+        {female && <g data-testid="female-hair-back" fill="url(#avatar-hair)">
+          <path d="M161 245c-8-146 60-222 181-222 118 0 183 88 176 219l-4 189c0 60 22 85 32 105-56 30-115 8-141-31H275c-35 38-93 54-142 22 24-42 29-92 26-144l2-138Z" />
+          <path d="M183 208c-17 145 14 233-26 302m345-302c16 143-14 226 24 307" fill="none" stroke="#9d7756" strokeOpacity=".24" strokeWidth="9" strokeLinecap="round" />
+        </g>}
         <path className={styles.suitBack} fill="url(#avatar-suit)" d="M35 756c10-129 60-215 208-249l97 53 98-53c146 34 197 120 207 249H35Z" />
+        {female ? <g data-testid="female-blouse">
+          <path className={styles.shirtFront} fill="url(#avatar-tie)" d="m244 514 96 30 97-30-26 221H269l-25-221Z" />
+          <path d="M280 535q60 68 122 0" fill="none" stroke="#a0c8a4" strokeOpacity=".6" strokeWidth="4" />
+          <path d="M291 544q49 68 99 0" fill="none" stroke="#d6a85f" strokeWidth="3" />
+          <path d="m341 589 8 10-8 11-8-11Z" fill="#dfbe7d" />
+        </g> : <>
         <path className={styles.shirtFront} fill="url(#avatar-shirt)" d="m244 514 96 47 97-47-26 221H269l-25-221Z" />
         <path className={styles.shirtCollar} fill="url(#avatar-shirt)" d="m244 514 96 47-39 47-47-65-10-29Z" />
         <path className={styles.shirtCollar} fill="url(#avatar-shirt)" d="m437 514-97 47 39 47 48-65 10-29Z" />
@@ -60,6 +78,7 @@ export function BusinessAvatar({
         <path className={styles.tieBody} fill="url(#avatar-tie)" d="m326 589 29 1 27 129-42 34-42-34 28-130Z" />
         <g clipPath="url(#avatar-tie-clip)"><path className={styles.tieHighlight} fill="url(#avatar-tie-shine)" d="m330 585 14 2 21 151-25 15-10-168Z" /><path className={styles.tieTexture} d="m304 635 67-34m-61 76 67-35m-60 77 62-34" /></g>
         <rect className={styles.tieBar} x="309" y="646" width="62" height="7" rx="3.5" />
+        </>}
         <path className={styles.leftLapel} fill="url(#avatar-lapel)" d="M243 507 77 556l116 180h96l34-139-80-90Z" /><path className={styles.rightLapel} fill="url(#avatar-lapel)" d="m438 507 166 49-116 180h-96l-34-139 80-90Z" />
         <path className={styles.leftLapelEdge} d="m244 513-17 130 77-48" /><path className={styles.rightLapelEdge} d="m437 513 17 130-77-48" /><path className={styles.suitSeam} d="M150 594c-30 42-47 96-53 162m433-162c30 42 47 96 53 162" /><path className={styles.pocket} d="M470 657h94l-9 55h-81l-4-55Z" /><path className={styles.pocketSquare} d="m481 658 19-24 22 18 20-21 14 27h-75Z" /><circle className={styles.lapelPin} cx="476" cy="602" r="7" />
         <g className={styles.raisedHand} aria-hidden="true">
@@ -73,10 +92,23 @@ export function BusinessAvatar({
         </g>
         <path className={styles.avatarNeck} fill="url(#avatar-skin)" d="M276 424h129l17 106c-42 42-119 42-162 0l16-106Z" /><path className={styles.neckShadow} d="M277 431c15 70 110 85 128 0v59c-29 45-98 45-129 0l1-59Z" />
         <path className={styles.leftEar} fill="url(#avatar-ear)" d="M210 236c-53-25-74 22-48 85 13 31 38 50 67 30l-19-115Z" /><path className={styles.rightEar} fill="url(#avatar-ear)" d="M476 236c53-25 73 22 48 85-13 31-38 50-67 30l19-115Z" /><path className={styles.earDetail} d="M197 268c-27-15-28 42 4 52m286-52c27-15 28 42-4 52" />
-        <path className={styles.avatarHead} fill="url(#avatar-skin)" filter="url(#avatar-clay)" d="M209 201c16-90 77-137 135-137 71 0 129 48 141 137l-5 138c-5 89-64 161-139 161-77 0-132-67-139-158l7-141Z" />
+        <path className={styles.avatarHead} fill="url(#avatar-skin)" d={facePath} />
         <g clipPath="url(#avatar-face-clip)"><ellipse className={styles.faceLight} cx="283" cy="216" rx="108" ry="166" /><ellipse className={styles.templeShade} cx="459" cy="292" rx="70" ry="174" /><path className={styles.clayStrokeOne} d="M238 153c50-35 145-38 200 3M228 371c48 35 167 35 214-2" /><path className={styles.clayStrokeTwo} d="M245 195c-19 76-12 166 21 231m167-235c19 77 11 167-19 231" /></g>
+        {female ? <g data-testid="female-hair">
+          <g className={styles.avatarHair} fill="url(#avatar-hair)">
+            <path d="M188 256c-20-94 4-164 66-200 56-33 128-27 178 5 66 43 86 126 66 220l-22 62-3-145c-64-11-108-57-142-102-23 70-73 107-114 124l-9 155-26-34 6-85Z" />
+            <path d="M331 96c-13 50-58 92-109 111 11-76 39-112 109-139v28Z" fill="#75563e" fillOpacity=".6" />
+            <path d="M342 83c45 17 97 66 128 109-66-14-99-60-128-109Z" fill="#8d6c4e" fillOpacity=".4" />
+          </g>
+          <g className={styles.hairGrooves}>
+            <path d="M319 63c-55 24-92 67-109 125m142-122c59 22 107 75 131 137M200 249l-2 93m291-93 3 94" />
+          </g>
+          <circle cx="207" cy="347" r="8" fill="#dbb677" stroke="#fae0a8" strokeWidth="2" />
+          <circle cx="479" cy="347" r="8" fill="#dbb677" stroke="#fae0a8" strokeWidth="2" />
+        </g> : <>
         <g className={styles.avatarHair} fill="url(#avatar-hair)"><path d="M205 219c-23-84 4-153 76-188 52-26 122-15 165 27 40 39 51 99 36 166l-31-52c-68-3-139-37-166-91-3 57-33 101-80 138Z" /><path d="M249 111c17-61 75-101 139-87-44 13-77 42-98 84l-41 3Z" /><path d="M284 87c32-56 108-72 155-34-55-3-100 17-126 58l-29-24Z" /><path d="M331 77c45-40 115-14 139 35-42-27-90-26-131 2l-8-37Z" /><path d="M391 87c49-12 91 25 96 80-26-35-60-51-101-45l5-35Z" /></g>
         <g className={styles.hairGrooves}><path d="M236 174c17-49 48-91 90-121" /><path d="M286 144c27-50 66-83 115-99" /><path d="M343 141c38-37 79-52 122-42" /><path d="M398 147c37-15 66-7 87 22" /></g>
+        </>}
         <g className={styles.avatarBrows}><path className={styles.leftBrow} d="M244 237c29-18 60-18 89-2" /><path className={styles.rightBrow} d="M374 235c29-15 59-13 85 6" /></g>
         <g className={styles.avatarEyes}><g className={styles.eyesExpression}><path className={styles.eyeWhite} d="M240 273c22-26 66-27 94-2-25 27-69 28-94 2Z" /><path className={styles.eyeWhite} d="M372 272c26-25 69-24 94 2-25 27-69 27-94-2Z" /><g className={styles.pupils}><ellipse className={styles.iris} cx="291" cy="272" rx="17" ry="20" /><ellipse className={styles.iris} cx="416" cy="272" rx="17" ry="20" /><circle cx="291" cy="274" r="8" /><circle cx="416" cy="274" r="8" /><circle className={styles.eyeSpark} cx="285" cy="265" r="4" /><circle className={styles.eyeSpark} cx="410" cy="265" r="4" /></g><path className={styles.upperLid} d="M240 273c22-26 66-27 94-2m38 1c26-25 69-24 94 2" /></g></g>
         <path className={styles.avatarNose} d="M346 273c-3 42-12 73-1 91 10 11 31 10 42 1-13 3-22-2-26-8" /><path className={styles.noseLight} d="M343 292c-2 29-7 48-5 62" /><path className={styles.cheekDetail} d="M235 346c22 18 48 21 73 10m91 0c24 12 49 9 69-9" /><path className={styles.friendlyCheeks} d="M247 364c17 11 35 12 52 4m105 0c17 8 35 6 51-5" />

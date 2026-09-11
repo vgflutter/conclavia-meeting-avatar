@@ -5,6 +5,7 @@ import { getRequestLocale } from "@/i18n/server";
 import { getAssistantProfile } from "@/lib/assistant-profile";
 import { connectToDatabase } from "@/lib/mongodb";
 import { MeetingModel } from "@/models/Meeting";
+import { publicMeetingTtsConfig } from "@/lib/meeting-tts-config";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export default async function MeetingRoomPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ mode?: string | string[] }>;
+  searchParams: Promise<{ mode?: string | string[]; attempt?: string | string[] }>;
 }) {
   const { token } = await params;
   const query = await searchParams;
@@ -26,17 +27,17 @@ export default async function MeetingRoomPage({
   return (
     <MeetingOutputSurface
       outputToken={token}
+      outputAttemptId={query.mode === "meeting" && typeof query.attempt === "string" && query.attempt === meeting.bot.entryAttemptId ? query.attempt : undefined}
       initialStatus={meeting.status}
       initialCommandId={meeting.commandHistory.at(-1)?.id}
       initialInterventionId={meeting.pendingIntervention?.id}
       displayName={meeting.assistant.wakeWord || profile.displayName}
       role={profile.role}
+      appearance={profile.appearance}
       locale={locale}
-      speechLanguage={meeting.language === "en" ? "en" : "it"}
-      voiceStyle={profile.voice.style}
-      speakingRate={profile.voice.speakingRate}
       inMeeting={query.mode === "meeting"}
       meetingProvider={meeting.bot.provider}
+      tts={publicMeetingTtsConfig()}
     />
   );
 }

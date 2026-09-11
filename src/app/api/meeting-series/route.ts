@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
-  localVoiceConfiguration,
+  meetingVoiceConfiguration,
   meetingAssistantConfiguration,
   meetingDocumentData,
 } from "@/lib/meeting-factory";
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         input.correctionPolicy,
         profile.displayName,
       ),
-      voice: localVoiceConfiguration(),
+      voice: meetingVoiceConfiguration(),
     });
     series = createdSeries;
 

@@ -6,7 +6,9 @@ import { notFound } from "next/navigation";
 import { DeleteMeetingButton } from "@/components/DeleteMeetingButton";
 import { MeetingAgendaManager } from "@/components/MeetingAgendaManager";
 import { MeetingAssistantConsole } from "@/components/MeetingAssistantConsole";
-import { MeetingOutcomeForm } from "@/components/MeetingOutcomeForm";
+import { MeetingDebugPanel } from "@/components/MeetingDebugPanel";
+import { MeetingArchiveButton } from "@/components/MeetingArchiveButton";
+import { MeetingSummaryCard } from "@/components/MeetingSummaryCard";
 import { MeetingSessionControls } from "@/components/MeetingSessionControls";
 import { getRequestLocale } from "@/i18n/server";
 import type { Locale } from "@/i18n/locale";
@@ -39,16 +41,6 @@ function statusClass(status: MeetingResponse["status"]): string {
   return "bg-slate-100 text-slate-700";
 }
 
-function quantityLabel(
-  locale: Locale,
-  count: number,
-  italian: [string, string],
-  english: [string, string],
-): string {
-  const labels = locale === "it" ? italian : english;
-  return `${count} ${count === 1 ? labels[0] : labels[1]}`;
-}
-
 function MemoryList({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
@@ -73,17 +65,25 @@ function MemoryList({ title, items }: { title: string; items: string[] }) {
 
 function TranscriptEntries({
   transcript,
+  locale,
 }: {
   transcript: MeetingResponse["transcript"];
+  locale: Locale;
 }) {
   return (
     <div className="max-h-96 space-y-4 overflow-y-auto pr-2">
       {transcript.map((segment) => (
-        <div key={segment.sequence}>
+        <div key={segment.segmentId || segment.sequence}>
           <p className="text-xs font-semibold text-[#295c43]">
-            {segment.speakerName}
+            {segment.source === "suspected_echo"
+              ? locale === "it" ? "Possibile eco dell’avatar · attribuzione incerta" : "Possible avatar echo · uncertain attribution"
+              : segment.speakerName}
+            {segment.source === "avatar" && (locale === "it" ? " · Trascrizione avatar" : " · Avatar transcript")}
           </p>
           <p className="mt-1 text-sm leading-6 text-slate-600">{segment.text}</p>
+          {segment.source === "suspected_echo" && <p className="text-xs text-amber-800">
+            {locale === "it" ? `Attribuzione originale: ${segment.speakerName}. Escluso da comandi, memoria e riepilogo.` : `Original attribution: ${segment.speakerName}. Excluded from commands, memory and summaries.`}
+          </p>}
         </div>
       ))}
     </div>
@@ -208,12 +208,6 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
         ? "segment"
         : "segments"
   }`;
-  const memoryItemCount =
-    meeting.summary.rememberedFacts.length +
-    meeting.summary.decisions.length +
-    meeting.summary.actionItems.length +
-    meeting.summary.openQuestions.length;
-  const hasSavedSummary = Boolean(meeting.summary.generatedAt || meeting.summary.overview);
 
   return (
     <div className="container-page py-10 sm:py-14">
@@ -236,14 +230,15 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
           <div className="p-5 sm:p-7">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${meetingIsOverdue ? "bg-amber-100 text-amber-800" : statusClass(meeting.status)}`}>
-                {meetingIsOverdue
-                  ? isItalian ? "Data superata" : "Past date"
+                {meeting.archivedAt
+                  ? isItalian ? "Archiviato" : "Archived"
+                  : meetingIsOverdue ? isItalian ? "Non svolto" : "Not held"
                   : meetingStatusLabel(locale, meeting.status)}
               </span>
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                 {meetingPlatformLabel(meeting.platform, locale)}
               </span>
-              {meeting.autoJoin && (
+              {meeting.autoJoin && !meeting.archivedAt && ["scheduled", "failed"].includes(meeting.status) && (
                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${!meetingIsOverdue && ["scheduling", "scheduled"].includes(meeting.bot.status) ? "bg-[#edf4ef] text-[#295c43]" : "bg-amber-50 text-amber-800"}`}>
                   {meetingIsOverdue
                     ? isItalian
@@ -285,21 +280,25 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
             )}
           </div>
 
-          <aside className="border-t border-slate-100 bg-[#f8faf8] p-5 lg:border-l lg:border-t-0 sm:p-6">
+          <aside id="session" className="scroll-mt-6 border-t border-slate-100 bg-[#f8faf8] p-5 lg:border-l lg:border-t-0 sm:p-6">
             {meetingIsOverdue && (
               <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
                 {isItalian
-                  ? "L’orario è già passato e il meeting non risulta avviato. Puoi aprire il link Teams oppure eliminare questo appuntamento."
-                  : "The scheduled time has passed and the meeting did not start. Open the Teams link or delete this appointment."}
+                  ? "L’orario è già passato e il meeting non risulta avviato. Puoi riprogrammarlo o archiviarlo: lo storico non viene eliminato."
+                  : "The scheduled time has passed and the meeting did not start. Reschedule or archive it; its history is preserved."}
               </p>
             )}
-            <MeetingSessionControls
+            {(meetingIsOverdue || meeting.archivedAt) && <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Link href={meeting.seriesId ? `/meetings/series/${meeting.seriesId}` : `/meetings/new?from=${meeting.id}`} className="text-sm font-semibold text-[#295c43] hover:underline">{isItalian ? "Riprogramma" : "Reschedule"}</Link>
+              <MeetingArchiveButton meetingId={meeting.id} archived={Boolean(meeting.archivedAt)} />
+            </div>}
+            {!meeting.archivedAt && <MeetingSessionControls
               meetingId={meeting.id}
               status={meeting.status}
               autoJoin={meeting.autoJoin}
               bot={meeting.bot}
               automation={automation}
-            />
+            />}
             <a
               href={meeting.meetingUrl}
               target="_blank"
@@ -312,7 +311,7 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
               <DeleteMeetingButton
                 meetingId={meeting.id}
                 meetingTitle={meeting.title}
-                disabled={["joining", "waiting_room", "live", "processing"].includes(meeting.status)}
+                disabled={["joining", "waiting_room", "live", "processing"].includes(meeting.status) || meeting.bot.status === "leaving" || meeting.bot.failureCode === "create_uncertain"}
                 returnHref={
                   meeting.seriesId ? `/meetings/series/${meeting.seriesId}` : "/meetings"
                 }
@@ -323,6 +322,7 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
       </header>
 
       <div className="space-y-6">
+        {!meetingInProgress && <MeetingSummaryCard meeting={meeting} locale={locale} />}
         {(meeting.seriesId || briefing.previousMeetingIds.length > 0) && (
           <ContinuityCard briefing={briefing} locale={locale} />
         )}
@@ -353,80 +353,9 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
           initialHistory={meeting.commandHistory}
         />
 
-        <section className="card p-5 sm:p-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#295c43]">
-                {isItalian ? "Esito del meeting" : "Meeting outcome"}
-              </p>
-              <h2 className="mt-2 text-xl font-semibold">
-                {isItalian ? "Ciò che resterà nello storico" : "What remains in history"}
-              </h2>
-            </div>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
-              {meeting.summary.generatedAt
-                ? isItalian
-                  ? "Memoria salvata"
-                  : "Memory saved"
-                : isItalian
-                  ? "In attesa"
-                  : "Pending"}
-            </span>
-          </div>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-500">
-            {isItalian
-                ? "Il riepilogo è lo storico principale del meeting e resta disponibile negli appuntamenti collegati."
-                : "The summary is the meeting’s primary record and remains available to connected appointments."}
-          </p>
-          {hasSavedSummary && (
-            <div className="mt-6 rounded-xl bg-[#f4f7f4] p-4 sm:p-5">
-              <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                {meeting.summary.overview}
-              </p>
-              {memoryItemCount > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                  <span className="rounded-full bg-white px-2.5 py-1">{quantityLabel(locale, meeting.summary.rememberedFacts.length, ["ricordo", "ricordi"], ["memory", "memories"])}</span>
-                  <span className="rounded-full bg-white px-2.5 py-1">{quantityLabel(locale, meeting.summary.decisions.length, ["decisione", "decisioni"], ["decision", "decisions"])}</span>
-                  <span className="rounded-full bg-white px-2.5 py-1">{quantityLabel(locale, meeting.summary.actionItems.length, ["attività", "attività"], ["action", "actions"])}</span>
-                  <span className="rounded-full bg-white px-2.5 py-1">{quantityLabel(locale, meeting.summary.openQuestions.length, ["domanda aperta", "domande aperte"], ["open question", "open questions"])}</span>
-                </div>
-              )}
-            </div>
-          )}
-          <details className="group mt-6 border-t border-slate-100 pt-5">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg py-2 text-sm font-semibold text-[#295c43]">
-              <span>{hasSavedSummary ? (isItalian ? "Modifica il riepilogo" : "Edit summary") : (isItalian ? "Completa il riepilogo" : "Complete summary")}</span>
-              <span aria-hidden="true" className="text-base transition-transform group-open:rotate-180">⌄</span>
-            </summary>
-            <div className="mt-4">
-              <MeetingOutcomeForm meeting={meeting} />
-            </div>
-          </details>
-        </section>
+        <MeetingDebugPanel key={meeting.id} meetingId={meeting.id} />
 
-        {meetingInProgress && (
-          meeting.transcript.length ? (
-            <details className="card group overflow-hidden">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 p-5 sm:p-6">
-                <div>
-                  <p className="section-kicker">{isItalian ? "Durante il meeting" : "During the meeting"}</p>
-                  <h2 className="mt-2 text-lg font-semibold">
-                    {isItalian ? `Trascrizione in diretta · ${transcriptCount}` : `Live transcript · ${transcriptCount}`}
-                  </h2>
-                </div>
-                <span aria-hidden="true" className="text-lg text-slate-400 transition-transform group-open:rotate-180">⌄</span>
-              </summary>
-              <div className="border-t border-slate-100 p-5 sm:p-6">
-                <TranscriptEntries transcript={meeting.transcript} />
-              </div>
-            </details>
-          ) : (
-            <div className="card flex items-center gap-3 p-4 text-sm text-slate-500">
-              <span className="size-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true" />
-              {isItalian ? "In ascolto: la trascrizione apparirà dopo il primo intervento." : "Listening: the transcript will appear after the first contribution."}
-            </div>
-          )
-        )}
+        {meetingInProgress && <MeetingSummaryCard meeting={meeting} locale={locale} />}
 
         {!meetingInProgress && meeting.transcript.length > 0 && (
           <details className="card group overflow-hidden">
@@ -455,7 +384,7 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
               </span>
             </summary>
             <div className="border-t border-slate-100 px-5 py-6 sm:px-7">
-              <TranscriptEntries transcript={meeting.transcript} />
+              <TranscriptEntries transcript={meeting.transcript} locale={locale} />
             </div>
           </details>
         )}

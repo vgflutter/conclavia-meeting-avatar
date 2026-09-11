@@ -84,6 +84,10 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
+    if (meeting.bot.provider === "attendee" && !meeting.bot.leftAt &&
+        (meeting.bot.externalBotId || meeting.bot.activeRoomKey || meeting.bot.failureCode === "create_uncertain")) {
+      return NextResponse.json({ error: "Fai uscire il collega e attendi la conferma prima di concludere il meeting." }, { status: 409 });
+    }
     meeting.summary.overview = overview;
     meeting.summary.rememberedFacts = rememberedFacts;
     meeting.summary.decisions = decisions;

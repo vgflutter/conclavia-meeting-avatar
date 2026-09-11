@@ -42,13 +42,14 @@ function escapeRegularExpression(value: string): string {
 }
 
 function captionWakePattern(value: string): string {
+  const accents: Record<string, string> = { a: "[aàáâãäå]", e: "[eèéêë]", i: "[iìíîï]", o: "[oòóôõö]", u: "[uùúûü]", c: "[cç]", n: "[nñ]" };
   return normalizedSpeech(value)
     .split(/\s+/)
     .filter(Boolean)
     .map((word) => {
       let pattern = "";
       for (let index = 0; index < word.length; index += 1) {
-        const character = escapeRegularExpression(word[index]);
+        const character = accents[word[index]] || escapeRegularExpression(word[index]);
         if (word[index + 1] === word[index]) {
           pattern += `${character}+`;
           while (word[index + 1] === word[index]) index += 1;
@@ -59,6 +60,25 @@ function captionWakePattern(value: string): string {
       return pattern;
     })
     .join("\\s+");
+}
+
+function wakeMatch(text: string, wakeWord: string): RegExpExecArray | null {
+  const trigger = captionWakePattern(wakeWord);
+  if (!trigger) return null;
+  const pattern = normalizedWakePhrase(wakeWord) === "conclavia"
+    ? `(?:${trigger}|con\\s+clavia|con\\s+la\\s+via|con\\s+lavia|assistente|collega\\s+digitale)`
+    : trigger;
+  return new RegExp(`(?<![\\p{L}\\p{N}])(?:${pattern})(?![\\p{L}\\p{N}])`, "iu").exec(text);
+}
+
+function isDirectAddressPrefix(prefix: string): boolean {
+  // A name in a quotation or reported speech is not a command addressed to us.
+  if (/["“”«»]/u.test(prefix)) return false;
+  // Teams can merge a previous sentence with a new direct address. Only a
+  // sentence boundary resets the prefix, never a comma or reported-speech colon.
+  const currentSentence = prefix.split(/[.!?]\s+/u).at(-1) || "";
+  return /^(?:(?:ciao|chao|salve|buongiorno|buonasera|hello|hi|hey|ehi|scusa|scusami|senti|ascolta|please|per favore|ok|okay|allora)\s*)*$/u
+    .test(normalizedSpeech(currentSentence));
 }
 
 const SMALL_NUMBERS: Record<string, number> = {
@@ -76,13 +96,17 @@ function numberFromSpeech(value: string): number | undefined {
 export function detectElementaryArithmetic(
   statement: string,
 ): { reason: string; response: string } | undefined {
-  const match = /\b(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten)\s*(?:x|per|times)\s*(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten)\s*(?:fa|è|is|equals?)\s*(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten|undici|eleven|dodici|twelve)\b/iu.exec(statement);
+  // Only a complete, affirmative integer claim is safe for this cheap rule.
+  // Substring matching incorrectly corrected decimals, quotations and negations.
+  const claim = statement.replace(/^\s*(?:ok|okay|allora|bene)[,\s]+/iu, "");
+  const match = /^\s*(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten)\s*(?:x|per|times)\s*(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten)\s*(?:fa|è|is|equals?)\s*(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten|undici|eleven|dodici|twelve)\s*[.!]?\s*$/iu.exec(claim);
   if (!match) return undefined;
   const left = numberFromSpeech(match[1]);
   const right = numberFromSpeech(match[2]);
   const claimed = numberFromSpeech(match[3]);
   if (left === undefined || right === undefined || claimed === undefined) return undefined;
   const actual = left * right;
+  if (![left, right, claimed, actual].every(Number.isSafeInteger)) return undefined;
   if (actual === claimed) return undefined;
   const isEnglish = /\b(?:times|is|equals?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/iu
     .test(statement);
@@ -98,13 +122,18 @@ export function meetingPermissionDecision(
   text: string,
   wakeWord: string,
 ): "grant" | "decline" | undefined {
-  const trigger = captionWakePattern(wakeWord);
-  if (!trigger || !new RegExp(`\\b(?:${trigger})\\b`, "iu").test(text)) return undefined;
-  if (/\b(?:vai pure|prego|puoi parlare|puoi intervenire|intervieni|dimmi pure|go ahead|you can speak|please speak)\b/iu.test(text)) {
-    return "grant";
-  }
-  if (/\b(?:lascia stare|non ora|abbassa la mano|non intervenire|never mind|not now|lower your hand)\b/iu.test(text)) {
+  const match = wakeMatch(text, wakeWord);
+  if (!match) return undefined;
+  const before = text.slice(0, match.index);
+  const after = text.slice(match.index + match[0].length).replace(/^[\s,.:;!?–—-]+/u, "").trim();
+  const request = isDirectAddressPrefix(before) ? after : after ? undefined : before.trim();
+  if (!request) return undefined;
+  const permission = request.replace(/^(?:sì|si|yes|ok|okay)[\s,]+/iu, "");
+  if (/^(?:lascia stare|non ora|abbassa la mano|non intervenire|non (?:puoi|devi) (?:parlare|intervenire)|non parlare|never mind|not now|lower your hand|(?:do not|don['’]t) (?:speak|talk|go ahead))\b/iu.test(permission)) {
     return "decline";
+  }
+  if (/^(?:vai pure|prego|puoi parlare|puoi intervenire|intervieni|dimmi pure|go ahead|you can speak|please speak)\b/iu.test(permission)) {
+    return "grant";
   }
   return undefined;
 }
@@ -115,6 +144,9 @@ export function isMeetingWakePhrase(spokenText: string, wakeWord: string): boole
   if (!spoken || !trigger) return false;
   const triggerPattern = captionWakePattern(wakeWord);
   if (triggerPattern && new RegExp(`^(?:${triggerPattern})$`, "iu").test(normalizedSpeech(spokenText))) {
+    return true;
+  }
+  if (triggerPattern && new RegExp(`^(?:(?:ciao|chao|salve|buongiorno|buonasera|hello|hi|hey)\\s+)+(?:${triggerPattern})$`, "iu").test(normalizedSpeech(spokenText))) {
     return true;
   }
 
@@ -134,13 +166,9 @@ export function parseMeetingVoiceCommand(
 ): { kind: MeetingCommandKind; prompt: string } | undefined {
   const trigger = wakeWord.trim();
   if (!spokenText.trim() || !trigger) return undefined;
-  const escapedTrigger = captionWakePattern(trigger);
-  const triggerPattern = normalizedWakePhrase(trigger) === "conclavia"
-    ? `(?:${escapedTrigger}|con\\s+clavia|con\\s+la\\s+via|con\\s+lavia|assistente|collega\\s+digitale)`
-    : escapedTrigger;
-  const triggerMatch = new RegExp(`\\b${triggerPattern}\\b`, "iu").exec(spokenText);
+  const triggerMatch = wakeMatch(spokenText, trigger);
   if (!triggerMatch || triggerMatch.index === undefined) {
-    const directAudioCheck = /^\s*(?:ciao|salve|hello|hi)\b.*\b(?:mi\s+senti|can\s+you\s+hear\s+me)\b/iu
+    const directAudioCheck = /^\s*(?:ciao|salve|hello|hi)[\s,!.]*(?:mi\s+senti|can\s+you\s+hear\s+me)[\s?!.]*$/iu
       .test(spokenText);
     if (!directAudioCheck) return undefined;
     return {
@@ -150,17 +178,26 @@ export function parseMeetingVoiceCommand(
         : "Mi senti?",
     };
   }
+  if (!isDirectAddressPrefix(spokenText.slice(0, triggerMatch.index))) return undefined;
   const request = spokenText
     .slice(triggerMatch.index + triggerMatch[0].length)
     .replace(/^[\s,.:;!?–—-]+/u, "")
     .trim();
-  if (!request) return undefined;
+  if (!request) {
+    // A greeting addressed to the configured name is a complete request, not
+    // an empty command. Keep a bare name available for split-caption questions.
+    const beforeName = normalizedSpeech(spokenText.slice(0, triggerMatch.index).split(/[.!?]\s+/u).at(-1) || "");
+    if (/^(?:(?:ciao|chao|salve|buongiorno|buonasera|hello|hi|hey)\s*)+$/u.test(beforeName)) {
+      return { kind: "ask", prompt: /\b(?:hello|hi|hey)\b/u.test(beforeName) ? "Hello" : "Ciao" };
+    }
+    return undefined;
+  }
 
   const rules: Array<{
     kind: MeetingCommandKind;
     pattern: RegExp;
   }> = [
-    { kind: "remember", pattern: /^(?:ricorda|remember)(?:\s+(?:che|that))?\s*/iu },
+    { kind: "remember", pattern: /^(?:ricorda|remember)\b(?:\s+(?:che|that)\b)?\s*/iu },
     {
       kind: "summary",
       pattern: /^(?:riepiloga|riassumi|fammi\s+(?:un\s+)?riepilogo|summarize|summary)\b\s*/iu,
@@ -214,6 +251,8 @@ export function meetingMemoryCandidates(
       item.owner ? `${item.description} · ${item.owner}` : item.description,
     ),
     ...briefing.openQuestions,
+    meeting.summary.overview,
+    briefing.overview || "",
   ]);
 }
 
@@ -234,6 +273,10 @@ export function findMemoryMatches(query: string, candidates: string[], limit = 3
     .sort((left, right) => right.score - left.score)
     .slice(0, limit)
     .map((item) => item.candidate);
+}
+
+export function selectMeetingMemory(query: string, candidates: string[], limit = 14): string[] {
+  return unique([...findMemoryMatches(query, candidates, limit), ...candidates]).slice(0, limit);
 }
 
 export function buildLocalMeetingSummary(

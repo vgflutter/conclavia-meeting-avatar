@@ -1,3 +1,4 @@
+export type AssistantAppearance = "business_clay" | "business_clay_female";
 export type AssistantVoiceStyle = "executive_warm" | "executive_clear";
 export type AssistantResponseStyle = "concise" | "balanced" | "detailed";
 export type AssistantAttitude = "discreet" | "collaborative" | "proactive";
@@ -11,11 +12,13 @@ export interface AssistantProfileRecord {
   key: "default";
   displayName: string;
   role: string;
-  appearance: "business_clay";
+  appearance: AssistantAppearance;
   personality: AssistantPersonality;
   voice: {
-    provider: "local";
-    model: "supertonic_3";
+    inworldVoiceIdIt?: string;
+    inworldVoiceIdEn?: string;
+    provider: "inworld";
+    model: "inworld-tts-2" | "inworld-tts-2-flash";
     style: AssistantVoiceStyle;
     speakingRate: number;
     pronunciationProfile: string;
@@ -27,11 +30,13 @@ export interface AssistantProfileRecord {
 export interface AssistantProfileResponse {
   displayName: string;
   role: string;
-  appearance: "business_clay";
+  appearance: AssistantAppearance;
   personality: AssistantPersonality;
   voice: {
-    provider: "local";
-    model: "supertonic_3";
+    inworldVoiceIdIt?: string;
+    inworldVoiceIdEn?: string;
+    provider: "inworld";
+    model: "inworld-tts-2" | "inworld-tts-2-flash";
     style: AssistantVoiceStyle;
     speakingRate: number;
     pronunciationProfile: string;

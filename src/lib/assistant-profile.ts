@@ -1,3 +1,4 @@
+import { meetingTtsConfig } from "@/lib/meeting-tts-config";
 import { connectToDatabase } from "@/lib/mongodb";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
 import type { AssistantProfileResponse } from "@/types/assistant-profile";
@@ -12,11 +13,11 @@ export const DEFAULT_ASSISTANT_PROFILE = {
     attitude: "collaborative" as const,
   },
   voice: {
-    provider: "local" as const,
-    model: "supertonic_3" as const,
+    provider: "inworld" as const,
+    model: meetingTtsConfig().model,
     style: "executive_warm" as const,
     speakingRate: 0.96,
-    pronunciationProfile: "conclavia-local-it-en",
+    pronunciationProfile: "inworld-it-en",
   },
 };
 
@@ -37,8 +38,10 @@ export async function getAssistantProfile(): Promise<AssistantProfileResponse> {
         source.personality?.attitude || DEFAULT_ASSISTANT_PROFILE.personality.attitude,
     },
     voice: {
+      inworldVoiceIdIt: profile?.voice.inworldVoiceIdIt,
+      inworldVoiceIdEn: profile?.voice.inworldVoiceIdEn,
       provider: DEFAULT_ASSISTANT_PROFILE.voice.provider,
-      model: DEFAULT_ASSISTANT_PROFILE.voice.model,
+      model: meetingTtsConfig().model,
       style: source.voice?.style || DEFAULT_ASSISTANT_PROFILE.voice.style,
       speakingRate:
         source.voice?.speakingRate || DEFAULT_ASSISTANT_PROFILE.voice.speakingRate,

@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 const PUBLIC_MEETING_PATHS = [
   "/meeting-room/",
   "/api/meeting-room/",
-  "/api/avatar/voice-assets/",
   "/api/webhooks/recall",
   "/api/webhooks/attendee",
   "/api/health",
@@ -12,9 +11,15 @@ const PUBLIC_MEETING_PATHS = [
 ];
 
 export function proxy(request: NextRequest) {
-  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const requestHost = forwardedHost || request.headers.get("host") || request.nextUrl.hostname;
-  if (!requestHost.endsWith(".trycloudflare.com")) {
+  // A client-supplied forwarded host must never override the tunnel's real host.
+  const hosts = [
+    request.headers.get("host") || "",
+    request.headers.get("x-forwarded-host") || "",
+    request.nextUrl.hostname,
+  ].flatMap((value) => value.split(","));
+  const isPublicTunnel = hosts.some((value) => value.trim().toLowerCase()
+    .replace(/:\d+$/u, "").replace(/\.$/u, "").endsWith(".trycloudflare.com"));
+  if (!isPublicTunnel) {
     return NextResponse.next();
   }
 

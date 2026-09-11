@@ -15,6 +15,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - The local runtime configuration is `.env.local` at this repository root. Preserve it when updating or installing dependencies; `.env.example` is only a template for new installations.
 - Meetings, series, memory, and the avatar profile remain in the MongoDB database configured by the local environment. Do not create an empty replacement database during setup.
 
+# Authorized local test recovery
+
+- The user has authorized restoring this existing local test server and its temporary HTTPS tunnel without asking for confirmation again. Validate the exact processes before restarting them, preserve all unrelated `.env.local` settings, and verify both public avatar reachability and blocked public management routes afterward.
+- This permission is limited to the same local test environment. It does not authorize a new paid deployment, bypassing Teams admission, or creating duplicate meeting participants. Report what was restored and distinguish connectivity checks from a successful real Teams conversation.
+
 # AWS Guidance
 
 - Prefer the AWS MCP Server for AWS interactions — it provides sandboxed

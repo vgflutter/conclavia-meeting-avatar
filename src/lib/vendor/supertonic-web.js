@@ -286,18 +286,21 @@ export class TextToSpeech {
 
         for (let i = 0; i < textList.length; i++) {
             const { wav, duration } = await this._infer([textList[i]], [langList[i]], style, totalStep, speed, progressCallback);
+            // The vocoder pads each latent chunk. Trim EACH phrase before
+            // concatenation, otherwise padding accumulates and the final
+            // duration-based trim cuts the last phrase short.
+            const phrase = wav.slice(0, Math.floor(duration[0] * this.sampleRate));
 
             if (wavCat.length === 0) {
-                wavCat = wav;
-                durCat = duration[0];
+                wavCat = phrase;
             } else {
                 const silenceLen = Math.floor(silenceDuration * this.sampleRate);
                 const silence = new Array(silenceLen).fill(0);
-                wavCat = [...wavCat, ...silence, ...wav];
-                durCat += duration[0] + silenceDuration;
+                wavCat = [...wavCat, ...silence, ...phrase];
             }
         }
 
+        durCat = wavCat.length / this.sampleRate;
         return { wav: wavCat, duration: [durCat] };
     }
 

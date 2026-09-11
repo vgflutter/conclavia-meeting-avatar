@@ -1,120 +1,69 @@
 import type { AssistantVoiceStyle } from "@/types/assistant-profile";
+import type { LocalSpeechResult, LocalVoiceProgress } from "./local-tts-engine";
+import type { SpeechInput, VoiceWorkerRequest, VoiceWorkerResponse } from "./local-tts-protocol";
 
-const MODEL_BASE_PATH = "/api/avatar/voice-assets";
-const MODEL_STEPS = 8;
+export type { LocalSpeechResult, LocalVoiceProgress } from "./local-tts-engine";
 
-type SupertonicModule = typeof import("@/lib/vendor/supertonic-web.js");
-type VoiceEngine = {
-  supertonic: SupertonicModule;
-  textToSpeech: InstanceType<SupertonicModule["TextToSpeech"]>;
-  backend: "webgpu" | "wasm";
-};
+let worker: Worker | undefined;
+let nextId = 0;
+type CompletedResponse = Extract<VoiceWorkerResponse, { type: "prepared" | "generated" }>;
+const pending = new Map<number, {
+  resolve: (response: CompletedResponse) => void;
+  reject: (error: Error) => void;
+  onProgress?: (progress: LocalVoiceProgress) => void;
+}>();
 
-export type LocalVoiceProgress =
-  | { phase: "loading"; current: number; total: number }
-  | { phase: "generating"; current: number; total: number };
-
-export type LocalSpeechResult = {
-  audio: Blob;
-  samples: Float32Array;
-  durationSeconds: number;
-  backend: "webgpu" | "wasm";
-};
-
-let enginePromise: Promise<VoiceEngine> | undefined;
-const stylePromises = new Map<AssistantVoiceStyle, Promise<InstanceType<SupertonicModule["Style"]>>>();
-
-function styleFile(style: AssistantVoiceStyle): string {
-  return style === "executive_clear" ? "M1.json" : "M3.json";
-}
-
-async function createEngine(onProgress?: (progress: LocalVoiceProgress) => void) {
-  const supertonic = await import("@/lib/vendor/supertonic-web.js");
-  const load = async (backend: "webgpu" | "wasm") => {
-    const result = await supertonic.loadTextToSpeech(
-      MODEL_BASE_PATH,
-      {
-        executionProviders: [backend],
-        graphOptimizationLevel: "all",
-        logSeverityLevel: 3,
-      },
-      (_modelName, current, total) =>
-        onProgress?.({ phase: "loading", current, total }),
-    );
-    return { supertonic, textToSpeech: result.textToSpeech, backend } satisfies VoiceEngine;
+function getWorker() {
+  if (worker) return worker;
+  worker = new Worker(new URL("./local-tts.worker.ts", import.meta.url), { type: "module", name: "conclavia-voice" });
+  worker.onmessage = ({ data }: MessageEvent<VoiceWorkerResponse>) => {
+    const request = pending.get(data.id);
+    if (!request) return;
+    if (data.type === "progress") { request.onProgress?.(data.progress); return; }
+    pending.delete(data.id);
+    if (data.type === "error") request.reject(new Error(data.message));
+    else request.resolve(data);
   };
-
-  try {
-    return await load("webgpu");
-  } catch {
-    return load("wasm");
-  }
+  const fail = () => {
+    worker?.terminate();
+    worker = undefined;
+    for (const request of pending.values()) request.reject(new Error("Voice worker unavailable"));
+    pending.clear();
+  };
+  worker.onerror = fail;
+  worker.onmessageerror = fail;
+  return worker;
 }
 
-async function getEngine(onProgress?: (progress: LocalVoiceProgress) => void) {
-  enginePromise ??= createEngine(onProgress).catch((error) => {
-    enginePromise = undefined;
-    throw error;
-  });
-  return enginePromise;
-}
-
-async function getStyle(engine: VoiceEngine, style: AssistantVoiceStyle) {
-  let stylePromise = stylePromises.get(style);
-  if (!stylePromise) {
-    stylePromise = engine.supertonic
-      .loadVoiceStyle([`${MODEL_BASE_PATH}/${styleFile(style)}`])
-      .catch((error) => {
-        stylePromises.delete(style);
-        throw error;
-      });
-    stylePromises.set(style, stylePromise);
-  }
-  return stylePromise;
-}
-
-export async function prepareLocalVoice(
-  voiceStyle: AssistantVoiceStyle,
+function requestVoice(
+  input: { type: "prepare"; voiceStyle: AssistantVoiceStyle } | { type: "generate"; input: SpeechInput },
   onProgress?: (progress: LocalVoiceProgress) => void,
-) {
-  const engine = await getEngine(onProgress);
-  await getStyle(engine, voiceStyle);
-  return engine.backend;
+): Promise<CompletedResponse> {
+  return new Promise((resolve, reject) => {
+    const id = ++nextId;
+    try {
+      const current = getWorker();
+      pending.set(id, { resolve, reject, onProgress });
+      // Honor browser capability/policy on both main and worker contexts.
+      const allowWebGpu = Boolean((navigator as Navigator & { gpu?: unknown }).gpu);
+      current.postMessage({ ...input, id, allowWebGpu } satisfies VoiceWorkerRequest);
+    } catch (error) {
+      pending.delete(id);
+      reject(error);
+    }
+  });
 }
 
-export async function generateLocalSpeech({
-  text,
-  language,
-  voiceStyle,
-  speakingRate,
-  onProgress,
-}: {
-  text: string;
-  language: "it" | "en";
-  voiceStyle: AssistantVoiceStyle;
-  speakingRate: number;
+export async function prepareLocalVoice(voiceStyle: AssistantVoiceStyle, onProgress?: (progress: LocalVoiceProgress) => void) {
+  const response = await requestVoice({ type: "prepare", voiceStyle }, onProgress);
+  if (response.type !== "prepared") throw new Error("Unexpected voice response");
+  return response.backend;
+}
+
+export async function generateLocalSpeech({ onProgress, ...input }: SpeechInput & {
   onProgress?: (progress: LocalVoiceProgress) => void;
 }): Promise<LocalSpeechResult> {
-  const engine = await getEngine(onProgress);
-  const style = await getStyle(engine, voiceStyle);
-  const result = await engine.textToSpeech.call(
-    text.trim(),
-    language,
-    style,
-    MODEL_STEPS,
-    speakingRate,
-    0.24,
-    (current, total) => onProgress?.({ phase: "generating", current, total }),
-  );
-  const durationSeconds = result.duration[0] ?? 0;
-  const sampleCount = Math.floor(engine.textToSpeech.sampleRate * durationSeconds);
-  const wav = result.wav.slice(0, sampleCount);
-  const buffer = engine.supertonic.writeWavFile(wav, engine.textToSpeech.sampleRate);
-
-  return {
-    audio: new Blob([buffer], { type: "audio/wav" }),
-    samples: Float32Array.from(wav),
-    durationSeconds,
-    backend: engine.backend,
-  };
+  const response = await requestVoice({ type: "generate", input }, onProgress);
+  if (response.type !== "generated") throw new Error("Unexpected voice response");
+  return response.result;
 }

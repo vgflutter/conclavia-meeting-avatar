@@ -39,7 +39,11 @@ export async function PATCH(request: Request) {
   const style = payload.voiceStyle as AssistantVoiceStyle;
   const responseStyle = payload.responseStyle as AssistantResponseStyle;
   const attitude = payload.attitude as AssistantAttitude;
-  const speakingRate = Number(payload.speakingRate);
+  const speakingRate = payload.speakingRate === undefined ? undefined : Number(payload.speakingRate);
+  const appearance = payload.appearance;
+  if (appearance !== undefined && appearance !== "business_clay" && appearance !== "business_clay_female") {
+    return NextResponse.json({ error: "Invalid avatar appearance" }, { status: 400 });
+  }
 
   if (
     !displayName ||
@@ -50,7 +54,7 @@ export async function PATCH(request: Request) {
   ) {
     return NextResponse.json({ error: "Name, role, personality and voice style are required" }, { status: 400 });
   }
-  if (!Number.isFinite(speakingRate) || speakingRate < 0.8 || speakingRate > 1.1) {
+  if (speakingRate !== undefined && (!Number.isFinite(speakingRate) || speakingRate < 0.8 || speakingRate > 1.1)) {
     return NextResponse.json({ error: "Speaking rate must be between 0.8 and 1.1" }, { status: 400 });
   }
 
@@ -59,11 +63,12 @@ export async function PATCH(request: Request) {
     await AssistantProfileModel.findOneAndUpdate(
       { key: "default" },
       {
-        ...DEFAULT_ASSISTANT_PROFILE,
-        displayName,
-        role,
-        personality: { responseStyle, attitude },
-        voice: { ...DEFAULT_ASSISTANT_PROFILE.voice, style, speakingRate },
+        $set: { displayName, role, ...(appearance ? { appearance } : {}), personality: { responseStyle, attitude },
+          "voice.style": style, ...(speakingRate !== undefined ? { "voice.speakingRate": speakingRate } : {}) },
+        $setOnInsert: { key: "default", ...(appearance ? {} : { appearance: DEFAULT_ASSISTANT_PROFILE.appearance }),
+          "voice.provider": DEFAULT_ASSISTANT_PROFILE.voice.provider,
+          "voice.model": DEFAULT_ASSISTANT_PROFILE.voice.model,
+          "voice.pronunciationProfile": DEFAULT_ASSISTANT_PROFILE.voice.pronunciationProfile },
       },
       { upsert: true, runValidators: true, setDefaultsOnInsert: true },
     ).exec();

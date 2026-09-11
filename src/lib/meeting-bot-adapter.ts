@@ -1,4 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { getMeetingBotRuntimeConfig } from "@/lib/meeting-bot-config";
+import { verifyMeetingOutput } from "@/lib/meeting-output-health";
+import { MEETING_ENTRY_TIMEOUT_SECONDS } from "@/lib/meeting-entry-policy";
+import { teamsCaptionLanguage } from "@/lib/meeting-caption-language";
+import type { AttendeeState } from "@/lib/attendee-state";
 import type { MeetingBotProvider, MeetingResponse } from "@/types/meeting";
 
 export interface MeetingBotSession {
@@ -16,6 +21,10 @@ export interface MeetingBotAdapter {
   join(meeting: MeetingResponse, requestOrigin: string): Promise<MeetingBotSession>;
   cancel(externalBotId: string): Promise<void>;
   leave(externalBotId: string): Promise<{ leftAt: Date }>;
+  getStatus?(externalBotId: string): Promise<AttendeeState>;
+  setCaptionLanguage?(externalBotId: string, language: "it-it" | "en-us"): Promise<void>;
+  refreshOutput?(meeting: MeetingResponse, options?: { restart?: boolean }): Promise<string>;
+  findAttempt?(meetingId: string, attemptId: string): Promise<{ externalBotId: string; state: AttendeeState } | undefined>;
 }
 
 export class MeetingBotConfigurationError extends Error {}
@@ -239,13 +248,11 @@ class RecallMeetingBotAdapter implements MeetingBotAdapter {
   }
 }
 
-class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
+export class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
   readonly provider = "attendee" as const;
   readonly live = true;
 
-  private readonly config = getMeetingBotRuntimeConfig();
-
-  constructor() {
+  constructor(private readonly config = getMeetingBotRuntimeConfig(), private readonly fetcher: typeof fetch = fetch) {
     if (
       this.config.provider !== "attendee" ||
       !this.config.ready ||
@@ -263,8 +270,11 @@ class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
     init: RequestInit,
     acceptedStatuses: number[],
   ): Promise<Response> {
-    const response = await fetch(`${this.config.apiBaseUrl}${path}`, {
+    const response = await this.fetcher(`${this.config.apiBaseUrl}${path}`, {
       ...init,
+      // Do not follow a POST to another TLS endpoint: transport failures must
+      // describe this request, not a redirect after a bot was already created.
+      redirect: "error",
       headers: {
         Accept: "application/json",
         Authorization: `Token ${this.config.apiKey}`,
@@ -292,7 +302,31 @@ class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
   }
 
   private outputUrl(meeting: MeetingResponse): string {
-    return `${this.config.publicBaseUrl}/meeting-room/${meeting.bot.outputToken}?mode=meeting`;
+    const url = new URL(`/meeting-room/${meeting.bot.outputToken}`, this.config.publicBaseUrl);
+    url.searchParams.set("mode", "meeting");
+    if (meeting.bot.entryAttemptId) url.searchParams.set("attempt", meeting.bot.entryAttemptId);
+    return url.toString();
+  }
+
+  async refreshOutput(meeting: MeetingResponse, options?: { restart?: boolean }): Promise<string> {
+    if (!meeting.bot.externalBotId) throw new MeetingBotConfigurationError("No active participant");
+    const target = new URL(this.outputUrl(meeting));
+    // The provider ignores identical settings: a new URL forces a renderer reload on repeated recovery.
+    target.searchParams.set("reload", randomUUID());
+    const url = target.toString();
+    await verifyMeetingOutput(url, this.fetcher);
+    if (options?.restart) {
+      // A hung webpage may not react to navigation. Stop only its media output,
+      // never the meeting participant, then allow the provider to apply the stop.
+      await this.request(`/bots/${encodeURIComponent(meeting.bot.externalBotId)}/voice_agent_settings`, {
+        method: "PATCH", body: JSON.stringify({ url: "" }),
+      }, [200]);
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+    }
+    await this.request(`/bots/${encodeURIComponent(meeting.bot.externalBotId)}/voice_agent_settings`, {
+      method: "PATCH", body: JSON.stringify({ url }),
+    }, [200]);
+    return url;
   }
 
   private webhookUrl(meeting: MeetingResponse): string {
@@ -320,11 +354,12 @@ class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
           1_000,
       ),
     );
-    const teamsLanguage = meeting.language === "it"
-      ? "it-it"
-      : meeting.language === "en"
-        ? "en-us"
-        : undefined;
+    await verifyMeetingOutput(outputUrl, this.fetcher);
+    // Newly tracked entries apply the language after recording starts. The
+    // provider can skip startup language selection on its UI fallback, then
+    // ignore a same-value PATCH. Deferring avoids that no-op without briefly
+    // switching the whole meeting to an unrelated language.
+    const teamsLanguage = meeting.bot.captionLanguage ? undefined : teamsCaptionLanguage(meeting.language);
     const response = await this.request(
       "/bots",
       {
@@ -336,6 +371,7 @@ class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
           deduplication_key: `conclavia-${meeting.id}`,
           metadata: {
             conclavia_meeting_id: meeting.id,
+            ...(meeting.bot.entryAttemptId ? { conclavia_attempt_id: meeting.bot.entryAttemptId } : {}),
             ...(meeting.seriesId ? { conclavia_series_id: meeting.seriesId } : {}),
           },
           voice_agent_settings: {
@@ -350,8 +386,8 @@ class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
             format: "none",
           },
           automatic_leave_settings: {
-            waiting_room_timeout_seconds: 15 * 60,
-            wait_for_host_to_start_meeting_timeout_seconds: 15 * 60,
+            waiting_room_timeout_seconds: MEETING_ENTRY_TIMEOUT_SECONDS,
+            wait_for_host_to_start_meeting_timeout_seconds: MEETING_ENTRY_TIMEOUT_SECONDS,
             only_participant_in_meeting_timeout_seconds: 60,
             max_uptime_seconds: plannedDurationSeconds + 15 * 60,
           },
@@ -409,6 +445,35 @@ class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
       [200],
     );
     return { leftAt: new Date() };
+  }
+
+  private parseState(value: unknown): AttendeeState {
+    const bot = value as { state?: unknown; events?: Array<{ type?: string; sub_type?: string; created_at?: string }> };
+    if (!bot || typeof bot.state !== "string") throw new MeetingBotProviderError("Invalid bot state response");
+    const event = Array.isArray(bot.events) ? bot.events.at(-1) : undefined;
+    const occurredAt = event?.created_at ? new Date(event.created_at) : new Date();
+    if (!Number.isFinite(occurredAt.getTime())) throw new MeetingBotProviderError("Invalid bot event timestamp");
+    return { state: bot.state, occurredAt, eventType: event?.type, subType: event?.sub_type };
+  }
+
+  async getStatus(externalBotId: string): Promise<AttendeeState> {
+    const response = await this.request(`/bots/${encodeURIComponent(externalBotId)}`, { method: "GET" }, [200]);
+    return this.parseState(await response.json());
+  }
+
+  async setCaptionLanguage(externalBotId: string, language: "it-it" | "en-us"): Promise<void> {
+    await this.request(`/bots/${encodeURIComponent(externalBotId)}/transcription_settings`, {
+      method: "PATCH",
+      body: JSON.stringify({ transcription_settings: { meeting_closed_captions: { teams_language: language } } }),
+    }, [200]);
+  }
+
+  async findAttempt(meetingId: string, attemptId: string) {
+    const response = await this.request(`/bots?deduplication_key=${encodeURIComponent(`conclavia-${meetingId}`)}`, { method: "GET" }, [200]);
+    const payload = await response.json() as { results?: Array<{ id?: string; metadata?: Record<string, unknown> }> };
+    if (!Array.isArray(payload.results)) throw new MeetingBotProviderError("Invalid bot list response");
+    const bot = payload.results.find((item) => item.metadata?.conclavia_attempt_id === attemptId);
+    return bot?.id ? { externalBotId: bot.id, state: this.parseState(bot) } : undefined;
   }
 }
 

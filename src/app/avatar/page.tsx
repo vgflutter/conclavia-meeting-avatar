@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AvatarNavigation } from "@/components/AvatarNavigation";
 
 import { AvatarSettingsForm } from "@/components/AvatarSettingsForm";
 import { getRequestLocale } from "@/i18n/server";
@@ -23,12 +23,10 @@ export default async function AvatarPage() {
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#295c43]">{isItalian ? "Avatar" : "Avatar"}</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{isItalian ? "Il collega che entra nei meeting" : "The colleague that joins meetings"}</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">{isItalian ? "Gestisci una sola identità visiva e vocale. È volutamente non realistica, professionale e riconoscibile." : "Manage one visual and vocal identity. It is deliberately non-realistic, professional and recognizable."}</p>
+          <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">{isItalian ? "Definisci nome, aspetto e comportamento. Per scegliere la voce e la velocità, passa a Prova avatar." : "Set the name, appearance and behaviour. Choose the voice and speaking rate in Test avatar."}</p>
         </div>
-        <Link href="/avatar/test" className="button-secondary shrink-0">
-          {isItalian ? "Prova avatar" : "Test avatar"}
-        </Link>
       </div>
+      <AvatarNavigation active="settings" locale={locale} />
       <AvatarSettingsForm profile={profile} />
     </div>
   );

@@ -1,3 +1,4 @@
+import { meetingTtsConfig } from "@/lib/meeting-tts-config";
 import { randomUUID } from "node:crypto";
 import type { Types } from "mongoose";
 
@@ -8,12 +9,12 @@ import type {
   MeetingVoiceConfiguration,
 } from "@/types/meeting";
 
-export function localVoiceConfiguration(): MeetingVoiceConfiguration {
+export function meetingVoiceConfiguration(): MeetingVoiceConfiguration {
   return {
-    mode: "local_private",
-    provider: "local",
-    model: "supertonic_3",
-    pronunciationProfile: "conclavia-local-it-en",
+    mode: "streaming",
+    provider: "inworld",
+    model: meetingTtsConfig().model,
+    pronunciationProfile: "inworld-it-en",
   };
 }
 
@@ -80,7 +81,7 @@ export function meetingDocumentData(
       outputToken,
       processedWebhookIds: [],
     },
-    voice: localVoiceConfiguration(),
+    voice: meetingVoiceConfiguration(),
     retention: {
       transcriptDays: 90,
       storeAudio: false,

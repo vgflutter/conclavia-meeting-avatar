@@ -1,4 +1,4 @@
-import { type HydratedDocument, type Model, Schema, model, models } from "mongoose";
+import { deleteModel, type HydratedDocument, type Model, Schema, model, models } from "mongoose";
 
 import type { AssistantProfileRecord } from "@/types/assistant-profile";
 
@@ -7,7 +7,7 @@ const assistantProfileSchema = new Schema<AssistantProfileRecord>(
     key: { type: String, enum: ["default"], required: true, unique: true },
     displayName: { type: String, required: true, trim: true, maxlength: 80 },
     role: { type: String, required: true, trim: true, maxlength: 120 },
-    appearance: { type: String, enum: ["business_clay"], required: true },
+    appearance: { type: String, enum: ["business_clay", "business_clay_female"], required: true },
     personality: {
       responseStyle: {
         type: String,
@@ -23,8 +23,10 @@ const assistantProfileSchema = new Schema<AssistantProfileRecord>(
       },
     },
     voice: {
-      provider: { type: String, enum: ["local"], required: true },
-      model: { type: String, enum: ["supertonic_3"], required: true },
+      inworldVoiceIdIt: { type: String, trim: true, maxlength: 160 },
+      inworldVoiceIdEn: { type: String, trim: true, maxlength: 160 },
+      provider: { type: String, enum: ["inworld", "local"], required: true },
+      model: { type: String, enum: ["inworld-tts-2", "inworld-tts-2-flash", "supertonic_3"], required: true },
       style: {
         type: String,
         enum: ["executive_warm", "executive_clear"],
@@ -36,6 +38,12 @@ const assistantProfileSchema = new Schema<AssistantProfileRecord>(
   },
   { timestamps: true },
 );
+
+// Legacy metadata remains readable; it never selects a playback engine.
+// HMR must not silently discard new settings through an old cached schema.
+if (models.AssistantProfile && (!models.AssistantProfile.schema.path("appearance").options.enum.includes("business_clay_female") || !models.AssistantProfile.schema.path("voice.inworldVoiceIdIt") ||
+  !models.AssistantProfile.schema.path("voice.inworldVoiceIdEn") ||
+  !models.AssistantProfile.schema.path("voice.provider").options.enum.includes("inworld"))) deleteModel("AssistantProfile");
 
 export const AssistantProfileModel =
   (models.AssistantProfile as Model<AssistantProfileRecord> | undefined) ??

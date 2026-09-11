@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { classifyTranscriptSource, transcriptEventIndex } from "@/lib/meeting-transcript-source";
 
 import {
   detectImportantIntervention,
@@ -27,19 +28,10 @@ export interface SpokenMeetingCommand {
   response: string;
 }
 
-function normalizeSpeech(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLocaleLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
 export async function storeMeetingTranscript(
   meeting: MeetingDocument,
   transcript: IncomingMeetingTranscript,
-): Promise<{ duplicate: boolean }> {
+): Promise<{ duplicate: boolean; segmentId?: string }> {
   const duplicate = meeting.transcript.slice(-8).some(
     (segment) =>
       segment.speakerName === transcript.speakerName &&
@@ -49,14 +41,18 @@ export async function storeMeetingTranscript(
   if (duplicate) return { duplicate: true };
 
   const previousSequence = meeting.transcript.at(-1)?.sequence || 0;
+  const createdAt = new Date();
+  const segmentId = randomUUID();
   meeting.transcript.push({
+    segmentId,
+    ...classifyTranscriptSource(meeting, { ...transcript, createdAt }),
     sequence: previousSequence + 1,
     speakerName: transcript.speakerName,
     text: transcript.text,
     language: transcript.language,
     startMs: transcript.startMs,
     endMs: transcript.endMs,
-    createdAt: new Date(),
+    createdAt,
   });
   if (
     !meeting.participants.some(
@@ -69,29 +65,28 @@ export async function storeMeetingTranscript(
     meeting.transcript.splice(0, meeting.transcript.length - 4_000);
   }
   await meeting.save();
-  return { duplicate: false };
+  return { duplicate: false, segmentId };
 }
 
 export async function processMeetingTranscriptAutomation(
   meeting: MeetingDocument,
   text: string,
+  segmentId?: string,
 ): Promise<SpokenMeetingCommand | undefined> {
   const wakeWord = meeting.assistant.wakeWord || "Conclavia";
-  const latestSpeaker = normalizeSpeech(meeting.transcript.at(-1)?.speakerName || "")
-    .replace(/\s+/g, "");
-  const normalizedWakeWord = normalizeSpeech(wakeWord).replace(/\s+/g, "");
-  if (latestSpeaker && normalizedWakeWord && latestSpeaker.startsWith(normalizedWakeWord)) {
-    return undefined;
-  }
-
-  const currentSegment = meeting.transcript.at(-1);
-  const previousSegment = meeting.transcript.at(-2);
+  const index = transcriptEventIndex(meeting.transcript, text, segmentId);
+  const currentSegment = meeting.transcript[index];
+  if (!currentSegment || currentSegment.text !== text ||
+    classifyTranscriptSource(meeting, currentSegment).source !== "participant") return undefined;
+  const previousSegment = meeting.transcript[index - 1];
   const continuesWakePhrase = Boolean(
     currentSegment &&
       previousSegment &&
+      classifyTranscriptSource(meeting, previousSegment).source === "participant" &&
       currentSegment.speakerName.toLocaleLowerCase() ===
         previousSegment.speakerName.toLocaleLowerCase() &&
       currentSegment.createdAt.getTime() - previousSegment.createdAt.getTime() <= 8_000 &&
+      currentSegment.createdAt.getTime() >= previousSegment.createdAt.getTime() &&
       isMeetingWakePhrase(previousSegment.text, wakeWord),
   );
   const actionableText = continuesWakePhrase && previousSegment
@@ -134,6 +129,9 @@ export async function processMeetingTranscriptAutomation(
 
   const voiceCommand = parseMeetingVoiceCommand(actionableText, wakeWord);
   if (voiceCommand) {
+    if ((voiceCommand.kind === "ask" && meeting.assistant.answerQuestions === false) ||
+        (voiceCommand.kind === "remember" && meeting.assistant.captureMemory === false) ||
+        (voiceCommand.kind === "summary" && meeting.assistant.summarizeOnRequest === false)) return undefined;
     if (meeting.pendingIntervention) meeting.set("pendingIntervention", undefined);
     await executeMeetingCommand(meeting, voiceCommand.kind, voiceCommand.prompt);
     const latest = meeting.commandHistory.at(-1);
@@ -143,6 +141,7 @@ export async function processMeetingTranscriptAutomation(
   }
 
   const lastCheck = meeting.bot.lastCorrectionCheckAt?.getTime() || 0;
+  const arithmetic = detectElementaryArithmetic(text);
   const conciseObjectiveClaim =
     text.length >= 12 &&
     /\b(?:0|1|2|3|4|5|6|7|8|9|zero|uno|due|tre|quattro|cinque|sei|sette|otto|nove|dieci|one|two|three|four|five|six|seven|eight|nine|ten)\b/iu.test(text) &&
@@ -151,12 +150,11 @@ export async function processMeetingTranscriptAutomation(
     meeting.assistant.correctionPolicy === "important_only" &&
     (text.length >= 30 || conciseObjectiveClaim) &&
     !text.trim().endsWith("?") &&
-    Date.now() - lastCheck >= 30_000;
+    (Boolean(arithmetic) || Date.now() - lastCheck >= 30_000);
   if (!interventionDue || meeting.pendingIntervention) return undefined;
 
   meeting.bot.lastCorrectionCheckAt = new Date();
   await meeting.save();
-  const arithmetic = detectElementaryArithmetic(text);
   const intervention = arithmetic
     ? { type: "correction" as const, ...arithmetic }
     : await detectImportantIntervention(meeting, text);

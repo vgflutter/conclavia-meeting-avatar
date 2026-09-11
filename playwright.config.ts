@@ -1,4 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+
+// Browser tests and lifecycle checks share an isolated database, never the user's meeting history.
+process.env.MONGODB_DB_NAME ||= `conclavia_e2e_${randomUUID().replaceAll("-", "")}`;
+process.env.MEETING_BOT_PROVIDER = "preview";
+process.env.MEETING_AI_ENABLED = "false";
+// Never spend voice credits or alter the default voice during regression tests.
+process.env.MEETING_TTS_PROVIDER = "inworld";
+process.env.INWORLD_API_KEY = "";
+process.env.INWORLD_TTS_MODEL = "inworld-tts-2-flash";
 
 export default defineConfig({
   testDir: "./tests/e2e",

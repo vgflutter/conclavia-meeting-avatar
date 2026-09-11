@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   BusinessAvatar,
@@ -10,9 +10,8 @@ import {
 import type { Locale } from "@/i18n/locale";
 import type { AvatarViseme } from "@/lib/avatar-visemes";
 import {
-  avatarVisemeAt,
-  avatarVoiceLevelAt,
-  buildAvatarLipSync,
+  audioLipSyncAt,
+  buildAudioLipSync,
 } from "@/lib/avatar-lipsync";
 import {
   generateLocalSpeech,
@@ -65,7 +64,6 @@ export function AvatarTestStudio({
   const audioUrlRef = useRef<string | undefined>(undefined);
   const animationRef = useRef<number | undefined>(undefined);
   const runRef = useRef(0);
-  const frames = useMemo(() => buildAvatarLipSync(text), [text]);
   const currentSpeechKey = `${language}:${profile.voice.style}:${profile.voice.speakingRate}:${text.trim()}`;
   const speechIsCurrent = Boolean(speech && speechKey === currentSpeechKey);
   const isBusy = previewState === "loading" || previewState === "generating";
@@ -94,15 +92,13 @@ export function AvatarTestStudio({
     audio.preload = "auto";
     audioRef.current = audio;
     audioUrlRef.current = url;
+    const timeline = buildAudioLipSync(text, result.samples, result.sampleRate);
 
     const animate = () => {
       if (run !== runRef.current || audio.paused || audio.ended) return;
-      const duration = Number.isFinite(audio.duration) && audio.duration > 0
-        ? audio.duration
-        : result.durationSeconds;
-      const playbackProgress = duration > 0 ? audio.currentTime / duration : 0;
-      setViseme(avatarVisemeAt(frames, playbackProgress));
-      setVoiceLevel(avatarVoiceLevelAt(result.samples, playbackProgress));
+      const frame = audioLipSyncAt(timeline, audio.currentTime);
+      setViseme(frame.viseme);
+      setVoiceLevel(frame.level);
       animationRef.current = window.requestAnimationFrame(animate);
     };
 

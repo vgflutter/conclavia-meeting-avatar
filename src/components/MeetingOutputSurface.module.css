@@ -20,18 +20,6 @@
   mask-image: radial-gradient(circle at center, black, transparent 83%);
 }
 
-.glow {
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  width: min(65vw, 55rem);
-  aspect-ratio: 1;
-  border: 1px solid rgb(189 232 141 / 10%);
-  border-radius: 50%;
-  box-shadow: 0 0 9rem rgb(70 181 125 / 10%);
-  transform: translateX(-50%);
-}
-
 .statusBadge {
   position: absolute;
   z-index: 4;
@@ -60,6 +48,17 @@
 
 .output[data-speaking="true"] .statusBadge i {
   animation: statusPulse 1.2s ease-in-out infinite;
+}
+
+.output[data-in-meeting="true"][data-live="false"] .statusBadge i {
+  background: #b0b8b1;
+  box-shadow: none;
+  animation: none;
+}
+
+.output[data-voice-state="error"] .statusBadge i {
+  background: #ec9878;
+  box-shadow: none;
 }
 
 .avatarWrap {

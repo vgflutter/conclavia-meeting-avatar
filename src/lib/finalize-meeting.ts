@@ -1,4 +1,5 @@
 import { buildLocalMeetingSummary } from "@/lib/meeting-command";
+import { participantTranscript } from "@/lib/meeting-transcript-source";
 import { buildMeetingContinuity } from "@/lib/meeting-continuity";
 import { connectToDatabase } from "@/lib/mongodb";
 import {
@@ -32,9 +33,10 @@ function unique(values: string[], limit: number): string[] {
 export async function finalizeMeeting(meetingId: string): Promise<void> {
   await connectToDatabase();
   const document = await MeetingModel.findById(meetingId).exec();
-  if (!document || document.summary.generatedAt) return;
+  if (!document || ["completed", "cancelled", "failed"].includes(document.status)) return;
 
   const meeting = serializeMeeting(document);
+  meeting.transcript = participantTranscript(meeting);
   const briefing = await buildMeetingContinuity(document);
   let overview = buildLocalMeetingSummary(
     meeting,
