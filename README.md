@@ -49,6 +49,8 @@ Start with [voice setup](#streaming-voice-setup), the [Cloudflare local test gui
 
 ## Product tour
 
+The desktop figures below were refreshed on **13 September 2026** from the current application, using fictional Aurora meetings in an isolated database. They show the real GUI, not design mockups or recordings of a Teams call. Paid integrations are disabled during capture; the Inworld configuration warning in the voice studio is intentional. See [refreshing the screenshots](#refreshing-the-readme-screenshots).
+
 ### Meetings at a glance
 
 The dashboard separates **Overview**, **Upcoming**, **History**, and **Series**. The overview shows a short list of current and upcoming meetings plus recent summaries. A collapsed action bar contains admissions and operational issues; old missed appointments and optional summary reviews do not accumulate there.
@@ -64,6 +66,8 @@ See the [dashboard verification report](docs/dashboard-verification-2026-09-09.m
 ### Avatar and voice test
 
 The avatar can be tested independently from a meeting, including Italian and English voice, speaking rate, facial mood, audio-driven lip sync, and hand raise. Save voice and rate only after comparing them; advanced model comparisons affect the preview only. This local preview does not require Cloudflare or an Attendee participant.
+
+Start in [Identity & behaviour](docs/images/avatar-settings-en.png) to choose the name and appearance, then move to the studio below. The provider is explicitly labelled **Inworld**, and optional speed/model controls stay under **Advanced settings**.
 
 ![Conclavia voice and movement studio](docs/images/avatar-studio-en.png)
 
@@ -127,17 +131,27 @@ Storage/context limits are intentional but relevant to long meetings: the meetin
 
 For testing, enable **Debug mode** on the meeting detail page, below the assistant commands. It is off by default and shows received transcript contributions and assistant response text with names and timestamps, updating roughly every second while the tab is visible. The latest acknowledged response also shows whether the avatar browser started, completed, or failed playback. A text response alone is not proof of audio, and browser playback does not establish what another Teams participant heard. This is a read-only view: it does not enable recording or change memory. Turning it off stops its requests. Only the latest 100 events are displayed; unchanged responses use conditional requests, and updates do not reload the page or pull focus away while reading older messages. Debug is not displayed in the avatar’s Teams video and does not ingest Teams text chat.
 
+The figure illustrates the named contextual follow-up with **seeded demonstration captions and a seeded response**. It documents the display, not microphone recognition, response generation or successful audio playback; those require the separate verification runs.
+
+![Debug mode showing a participant statement, a named invitation and Riccardo's contextual correction](docs/images/meeting-debug-en.png)
+
 The assistant personality has two deliberately simple controls: response length and attitude. Those choices are included in the meeting prompt.
 
 ## Assistant context
 
 Open **Context** in the navigation to enter company background, terminology and working preferences. In a meeting, open **Context for the assistant** for appointment-specific notes and a read-only preview of inherited context. The series detail has its own **Series context** section. During creation, notes are optional and collapsed; the objective remains the result to achieve, not a second background field.
 
+![General assistant context with explicit save and an explanation of the three scopes](docs/images/assistant-context-en.png)
+
 | Scope | Where to edit | Applies to |
 | --- | --- | --- |
 | General | `/context` | Every meeting in this installation |
 | Series | Series detail → Series context | All appointments linked by `seriesId`, including existing and future ones |
 | Meeting | Meeting detail → Context for the assistant | Only that appointment |
+
+The meeting panel shows inherited general and series notes alongside the editable notes for this appointment, so shared background does not have to be copied into each meeting.
+
+![Meeting-specific context with the inherited general and series context expanded](docs/images/meeting-context-en.png)
 
 The effective background is **general + series + meeting**. Specific details take precedence over broader background, while non-conflicting information remains available. This is prompt guidance, not a guarantee of model reasoning. The common prompt rules keep owner-supplied background separate from transcript evidence: a planned budget in context must not be summarized as a budget approved in the meeting. Stored outcomes and original transcripts are not rewritten. Transcripts remain evidence, never replacement system instructions. This follows the [OpenAI instruction/input separation](https://developers.openai.com/api/docs/guides/prompt-engineering#message-roles-and-instruction-following).
 
@@ -225,6 +239,10 @@ The monitor persists at most three attempts per entry, does not reapply after HT
 
 Choose **Male · Business** or **Female · Business** in either **Identity & behaviour** or **Test avatar**. Both tabs share the same unsaved configuration: you can select the female avatar, change its name, switch to testing and hear it before saving. The female variant uses the same animated vector style, blue blazer, expressions, hand raise and audio-driven mouth shapes, with chestnut hair and a green blouse. Its chin has a softer contour and lighter shading without the dark chin crease.
 
+The female studio example below uses the independently configured name **Nora**, the Italian voice **Orietta**, and the preview's raised-hand control. The hand is an avatar gesture, not the native Teams toolbar hand.
+
+![Female business avatar with its hand raised and the Italian Inworld voice Orietta selected](docs/images/avatar-studio-female-en.png)
+
 Voices follow the selected appearance in both tabs: **male avatar → male voices only; female avatar → female voices only**, in Italian and English. Switching appearance immediately selects a compatible pair in the preview (Gianni/Dennis for male, Orietta/Eleanor for female), retaining compatible selections and remembering each appearance's last choices during the editing session. The name stays independent: selecting the female avatar does not rename Riccardo. The voice studio uses the current draft; the meeting renderer uses only the saved configuration. An already open meeting renderer picks up saved appearance changes through its existing state polling, without creating another participant.
 
 If an existing profile contains mismatched voices, preview uses compatible defaults and explicitly asks you to save the correction. Merely opening the page never rewrites the saved meeting profile. Custom server voice IDs without curated gender metadata are not offered in this filtered selector; their saved values remain visible under Advanced until explicitly replaced. Discarding other edits cannot restore a mismatched voice into the preview.
@@ -235,7 +253,7 @@ The [female avatar verification report](docs/female-avatar-verification-2026-09-
 
 The avatar workspace has two sections: **Identity & behaviour** for name, appearance and personality, and **Test avatar · voice & movement** for listening and animation checks. Optional speaking-rate adjustments belong in the test studio's collapsed **Advanced settings**, so the main flow stays focused on choosing and hearing a voice.
 
-[Voice and movement studio screenshot](docs/images/avatar-studio-en.png) · [Mobile playback preview](docs/images/avatar-studio-mobile-speaking-en.png)
+[Voice and movement studio](docs/images/avatar-studio-en.png) · [Identity & behaviour](docs/images/avatar-settings-en.png). Earlier mobile playback evidence remains in the [female avatar verification report](docs/female-avatar-verification-2026-09-11.md).
 
 Open **Test avatar · voice & movement**. Only the voices matching the preview's appearance and language are offered:
 
@@ -545,6 +563,20 @@ This runs ESLint, TypeScript, isolated tunnel-launcher tests, a production build
 Tests run on an isolated local port and a per-run `conclavia_e2e_…` database with meeting AI and the external participant disabled. `MONGODB_DB_NAME` selects this test database without modifying `.env.local`; normal runtime continues using the database in `MONGODB_URI`. Tests create uniquely named records and remove them after their scenarios, without creating paid external usage or modifying user meeting history.
 
 The regression runner selects streaming with an empty provider credential. Deterministic PCM fixtures test playback, queue ordering, permission gating, errors, stop, and lip sync without paid synthesis. On 11 September 2026, the streaming-only regression run passed **187 tests in 2.0 minutes**, plus ESLint and TypeScript. The running application's old preview URL also opened only the streaming studio, the retired model endpoint returned 404, and no browser errors were observed. No Teams participant or paid synthesis was started for this run. Real provider probes are separate from these regressions; older audit reports describe the implementation at their recorded date.
+
+### Refreshing the README screenshots
+
+After installing dependencies and configuring a reachable MongoDB connection for local development, run from `conclavia-meeting-avatar`:
+
+```bash
+npm run docs:screenshots
+```
+
+This opt-in Playwright workflow regenerates **ten desktop PNGs** under `docs/images/`: meetings, creation, series, memory, identity, male/female voice studios, general context, inherited meeting context and debug. It uses Chrome, an isolated server on **port 3101**, and a dedicated `conclavia_e2e_docs_…` database. It preserves `.env.local`, the normal application's database and the server on port 3000. Do not run it alongside another regression run using port 3101 or `.next-e2e`.
+
+The capture creates fictional demo records, removes its own meeting/series records afterward and restores the isolated profile/context. External meeting participants and AI generation are disabled, the Inworld credential is empty, and browser requests to external hosts or speech endpoints are blocked. No Cloudflare tunnel or paid provider call is needed. The voice configuration warning is retained, and the debug conversation is seeded explicitly; neither screenshot is audio/video acceptance evidence.
+
+The capture checks the selected appearance/voice, inherited context, example response, horizontal overflow and browser errors. Review the generated images visually before committing them. It is separate from `npm run verify`, so regular regression runs do not overwrite documentation images.
 
 ### Real streaming voice smoke test
 

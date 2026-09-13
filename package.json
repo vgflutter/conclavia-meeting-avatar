@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "docs:screenshots": "playwright test --config playwright.docs.config.ts",
     "test:live": "node scripts/verify-live.mjs",
     "verify": "npm run lint && npm run typecheck && npm run test:tunnel && npm run build && npm run test:e2e"
   },
