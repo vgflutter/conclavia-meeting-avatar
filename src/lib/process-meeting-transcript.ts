@@ -10,9 +10,11 @@ import {
   isMeetingWakePhrase,
   meetingPermissionDecision,
   parseMeetingVoiceCommand,
+  statementBeforeMeetingAddress,
 } from "@/lib/meeting-command";
 import type { MeetingDocument } from "@/models/Meeting";
 import type { MeetingCommandKind } from "@/types/meeting";
+import { isMeetingTopicBoundary, recentMeetingFollowUp } from "@/lib/meeting-follow-up";
 
 export interface IncomingMeetingTranscript {
   speakerName: string;
@@ -93,15 +95,28 @@ export async function processMeetingTranscriptAutomation(
     ? `${previousSegment.text} ${text}`
     : text;
 
-  if (
+  const permission = meetingPermissionDecision(actionableText, wakeWord);
+  const inlineStatement = permission === "grant" ? statementBeforeMeetingAddress(text, wakeWord) : undefined;
+  const expiredPending = Boolean(
     meeting.pendingIntervention &&
     meeting.pendingIntervention.expiresAt.getTime() <= Date.now()
-  ) {
+  );
+  if (meeting.pendingIntervention && (expiredPending ||
+      meeting.assistant.correctionPolicy !== "important_only" || isMeetingTopicBoundary(text) ||
+      (inlineStatement && inlineStatement !== meeting.pendingIntervention.sourceStatement))) {
     meeting.set("pendingIntervention", undefined);
     await meeting.save();
   }
 
-  if (meeting.pendingIntervention && meetingPermissionDecision(actionableText, wakeWord) === "grant") {
+  if (permission === "defer") return undefined;
+  if (permission === "decline") {
+    if (meeting.pendingIntervention) {
+      meeting.set("pendingIntervention", undefined);
+      await meeting.save();
+    }
+    return undefined;
+  }
+  if (meeting.pendingIntervention && permission === "grant") {
     const pending = meeting.pendingIntervention;
     const kind = pending.type === "correction" ? "correct" : "inform";
     meeting.commandHistory.push({
@@ -121,10 +136,12 @@ export async function processMeetingTranscriptAutomation(
       ? { id: latest.id, kind: latest.kind, response: latest.response }
       : undefined;
   }
-  if (meeting.pendingIntervention && meetingPermissionDecision(actionableText, wakeWord) === "decline") {
-    meeting.set("pendingIntervention", undefined);
-    await meeting.save();
-    return undefined;
+  if (permission === "grant") {
+    if (meeting.assistant.answerQuestions === false) return undefined;
+    const followUp = expiredPending && !inlineStatement ? undefined : recentMeetingFollowUp(meeting, index);
+    await executeMeetingCommand(meeting, "ask", followUp?.text || actionableText, { followUp: followUp || null });
+    const latest = meeting.commandHistory.at(-1);
+    return latest ? { id: latest.id, kind: latest.kind, response: latest.response } : undefined;
   }
 
   const voiceCommand = parseMeetingVoiceCommand(actionableText, wakeWord);

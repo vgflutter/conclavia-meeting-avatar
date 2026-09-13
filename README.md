@@ -20,7 +20,7 @@ The management interface works without a meeting provider. Automatic Teams entry
 ## Latest update — 13 September 2026
 
 - **Layered context:** the new Context page saves shared background; series and meeting details add their own notes. All AI answer, verification, summary, proactive-intervention and final-memory prompts receive the same three scopes. Existing appointments inherit series edits at the next generation, without leaving/rejoining. Context is not recorded as a meeting decision. See [assistant context](#assistant-context).
-- **Contextual turn regression:** “Secondo me tre per tre fa 12” now prepares the arithmetic correction; “Ehi Riccardo, dimmi” grants the pending turn. Punctuation alone cannot become an ask/check/memory request. This parser fix does not fix the separate “Ciao Riccardo” → “Charlie cardo” recognition defect.
+- **Named contextual turns:** speech automation requires the configured name, not a generic “hello, can you hear me?”. “Ehi Riccardo, dimmi” releases a valid prepared contribution or retrieves the recent participant statement, even when proactive contributions are off. Punctuation alone cannot become a request. This parser fix does not fix the separate “Ciao Riccardo” → “Charlie cardo” recognition defect.
 - **Simpler GUI:** Teams link and language first, an optional collapsed agenda, a more compact avatar studio, question-first assistant controls, and memory search across decisions, actions and open questions. Pending actions prevent repeated submissions in the current view, and failed saves preserve the form. See the [GUI review](docs/gui-review-2026-09-13.md).
 - **Avatar workspace:** choose an appearance, select an Italian/English voice, listen, then explicitly save or discard. Optional speaking-rate adjustments, model comparisons and diagnostics are collapsed under Advanced settings.
 - **Two appearances:** male and female business avatars share expressions, idle motion, raised-hand animation and audio-clock mouth shapes. Appearance, invocation name and voice remain independent.
@@ -28,7 +28,7 @@ The management interface works without a meeting provider. Automatic Teams entry
 - **Repeatable local tunnel setup:** `npm run tunnel` restores or reuses the authorized local app/Cloudflare connection; `npm run tunnel:check` checks it without restarting anything. The launcher preserves unrelated environment values and refuses to expose another project's server. See the [Cloudflare guide](#public-connection-for-a-local-teams-test).
 - **Safer meetings:** attempt-scoped entry/exit reconciliation, renderer health checks, caption language setup, conservative echo classification, optional realtime debug and summary-first paginated history.
 - **Acceptance status:** application regressions and browser/provider previews are covered; receiver-side Teams latency, voice naturalness and video/lip-sync quality are **not yet signed off**. See the [objective-based audit](docs/objective-audit-2026-09-11.md) and the historical [10 September audit](docs/poc-audit-2026-09-10.md) for evidence and limits.
-- **Latest regression check:** 240 automated tests passed in 3.7 minutes, followed by a final 10-test context rerun; all 23 isolated tunnel-launcher tests also passed. TypeScript, ESLint and an isolated production build passed on 13 September. No new live Teams call or paid speech synthesis was performed for this check. See the [context verification report](docs/assistant-context-verification-2026-09-13.md) for coverage and limits.
+- **Latest regression check:** 255 automated tests passed in 3.5 minutes, plus all 23 isolated tunnel-launcher tests. The repeat run fixed a deferred-permission parser bug and made the simulated audio-start measurement event-based, retaining its 3-second limit. TypeScript, ESLint and the isolated production build passed; the existing tunnel passed public health and management-route protection checks without a restart. Details, the initial timing outlier and five diagnostic audio repeats are recorded in the [named-turn verification report](docs/named-turn-verification-2026-09-13.md). No new live Teams call or paid speech synthesis was performed. The earlier [context verification report](docs/assistant-context-verification-2026-09-13.md) covers layered-context delivery and storage.
 
 Start with [voice setup](#streaming-voice-setup), the [Cloudflare local test guide](#public-connection-for-a-local-teams-test), or [company deployment](#production-deployment).
 
@@ -104,6 +104,22 @@ The meeting's assistant console opens on **Answer**. **Summarize** and **Agenda*
 When proactive contributions are enabled, the colleague checks substantive statements for material errors and for reliable stored information that would advance the current objective or agenda. It raises its hand and prepares the contribution, but does not speak yet. A participant must grant the floor using its configured name, for example **“Nora, go ahead”** or **“Nora, vai pure”**. Because the answer is prepared while the hand is raised, playback can begin without a second model request.
 
 The raised hand is drawn by the avatar and reflected in its pending-intervention state. The current integration does not operate the native Teams hand button. Debug shows caption contributions and response text, not a general Teams chat integration.
+
+### Named turns and contextual follow-ups
+
+Voice automation speaks only after a direct call to the meeting's configured name. An unnamed greeting/audio check, a different addressee, a quotation, or a third-person mention does not grant the floor. Generic aliases such as “Assistente” and “Collega digitale” are not substitutes for the configured name. Explicit actions clicked in the management GUI do not require saying the name.
+
+For example, **“Secondo me tre per tre fa 12” → “Ehi Riccardo, dimmi”** produces **“Sì, 3 per 3 fa 9, non 12.”** The incorrect statement alone does not produce speech. With proactive contributions enabled it can prepare a correction and raise the avatar's hand; with them disabled, the named follow-up can still retrieve the statement when answers are enabled.
+
+- “Dimmi”, “dimmi pure” and “vai pure”, addressed to the name, are floor controls, not empty questions. The name can come before or after these controls; Italian and English controls are supported.
+- Without a prepared contribution, lookup is restricted to the same meeting's last eight caption segments and 90 seconds. It uses participant content, excludes avatar/known echo segments, and does not revive a refused, already answered or explicitly changed topic. Missing or ambiguous references receive a short clarification, not an invented question.
+- Split name/request captions require the same speaker within eight seconds. A statement and named follow-up in a single caption are also supported. A new explicit statement in that caption takes precedence over an older prepared contribution.
+- A specific question such as “Riccardo, dimmi qual è il budget” remains a question; it does not release an unrelated prepared correction. Refusals remain silent even when no intervention is pending. Conditional permissions such as “Riccardo, vai pure quando te lo dico” or “Riccardo, dimmi pure quando te lo dico” do not authorize speech or become questions. The original point remains available within the same bounded lookup for a later named grant; actual questions such as “dimmi quando consegniamo” still work.
+- Elementary, affirmative integer multiplication errors use deterministic arithmetic. Other follow-ups receive the identified statement, transcript, memory and configured context in the AI input. Original captions and speaker names are preserved. Neither contextual retrieval nor a speech command certifies correct microphone recognition or receiver-side playback.
+
+The instruction and the referenced statement are separated following the [official OpenAI prompt guidance](https://developers.openai.com/api/docs/guides/prompt-engineering#message-roles-and-instruction-following). The model is not responsible for deciding whether it has permission to speak; the code enforces that boundary before generation. See [named-turn verification](docs/named-turn-verification-2026-09-13.md).
+
+### Meeting outcomes and debug
 
 At the end of a meeting, the transcript is condensed into an overview, facts, decisions, actions and open questions. Those items become the continuity briefing for later appointments in the same series. The full transcript remains collapsed and can be expanded afterward to verify a specific passage.
 
@@ -496,7 +512,7 @@ The organizer's Teams policy must allow anonymous guests and captions. If compan
 npm run verify
 ```
 
-This runs ESLint, TypeScript, a production build, and the Playwright regression suite covering:
+This runs ESLint, TypeScript, isolated tunnel-launcher tests, a production build, and the Playwright regression suite covering:
 
 - general/series/meeting context persistence, inheritance, clearing, concurrent edits, input validation and public-route isolation;
 - actual AI task orchestration with intercepted provider calls, checking context injection in answers, checks, summaries, proactive interventions and final memory extraction (not a live-model reasoning certification);

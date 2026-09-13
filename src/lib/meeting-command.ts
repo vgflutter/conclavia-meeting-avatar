@@ -65,10 +65,7 @@ function captionWakePattern(value: string): string {
 function wakeMatch(text: string, wakeWord: string): RegExpExecArray | null {
   const trigger = captionWakePattern(wakeWord);
   if (!trigger) return null;
-  const pattern = normalizedWakePhrase(wakeWord) === "conclavia"
-    ? `(?:${trigger}|con\\s+clavia|con\\s+la\\s+via|con\\s+lavia|assistente|collega\\s+digitale)`
-    : trigger;
-  return new RegExp(`(?<![\\p{L}\\p{N}])(?:${pattern})(?![\\p{L}\\p{N}])`, "iu").exec(text);
+  return new RegExp(`(?<![\\p{L}\\p{N}])(?:${trigger})(?![\\p{L}\\p{N}])`, "iu").exec(text);
 }
 
 function isDirectAddressPrefix(prefix: string): boolean {
@@ -114,29 +111,45 @@ export function detectElementaryArithmetic(
   return {
     reason: "The stated arithmetic result is objectively incorrect.",
     response: isEnglish
-      ? `A quick correction: ${left} times ${right} is ${actual}, not ${claimed}.`
-      : `Una rapida correzione: ${left} per ${right} fa ${actual}, non ${claimed}.`,
+      ? `Yes, ${left} times ${right} is ${actual}, not ${claimed}.`
+      : `Sì, ${left} per ${right} fa ${actual}, non ${claimed}.`,
   };
 }
 
 export function meetingPermissionDecision(
   text: string,
   wakeWord: string,
-): "grant" | "decline" | undefined {
+): "grant" | "decline" | "defer" | undefined {
   const match = wakeMatch(text, wakeWord);
   if (!match) return undefined;
   const before = text.slice(0, match.index);
-  const after = text.slice(match.index + match[0].length).replace(/^[\s,.:;!?–—-]+/u, "").trim();
+  const after = text.slice(match.index + match[0].length).replace(/^[\s,.:;!?–—-]+|[\s.!?]+$/gu, "").trim();
   const request = isDirectAddressPrefix(before) ? after : after ? undefined : before.trim();
-  if (!request) return undefined;
-  const permission = request.replace(/^(?:sì|si|yes|ok|okay)[\s,]+/iu, "");
-  if (/^(?:lascia stare|non ora|abbassa la mano|non intervenire|non (?:puoi|devi) (?:parlare|intervenire)|non parlare|never mind|not now|lower your hand|(?:do not|don['’]t) (?:speak|talk|go ahead))\b/iu.test(permission)) {
+  if (!request || /["“”«»]/u.test(request)) return undefined;
+  const permission = normalizedSpeech(request)
+    .replace(/^(?:si|yes|ok|okay)\s+/u, "")
+    .replace(/\s+(?:per favore|grazie|please|thanks)$/u, "");
+  if (/^(?:lascia stare|non ora|abbassa la mano|non intervenire|non (?:puoi|devi) (?:parlare|intervenire|rispondere)|non parlare|non rispondere|never mind|not now|lower your hand|(?:do not|don t) (?:speak|talk|answer|go ahead))\b/iu.test(permission)) {
     return "decline";
   }
-  if (/^dimmi[\s.!?]*$/iu.test(permission) || /^(?:vai pure|prego|puoi parlare|puoi intervenire|intervieni|dimmi pure|go ahead|you can speak|please speak)\b/iu.test(permission)) {
+  if (/^(?:dimmi(?: pure)?|vai pure|puoi parlare|puoi intervenire|intervieni|go ahead)\b.*\b(?:ma|but)\s+(?:non|not|don t|do not)\b/iu.test(permission)) return "decline";
+  if (/^(?:dimmi(?: pure)?|vai pure|prego|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)(?: ora| adesso| now)?$/iu.test(permission)) {
     return "grant";
   }
+  // A future invitation is not permission now and not a question for the LLM.
+  // Keep this distinct from actual requests such as "dimmi quando consegniamo".
+  if (/^dimmi(?: pure)?(?: solo)? (?:quando|se) (?:te lo (?:dico|chiedo|diro|chiedero)|ti (?:chiamo|chiamero|do la parola|daro la parola))\b/u.test(permission) ||
+      /^(?:vai pure|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)\b.*\b(?:quando|se|when|if|until)\b/u.test(permission)) return "defer";
   return undefined;
+}
+
+export function statementBeforeMeetingAddress(text: string, wakeWord: string): string | undefined {
+  const match = wakeMatch(text, wakeWord);
+  if (!match) return undefined;
+  const prefix = text.slice(0, match.index);
+  if (!isDirectAddressPrefix(prefix)) return undefined;
+  const boundary = [...prefix.matchAll(/[.!?]\s+/gu)].at(-1);
+  return boundary?.index !== undefined ? prefix.slice(0, boundary.index + 1).trim() || undefined : undefined;
 }
 
 export function isMeetingWakePhrase(spokenText: string, wakeWord: string): boolean {
@@ -151,14 +164,7 @@ export function isMeetingWakePhrase(spokenText: string, wakeWord: string): boole
     return true;
   }
 
-  // Teams captions sometimes split the product name into separate words.
-  return trigger === "conclavia" && [
-    "conclavia",
-    "conlavia",
-    "conclava",
-    "assistente",
-    "collegadigitale",
-  ].includes(spoken);
+  return false;
 }
 
 export function parseMeetingVoiceCommand(
@@ -168,17 +174,7 @@ export function parseMeetingVoiceCommand(
   const trigger = wakeWord.trim();
   if (!spokenText.trim() || !trigger) return undefined;
   const triggerMatch = wakeMatch(spokenText, trigger);
-  if (!triggerMatch || triggerMatch.index === undefined) {
-    const directAudioCheck = /^\s*(?:ciao|salve|hello|hi)[\s,!.]*(?:mi\s+senti|can\s+you\s+hear\s+me)[\s?!.]*$/iu
-      .test(spokenText);
-    if (!directAudioCheck) return undefined;
-    return {
-      kind: "ask",
-      prompt: /\bcan\s+you\s+hear\s+me\b/iu.test(spokenText)
-        ? "Can you hear me?"
-        : "Mi senti?",
-    };
-  }
+  if (!triggerMatch || triggerMatch.index === undefined) return undefined;
   if (!isDirectAddressPrefix(spokenText.slice(0, triggerMatch.index))) return undefined;
   const request = spokenText
     .slice(triggerMatch.index + triggerMatch[0].length)
@@ -193,6 +189,12 @@ export function parseMeetingVoiceCommand(
     }
     return undefined;
   }
+
+  // Turn control is handled separately, never sent as a question or a command
+  // hidden inside a quotation/conditional permission.
+  if (meetingPermissionDecision(spokenText, wakeWord) ||
+      /^(?:vai pure|prego|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)\b/iu.test(request) ||
+      /^(?:ha detto|dice che|pensa che|said|says|thinks)\b/iu.test(request)) return undefined;
 
   const rules: Array<{
     kind: MeetingCommandKind;

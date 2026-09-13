@@ -145,12 +145,30 @@ test(`streaming simulato ${appearance}${cpuOnly ? " senza GPU" : ""}: attende il
     await expect(page.locator("svg[data-gesture='hand_raise']")).toBeVisible();
     expect((await voiceProbeStats(page)).playbacks).toHaveLength(0);
     await expect(page.locator("[data-speaking='false']")).toBeVisible();
-    const started = performance.now();
+    await page.evaluate(() => {
+      const timing: { armedAt: number; startedAt?: number } = { armedAt: performance.now() };
+      Object.assign(window, { speechStartTiming: timing });
+      const surface = document.querySelector("[data-voice-state]")!;
+      const observer = new MutationObserver(() => {
+        if (surface.getAttribute("data-speaking") === "true") {
+          timing.startedAt = performance.now();
+          observer.disconnect();
+        }
+      });
+      observer.observe(surface, { attributes: true, attributeFilter: ["data-speaking"] });
+    });
     await webhook(request, meeting, `${meeting.assistant.wakeWord}, vai pure`, 3000);
-    await expect(page.locator("[data-speaking='true']")).toBeVisible({timeout: 5000});
-    const latencyMs = Math.round(performance.now() - started);
-    console.log(`Prepared correction to audio: ${latencyMs}ms`);
-    expect(latencyMs).toBeLessThan(3000);
+    // Capture the transient start in the browser. Locator retries measure when
+    // Playwright notices it, not when the audio-driven speaking state started.
+    const observedLatency = () => page.evaluate(() => {
+      const timing = (window as unknown as { speechStartTiming: { armedAt: number; startedAt?: number } }).speechStartTiming;
+      return timing.startedAt === undefined ? null : Math.round(timing.startedAt - timing.armedAt);
+    });
+    await expect.poll(observedLatency, { timeout: 5000 }).not.toBeNull();
+    const latencyMs = await observedLatency();
+    console.log(`Prepared correction to browser audio state: ${latencyMs}ms`);
+    expect(latencyMs).not.toBeNull();
+    expect(latencyMs!).toBeLessThan(3000);
     await expect(page.locator("[data-spoken-command]")).toBeVisible({timeout: 15000});
 
     await page.evaluate(() => {

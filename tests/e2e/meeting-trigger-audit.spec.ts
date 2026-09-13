@@ -126,7 +126,7 @@ test("segnalazione reale: secondo me tre per tre fa 12, poi Ehi Riccardo Dimmi r
   expect(result.transcript.at(-1)?.text).toBe("Ehi Riccardo, Dimmi.");
 });
 
-test("dimmi alone grants only a pending turn; a real question is not swallowed and punctuation is not a question", () => {
+test("dimmi is a named floor control; a real question is not swallowed and punctuation is not a question", () => {
   expect(meetingPermissionDecision("Ehi Riccardo, Dimmi.", "Riccardo")).toBe("grant");
   expect(meetingPermissionDecision("Riccardo, dimmi quanto costa", "Riccardo")).toBeUndefined();
   expect(parseMeetingVoiceCommand("Riccardo, dimmi quanto costa", "Riccardo")).toEqual({ kind: "ask", prompt: "quanto costa" });
@@ -136,6 +136,174 @@ test("dimmi alone grants only a pending turn; a real question is not swallowed a
   for (const statement of ["Secondo me non è vero che tre per tre fa dodici.", "Secondo me tre per tre fa dodici?", 'Secondo me "tre per tre fa dodici".', "Secondo me 1,5 per 2 fa 3."]) {
     expect(detectElementaryArithmetic(statement)).toBeUndefined();
   }
+});
+
+test("named floor controls are complete requests, never quoted or conditional permissions", () => {
+  for (const text of ["Ehi Riccardo, dimmi.", "Dimmi, Riccardo.", "Riccardo, vai pure, grazie.", "Vai pure, Riccardo!", "Riccardo, go ahead please."]) {
+    expect(meetingPermissionDecision(text, "Riccardo"), text).toBe("grant");
+  }
+  for (const text of ["Dimmi.", "Vai pure", "Marco, dimmi", 'Ha detto: "Riccardo, dimmi"', "Ho detto dimmi a Riccardo", "Riccardo, dimmi pure quanto costa", 'Vai pure, Riccardo, ha detto Elena']) {
+    expect(meetingPermissionDecision(text, "Riccardo"), text).toBeUndefined();
+  }
+  for (const text of ["Riccardo, non rispondere", "Riccardo, dimmi pure ma non ora", "Riccardo, go ahead but do not speak"]) {
+    expect(meetingPermissionDecision(text, "Riccardo"), text).toBe("decline");
+  }
+  for (const name of ["Riccardo", "Conclavia"]) {
+    for (const text of ["Ciao, mi senti?", "Hello, can you hear me?", "Assistente, mi senti?", "Collega digitale, rispondi", "Riccardo ha detto che il budget è approvato"]) {
+      expect(parseMeetingVoiceCommand(text, name), text).toBeUndefined();
+    }
+  }
+});
+
+test("deferred dimmi does not become an immediate question, while actual questions still work", () => {
+  for (const text of [
+    "Riccardo, dimmi pure quando te lo dico.",
+    "Riccardo, dimmi solo se ti chiamo.",
+    "Riccardo, dimmi quando ti do la parola.",
+    "Riccardo, dimmi pure solo quando te lo chiederò.",
+    "Riccardo, vai pure quando te lo dico.",
+    "Riccardo, go ahead only when I invite you.",
+  ]) {
+    expect(meetingPermissionDecision(text, "Riccardo"), text).toBe("defer");
+    expect(parseMeetingVoiceCommand(text, "Riccardo"), text).toBeUndefined();
+  }
+  for (const text of ["Riccardo, dimmi ma non ora", "Riccardo, dimmi pure ma non adesso"]) {
+    expect(meetingPermissionDecision(text, "Riccardo"), text).toBe("decline");
+    expect(parseMeetingVoiceCommand(text, "Riccardo"), text).toBeUndefined();
+  }
+  for (const [text, prompt] of [
+    ["Riccardo, dimmi pure quanto costa", "pure quanto costa"],
+    ["Riccardo, dimmi quando consegniamo", "quando consegniamo"],
+    ["Riccardo, dimmi solo se il budget basta", "solo se il budget basta"],
+  ]) {
+    expect(parseMeetingVoiceCommand(text, "Riccardo"), text).toEqual({ kind: "ask", prompt });
+  }
+});
+
+test("silence: no unnamed, other-person, quoted or conditional request releases a prepared response", async ({ request }) => {
+  const meeting = await fixture(request);
+  await speak(meeting.id, "Secondo me tre per tre fa 12.");
+  for (const text of ["Ciao, mi senti?", "Hello, can you hear me?", "Dimmi.", "Marco, dimmi", 'Elena ha detto: "Riccardo, vai pure"', "Riccardo, vai pure quando te lo dico", "Riccardo, dimmi pure quando te lo dico", "Riccardo, dimmi solo se ti chiamo"]) {
+    const saved = await speak(meeting.id, text);
+    expect(saved.commandHistory, text).toHaveLength(0);
+    expect(saved.pendingIntervention, text).toBeTruthy();
+  }
+  const saved = await speak(meeting.id, "Riccardo, dimmi");
+  expect(saved.commandHistory).toHaveLength(1);
+  expect(saved.commandHistory[0].response).toBe("Sì, 3 per 3 fa 9, non 12.");
+});
+
+for (const [name, statement, call, result] of [
+  ["Riccardo", "Secondo me tre per tre fa 12.", "Ehi Riccardo, dimmi.", "Sì, 3 per 3 fa 9, non 12."],
+  ["Nora", "I think three times three is twelve.", "Nora, go ahead.", "Yes, 3 times 3 is 9, not 12."],
+]) {
+  test(`context without raised hand: ${name} retrieves the preceding point only after the named call`, async ({ request }) => {
+    const meeting = await fixture(request, "off");
+    await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "assistant.wakeWord": name } });
+    let saved = await speak(meeting.id, statement);
+    expect(saved.pendingIntervention).toBeUndefined(); expect(saved.commandHistory).toHaveLength(0);
+    saved = await speak(meeting.id, name === "Riccardo" ? "Riccardo, dimmi pure quando te lo dico." : "Nora, go ahead only when I invite you.");
+    expect(saved.commandHistory).toHaveLength(0);
+    saved = await speak(meeting.id, call);
+    expect(saved.commandHistory).toHaveLength(1);
+    expect(saved.commandHistory[0]).toMatchObject({ kind: "correct", prompt: statement, response: result });
+    expect(saved.transcript[0].text).toBe(statement);
+    expect(saved.transcript.at(-1)?.text).toBe(call);
+  });
+}
+
+test("context: claim and named call in one caption still refer to the claim", async ({ request }) => {
+  const meeting = await fixture(request, "off");
+  const text = "Secondo me tre per tre fa 12. Ehi Riccardo, dimmi.";
+  const saved = await speak(meeting.id, text);
+  expect(saved.commandHistory).toHaveLength(1);
+  expect(saved.commandHistory[0]).toMatchObject({ prompt: "Secondo me tre per tre fa 12.", response: "Sì, 3 per 3 fa 9, non 12." });
+  expect(saved.transcript[0].text).toBe(text);
+});
+
+test("context: split name and grant require the same speaker; an echo is not the point to retrieve", async ({ request }) => {
+  const meeting = await fixture(request, "off");
+  await speak(meeting.id, "Secondo me tre per tre fa 12.");
+  await speak(meeting.id, "Riccardo");
+  let saved = await speak(meeting.id, "Dimmi", "Marco");
+  expect(saved.commandHistory).toHaveLength(0);
+  // A fresh isolated caption pair exercises the eight-second same-speaker rule.
+  await speak(meeting.id, "Secondo me quattro per tre fa 13.");
+  await speak(meeting.id, "La risposta è segreta.", "Riccardo (Guest)");
+  await speak(meeting.id, "Riccardo");
+  saved = await speak(meeting.id, "Dimmi");
+  expect(saved.commandHistory.at(-1)?.response).toBe("Sì, 4 per 3 fa 12, non 13.");
+});
+
+test("context: an explicit new statement in the named call supersedes an older prepared correction", async ({ request }) => {
+  const meeting = await fixture(request);
+  await speak(meeting.id, "Secondo me tre per tre fa 12.");
+  const saved = await speak(meeting.id, "Secondo me quattro per tre fa 13. Riccardo, dimmi.");
+  expect(saved.commandHistory).toHaveLength(1);
+  expect(saved.commandHistory[0]).toMatchObject({ prompt: "Secondo me quattro per tre fa 13.", response: "Sì, 4 per 3 fa 12, non 13." });
+  expect(saved.pendingIntervention).toBeUndefined();
+});
+
+test("context: a non-arithmetic follow-up retrieves its topic and known memory, not an empty request", async ({ request }) => {
+  const meeting = await fixture(request, "off");
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "summary.rememberedFacts": ["Il budget approvato di Aurora è 48000 euro."] } });
+  const statement = "Vorrei riprendere il budget approvato di Aurora.";
+  await speak(meeting.id, statement, "Marco");
+  const saved = await speak(meeting.id, "Riccardo, dimmi.");
+  expect(saved.commandHistory).toHaveLength(1);
+  expect(saved.commandHistory[0]).toMatchObject({ kind: "ask", prompt: statement });
+  expect(saved.commandHistory[0].response).toContain("48000");
+});
+
+test("context: missing, refused and expired points request clarification, never resurrect the correction", async ({ request }) => {
+  const meeting = await fixture(request);
+  let saved = await speak(meeting.id, "Riccardo, non ora");
+  expect(saved.commandHistory).toHaveLength(0);
+  saved = await speak(meeting.id, "Riccardo, dimmi.");
+  expect(saved.commandHistory.at(-1)?.response).toBe("A quale punto ti riferisci?");
+  await speak(meeting.id, "Secondo me tre per tre fa 12.");
+  await speak(meeting.id, "Riccardo, lascia stare");
+  saved = await speak(meeting.id, "Riccardo, vai pure");
+  expect(saved.commandHistory.at(-1)?.response).toBe("A quale punto ti riferisci?");
+  await speak(meeting.id, "Secondo me quattro per tre fa 13.");
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "pendingIntervention.expiresAt": new Date(Date.now() - 1000) } });
+  saved = await speak(meeting.id, "Ehi Riccardo, dimmi.");
+  expect(saved.commandHistory.at(-1)?.response).toBe("A quale punto ti riferisci?");
+  expect(saved.commandHistory.every(command => command.kind === "ask")).toBe(true);
+});
+
+test("context: old, already answered, or explicitly changed topics are not reused", async ({ request }) => {
+  const meeting = await fixture(request, "off");
+  let saved = await speak(meeting.id, "Secondo me tre per tre fa 12.");
+  saved.transcript[0].createdAt = new Date(Date.now() - 91_000); await saved.save();
+  saved = await speak(meeting.id, "Riccardo, dimmi");
+  expect(saved.commandHistory.at(-1)?.response).toBe("A quale punto ti riferisci?");
+  await speak(meeting.id, "Secondo me quattro per tre fa 13.");
+  saved = await speak(meeting.id, "Riccardo, vai pure");
+  expect(saved.commandHistory.at(-1)?.kind).toBe("correct");
+  saved = await speak(meeting.id, "Ehi Riccardo, dimmi.");
+  expect(saved.commandHistory.at(-1)?.response).toBe("A quale punto ti riferisci?");
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "assistant.correctionPolicy": "important_only" } });
+  await speak(meeting.id, "Secondo me cinque per tre fa 16.");
+  saved = await speak(meeting.id, "Cambiamo argomento.");
+  expect(saved.pendingIntervention).toBeUndefined();
+  saved = await speak(meeting.id, "Dimmi, Riccardo");
+  expect(saved.commandHistory.at(-1)?.response).toBe("A quale punto ti riferisci?");
+});
+
+test("context respects disabled answers and explicit questions do not release unrelated pending corrections", async ({ request }) => {
+  const meeting = await fixture(request, "off");
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "assistant.answerQuestions": false } });
+  await speak(meeting.id, "Secondo me tre per tre fa 12.");
+  let saved = await speak(meeting.id, "Riccardo, dimmi");
+  expect(saved.commandHistory).toHaveLength(0);
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "assistant.answerQuestions": true, "assistant.correctionPolicy": "important_only" } });
+  await speak(meeting.id, "Secondo me quattro per tre fa 13.");
+  saved = await speak(meeting.id, "Riccardo, dimmi qual è il budget");
+  expect(saved.commandHistory).toHaveLength(1);
+  expect(saved.commandHistory[0]).toMatchObject({ kind: "ask", prompt: "qual è il budget" });
+  expect(saved.commandHistory[0].response).not.toContain("fa 12");
+  expect(saved.pendingIntervention).toBeUndefined();
 });
 
 test("correzioni: un ok iniziale non nasconde un errore oggettivo e non elimina negazioni", async ({request}) => {
@@ -282,6 +450,44 @@ test("webhook: consegna duplicata produce una sola trascrizione e una sola rispo
   expect(saved.commandHistory).toHaveLength(1);
   expect(saved.transcript).toHaveLength(1);
 });
+
+for (const policy of ["important_only", "off"]) {
+  test(`webhook: named contextual turn survives Attendee async ingress and replay (${policy})`, async ({ request }) => {
+    const meeting = await fixture(request, policy);
+    await MeetingModel.updateOne({ _id: meeting.id }, { $set: {
+      status: "live", "bot.provider": "attendee", "bot.externalBotId": `audit-${meeting.id}`,
+    } });
+    const path = `/api/webhooks/attendee?meeting_token=${meeting.bot.outputToken}`;
+    const caption = (text: string, timestamp: number) => ({
+      idempotency_key: randomUUID(), bot_id: `audit-${meeting.id}`, trigger: "transcript.update",
+      data: { speaker_name: "Elena Costa", timestamp_ms: timestamp, duration_ms: 1000,
+        transcription: { transcript: text, words: [] } },
+    });
+    const statement = "Secondo me tre per tre fa 12.";
+    expect((await request.post(path, { data: caption(statement, 1000) })).ok()).toBe(true);
+    if (policy === "important_only") {
+      await expect.poll(async () => (await MeetingModel.findById(meeting.id).orFail()).pendingIntervention?.sourceStatement).toBe(statement);
+    }
+    expect((await request.post(path, { data: caption("Riccardo, dimmi pure quando te lo dico.", 3000) })).ok()).toBe(true);
+    expect((await request.post(path, { data: caption("Dimmi.", 5000) })).ok()).toBe(true);
+    let saved = await MeetingModel.findById(meeting.id).orFail();
+    expect(saved.transcript).toHaveLength(3);
+    expect(saved.commandHistory).toHaveLength(0);
+    // Keep the final call adjacent to the actual topic when no hand is prepared:
+    // the unrelated bare "Dimmi" above must not become contextual evidence.
+    expect((await request.post(path, { data: caption(statement, 7000) })).ok()).toBe(true);
+    const namedCall = caption("Ehi Riccardo, dimmi.", 9000);
+    expect((await request.post(path, { data: namedCall })).ok()).toBe(true);
+    await expect.poll(async () => (await MeetingModel.findById(meeting.id).orFail()).commandHistory.length).toBe(1);
+    expect((await request.post(path, { data: namedCall })).ok()).toBe(true);
+    saved = await MeetingModel.findById(meeting.id).orFail();
+    expect(saved.commandHistory).toHaveLength(1);
+    expect(saved.commandHistory[0]).toMatchObject({ kind: "correct", prompt: statement, response: "Sì, 3 per 3 fa 9, non 12." });
+    expect(saved.pendingIntervention).toBeUndefined();
+    expect(saved.transcript).toHaveLength(5);
+    expect(saved.transcript.at(-1)?.text).toBe("Ehi Riccardo, dimmi.");
+  });
+}
 
 test("webhook: Attendee conserva ma non esegue un eco attribuito a Vincenzo", async ({request}) => {
   const meeting = await fixture(request);

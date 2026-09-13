@@ -536,9 +536,9 @@ test("comandi vocali: riconosce italiano e inglese dopo la parola di attivazione
   expect(isMeetingWakePhrase("Ricardo", "Riccardo")).toBe(true);
   expect(meetingPermissionDecision("Ricardo, go ahead", "Riccardo")).toBe("grant");
   expect(parseMeetingVoiceCommand("Assistente, quanto fa tre per tre?", "Conclavia"))
-    .toEqual({ kind: "ask", prompt: "quanto fa tre per tre?" });
+    .toBeUndefined();
   expect(parseMeetingVoiceCommand("Ciao, mi senti?", "Conclavia"))
-    .toEqual({ kind: "ask", prompt: "Mi senti?" });
+    .toBeUndefined();
   expect(parseMeetingVoiceCommand("Questa frase non è un comando", "Conclavia"))
     .toBeUndefined();
   expect(parseMeetingVoiceCommand("Nora, qual è il prossimo punto?", "Nora"))

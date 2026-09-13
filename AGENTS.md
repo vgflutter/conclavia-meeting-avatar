@@ -36,6 +36,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Preserve explicit saves, stale-version conflict protection and scope-specific clearing. Context edits must not change bot lifecycle, voices or existing history.
 - Do not expose context through the public avatar rendering capability. This PoC is a single shared workspace, not a tenant-isolated company deployment.
 
+# Named speaking turns
+
+- Require the configured invocation name for transcript-driven speech. Do not restore unnamed audio-check shortcuts or generic assistant aliases. A mention or quoted/conditional permission is not a direct speaking turn.
+- Keep prepared hand-raise contributions silent until a named grant. A bare named “dimmi” must recover a recent point, not become a punctuation-only question; this also applies without a prepared contribution when answers are enabled.
+- Deferred permission (“dimmi pure quando te lo dico”) stays silent until a later named grant; do not treat it as a question. Preserve actual questions such as “dimmi quando consegniamo”.
+- Keep fallback references within the same meeting, eight prior caption segments and 90 seconds. Ignore avatar/known echoes and do not resurrect dismissed or already answered points. Preserve explicit refusal, topic changes, feature settings and split-caption speaker/time boundaries.
+- Test speech permission separately from contextual retrieval and speech recognition. See `docs/named-turn-verification-2026-09-13.md`; correct injected transcripts do not validate live Teams recognition/audio.
+
 # AWS Guidance
 
 - Prefer the AWS MCP Server for AWS interactions — it provides sandboxed
