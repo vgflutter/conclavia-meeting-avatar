@@ -178,6 +178,9 @@
 .businessAvatar[data-appearance="business_clay_female"] .rightBrow { stroke-width: 9; }
 .businessAvatar[data-appearance="business_clay_female"] .avatarNose { stroke-width: 6; }
 .businessAvatar[data-appearance="business_clay_female"] .cheekDetail { opacity: 0.45; }
+.businessAvatar[data-appearance="business_clay_female"] .templeShade { fill: rgb(126 82 57 / 7%); }
+.businessAvatar[data-appearance="business_clay_female"] .neckShadow { fill: rgb(119 76 50 / 12%); }
+.businessAvatar[data-appearance="business_clay_female"] .avatarHead { stroke: rgb(115 78 54 / 30%); stroke-width: 2; }
 .businessAvatar[data-appearance="business_clay_female"] .lipUpper { fill: #95544e; }
 .businessAvatar[data-appearance="business_clay_female"] .lipLower { fill: #bc7970; }
 .businessAvatar[data-appearance="business_clay_female"] .pocketSquare { opacity: 0; }

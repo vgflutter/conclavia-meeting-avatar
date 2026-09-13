@@ -114,6 +114,30 @@ test("permesso: una menzione o una citazione non concede la parola", () => {
   expect(meetingPermissionDecision("Vai pure, Riccardo", "Riccardo")).toBe("grant");
 });
 
+test("segnalazione reale: secondo me tre per tre fa 12, poi Ehi Riccardo Dimmi riprende la correzione", async ({ request }) => {
+  const meeting = await fixture(request);
+  const pending = await speak(meeting.id, "Secondo me tre per tre fa 12.");
+  expect(pending.pendingIntervention?.response).toContain("fa 9, non 12");
+  const result = await speak(meeting.id, "Ehi Riccardo, Dimmi.");
+  expect(result.pendingIntervention).toBeUndefined();
+  expect(result.commandHistory).toHaveLength(1);
+  expect(result.commandHistory[0]).toMatchObject({ kind: "correct", prompt: "Secondo me tre per tre fa 12." });
+  expect(result.commandHistory[0].response).toContain("fa 9, non 12");
+  expect(result.transcript.at(-1)?.text).toBe("Ehi Riccardo, Dimmi.");
+});
+
+test("dimmi alone grants only a pending turn; a real question is not swallowed and punctuation is not a question", () => {
+  expect(meetingPermissionDecision("Ehi Riccardo, Dimmi.", "Riccardo")).toBe("grant");
+  expect(meetingPermissionDecision("Riccardo, dimmi quanto costa", "Riccardo")).toBeUndefined();
+  expect(parseMeetingVoiceCommand("Riccardo, dimmi quanto costa", "Riccardo")).toEqual({ kind: "ask", prompt: "quanto costa" });
+  for (const text of ["Riccardo, dimmi.", "Riccardo, rispondi!", "Riccardo, verifica.", "Riccardo, ricorda."]) {
+    expect(parseMeetingVoiceCommand(text, "Riccardo")).toBeUndefined();
+  }
+  for (const statement of ["Secondo me non è vero che tre per tre fa dodici.", "Secondo me tre per tre fa dodici?", 'Secondo me "tre per tre fa dodici".', "Secondo me 1,5 per 2 fa 3."]) {
+    expect(detectElementaryArithmetic(statement)).toBeUndefined();
+  }
+});
+
 test("correzioni: un ok iniziale non nasconde un errore oggettivo e non elimina negazioni", async ({request}) => {
   expect(detectElementaryArithmetic("Ok tre per tre fa 12.")?.response).toContain("fa 9");
   expect(detectElementaryArithmetic("Okay, three times three is twelve.")?.response).toContain("is 9");

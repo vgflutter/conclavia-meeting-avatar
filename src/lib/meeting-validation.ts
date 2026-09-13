@@ -1,3 +1,4 @@
+import { validateContext } from "@/lib/assistant-context";
 import type {
   MeetingCreateInput,
   MeetingAgendaInput,
@@ -76,6 +77,8 @@ export function validateMeetingInput(body: unknown): MeetingValidationResult {
   const title = cleanText(body.title, 160);
   const meetingUrl = cleanText(body.meetingUrl, 2_000);
   const objective = cleanText(body.objective, 2_000);
+  if (body.context !== undefined && !validateContext(body.context)) issues.push("Context must be text of at most 8000 characters");
+  const context = typeof body.context === "string" ? body.context.trim() : "";
   const seriesLabel = cleanText(body.seriesLabel, 160) || undefined;
   const timezone = cleanText(body.timezone, 100) || "Europe/Rome";
   const language = body.language as MeetingLanguage;
@@ -125,6 +128,7 @@ export function validateMeetingInput(body: unknown): MeetingValidationResult {
       durationMinutes,
       timezone,
       objective,
+      context,
       seriesLabel,
       language,
       autoJoin: body.autoJoin as boolean,

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   if (request.headers.get("sec-fetch-site") === "cross-site" || (origin && origin !== publicUrl.origin)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
-  let input: { text: string; language: "it" | "en"; model: InworldModel; voiceId?: string; speakingRate?: number };
+  let input: { text: string; language: "it" | "en"; model: InworldModel; voiceId?: string; speakingRate?: number; provider?: "inworld" };
   try {
     if (!request.headers.get("content-type")?.includes("application/json")) throw new Error();
     const text = await request.text();
@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     input = JSON.parse(text);
     if (!input || typeof input.text !== "string" || !input.text.trim() || input.text.length > 1_000 ||
       !["it", "en"].includes(input.language) || !["inworld-tts-2-flash", "inworld-tts-2"].includes(input.model) ||
+      (input.provider !== undefined && input.provider !== "inworld") ||
       (input.voiceId !== undefined && !isAvatarVoice(input.voiceId, input.language)) ||
       (input.speakingRate !== undefined && (typeof input.speakingRate !== "number" || !Number.isFinite(input.speakingRate) || input.speakingRate < 0.8 || input.speakingRate > 1.1))) throw new Error();
   } catch { return Response.json({ error: "Invalid voice test" }, { status: 400 }); }

@@ -23,6 +23,8 @@ export function serializeMeeting(document: MeetingDocument): MeetingResponse {
     scheduledEnd: document.scheduledEnd.toISOString(),
     timezone: document.timezone,
     objective: document.objective || "",
+    context: document.context || "",
+    contextVersion: document.contextVersion || 0,
     seriesLabel: document.seriesLabel || undefined,
     seriesKey: document.seriesKey,
     language: document.language,

@@ -18,6 +18,7 @@ export function Header() {
   const navigation = [
     { href: "/meetings", it: "Meeting", en: "Meetings" },
     { href: "/memory", it: "Memoria", en: "Memory" },
+    { href: "/context", it: "Contesto", en: "Context" },
     { href: "/avatar", it: "Avatar", en: "Avatar" },
   ];
 
@@ -31,7 +32,7 @@ export function Header() {
             width={2079}
             height={756}
             priority
-            className="h-11 w-auto sm:h-12"
+            className="h-8 w-auto sm:h-12"
           />
         </Link>
         <nav
@@ -63,14 +64,14 @@ export function Header() {
             <option value="en">EN</option>
             <option value="it">IT</option>
           </select>
-          <Link href="/meetings/new" className="button-primary whitespace-nowrap">
+          {pathname !== "/meetings/new" && <Link href="/meetings/new" className="button-primary whitespace-nowrap">
             {locale === "it" ? "Nuovo meeting" : "New meeting"}
-          </Link>
+          </Link>}
         </nav>
       </div>
       <nav
         aria-label={locale === "it" ? "Navigazione mobile" : "Mobile navigation"}
-        className="container-page grid grid-cols-3 border-t border-[#edf0eb] py-1.5 md:hidden"
+        className="container-page grid grid-cols-4 border-t border-[#edf0eb] py-1.5 md:hidden"
       >
         {navigation.map((item) => {
           const active = pathname.startsWith(item.href);

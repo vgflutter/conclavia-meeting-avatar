@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AssistantContextEditor } from "@/components/AssistantContextEditor";
+import { getGlobalAssistantContext } from "@/lib/assistant-context-store";
 import { Types } from "mongoose";
 import { notFound } from "next/navigation";
 
@@ -46,6 +48,7 @@ export default async function MeetingSeriesPage({ params }: SeriesPageProps) {
     .sort({ scheduledStart: 1 })
     .exec();
   const series = serializeMeetingSeries(document);
+  const globalContext = await getGlobalAssistantContext();
   const meetings = meetingDocuments.map(serializeMeeting);
   const briefing = await buildMeetingSeriesContinuity(
     series.id,
@@ -93,6 +96,15 @@ export default async function MeetingSeriesPage({ params }: SeriesPageProps) {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="space-y-6">
+          <details id="context" className="card scroll-mt-36 overflow-hidden" data-testid="series-context">
+            <summary className="cursor-pointer p-5 sm:p-6">
+              <h2 className="inline text-lg font-semibold">{isItalian ? "Contesto della serie" : "Series context"}</h2>
+              <p className="mt-1 text-sm text-slate-500">{isItalian ? "Informazioni condivise da tutti gli appuntamenti, anche quelli già creati." : "Background shared by every appointment, including existing ones."}</p>
+            </summary>
+            <div className="border-t border-slate-100 p-5 sm:p-6"><AssistantContextEditor scope="series" resourceId={series.id}
+              initial={{ context: series.context || "", version: series.contextVersion || 0 }}
+              inherited={[{ label: isItalian ? "Generale" : "General", context: globalContext.context, href: "/context" }]} /></div>
+          </details>
           <section className="card p-5 sm:p-7">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>

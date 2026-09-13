@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { DEFAULT_ASSISTANT_PROFILE, getAssistantProfile } from "@/lib/assistant-profile";
+import { isAvatarVoice } from "@/lib/avatar-voice-catalog";
 import { connectToDatabase } from "@/lib/mongodb";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
 import { MeetingModel } from "@/models/Meeting";
@@ -23,6 +24,12 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const origin = request.headers.get("origin");
+  const destination = new URL(request.url);
+  if (request.headers.get("host")) destination.host = request.headers.get("host")!;
+  if (request.headers.get("sec-fetch-site") === "cross-site" || (origin && origin !== destination.origin)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   let body: unknown;
   try {
     body = await request.json();
@@ -39,8 +46,13 @@ export async function PATCH(request: Request) {
   const style = payload.voiceStyle as AssistantVoiceStyle;
   const responseStyle = payload.responseStyle as AssistantResponseStyle;
   const attitude = payload.attitude as AssistantAttitude;
-  const speakingRate = payload.speakingRate === undefined ? undefined : Number(payload.speakingRate);
+  const speakingRate = payload.speakingRate;
   const appearance = payload.appearance;
+  const voiceIt = payload.inworldVoiceIdIt;
+  const voiceEn = payload.inworldVoiceIdEn;
+  if ((voiceIt !== undefined && !isAvatarVoice(voiceIt, "it")) || (voiceEn !== undefined && !isAvatarVoice(voiceEn, "en"))) {
+    return NextResponse.json({ error: "Invalid voice selection" }, { status: 400 });
+  }
   if (appearance !== undefined && appearance !== "business_clay" && appearance !== "business_clay_female") {
     return NextResponse.json({ error: "Invalid avatar appearance" }, { status: 400 });
   }
@@ -54,7 +66,7 @@ export async function PATCH(request: Request) {
   ) {
     return NextResponse.json({ error: "Name, role, personality and voice style are required" }, { status: 400 });
   }
-  if (speakingRate !== undefined && (!Number.isFinite(speakingRate) || speakingRate < 0.8 || speakingRate > 1.1)) {
+  if (speakingRate !== undefined && (typeof speakingRate !== "number" || !Number.isFinite(speakingRate) || speakingRate < 0.8 || speakingRate > 1.1)) {
     return NextResponse.json({ error: "Speaking rate must be between 0.8 and 1.1" }, { status: 400 });
   }
 
@@ -64,7 +76,9 @@ export async function PATCH(request: Request) {
       { key: "default" },
       {
         $set: { displayName, role, ...(appearance ? { appearance } : {}), personality: { responseStyle, attitude },
-          "voice.style": style, ...(speakingRate !== undefined ? { "voice.speakingRate": speakingRate } : {}) },
+          "voice.style": style, ...(speakingRate !== undefined ? { "voice.speakingRate": speakingRate } : {}),
+          ...(voiceIt !== undefined ? { "voice.inworldVoiceIdIt": voiceIt } : {}),
+          ...(voiceEn !== undefined ? { "voice.inworldVoiceIdEn": voiceEn } : {}) },
         $setOnInsert: { key: "default", ...(appearance ? {} : { appearance: DEFAULT_ASSISTANT_PROFILE.appearance }),
           "voice.provider": DEFAULT_ASSISTANT_PROFILE.voice.provider,
           "voice.model": DEFAULT_ASSISTANT_PROFILE.voice.model,

@@ -1,71 +1,24 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { BusinessAvatar } from "@/components/BusinessAvatar";
+import { AvatarAppearanceSelect, AvatarSaveControls, useAvatarWorkspace } from "@/components/AvatarWorkspace";
 import { useTranslations } from "@/i18n/I18nProvider";
 import type {
-  AssistantAppearance,
   AssistantAttitude,
-  AssistantProfileResponse,
   AssistantResponseStyle,
 } from "@/types/assistant-profile";
 
-export function AvatarSettingsForm({ profile }: { profile: AssistantProfileResponse }) {
-  const router = useRouter();
+export function AvatarSettingsForm() {
   const { locale } = useTranslations();
   const isItalian = locale === "it";
-  const [displayName, setDisplayName] = useState(profile.displayName);
-  const [appearance, setAppearance] = useState<AssistantAppearance>(profile.appearance);
-  const [role, setRole] = useState(profile.role);
-  const [responseStyle, setResponseStyle] = useState<AssistantResponseStyle>(
-    profile.personality.responseStyle,
-  );
-  const [attitude, setAttitude] = useState<AssistantAttitude>(
-    profile.personality.attitude,
-  );
-  const [pending, setPending] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string>();
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPending(true);
-    setSaved(false);
-    setError(undefined);
-    try {
-      const response = await fetch("/api/avatar", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          displayName,
-          appearance,
-          role,
-          responseStyle,
-          attitude,
-          voiceStyle: profile.voice.style,
-        }),
-      });
-      const payload = (await response.json()) as { profile?: unknown };
-      if (!response.ok || !payload.profile) throw new Error();
-      setSaved(true);
-      router.refresh();
-    } catch {
-      setError(
-        isItalian
-          ? "Non siamo riusciti a salvare le modifiche. Riprova."
-          : "We couldn’t save your changes. Please try again.",
-      );
-    } finally {
-      setPending(false);
-    }
-  }
+  const { draft, update, saving, save } = useAvatarWorkspace();
+  const { displayName, appearance, role, responseStyle, attitude } = draft;
 
   return (
-    <form onSubmit={handleSubmit} onChange={() => setSaved(false)} className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-      <section className="relative aspect-[4/5] max-h-[36rem] overflow-hidden rounded-[2rem] bg-[#09100d] lg:sticky lg:top-6">
+    <form onSubmit={event => { event.preventDefault(); void save(); }} className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <section className="relative h-64 overflow-hidden rounded-2xl bg-[#09100d] sm:h-auto sm:aspect-[4/5] sm:max-h-[36rem] lg:sticky lg:top-24">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(79,170,126,0.28),transparent_42%)]" />
         <div className="absolute inset-x-[8%] bottom-0 top-4">
           <BusinessAvatar appearance={appearance} ariaLabel={isItalian ? "Avatar del collega digitale in abito business" : "Business-style digital colleague avatar"} />
@@ -80,22 +33,16 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
         </div>
       </section>
 
-      <div className="space-y-6">
+      <fieldset disabled={saving} className="min-w-0 space-y-6">
         <section className="card p-5 sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#295c43]">{isItalian ? "Identità" : "Identity"}</p>
-          <h2 className="mt-2 text-xl font-semibold">{isItalian ? "Come appare nel meeting" : "How it appears in the meeting"}</h2>
+          <h2 className="text-xl font-semibold">{isItalian ? "Identità" : "Identity"}</h2>
           <div className="mt-5">
-            <label className="label" htmlFor="avatar-appearance">{isItalian ? "Aspetto dell’avatar" : "Avatar appearance"}</label>
-            <select id="avatar-appearance" className="input" value={appearance} onChange={(event) => setAppearance(event.target.value as AssistantAppearance)}>
-              <option value="business_clay">{isItalian ? "Maschile · Business" : "Male · Business"}</option>
-              <option value="business_clay_female">{isItalian ? "Femminile · Business" : "Female · Business"}</option>
-            </select>
-            <p className="mt-2 text-xs leading-5 text-slate-500">{isItalian ? "Stesso stile e animazioni. Nome e voce si scelgono separatamente." : "Same style and animations. Choose the name and voice separately."}</p>
+            <AvatarAppearanceSelect locale={locale} />
           </div>
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             <div>
               <label className="label" htmlFor="avatar-name">{isItalian ? "Nome e parola di richiamo" : "Name and call phrase"}</label>
-              <input id="avatar-name" className="input" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={80} required />
+              <input id="avatar-name" className="input" value={displayName} onChange={(event) => update({ displayName: event.target.value })} maxLength={80} required />
               <p className="mt-2 text-xs leading-5 text-slate-500">
                 {isItalian
                   ? "Apparirà con questo nome e risponderà quando lo pronunci nel meeting."
@@ -104,23 +51,15 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
             </div>
             <div>
               <label className="label" htmlFor="avatar-role">{isItalian ? "Ruolo mostrato" : "Displayed role"}</label>
-              <input id="avatar-role" className="input" value={role} onChange={(event) => setRole(event.target.value)} maxLength={120} required />
+              <input id="avatar-role" className="input" value={role} onChange={(event) => update({ role: event.target.value })} maxLength={120} required />
             </div>
           </div>
         </section>
 
         <section className="card p-5 sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#295c43]">
-            {isItalian ? "Personalità" : "Personality"}
-          </p>
-          <h2 className="mt-2 text-xl font-semibold">
-            {isItalian ? "Come si comporta nel meeting" : "How it behaves in the meeting"}
+          <h2 className="text-xl font-semibold">
+            {isItalian ? "Comportamento" : "Behaviour"}
           </h2>
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            {isItalian
-              ? "Due scelte semplici per rendere i suoi interventi coerenti con il tuo modo di lavorare."
-              : "Two simple choices to keep its contributions consistent with how you work."}
-          </p>
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             <div>
               <label className="label" htmlFor="response-style">
@@ -131,7 +70,7 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
                 className="input"
                 value={responseStyle}
                 onChange={(event) =>
-                  setResponseStyle(event.target.value as AssistantResponseStyle)
+                  update({ responseStyle: event.target.value as AssistantResponseStyle })
                 }
               >
                 <option value="concise">{isItalian ? "Sintetico" : "Concise"}</option>
@@ -161,7 +100,7 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
                 className="input"
                 value={attitude}
                 onChange={(event) =>
-                  setAttitude(event.target.value as AssistantAttitude)
+                  update({ attitude: event.target.value as AssistantAttitude })
                 }
               >
                 <option value="discreet">{isItalian ? "Discreto" : "Discreet"}</option>
@@ -185,16 +124,12 @@ export function AvatarSettingsForm({ profile }: { profile: AssistantProfileRespo
           </div>
         </section>
 
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          {saved && <span className="text-sm font-medium text-emerald-700">{isItalian ? "Avatar aggiornato." : "Avatar updated."}</span>}
-          {error && <span className="text-sm text-red-700">{error}</span>}
-          <button type="submit" className="button-primary" disabled={pending}>{pending ? (isItalian ? "Salvataggio…" : "Saving…") : (isItalian ? "Salva avatar" : "Save avatar")}</button>
-        </div>
+        <AvatarSaveControls locale={locale} />
         <p className="text-right text-sm text-slate-500">
-          {isItalian ? "Salva prima di passare a " : "Save before switching to "}
+          {isItalian ? "Prova queste modifiche prima di salvarle: " : "Try these changes before saving: "}
           <Link href="/avatar/test" className="font-semibold text-[#295c43] underline">{isItalian ? "Prova avatar" : "Test avatar"}</Link>.
         </p>
-      </div>
+      </fieldset>
     </form>
   );
 }

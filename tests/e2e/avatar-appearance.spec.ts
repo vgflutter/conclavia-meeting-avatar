@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { installVoiceProbe } from "./voice-probe";
 
-test("appearance: female preview, persistence, independent voices and animated speech", async ({ page, request }, testInfo) => {
+test("appearance: female preview, persistence, compatible voices and animated speech", async ({ page, request }, testInfo) => {
   expect(process.env.MONGODB_DB_NAME).toMatch(/^conclavia_e2e_/);
   const { profile } = await (await request.get("/api/avatar")).json();
   const body = { displayName: profile.displayName, role: profile.role,
@@ -22,7 +22,8 @@ test("appearance: female preview, persistence, independent voices and animated s
     await page.reload();
     await expect(page.getByLabel("Avatar appearance")).toHaveValue("business_clay_female");
     const saved = (await (await request.get("/api/avatar")).json()).profile;
-    expect(saved.voice).toEqual(profile.voice);
+    expect(saved.voice).toEqual({ ...profile.voice, inworldVoiceIdIt: "Orietta", inworldVoiceIdEn:
+      ["Olivia", "Eleanor"].includes(profile.voice.inworldVoiceIdEn) ? profile.voice.inworldVoiceIdEn : "Eleanor" });
     expect(saved.displayName).toBe(profile.displayName);
     expect((await request.patch("/api/avatar", { data: { ...body, appearance: "invalid" } })).status()).toBe(400);
     // An older client that omits appearance must not revert the chosen variant.

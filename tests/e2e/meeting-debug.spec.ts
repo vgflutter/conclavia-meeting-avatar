@@ -113,6 +113,7 @@ test("debug: opzionale, webhook in diretta, risposta con nome dinamico e spegnim
   await expect(log.getByText(answer, { exact: true })).toHaveCount(1);
 
   // Saving through the GUI refreshes server components but must keep debug open.
+  await page.getByRole("button", { name: "Ricorda", exact: true }).click();
   await page.getByPlaceholder("Es. Ricorda che il lancio è fissato al 15 ottobre").fill("Demo confermata");
   await page.getByRole("button", { name: "Invia", exact: true }).click();
   await expect(log.getByText("Richiesta: Demo confermata", { exact: true })).toBeVisible();

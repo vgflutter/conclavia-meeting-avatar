@@ -9,6 +9,8 @@ export function serializeMeetingSeries(
     id: document._id.toString(),
     title: document.title,
     objective: document.objective || "",
+    context: document.context || "",
+    contextVersion: document.contextVersion || 0,
     timezone: document.timezone,
     language: document.language,
     autoJoin: document.autoJoin,

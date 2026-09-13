@@ -20,6 +20,24 @@ async function openStudio(page: Page) {
   await expect(page.locator('svg[data-appearance="business_clay_female"]')).toBeVisible();
 }
 
+test("female face: lighter chin without crease, male shading unchanged", async ({ page }, testInfo) => {
+  await page.goto("/avatar");
+  const avatar = page.locator("svg[data-appearance]");
+  const head = avatar.locator('path[class*="avatarHead"]');
+  await expect(head).toHaveAttribute("fill", "url(#avatar-skin-female)");
+  await expect(avatar.locator('path[class*="chinDetail"]')).toHaveCount(0);
+  await expect(avatar.locator("#avatar-skin-female stop").last()).toHaveAttribute("stop-color", "#c79575");
+  const femalePath = await head.getAttribute("d");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await avatar.screenshot({ path: testInfo.outputPath("female-soft-chin.png") });
+  // Changing only the local preview must leave the existing male design intact.
+  await page.getByLabel("Avatar appearance").selectOption("business_clay");
+  await expect(head).toHaveAttribute("fill", "url(#avatar-skin)");
+  await expect(avatar.locator('path[class*="chinDetail"]')).toHaveCount(1);
+  await expect(avatar.locator("#avatar-skin stop").last()).toHaveAttribute("stop-color", "#70432f");
+  expect(await head.getAttribute("d")).not.toBe(femalePath);
+});
+
 test("female rig: all 64 expression, mouth and hand combinations", async ({ page }, testInfo) => {
   await openStudio(page);
   const avatar = page.locator('svg[data-appearance="business_clay_female"]');

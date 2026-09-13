@@ -1,5 +1,5 @@
 import { DEFAULT_ASSISTANT_PROFILE, getAssistantProfile } from "@/lib/assistant-profile";
-import { AVATAR_VOICES, isAvatarVoice } from "@/lib/avatar-voice-catalog";
+import { AVATAR_VOICES, isAvatarVoice, VOICE_CATALOG_VERIFIED_AT, VOICE_PROVIDERS } from "@/lib/avatar-voice-catalog";
 import { meetingTtsConfig, selectedMeetingVoices } from "@/lib/meeting-tts-config";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
 
@@ -12,7 +12,8 @@ export async function GET() {
   try {
     const profile = await getAssistantProfile();
     const config = meetingTtsConfig();
-    return Response.json({ voices: AVATAR_VOICES, selected: selectedMeetingVoices(profile.voice, config),
+    return Response.json({ provider: VOICE_PROVIDERS.inworld, catalogVerifiedAt: VOICE_CATALOG_VERIFIED_AT,
+      voices: AVATAR_VOICES, selected: selectedMeetingVoices(profile.voice, config),
       speakingRate: profile.voice.speakingRate, enabled: config.provider === "inworld" && config.ready }, { headers });
   } catch { return Response.json({ error: "Voice settings unavailable" }, { status: 503, headers }); }
 }

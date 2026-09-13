@@ -141,6 +141,9 @@ export default async function MemoryPage({
           { seriesLabel: { $regex: expression, $options: "i" } },
           { "summary.overview": { $regex: expression, $options: "i" } },
           { "summary.rememberedFacts": { $regex: expression, $options: "i" } },
+          { "summary.decisions": { $regex: expression, $options: "i" } },
+          { "summary.actionItems.description": { $regex: expression, $options: "i" } },
+          { "summary.openQuestions": { $regex: expression, $options: "i" } },
         ],
       }
     : {};
@@ -162,14 +165,13 @@ export default async function MemoryPage({
     <div className="container-page py-8 sm:py-12">
       <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
-          <p className="section-kicker">{isItalian ? "Memoria dei meeting" : "Meeting memory"}</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            {isItalian ? "Decisioni e contesto, sempre disponibili" : "Decisions and context, always available"}
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isItalian ? "Memoria" : "Memory"}
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
             {isItalian
-              ? `${total} ${total === 1 ? "meeting salvato" : "meeting salvati"}. Il riepilogo resta in primo piano; i dettagli si aprono solo quando servono.`
-              : `${total} ${total === 1 ? "saved meeting" : "saved meetings"}. Summaries stay prominent; details open only when needed.`}
+              ? `${total} ${total === 1 ? "meeting salvato" : "meeting salvati"} · Riepiloghi, decisioni e attività.`
+              : `${total} ${total === 1 ? "saved meeting" : "saved meetings"} · Summaries, decisions and actions.`}
           </p>
         </div>
         <Link href="/meetings" className="button-secondary shrink-0">{isItalian ? "Vai ai meeting" : "Go to meetings"}</Link>

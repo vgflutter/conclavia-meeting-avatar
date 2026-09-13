@@ -2,6 +2,7 @@
 
 import { type FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CONTEXT_MAX_LENGTH } from "@/lib/assistant-context";
 
 import { useTranslations } from "@/i18n/I18nProvider";
 import type { CorrectionPolicy, MeetingLanguage, MeetingCreateInput } from "@/types/meeting";
@@ -41,7 +42,7 @@ export function MeetingCreateForm({
 }: {
   automation: MeetingAutomationPublicConfig;
   assistantName: string;
-  initialMeeting?: Pick<MeetingCreateInput, "title" | "objective" | "meetingUrl" | "durationMinutes" | "timezone" | "language" | "agenda" | "correctionPolicy" | "seriesLabel">;
+  initialMeeting?: Pick<MeetingCreateInput, "title" | "objective" | "meetingUrl" | "durationMinutes" | "timezone" | "language" | "agenda" | "correctionPolicy" | "seriesLabel" | "context">;
 }) {
   const router = useRouter();
   const { locale } = useTranslations();
@@ -55,6 +56,7 @@ export function MeetingCreateForm({
   );
   const [title, setTitle] = useState(initialMeeting?.title || "");
   const [objective, setObjective] = useState(initialMeeting?.objective || "");
+  const [context, setContext] = useState(initialMeeting?.context || "");
   const [appointments, setAppointments] = useState<AppointmentDraft[]>([
     { ...initialAppointment("appointment-1"), meetingUrl: initialMeeting?.meetingUrl || "", durationMinutes: initialMeeting?.durationMinutes || 60 },
   ]);
@@ -67,6 +69,7 @@ export function MeetingCreateForm({
   const [correctionPolicy, setCorrectionPolicy] =
     useState<CorrectionPolicy>(initialMeeting?.correctionPolicy || "important_only");
   const [submitting, setSubmitting] = useState(false);
+  const submitInFlight = useRef(false);
   const [error, setError] = useState<string>();
   const timezone = initialMeeting?.timezone || "Europe/Rome";
 
@@ -120,6 +123,8 @@ export function MeetingCreateForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitInFlight.current) return;
+    submitInFlight.current = true;
     setSubmitting(true);
     setError(undefined);
 
@@ -150,6 +155,7 @@ export function MeetingCreateForm({
               ? {
                   title,
                   objective,
+                  context,
                   timezone,
                   language,
                   autoJoin: automaticEntry,
@@ -160,6 +166,7 @@ export function MeetingCreateForm({
               : {
                   title,
                   objective,
+                  context,
                   timezone,
                   language,
                   autoJoin: automaticEntry,
@@ -187,6 +194,7 @@ export function MeetingCreateForm({
       );
       router.refresh();
     } catch {
+      submitInFlight.current = false;
       setError(
         isItalian
           ? "Non siamo riusciti a salvare il meeting. Controlla i dati e riprova."
@@ -197,7 +205,8 @@ export function MeetingCreateForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit}>
+      <fieldset disabled={submitting} className="min-w-0 space-y-6">
       <fieldset className="card p-2">
         <legend className="sr-only">
           {isItalian ? "Tipo di programmazione" : "Schedule type"}
@@ -241,26 +250,17 @@ export function MeetingCreateForm({
       </fieldset>
 
       <section className="card p-5 sm:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#295c43]">
-          {mode === "series"
-            ? isItalian
-              ? "Percorso condiviso"
-              : "Shared journey"
-            : isItalian
-              ? "Il meeting"
-              : "The meeting"}
-        </p>
-        <h2 className="mt-2 text-xl font-semibold">
-          {mode === "series"
-            ? isItalian
-              ? "Una serie mantiene il filo tra gli appuntamenti"
-              : "A series keeps every appointment connected"
-            : isItalian
-              ? "Prepara il meeting"
-              : "Prepare the meeting"}
+        <h2 className="text-xl font-semibold">
+          {mode === "series" ? isItalian ? "Dati della serie" : "Series details" : isItalian ? "Dati del meeting" : "Meeting details"}
         </h2>
 
         <div className="mt-6 grid gap-5">
+          {mode === "single" && <div>
+            <label className="label" htmlFor="single-meeting-url">{isItalian ? "Link Microsoft Teams" : "Microsoft Teams link"}</label>
+            <input id="single-meeting-url" type="url" className="input" required value={appointments[0].meetingUrl}
+              onChange={event => updateAppointment(appointments[0].key, "meetingUrl", event.target.value)}
+              placeholder="https://teams.live.com/meet/..." />
+          </div>}
           <div>
             <label className="label" htmlFor="meeting-title">
               {mode === "series"
@@ -300,68 +300,57 @@ export function MeetingCreateForm({
               onChange={(event) => setObjective(event.target.value)}
               placeholder={
                 isItalian
-                  ? "Che cosa deve capire, ottenere o ricordare il collega digitale?"
-                  : "What should the digital colleague understand, achieve or remember?"
+                  ? "Quale risultato vuoi ottenere da questo incontro?"
+                  : "What result do you want from this meeting?"
               }
               maxLength={2_000}
               required
             />
           </div>
-        </div>
-      </section>
-
-      <section className="card p-5 sm:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#295c43]">
-              {isItalian ? "Scaletta" : "Agenda"}
-            </p>
-            <h2 className="mt-2 text-xl font-semibold">
-              {isItalian ? "Che cosa deve essere affrontato" : "What must be covered"}
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              {isItalian ? "Segna come obbligatori i punti che non possono essere saltati." : "Mark items as mandatory when they cannot be skipped."}
-            </p>
+            <label className="label" htmlFor="meeting-language">
+              {isItalian ? "Lingua" : "Language"}
+            </label>
+            <select
+              id="meeting-language"
+              className="input"
+              value={language}
+              onChange={(event) => setLanguage(event.target.value as MeetingLanguage)}
+            >
+              {!usesTeamsCaptions && <option value="auto">{isItalian ? "Automatica · IT/EN" : "Automatic · IT/EN"}</option>}
+              <option value="it">Italiano</option>
+              <option value="en">English</option>
+            </select>
+            {usesTeamsCaptions && <p className="mt-2 text-sm text-slate-500">
+              {isItalian ? "Scegli la lingua parlata nel meeting: viene usata anche per i sottotitoli di Teams." : "Choose the language spoken in the meeting. It is also used for Teams captions."}
+            </p>}
           </div>
-          {agenda.length < 20 && (
-            <button type="button" onClick={addAgendaItem} className="button-secondary">
-              <span aria-hidden="true">＋</span> {isItalian ? "Aggiungi punto" : "Add item"}
-            </button>
-          )}
-        </div>
-        <div className="mt-6 space-y-3">
-          {agenda.map((item, index) => (
-            <div key={item.key} className="grid gap-3 rounded-xl border border-slate-200 bg-[#fafbf9] p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] sm:items-center">
-              <span className="flex size-8 items-center justify-center rounded-full bg-[#e4eee7] text-xs font-bold text-[#295c43]">{index + 1}</span>
-              <label className="min-w-0">
-                <span className="sr-only">{isItalian ? `Punto ${index + 1}` : `Item ${index + 1}`}</span>
-                <input className="input" value={item.title} onChange={(event) => updateAgendaItem(item.key, { title: event.target.value })} placeholder={isItalian ? "Es. Approvare la roadmap" : "E.g. Approve the roadmap"} maxLength={500} />
-              </label>
-              <label className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-slate-600">
-                <input type="checkbox" checked={item.mandatory} onChange={(event) => updateAgendaItem(item.key, { mandatory: event.target.checked })} className="size-4 accent-[#295c43]" />
-                {isItalian ? "Obbligatorio" : "Mandatory"}
-              </label>
-              <button type="button" onClick={() => removeAgendaItem(item.key)} className="rounded-lg px-2.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-50" aria-label={isItalian ? `Rimuovi punto ${index + 1}` : `Remove item ${index + 1}`}>×</button>
-            </div>
-          ))}
-          {!agenda.length && <p className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">{isItalian ? "Nessun punto: puoi aggiungerne uno." : "No items: add one when ready."}</p>}
+          <details className="rounded-xl border border-slate-200 p-4" data-testid="create-context" open={initialMeeting?.context ? true : undefined}>
+            <summary className="cursor-pointer text-sm font-semibold text-[#295c43]">
+              {mode === "series" ? isItalian ? "Contesto della serie" : "Series context" : isItalian ? "Note per questo meeting" : "Notes for this meeting"}
+              <span className="ml-2 text-xs font-normal text-slate-500">{context.trim() ? isItalian ? "Aggiunto" : "Added" : isItalian ? "Facoltativo" : "Optional"}</span>
+            </summary>
+            <p className="mt-3 text-sm leading-6 text-slate-500">{isItalian
+              ? "Il contesto generale è già incluso. Aggiungi qui solo informazioni specifiche, terminologia o vincoli. Potrai modificarle anche dopo."
+              : "General context is already included. Add only specific background, terminology or constraints here. You can edit these later."}</p>
+            <label className="label mt-3" htmlFor="meeting-context">{mode === "series" ? isItalian ? "Informazioni condivise dalla serie" : "Shared series background" : isItalian ? "Informazioni per questo appuntamento" : "Background for this appointment"}</label>
+            <textarea id="meeting-context" className="input min-h-28 resize-y" maxLength={CONTEXT_MAX_LENGTH} value={context} onChange={event => setContext(event.target.value)} />
+            <p className="mt-2 text-xs text-slate-500">{context.length} / {CONTEXT_MAX_LENGTH} · {isItalian ? "Niente password o chiavi API." : "No passwords or API keys."}</p>
+          </details>
         </div>
       </section>
 
       <section className="card p-5 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#295c43]">
-              {isItalian ? "Calendario" : "Schedule"}
-            </p>
-            <h2 className="mt-2 text-xl font-semibold">
+            <h2 className="text-xl font-semibold">
               {mode === "series"
                 ? isItalian
-                  ? `${appointments.length} ${appointments.length === 1 ? "appuntamento" : "appuntamenti"}, anche con link Teams diversi`
-                  : `${appointments.length} ${appointments.length === 1 ? "appointment" : "appointments"}, including different Teams links`
+                  ? `${appointments.length} ${appointments.length === 1 ? "appuntamento" : "appuntamenti"}`
+                  : `${appointments.length} ${appointments.length === 1 ? "appointment" : "appointments"}`
                 : isItalian
-                  ? "Dove e quando deve entrare"
-                  : "Where and when to join"}
+                  ? "Quando deve entrare"
+                  : "When to join"}
             </h2>
           </div>
           {mode === "series" && appointments.length < 24 && (
@@ -423,13 +412,13 @@ export function MeetingCreateForm({
           </fieldset>
         )}
 
-        <div className="mt-6 space-y-4">
+        {(mode === "series" || timing === "scheduled") && <div className="mt-6 space-y-4">
           {appointments.map((appointment, index) => (
             <fieldset key={appointment.key} className="rounded-2xl border border-slate-200 bg-[#fafbf9] p-4 sm:p-5">
               <legend className="sr-only">
                 {isItalian ? `Appuntamento ${index + 1}` : `Appointment ${index + 1}`}
               </legend>
-              <div className="mb-4 flex items-center justify-between gap-3">
+              {mode === "series" && <div className="mb-4 flex items-center justify-between gap-3">
                 <span className="flex size-8 items-center justify-center rounded-full bg-[#e4eee7] text-sm font-bold text-[#295c43]">
                   {index + 1}
                 </span>
@@ -442,7 +431,7 @@ export function MeetingCreateForm({
                     {isItalian ? "Rimuovi" : "Remove"}
                   </button>
                 )}
-              </div>
+              </div>}
               <div className="grid gap-4 sm:grid-cols-2">
                 {mode === "series" && (
                   <div className="sm:col-span-2">
@@ -462,7 +451,7 @@ export function MeetingCreateForm({
                     />
                   </div>
                 )}
-                <div className="sm:col-span-2">
+                {mode === "series" && <div className="sm:col-span-2">
                   <label className="label" htmlFor={`${appointment.key}-url`}>
                     {isItalian ? "Link Microsoft Teams" : "Microsoft Teams link"}
                   </label>
@@ -475,7 +464,7 @@ export function MeetingCreateForm({
                     placeholder="https://teams.microsoft.com/l/meetup-join/..."
                     required
                   />
-                </div>
+                </div>}
                 {(mode === "series" || timing === "scheduled") && (
                   <>
                     <div>
@@ -513,8 +502,41 @@ export function MeetingCreateForm({
               </div>
             </fieldset>
           ))}
-        </div>
+        </div>}
       </section>
+
+      <details className="card group p-5 sm:p-7" data-testid="create-agenda" open={Boolean(initialMeeting?.agenda.length)}>
+        <summary className="cursor-pointer text-lg font-semibold">
+          {isItalian ? "Scaletta" : "Agenda"} <span className="text-sm font-normal text-slate-500">· {agenda.some(item => item.title.trim())
+            ? `${agenda.filter(item => item.title.trim()).length} ${isItalian ? "punti" : "items"}`
+            : isItalian ? "facoltativa" : "optional"}</span>
+        </summary>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500">{isItalian ? "Indica i punti da affrontare e quelli obbligatori." : "Add topics and mark any mandatory items."}</p>
+          {agenda.length < 20 && (
+            <button type="button" onClick={addAgendaItem} className="button-secondary">
+              <span aria-hidden="true">＋</span> {isItalian ? "Aggiungi punto" : "Add item"}
+            </button>
+          )}
+        </div>
+        <div className="mt-6 space-y-3">
+          {agenda.map((item, index) => (
+            <div key={item.key} className="grid gap-3 rounded-xl border border-slate-200 bg-[#fafbf9] p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] sm:items-center">
+              <span className="flex size-8 items-center justify-center rounded-full bg-[#e4eee7] text-xs font-bold text-[#295c43]">{index + 1}</span>
+              <label className="min-w-0">
+                <span className="sr-only">{isItalian ? `Punto ${index + 1}` : `Item ${index + 1}`}</span>
+                <input className="input" value={item.title} onChange={(event) => updateAgendaItem(item.key, { title: event.target.value })} placeholder={isItalian ? "Es. Approvare la roadmap" : "E.g. Approve the roadmap"} maxLength={500} />
+              </label>
+              <label className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-slate-600">
+                <input type="checkbox" checked={item.mandatory} onChange={(event) => updateAgendaItem(item.key, { mandatory: event.target.checked })} className="size-4 accent-[#295c43]" />
+                {isItalian ? "Obbligatorio" : "Mandatory"}
+              </label>
+              <button type="button" onClick={() => removeAgendaItem(item.key)} className="rounded-lg px-2.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-50" aria-label={isItalian ? `Rimuovi punto ${index + 1}` : `Remove item ${index + 1}`}>×</button>
+            </div>
+          ))}
+          {!agenda.length && <p className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">{isItalian ? "Nessun punto: puoi aggiungerne uno." : "No items: add one when ready."}</p>}
+        </div>
+      </details>
 
       {mode === "series" && (
         <div className="rounded-2xl border border-[#bfd5c5] bg-[#eef5f0] p-5">
@@ -532,35 +554,13 @@ export function MeetingCreateForm({
       <details className="card group overflow-hidden">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 hover:bg-[#fafcf9] sm:p-6">
           <div>
-            <p className="section-kicker">{isItalian ? "Preferenze" : "Preferences"}</p>
-            <h2 className="mt-2 text-lg font-semibold">
-              {isItalian ? "Lingua e interventi" : "Language and contributions"}
+            <h2 className="text-lg font-semibold">
+              {isItalian ? "Ingresso e interventi" : "Entry and contributions"}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {isItalian ? "Lingua e modalità di intervento" : "Language and intervention preferences"}
-            </p>
           </div>
           <span aria-hidden="true" className="text-lg text-slate-400 transition-transform group-open:rotate-180">⌄</span>
         </summary>
         <div className="grid gap-5 border-t border-slate-100 p-5 sm:grid-cols-2 sm:p-6">
-          <div>
-            <label className="label" htmlFor="meeting-language">
-              {isItalian ? "Lingua" : "Language"}
-            </label>
-            <select
-              id="meeting-language"
-              className="input"
-              value={language}
-              onChange={(event) => setLanguage(event.target.value as MeetingLanguage)}
-            >
-              {!usesTeamsCaptions && <option value="auto">{isItalian ? "Automatica · IT/EN" : "Automatic · IT/EN"}</option>}
-              <option value="it">Italiano</option>
-              <option value="en">English</option>
-            </select>
-            {usesTeamsCaptions && <p className="mt-2 text-sm text-slate-500">
-              {isItalian ? "Scegli la lingua parlata nel meeting: viene usata anche per i sottotitoli di Teams." : "Choose the language spoken in the meeting. It is also used for Teams captions."}
-            </p>}
-          </div>
           <div>
             <label className="label" htmlFor="meeting-correction-policy">
               {isItalian ? "Correzione delle inesattezze" : "Inaccuracy correction"}
@@ -632,9 +632,11 @@ export function MeetingCreateForm({
 
       <div className="flex flex-col gap-3 rounded-2xl border border-[#d9e4da] bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs leading-5 text-slate-500 sm:max-w-xl">
-          {isItalian
-            ? `Nel meeting puoi chiamarlo dicendo “${assistantName}” per fare domande, ricordare, riepilogare o seguire la scaletta.`
-            : `In the meeting, say “${assistantName}” to ask questions, remember, summarize or follow the agenda.`}
+          {timing === "now"
+            ? isItalian ? `Dopo il salvataggio ${assistantName} proverà a entrare. Se necessario, ammettilo in Teams.` : `After saving, ${assistantName} will try to join. Admit it in Teams if needed.`
+            : autoJoin
+              ? isItalian ? `${assistantName} proverà a entrare all’orario indicato. Potrebbe servire la tua ammissione in Teams.` : `${assistantName} will try to join at the scheduled time. Teams may require you to admit it.`
+              : isItalian ? "Salva l’appuntamento senza avviare l’ingresso dell’avatar." : "Save the appointment without starting avatar entry."}
         </p>
         <button type="submit" className="button-primary min-w-44" disabled={submitting}>
           {submitting
@@ -654,6 +656,7 @@ export function MeetingCreateForm({
                   : "Save meeting"}
         </button>
       </div>
+      </fieldset>
     </form>
   );
 }

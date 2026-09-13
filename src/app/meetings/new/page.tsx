@@ -22,13 +22,14 @@ export default async function NewMeetingPage({searchParams}: {searchParams: Prom
   const automation = getMeetingAutomationPublicConfig();
   const profile = await getAssistantProfile();
   const { from } = await searchParams;
-  let initialMeeting: Pick<MeetingCreateInput, "title" | "objective" | "meetingUrl" | "durationMinutes" | "timezone" | "language" | "agenda" | "correctionPolicy" | "seriesLabel"> | undefined;
+  let initialMeeting: Pick<MeetingCreateInput, "title" | "objective" | "meetingUrl" | "durationMinutes" | "timezone" | "language" | "agenda" | "correctionPolicy" | "seriesLabel" | "context"> | undefined;
   if (from) {
     if (!Types.ObjectId.isValid(from)) notFound();
     await connectToDatabase();
-    const source = await MeetingModel.findById(from).select("title objective meetingUrl scheduledStart scheduledEnd timezone language agenda assistant.correctionPolicy seriesLabel").lean();
+    const source = await MeetingModel.findById(from).select("title objective context meetingUrl scheduledStart scheduledEnd timezone language agenda assistant.correctionPolicy seriesLabel").lean();
     if (!source) notFound();
     initialMeeting = { title: source.title, objective: source.objective || "", meetingUrl: source.meetingUrl,
+      context: source.context || "",
       durationMinutes: Math.max(15, Math.round((source.scheduledEnd.getTime() - source.scheduledStart.getTime()) / 60_000)),
       timezone: source.timezone, language: source.language, agenda: source.agenda.map(({title, mandatory}) => ({title, mandatory})),
       correctionPolicy: source.assistant?.correctionPolicy || "important_only", seriesLabel: source.seriesLabel,
@@ -45,16 +46,13 @@ export default async function NewMeetingPage({searchParams}: {searchParams: Prom
         {isItalian ? "Tutti i meeting" : "All meetings"}
       </Link>
       <div className="mb-7 max-w-3xl">
-        <p className="section-kicker">
-          {isItalian ? "Nuova programmazione" : "New schedule"}
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight">
           {isItalian ? "Aggiungi un meeting" : "Add a meeting"}
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
           {isItalian
-            ? "Incolla il link Teams e scegli se entrare subito o all’orario stabilito. Per più appuntamenti, crea una serie con memoria condivisa."
-            : "Paste the Teams link and choose whether to join now or at a scheduled time. For multiple appointments, create a series with shared memory."}
+            ? "Incolla il link Teams, indica l’obiettivo e scegli quando entrare."
+            : "Paste the Teams link, set the objective and choose when to join."}
         </p>
       </div>
       {initialMeeting && <p className="mb-5 rounded-xl bg-[#edf4ef] p-4 text-sm text-[#295c43]">{isItalian ? "Scegli una nuova data. Verrà creato un nuovo appuntamento; quello originale resterà nello storico. Nessun ingresso viene avviato prima della conferma." : "Choose a new date. A new appointment will be created; the original stays in history. No meeting entry starts before you confirm."}</p>}

@@ -6,22 +6,23 @@ import type { Locale } from "@/i18n/locale";
 import type { AvatarViseme } from "@/lib/avatar-visemes";
 import type { InworldModel } from "@/lib/meeting-tts-config";
 import { playStreamingSpeech, type StreamingVoiceMetrics } from "@/lib/streaming-voice-player";
-import type { AssistantProfileResponse } from "@/types/assistant-profile";
-import { AVATAR_VOICES, isAvatarVoice } from "@/lib/avatar-voice-catalog";
+import { avatarVoiceName, voicesForAppearance, VOICE_PROVIDERS, DEFAULT_SPEAKING_RATE } from "@/lib/avatar-voice-catalog";
+import { AvatarAppearanceSelect, AvatarSaveControls, useAvatarWorkspace } from "@/components/AvatarWorkspace";
 
-export function StreamingVoiceTestStudio({ profile, locale, model: initialModel, configured, voices }: {
-  profile: AssistantProfileResponse; locale: Locale; model: InworldModel; configured: boolean;
-  voices: { it: string; en: string };
+export function StreamingVoiceTestStudio({ locale, model: initialModel, configured }: {
+  locale: Locale; model: InworldModel; configured: boolean;
 }) {
   const it = locale === "it";
-  const [text, setText] = useState(it ? `Ciao, sono ${profile.displayName}. Ti sento, dimmi pure.` : `Hello, I'm ${profile.displayName}. I can hear you. Go ahead.`);
+  const { draft, saved, update, saving } = useAvatarWorkspace();
   const [language, setLanguage] = useState<"it" | "en">(it ? "it" : "en");
-  const [candidates, setCandidates] = useState(voices);
-  const [savedVoices, setSavedVoices] = useState(voices);
-  const [speakingRate, setSpeakingRate] = useState(profile.voice.speakingRate);
-  const [savedRate, setSavedRate] = useState(profile.voice.speakingRate);
-  const [saving, setSaving] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
+  const [phrases, setPhrases] = useState<Partial<Record<"it" | "en", string>>>({});
+  const text = phrases[language] ?? (language === "it" ? `Ciao, sono ${draft.displayName}. Ti sento, dimmi pure.` : `Hello, I'm ${draft.displayName}. I can hear you. Go ahead.`);
+  const candidates = { it: draft.voiceIt, en: draft.voiceEn };
+  const provider = VOICE_PROVIDERS.inworld;
+  const availableVoices = voicesForAppearance(draft.appearance, language, provider.id);
+  const selectedVoice = availableVoices.find(voice => voice.id === candidates[language]);
+  const speakingRate = draft.speakingRate;
+  const formatRate = (value: number) => `${value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}×`;
   const [model, setModel] = useState(initialModel);
   const [state, setState] = useState<"ready" | "preparing" | "speaking" | "error">("ready");
   const [frame, setFrame] = useState<{ viseme: AvatarViseme; level: number }>({ viseme: "rest", level: 0 });
@@ -31,7 +32,6 @@ export function StreamingVoiceTestStudio({ profile, locale, model: initialModel,
   const [gesture, setGesture] = useState<AvatarGesture>("rest");
   const controller = useRef<AbortController | undefined>(undefined);
   const busy = state === "preparing" || state === "speaking";
-  const changed = candidates[language] !== savedVoices[language] || speakingRate !== savedRate;
   useEffect(() => () => controller.current?.abort(), []);
 
   async function listen() {
@@ -42,8 +42,8 @@ export function StreamingVoiceTestStudio({ profile, locale, model: initialModel,
     setMetrics(undefined);
     setState("preparing");
     try {
-      const result = await playStreamingSpeech({ endpoint: "/api/avatar/speech", payload: { text, language, model, speakingRate,
-        ...(isAvatarVoice(candidates[language], language) ? { voiceId: candidates[language] } : {}) }, signal: run.signal,
+      const result = await playStreamingSpeech({ endpoint: "/api/avatar/speech", payload: { text, language, model, speakingRate, provider: provider.id,
+        voiceId: candidates[language] }, signal: run.signal,
         onFrame: (viseme, level) => { if (!run.signal.aborted) setFrame({ viseme, level }); },
         onStart: (milliseconds) => { if (!run.signal.aborted) { setFirstAudioMs(milliseconds); setState("speaking"); } },
       });
@@ -59,34 +59,21 @@ export function StreamingVoiceTestStudio({ profile, locale, model: initialModel,
     setState("ready");
   }
 
-  async function saveVoice() {
-    if (saving || busy) return;
-    setSaving(true);
-    setSaveState("idle");
-    try {
-      const response = await fetch("/api/avatar/voices", { method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language, ...(isAvatarVoice(candidates[language], language) ? { voiceId: candidates[language] } : {}), speakingRate }), signal: AbortSignal.timeout(10_000) });
-      if (!response.ok) throw new Error();
-      const result = await response.json() as { selected: { it: string; en: string }; speakingRate: number };
-      setSavedVoices(result.selected);
-      setSavedRate(result.speakingRate);
-      setSaveState("saved");
-    } catch { setSaveState("error"); }
-    finally { setSaving(false); }
-  }
-
   return (
     <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]" data-streaming-voice-state={state}>
-      <div className="card min-w-0 overflow-hidden lg:sticky lg:top-6">
+      <div className="card min-w-0 overflow-hidden lg:sticky lg:top-24">
         <div className="bg-[#09100d] p-5 text-white">
           <p className="text-xs font-semibold uppercase tracking-widest text-white/60">{it ? "Anteprima dal vivo" : "Live preview"}</p>
-        <div className="mx-auto aspect-square max-h-[280px] sm:max-h-[440px]">
-          <BusinessAvatar appearance={profile.appearance} viseme={frame.viseme} voiceLevel={frame.level} mood={mood} gesture={gesture}
+        <div className="mx-auto aspect-square max-h-[180px] sm:max-h-[440px]">
+          <div className={`h-full w-full ${busy ? "max-lg:fixed max-lg:right-3 max-lg:top-28 max-lg:z-40 max-lg:h-36 max-lg:w-32 max-lg:rounded-xl max-lg:bg-[#09100d] max-lg:shadow-xl" : ""}`} data-testid="speech-preview">
+          <BusinessAvatar appearance={draft.appearance} viseme={frame.viseme} voiceLevel={frame.level} mood={mood} gesture={gesture}
             ariaLabel={it ? "Avatar del collega digitale" : "Digital colleague avatar"} />
+          </div>
         </div>
-        <p className="text-center font-semibold">{profile.displayName}</p>
+        <p className="text-center font-semibold">{draft.displayName}</p>
         </div>
         <div className="space-y-4 p-5">
+          <AvatarAppearanceSelect locale={locale} disabled={busy} />
           <h2 className="font-semibold">{it ? "Movimenti ed espressioni" : "Movement & expressions"}</h2>
           <div className="flex flex-wrap gap-3">
             <button type="button" className="button-secondary" aria-pressed={gesture === "hand_raise"} onClick={() => setGesture(gesture === "rest" ? "hand_raise" : "rest")}>{it ? "Alza / abbassa la mano" : "Raise / lower hand"}</button>
@@ -95,7 +82,7 @@ export function StreamingVoiceTestStudio({ profile, locale, model: initialModel,
               setMood(moods[(moods.indexOf(mood) + 1) % moods.length]);
             }}>{it ? "Cambia espressione" : "Change expression"}</button>
           </div>
-          <p className="text-sm text-slate-500">{it ? "Il labiale segue la voce durante l’ascolto. Questi gesti sono solo una prova, non comandi per Teams." : "The mouth follows speech during playback. These gestures are a preview, not commands sent to Teams."}</p>
+          <p className="text-xs text-slate-500">{it ? "Gesti in anteprima, non comandi per Teams. Il labiale segue l’audio." : "Preview gestures, not Teams commands. Lip sync follows the audio."}</p>
           <p role="status" className={state === "error" ? "text-red-700" : "text-sm text-slate-600"}>
             {state === "error" ? it ? "La voce non è disponibile. Controlla il collegamento del servizio e riprova." : "Voice unavailable. Check the service connection and try again."
               : state === "preparing" ? it ? "Preparo la risposta…" : "Preparing response…"
@@ -104,11 +91,16 @@ export function StreamingVoiceTestStudio({ profile, locale, model: initialModel,
         </div>
       </div>
       <div className="card min-w-0 space-y-5 p-5 sm:p-6">
-        <h2 className="text-xl font-semibold">{it ? `Scegli la voce di ${profile.displayName}` : `Choose ${profile.displayName}’s voice`}</h2>
-        <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600" data-testid="saved-voices">{it ? "Voci salvate" : "Saved voices"}: Italiano — {savedVoices.it}; English — {savedVoices.en}. {it ? "Velocità" : "Speaking rate"}: {savedRate.toFixed(2)}×.</p>
+        <h2 className="text-xl font-semibold">{it ? `Scegli la voce di ${draft.displayName}` : `Choose ${draft.displayName}’s voice`}</h2>
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-sm" data-testid="voice-provider">
+          <p className="font-semibold text-[#295c43]">{it ? "Fornitore della voce" : "Voice provider"}: {provider.name}</p>
+        </div>
+        <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600" data-testid="preview-voices">{it ? "Voci da provare" : "Preview voices"}: Italiano — {avatarVoiceName(draft.voiceIt)}; English — {avatarVoiceName(draft.voiceEn)}.
+          {speakingRate !== DEFAULT_SPEAKING_RATE && <> {it ? "Ritmo del parlato" : "Speaking rate"}: {formatRate(speakingRate)}.</>}
+        </p>
         <p className="text-sm text-slate-600">{it
-          ? "Scegli lingua e voce, regola la velocità e ascolta. Ogni ascolto utilizza il credito Inworld."
-          : "Choose a language and voice, adjust the rate and listen. Each playback uses Inworld credit."}</p>
+          ? "Ogni ascolto utilizza il credito Inworld."
+          : "Each playback uses Inworld credit."}</p>
         {!configured && <p className="text-sm text-amber-800">{it
           ? "La nuova voce non è ancora configurata. Completa il collegamento Inworld sul server prima della prova."
           : "The new voice is not configured yet. Complete the Inworld connection on the server before testing."}</p>}
@@ -117,8 +109,7 @@ export function StreamingVoiceTestStudio({ profile, locale, model: initialModel,
           <label className="label" htmlFor="stream-language">{it ? "Lingua" : "Language"}</label>
           <select className="input" id="stream-language" value={language} disabled={busy || saving} onChange={(event) => {
             const next = event.target.value as "it" | "en";
-            setLanguage(next); setSaveState("idle");
-            setText(next === "it" ? `Ciao, sono ${profile.displayName}. Ti sento, dimmi pure.` : `Hello, I'm ${profile.displayName}. I can hear you. Go ahead.`);
+            setLanguage(next);
           }}>
             <option value="it">Italiano</option><option value="en">English</option>
           </select>
@@ -126,60 +117,70 @@ export function StreamingVoiceTestStudio({ profile, locale, model: initialModel,
         <div>
           <label className="label" htmlFor="stream-voice">{it ? "Voce da provare" : "Voice to preview"}</label>
           <select id="stream-voice" className="input" value={candidates[language]} disabled={busy || saving} onChange={(event) => {
-            setCandidates((current) => ({ ...current, [language]: event.target.value })); setSaveState("idle");
+            update(language === "it" ? { voiceIt: event.target.value } : { voiceEn: event.target.value });
           }}>
-            {!isAvatarVoice(candidates[language], language) && <option value={candidates[language]}>{candidates[language]} ({it ? "configurata sul server" : "server configured"})</option>}
-            {AVATAR_VOICES.filter((voice) => voice.language === language).map((voice) => <option key={voice.id} value={voice.id}>
-              {voice.name} · {voice.accent === "IT" ? "Italiano" : voice.accent === "UK" ? "English (UK)" : "English (US)"}
-            </option>)}
+            {(["system", "community"] as const).map(source => {
+              const group = availableVoices.filter(voice => voice.source === source);
+              return group.length > 0 && <optgroup key={source} label={`${provider.name} · ${source === "system" ? it ? "Sistema" : "System" : "Community"}`}>
+                {group.map(voice => <option key={voice.id} value={voice.id}>
+                  {voice.name} · {voice.gender === "male" ? it ? "Maschile" : "Male" : it ? "Femminile" : "Female"} · {voice.accent === "IT" ? "Italiano" : voice.accent === "UK" ? "English (UK)" : "English (US)"}
+                </option>)}
+              </optgroup>;
+            })}
           </select>
         </div>
         </div>
-        <div>
-          <div className="flex items-center justify-between gap-3">
-            <label className="label" htmlFor="speaking-rate">{it ? "Velocità della voce" : "Speaking rate"}</label>
-            <output htmlFor="speaking-rate" className="text-sm font-semibold tabular-nums">{speakingRate.toFixed(2)}×</output>
-          </div>
-          <input id="speaking-rate" type="range" min="0.8" max="1.1" step="0.01" value={speakingRate} disabled={busy || saving}
-            onChange={(event) => { setSpeakingRate(Number(event.target.value)); setSaveState("idle"); }} className="w-full accent-[#295c43]" />
-          <p className="mt-1 text-xs leading-5 text-slate-500">{it ? "Da 0,80× a 1,10× · Vale per entrambe le lingue. Cambia il ritmo del parlato, non il tempo di attesa della risposta." : "0.80× to 1.10× · Applies to both languages. Changes speaking pace, not response latency."}</p>
-        </div>
+        <p className="text-sm text-slate-600" data-testid="voice-origin">{selectedVoice?.source === "community"
+          ? it ? "Inworld · Community. Qualità e disponibilità possono variare."
+            : "Inworld · Community. Quality and availability may vary."
+          : it ? "Inworld · Sistema" : "Inworld · System"}</p>
         <div>
           <label className="label" htmlFor="stream-text">{it ? "Frase da provare" : "Test phrase"}</label>
-          <textarea className="input min-h-32" id="stream-text" maxLength={1000} value={text} disabled={busy} onChange={(event) => setText(event.target.value)} />
+          <textarea className="input min-h-32" id="stream-text" maxLength={1000} value={text} disabled={busy || saving} onChange={(event) => setPhrases(current => ({ ...current, [language]: event.target.value }))} />
         </div>
         <div className="flex flex-wrap gap-3">
           <button type="button" className="button-primary" disabled={saving || (!busy && !text.trim())} onClick={busy ? stop : () => void listen()}>
             {busy ? it ? "Ferma la voce" : "Stop voice" : it ? "Ascolta la voce" : "Listen to voice"}
           </button>
-          <button type="button" className="button-secondary disabled:cursor-not-allowed disabled:opacity-50" disabled={busy || saving || !changed} onClick={() => void saveVoice()}>
-            {saving ? it ? "Salvataggio…" : "Saving…" : it ? "Salva voce e velocità" : "Save voice & rate"}
-          </button>
-          {changed && <button type="button" className="text-sm font-semibold text-slate-600 underline" disabled={busy || saving} onClick={() => {
-            setCandidates((current) => ({ ...current, [language]: savedVoices[language] })); setSpeakingRate(savedRate); setSaveState("idle");
-          }}>{it ? "Annulla modifiche" : "Discard changes"}</button>}
         </div>
-        <p role="status" className={saveState === "error" ? "text-red-700 text-sm" : "text-sm text-slate-600"}>
-          {saveState === "error" ? it ? "Salvataggio non riuscito. La voce precedente è ancora selezionata: riprova." : "Could not save. The previous voice remains selected: please retry."
-            : saveState === "saved" ? it ? "Voce e velocità salvate per le prossime risposte. Non serve riavviare il meeting." : "Voice and rate saved for subsequent responses. No meeting restart needed."
-            : changed ? it ? "Modifiche non salvate: ascoltale prima di confermare." : "Unsaved changes: listen before confirming."
-            : it ? "Impostazioni salvate in uso." : "Using saved settings."}
-        </p>
-        <p className="text-xs leading-5 text-slate-500">{it ? "Salvi la voce della lingua selezionata e la velocità comune a entrambe. Nome, aspetto, voce dell’altra lingua e modello del meeting non cambiano." : "Saves this language’s voice and the rate shared by both languages. The name, appearance, other language’s voice and meeting model stay unchanged."}</p>
+        <AvatarSaveControls locale={locale} disabled={busy} />
         {firstAudioMs !== undefined && <p data-testid="stream-first-audio" className="text-sm text-slate-600">
           {it ? "Avvio audio nel browser" : "Browser audio start"}: {(firstAudioMs / 1000).toFixed(2)} s.
           {it ? " Non misura il ritardo del meeting Teams." : " This does not measure Teams meeting latency."}
         </p>}
         <details className="border-t border-slate-200 pt-4" data-testid="voice-advanced">
-          <summary className="cursor-pointer text-sm font-semibold text-slate-600">{it ? "Avanzate · modello e diagnostica" : "Advanced · model & diagnostics"}</summary>
+          <summary className="cursor-pointer text-sm font-semibold text-slate-600">{it ? "Regolazioni avanzate" : "Advanced settings"}</summary>
           <div className="mt-4 space-y-4">
+          <p className="text-xs text-slate-500">{it
+            ? "Tutte le voci sono erogate da Inworld. Sistema e Community indicano l’origine della voce, non provider diversi."
+            : "All voices are served by Inworld. System and Community describe their origin, not different providers."}</p>
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="label" htmlFor="speaking-rate">{it ? "Ritmo del parlato" : "Speaking rate"}</label>
+              <output htmlFor="speaking-rate" className="text-sm font-semibold tabular-nums">{formatRate(speakingRate)}</output>
+            </div>
+            <input id="speaking-rate" type="range" min="0.8" max="1.1" step="0.01" value={speakingRate} disabled={busy || saving}
+              aria-describedby="speaking-rate-help" aria-valuetext={formatRate(speakingRate)}
+              onChange={(event) => update({ speakingRate: Number(event.target.value) })} className="w-full accent-[#295c43]" />
+            <p id="speaking-rate-help" className="mt-1 text-xs leading-5 text-slate-500">{it
+              ? "Da 0,80× a 1,10× · Vale per entrambe le lingue. Cambia il ritmo del parlato, non il tempo di attesa della risposta."
+              : "0.80× to 1.10× · Applies to both languages. Changes speaking pace, not response latency."}</p>
+            <button type="button" className="button-secondary mt-3 disabled:opacity-50" disabled={busy || saving || speakingRate === DEFAULT_SPEAKING_RATE}
+              onClick={() => update({ speakingRate: DEFAULT_SPEAKING_RATE })}>
+              {it ? "Ripristina" : "Reset"} · {formatRate(DEFAULT_SPEAKING_RATE)}
+            </button>
+          </div>
+          <p className="text-sm text-slate-600" data-testid="saved-voices">{it ? "Voci salvate nei meeting" : "Saved meeting voices"} · {provider.name}: Italiano — {avatarVoiceName(saved.voiceIt)}; English — {avatarVoiceName(saved.voiceEn)}. {it ? "Ritmo del parlato" : "Speaking rate"}: {formatRate(saved.speakingRate)}.</p>
+          <p className="text-xs text-slate-500">{it
+            ? "Questo PoC integra solo Inworld. Il collegamento di altri provider per cliente è previsto come evoluzione, non è ancora disponibile."
+            : "This PoC integrates Inworld only. Client-specific connections to other providers are a future extension, not available yet."}</p>
           <div>
             <label className="label" htmlFor="stream-model">{it ? "Modello da confrontare" : "Model to compare"}</label>
             <select className="input" id="stream-model" value={model} disabled={busy || saving} onChange={(event) => setModel(event.target.value as InworldModel)}>
               <option value="inworld-tts-2-flash">Inworld Flash</option>
               <option value="inworld-tts-2">Inworld TTS-2</option>
             </select>
-            <p className="mt-2 text-sm text-slate-500">{it ? "Solo per questa prova: non viene salvato con voce e velocità." : "Preview only: not saved with the voice and rate."}</p>
+            <p className="mt-2 text-sm text-slate-500">{it ? "Solo per questa prova: non viene salvato con voce e ritmo del parlato." : "Preview only: not saved with the voice and rate."}</p>
           </div>
           {metrics && <p data-testid="stream-playback-metrics" data-metrics={JSON.stringify(metrics)} className="text-sm text-slate-600">
           {it ? "Interruzioni del buffer" : "Buffer underruns"}: {metrics.underruns} ({Math.round(metrics.gapMs)} ms).

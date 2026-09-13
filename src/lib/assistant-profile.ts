@@ -1,4 +1,5 @@
 import { meetingTtsConfig } from "@/lib/meeting-tts-config";
+import { DEFAULT_SPEAKING_RATE } from "@/lib/avatar-voice-catalog";
 import { connectToDatabase } from "@/lib/mongodb";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
 import type { AssistantProfileResponse } from "@/types/assistant-profile";
@@ -16,7 +17,7 @@ export const DEFAULT_ASSISTANT_PROFILE = {
     provider: "inworld" as const,
     model: meetingTtsConfig().model,
     style: "executive_warm" as const,
-    speakingRate: 0.96,
+    speakingRate: DEFAULT_SPEAKING_RATE,
     pronunciationProfile: "inworld-it-en",
   },
 };

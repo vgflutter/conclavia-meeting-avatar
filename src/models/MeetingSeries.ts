@@ -1,4 +1,5 @@
-import { type HydratedDocument, type Model, Schema, model, models } from "mongoose";
+import { deleteModel, type HydratedDocument, type Model, Schema, model, models } from "mongoose";
+import { CONTEXT_MAX_LENGTH } from "@/lib/assistant-context";
 
 import type { MeetingSeriesRecord } from "@/types/meeting";
 
@@ -28,6 +29,8 @@ const assistantSchema = new Schema(
 
 const meetingSeriesSchema = new Schema<MeetingSeriesRecord>(
   {
+    context: { type: String, default: "", maxlength: CONTEXT_MAX_LENGTH },
+    contextVersion: { type: Number, default: 0, min: 0 },
     title: { type: String, required: true, trim: true, maxlength: 160 },
     objective: { type: String, trim: true, maxlength: 2_000 },
     timezone: { type: String, required: true, trim: true, maxlength: 100 },
@@ -46,6 +49,8 @@ const meetingSeriesSchema = new Schema<MeetingSeriesRecord>(
 );
 
 meetingSeriesSchema.index({ updatedAt: -1 });
+
+if (models.MeetingSeries && !models.MeetingSeries.schema.path("contextVersion")) deleteModel("MeetingSeries");
 
 export const MeetingSeriesModel =
   (models.MeetingSeries as Model<MeetingSeriesRecord> | undefined) ??

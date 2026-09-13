@@ -57,6 +57,7 @@ export interface MeetingAssistantConfiguration {
 }
 
 export interface MeetingCreateInput {
+  context?: string;
   title: string;
   meetingUrl: string;
   scheduledStart: string;
@@ -78,6 +79,7 @@ export interface MeetingAppointmentInput {
 }
 
 export interface MeetingSeriesCreateInput {
+  context?: string;
   title: string;
   objective: string;
   timezone: string;
@@ -194,6 +196,8 @@ export interface MeetingRetentionConfiguration {
 }
 
 export interface MeetingRecord {
+  context?: string;
+  contextVersion?: number;
   archivedAt?: Date;
   seriesId?: Types.ObjectId;
   title: string;
@@ -223,6 +227,8 @@ export interface MeetingRecord {
 }
 
 export interface MeetingResponse {
+  context?: string;
+  contextVersion?: number;
   archivedAt?: string;
   id: string;
   seriesId?: string;
@@ -293,6 +299,8 @@ export interface MeetingResponse {
 }
 
 export interface MeetingSeriesRecord {
+  context?: string;
+  contextVersion?: number;
   title: string;
   objective: string;
   timezone: string;
@@ -306,6 +314,8 @@ export interface MeetingSeriesRecord {
 }
 
 export interface MeetingSeriesResponse {
+  context?: string;
+  contextVersion?: number;
   id: string;
   title: string;
   objective: string;

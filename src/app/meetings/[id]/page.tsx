@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AssistantContextEditor } from "@/components/AssistantContextEditor";
+import { getMeetingContextLayers } from "@/lib/assistant-context-store";
 import { Types } from "mongoose";
 import { notFound } from "next/navigation";
 
@@ -187,6 +189,7 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
   if (!document) notFound();
 
   const [meeting, briefing] = [serializeMeeting(document), await buildMeetingContinuity(document)];
+  const contextLayers = await getMeetingContextLayers(document);
   const automation = getMeetingAutomationPublicConfig();
   const durationMinutes = Math.round(
     (new Date(meeting.scheduledEnd).getTime() -
@@ -321,11 +324,13 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
         </div>
       </header>
 
+      <nav aria-label={isItalian ? "Sezioni del meeting" : "Meeting sections"} className="mb-5 flex flex-wrap gap-2 text-sm font-medium">
+        <a href="#assistant" className="rounded-lg bg-[#edf4ef] px-3 py-2 text-[#295c43]">{isItalian ? "Assistente" : "Assistant"}</a>
+        <a href="#preparation" className="rounded-lg px-3 py-2 text-slate-600 hover:bg-white">{isItalian ? "Contesto" : "Context"}</a>
+        <a href="#summary" className="rounded-lg px-3 py-2 text-slate-600 hover:bg-white">{isItalian ? "Riepilogo" : "Summary"}</a>
+      </nav>
       <div className="space-y-6">
         {!meetingInProgress && <MeetingSummaryCard meeting={meeting} locale={locale} />}
-        {(meeting.seriesId || briefing.previousMeetingIds.length > 0) && (
-          <ContinuityCard briefing={briefing} locale={locale} />
-        )}
 
         <MeetingAgendaManager meetingId={meeting.id} initialAgenda={meeting.agenda} />
 
@@ -347,15 +352,34 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
             </section>
           )}
 
-        <MeetingAssistantConsole
+        <div id="assistant" className="scroll-mt-36"><MeetingAssistantConsole
           meetingId={meeting.id}
           assistantName={meeting.assistant.wakeWord}
           initialHistory={meeting.commandHistory}
-        />
+        /></div>
 
         <MeetingDebugPanel key={meeting.id} meetingId={meeting.id} />
 
         {meetingInProgress && <MeetingSummaryCard meeting={meeting} locale={locale} />}
+
+        <section id="preparation" className="scroll-mt-36 space-y-4">
+          <details className="card group overflow-hidden" data-testid="meeting-context">
+            <summary className="flex cursor-pointer items-center justify-between gap-3 p-5 sm:p-6">
+              <div><h2 className="text-lg font-semibold">{isItalian ? "Contesto per l’assistente" : "Context for the assistant"}</h2>
+                <p className="mt-1 text-sm text-slate-500">{isItalian ? "Note di questo meeting e informazioni ereditate. Non modifica il verbale." : "Meeting notes and inherited background. Does not change the minutes."}</p>
+              </div><span className="shrink-0 text-xs text-[#295c43]">{meeting.context ? isItalian ? "Note aggiunte" : "Notes added" : isItalian ? "Facoltativo" : "Optional"}</span>
+            </summary>
+            <div className="border-t border-slate-100 p-5 sm:p-6">
+              <AssistantContextEditor key={meeting.id} scope="meeting" resourceId={meeting.id}
+                initial={{ context: meeting.context || "", version: meeting.contextVersion || 0 }}
+                inherited={[
+                  { label: isItalian ? "Generale" : "General", context: contextLayers.global, href: "/context" },
+                  ...(meeting.seriesId ? [{ label: isItalian ? "Serie" : "Series", context: contextLayers.series, href: `/meetings/series/${meeting.seriesId}#context` }] : []),
+                ]} />
+            </div>
+          </details>
+          {(meeting.seriesId || briefing.previousMeetingIds.length > 0) && <ContinuityCard briefing={briefing} locale={locale} />}
+        </section>
 
         {!meetingInProgress && meeting.transcript.length > 0 && (
           <details className="card group overflow-hidden">

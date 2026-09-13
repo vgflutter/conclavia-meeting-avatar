@@ -8,6 +8,9 @@
   "scripts": {
     "dev": "next dev",
     "dev:system-ca": "node scripts/dev-with-system-ca.mjs",
+    "tunnel": "node scripts/local-tunnel.mjs",
+    "tunnel:check": "node scripts/local-tunnel.mjs --check",
+    "test:tunnel": "node --test tests/scripts/local-tunnel.test.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -15,7 +18,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:live": "node scripts/verify-live.mjs",
-    "verify": "npm run lint && npm run typecheck && npm run build && npm run test:e2e"
+    "verify": "npm run lint && npm run typecheck && npm run test:tunnel && npm run build && npm run test:e2e"
   },
   "dependencies": {
     "mongoose": "8.24.2",

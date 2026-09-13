@@ -1,5 +1,6 @@
 import { deleteModel, type HydratedDocument, type Model, Schema, model, models } from "mongoose";
 import { hasMeetingLifecycleSchema } from "@/lib/meeting-model-schema";
+import { CONTEXT_MAX_LENGTH } from "@/lib/assistant-context";
 
 import type {
   MeetingActionItem,
@@ -194,6 +195,8 @@ const voiceSchema = new Schema<MeetingVoiceConfiguration>(
 
 const meetingSchema = new Schema<MeetingRecord>(
   {
+    context: { type: String, default: "", maxlength: CONTEXT_MAX_LENGTH },
+    contextVersion: { type: Number, default: 0, min: 0 },
     archivedAt: { type: Date },
     seriesId: { type: Schema.Types.ObjectId, ref: "MeetingSeries", index: true },
     title: { type: String, required: true, trim: true, maxlength: 160 },
@@ -248,7 +251,7 @@ meetingSchema.index({ "bot.joinDeadlineAt": 1, "bot.status": 1 });
 
 export function registerMeetingModel(): Model<MeetingRecord> {
   const cached = models.Meeting as Model<MeetingRecord> | undefined;
-  if (cached && hasMeetingLifecycleSchema(cached) && cached.schema.path("archivedAt")) return cached;
+  if (cached && hasMeetingLifecycleSchema(cached) && cached.schema.path("archivedAt") && cached.schema.path("contextVersion")) return cached;
   // Remove only the in-process model definition, never the collection or its data.
   if (cached) deleteModel("Meeting");
   return model<MeetingRecord>("Meeting", meetingSchema);

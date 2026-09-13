@@ -1,4 +1,5 @@
 import { validateMeetingInput } from "@/lib/meeting-validation";
+import { validateContext } from "@/lib/assistant-context";
 import type { MeetingAgendaInput, MeetingSeriesCreateInput } from "@/types/meeting";
 
 export type MeetingSeriesValidationResult =
@@ -25,6 +26,7 @@ export function validateMeetingSeriesInput(
   const timezone = cleanText(body.timezone, 100) || "Europe/Rome";
   const appointments = Array.isArray(body.appointments) ? body.appointments : [];
   const issues: string[] = [];
+  if (body.context !== undefined && !validateContext(body.context)) issues.push("Context must be text of at most 8000 characters");
   let normalizedAgenda: MeetingAgendaInput[] = [];
 
   if (!title) issues.push("Series title is required");
@@ -90,6 +92,7 @@ export function validateMeetingSeriesInput(
       title,
       objective,
       timezone,
+      context: typeof body.context === "string" ? body.context.trim() : "",
       language: body.language as MeetingSeriesCreateInput["language"],
       autoJoin: body.autoJoin as boolean,
       agenda: normalizedAgenda,

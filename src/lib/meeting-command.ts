@@ -98,7 +98,8 @@ export function detectElementaryArithmetic(
 ): { reason: string; response: string } | undefined {
   // Only a complete, affirmative integer claim is safe for this cheap rule.
   // Substring matching incorrectly corrected decimals, quotations and negations.
-  const claim = statement.replace(/^\s*(?:ok|okay|allora|bene)[,\s]+/iu, "");
+  const claim = statement.replace(/^\s*(?:ok|okay|allora|bene)[,\s]+/iu, "")
+    .replace(/^\s*(?:secondo me|i think)[,\s]+/iu, "");
   const match = /^\s*(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten)\s*(?:x|per|times)\s*(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten)\s*(?:fa|è|is|equals?)\s*(\d+|zero|uno|one|due|two|tre|three|quattro|four|cinque|five|sei|six|sette|seven|otto|eight|nove|nine|dieci|ten|undici|eleven|dodici|twelve)\s*[.!]?\s*$/iu.exec(claim);
   if (!match) return undefined;
   const left = numberFromSpeech(match[1]);
@@ -132,7 +133,7 @@ export function meetingPermissionDecision(
   if (/^(?:lascia stare|non ora|abbassa la mano|non intervenire|non (?:puoi|devi) (?:parlare|intervenire)|non parlare|never mind|not now|lower your hand|(?:do not|don['’]t) (?:speak|talk|go ahead))\b/iu.test(permission)) {
     return "decline";
   }
-  if (/^(?:vai pure|prego|puoi parlare|puoi intervenire|intervieni|dimmi pure|go ahead|you can speak|please speak)\b/iu.test(permission)) {
+  if (/^dimmi[\s.!?]*$/iu.test(permission) || /^(?:vai pure|prego|puoi parlare|puoi intervenire|intervieni|dimmi pure|go ahead|you can speak|please speak)\b/iu.test(permission)) {
     return "grant";
   }
   return undefined;
@@ -213,7 +214,7 @@ export function parseMeetingVoiceCommand(
   for (const rule of rules) {
     if (!rule.pattern.test(request)) continue;
     const prompt = request.replace(rule.pattern, "").trim();
-    if (!["summary", "agenda"].includes(rule.kind) && !prompt) return undefined;
+    if (!["summary", "agenda"].includes(rule.kind) && !/[\p{L}\p{N}]/u.test(prompt)) return undefined;
     return { kind: rule.kind, prompt };
   }
 
@@ -221,7 +222,7 @@ export function parseMeetingVoiceCommand(
     return { kind: "agenda", prompt: request };
   }
 
-  return { kind: "ask", prompt: request };
+  return /[\p{L}\p{N}]/u.test(request) ? { kind: "ask", prompt: request } : undefined;
 }
 
 function unique(values: string[]): string[] {

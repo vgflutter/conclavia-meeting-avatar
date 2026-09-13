@@ -98,6 +98,7 @@ test("meeting singolo: creazione, comandi, memoria e cancellazione", async ({
 
       await page.getByLabel("Titolo del meeting").fill(title);
       await page.getByLabel("Obiettivo del meeting").fill(objective);
+      await page.getByTestId("create-agenda").locator("summary").click();
       await page.getByPlaceholder("Es. Approvare la roadmap").fill("Confermare la roadmap");
       await page.getByLabel("Link Microsoft Teams").fill(teamLink);
       await expect(page.getByRole("button", { name: /Entra ora/ })).toHaveCount(0);
@@ -189,6 +190,7 @@ test("meeting singolo: creazione, comandi, memoria e cancellazione", async ({
       await page.getByRole("button", { name: "Coperto" }).click();
       await expect(page.getByText("1 di 1 punto completato")).toBeVisible();
 
+      await page.getByRole("button", { name: "Ricorda", exact: true }).click();
       const rememberStartedAt = Date.now();
       await page
         .getByPlaceholder("Es. Ricorda che il lancio è fissato al 15 ottobre")
@@ -277,6 +279,7 @@ test("serie: due appuntamenti condividono la memoria", async ({ page, request })
     await page.getByRole("button", { name: /Serie di meeting/ }).click();
     await page.getByLabel("Nome della serie").fill(seriesTitle);
     await page.getByLabel("Obiettivo del meeting").fill(`Mantenere il contesto ${marker}`);
+    await page.getByTestId("create-agenda").locator("summary").click();
     await page.getByPlaceholder("Es. Approvare la roadmap").fill("Allineare i prossimi passi");
 
     await page.locator("#appointment-1-label").fill(firstLabel);
@@ -506,7 +509,7 @@ test("l'avatar si prova in streaming senza creare un meeting", async ({ page }) 
   await useItalian(page);
   await page.goto("/avatar");
   await page.getByRole("navigation", { name: "Configurazione avatar" }).getByRole("link", { name: "Prova avatar · voce e movimenti", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Ascolta, regola, scegli" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Prova avatar", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Alza / abbassa la mano" }).click();
   await expect(page.locator("svg[data-gesture='hand_raise']")).toBeVisible();
   for (const language of ["it", "en"]) {

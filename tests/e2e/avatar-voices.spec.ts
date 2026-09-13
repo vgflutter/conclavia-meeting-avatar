@@ -1,14 +1,28 @@
 import { expect, test } from "@playwright/test";
-import { AVATAR_VOICES, isAvatarVoice } from "../../src/lib/avatar-voice-catalog";
+import { AVATAR_VOICES, isAvatarVoice, compatibleAvatarVoice, voicesForAppearance } from "../../src/lib/avatar-voice-catalog";
 import { meetingTtsConfig, selectedMeetingVoices } from "../../src/lib/meeting-tts-config";
 import { inworldSpeechResponse } from "../../src/lib/inworld-tts";
 
 test("voice catalog: native language validation and per-language saved overrides", () => {
-  expect(AVATAR_VOICES.filter(v => v.language === "it")).toHaveLength(2);
+  expect(AVATAR_VOICES.filter(v => v.language === "it")).toHaveLength(6);
+  expect(AVATAR_VOICES.filter(v => v.language === "it" && v.source === "system")).toHaveLength(2);
+  expect(AVATAR_VOICES.filter(v => v.language === "it" && v.source === "community")).toHaveLength(4);
+  expect(AVATAR_VOICES.every(v => v.provider === "inworld")).toBe(true);
   expect(AVATAR_VOICES.filter(v => v.language === "en")).toHaveLength(6);
   expect(isAvatarVoice("Dennis", "it")).toBe(false);
   expect(isAvatarVoice("Orietta", "en")).toBe(false);
   expect(isAvatarVoice("invented", "it")).toBe(false);
+  expect(voicesForAppearance("business_clay", "it").map(v => v.id)).toEqual(["Gianni", "community-rxgdeftvn9dc", "community-wogdp7fnk36a", "community-kvd4dbkrdpds"]);
+  expect(voicesForAppearance("business_clay", "en").map(v => v.id)).toEqual(["Dennis", "Edward", "Alex", "Alistair"]);
+  expect(voicesForAppearance("business_clay_female", "it").map(v => v.id)).toEqual(["Orietta", "community-detz4fjemm8q"]);
+  expect(voicesForAppearance("business_clay_female", "en").map(v => v.id)).toEqual(["Olivia", "Eleanor"]);
+  expect(compatibleAvatarVoice("Edward", "en", "business_clay")).toBe("Edward");
+  expect(compatibleAvatarVoice("Dennis", "en", "business_clay_female")).toBe("Eleanor");
+  expect(compatibleAvatarVoice("CustomIT", "it", "business_clay_female")).toBe("Orietta");
+  expect(compatibleAvatarVoice("community-wogdp7fnk36a", "it", "business_clay")).toBe("community-wogdp7fnk36a");
+  expect(compatibleAvatarVoice("community-wogdp7fnk36a", "it", "business_clay_female")).toBe("Orietta");
+  expect(isAvatarVoice("community-wogdp7fnk36a", "en")).toBe(false);
+  expect(isAvatarVoice("community-wogdp7fnk36a", "it", "unconfigured-provider")).toBe(false);
   const config = meetingTtsConfig({ INWORLD_VOICE_ID_IT: "CustomIT", INWORLD_VOICE_ID: "CustomEN" });
   expect(selectedMeetingVoices({}, config)).toEqual({it: "CustomIT", en: "CustomEN"});
   expect(selectedMeetingVoices({inworldVoiceIdIt: "Orietta"}, config)).toEqual({it: "Orietta", en: "CustomEN"});
@@ -51,6 +65,9 @@ test("voice API: persists separately, profile edits preserve selections, rejects
 
 test("voice GUI: preview does not save, explicit save survives reload and preserves the other language", async ({page, request}) => {
   expect(process.env.MONGODB_DB_NAME).toMatch(/^conclavia_e2e_/u);
+  const {profile} = await (await request.get("/api/avatar")).json();
+  await request.patch("/api/avatar", {data: {displayName: profile.displayName, role: profile.role, appearance: "business_clay",
+    responseStyle: profile.personality.responseStyle, attitude: profile.personality.attitude, voiceStyle: profile.voice.style}});
   await request.patch("/api/avatar/voices", {data: {language: "it", voiceId: "Gianni"}});
   await request.patch("/api/avatar/voices", {data: {language: "en", voiceId: "Dennis"}});
   await page.context().addCookies([{name: "conclavia_locale", value: "it", url: "http://127.0.0.1:3101"}]);
@@ -62,21 +79,22 @@ test("voice GUI: preview does not save, explicit save survives reload and preser
     await route.fulfill({contentType: "application/x-ndjson", body: JSON.stringify({audio: pcm.toString("base64")}) + '\n{"done":true}\n'});
   });
   await page.goto("/avatar/test?voice=inworld");
-  await page.getByLabel("Voce da provare").selectOption("Orietta");
+  await page.getByLabel("Aspetto dell’avatar").selectOption("business_clay_female");
+  await expect(page.getByLabel("Voce da provare")).toHaveValue("Orietta");
   await page.getByRole("button", {name: "Ascolta la voce", exact: true}).click();
   await expect(page.locator('[data-streaming-voice-state="ready"]')).toBeVisible();
   expect(preview).toMatchObject({language: "it", voiceId: "Orietta"});
   expect((await (await request.get("/api/avatar/voices")).json()).selected.it).toBe("Gianni");
-  await page.getByRole("button", {name: "Salva voce e velocità", exact: true}).click();
-  await expect(page.getByTestId("saved-voices")).toContainText("Italiano — Orietta; English — Dennis");
+  await page.getByRole("button", {name: "Salva avatar", exact: true}).click();
+  await expect(page.getByTestId("saved-voices")).toContainText("Italiano — Orietta; English — Eleanor");
   await page.reload();
   await expect(page.getByLabel("Voce da provare")).toHaveValue("Orietta");
   await page.getByLabel("Lingua", {exact: true}).selectOption("en");
   await expect(page.getByLabel("Frase da provare")).toHaveValue(/^Hello,/u);
-  await expect(page.getByLabel("Voce da provare").locator("option")).toHaveCount(6);
-  await page.getByLabel("Voce da provare").selectOption("Eleanor");
-  await page.getByRole("button", {name: "Salva voce e velocità", exact: true}).click();
-  await expect(page.getByTestId("saved-voices")).toContainText("Italiano — Orietta; English — Eleanor");
+  await expect(page.getByLabel("Voce da provare").locator("option")).toHaveCount(2);
+  await page.getByLabel("Voce da provare").selectOption("Olivia");
+  await page.getByRole("button", {name: "Salva avatar", exact: true}).click();
+  await expect(page.getByTestId("saved-voices")).toContainText("Italiano — Orietta; English — Olivia");
 });
 
 test("voice GUI: failed save leaves the configured voice unchanged", async ({page, request}) => {
@@ -85,8 +103,8 @@ test("voice GUI: failed save leaves the configured voice unchanged", async ({pag
   await page.goto("/avatar/test?voice=inworld");
   await page.getByLabel("Language", {exact: true}).selectOption("it");
   await page.getByLabel("Voice to preview").selectOption("Orietta");
-  await page.route("**/api/avatar/voices", route => route.fulfill({status: 503, json: {error: "Unavailable"}}));
-  await page.getByRole("button", {name: "Save voice & rate", exact: true}).click();
+  await page.route("**/api/avatar", route => route.fulfill({status: 503, json: {error: "Unavailable"}}));
+  await page.getByRole("button", {name: "Save avatar", exact: true}).click();
   await expect(page.getByText(/Could not save/)).toBeVisible();
   await expect(page.getByTestId("saved-voices")).toContainText("Italiano — Gianni");
 });

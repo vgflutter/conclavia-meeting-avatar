@@ -56,6 +56,7 @@ export function meetingDocumentData(
     scheduledEnd,
     timezone: input.timezone,
     objective: input.objective,
+    context: input.context || "",
     seriesLabel,
     seriesKey:
       options.seriesKey ??

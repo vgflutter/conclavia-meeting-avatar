@@ -20,6 +20,22 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - The user has authorized restoring this existing local test server and its temporary HTTPS tunnel without asking for confirmation again. Validate the exact processes before restarting them, preserve all unrelated `.env.local` settings, and verify both public avatar reachability and blocked public management routes afterward.
 - This permission is limited to the same local test environment. It does not authorize a new paid deployment, bypassing Teams admission, or creating duplicate meeting participants. Report what was restored and distinguish connectivity checks from a successful real Teams conversation.
 
+# Speech recognition acceptance: recurring user report
+
+- The user says "Ciao Riccardo" but Teams/Attendee repeatedly delivers "Charlie cardo.". Their requirement is **correct speech-to-text**, not a response triggered by that wrong caption.
+- Do not solve this report by adding "Charlie cardo" as a wake alias, fabricating a greeting, or rewriting the displayed original transcript. Preserve the input as evidence and investigate the transcription source and actual spoken-language setting.
+- `captionLanguageRequestedAt` proves only API acknowledgement. The stored transcript `language` is populated from the meeting preference; neither establishes the spoken language actually used in Teams.
+- Parser/webhook fixtures, healthy tunnels, generated answers and renderer audio acknowledgements do not pass microphone-to-transcript acceptance. Keep these verification stages separate in reports.
+- Read `docs/caption-recognition-2026-09-13.md` before revisiting this failure. It remains unresolved without real recognition evidence; do not present it as fixed based on unrelated regression counts.
+
+# Assistant context invariants
+
+- General context is edited at `/context`; series and appointment notes are edited on their detail pages. Keep background separate from the objective, transcript and confirmed outcomes.
+- Resolve general + series + meeting context for every AI task, including proactive interventions and final memory extraction. Series context is inherited dynamically by `seriesId`, not copied to each appointment.
+- Use `assistant-context.ts` for scope precedence and prompt boundaries. Custom background must not become fabricated meeting decisions or replacement application instructions.
+- Preserve explicit saves, stale-version conflict protection and scope-specific clearing. Context edits must not change bot lifecycle, voices or existing history.
+- Do not expose context through the public avatar rendering capability. This PoC is a single shared workspace, not a tenant-isolated company deployment.
+
 # AWS Guidance
 
 - Prefer the AWS MCP Server for AWS interactions — it provides sandboxed

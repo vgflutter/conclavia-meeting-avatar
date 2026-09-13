@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useTranslations } from "@/i18n/I18nProvider";
@@ -18,10 +18,10 @@ const commandMeta: Record<MeetingCommandKind, { icon: string; it: string; en: st
 };
 
 const selectableCommands: MeetingCommandKind[] = [
+  "ask",
   "remember",
   "summary",
   "agenda",
-  "ask",
   "correct",
 ];
 
@@ -29,26 +29,29 @@ export function MeetingAssistantConsole({ meetingId, assistantName, initialHisto
   const router = useRouter();
   const { locale } = useTranslations();
   const isItalian = locale === "it";
-  const [kind, setKind] = useState<MeetingCommandKind>("remember");
+  const [kind, setKind] = useState<MeetingCommandKind>("ask");
   const [prompt, setPrompt] = useState("");
   const [history, setHistory] = useState(initialHistory);
   const [pending, setPending] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState<string>();
 
   async function execute(commandKind = kind) {
+    if (inFlight.current) return;
     if (!["summary", "agenda"].includes(commandKind) && !prompt.trim()) return;
+    inFlight.current = true;
     setPending(true);
     setError(undefined);
     try {
       const response = await fetch(`/api/meetings/${meetingId}/commands`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: commandKind, prompt }),
+        body: JSON.stringify({ kind: commandKind, prompt: ["summary", "agenda"].includes(commandKind) ? "" : prompt }),
       });
       const payload = (await response.json()) as { response?: string; meeting?: { commandHistory: SerializedCommandEvent[] } };
       if (!response.ok || !payload.meeting || !payload.response) throw new Error();
       setHistory(payload.meeting.commandHistory);
-      setPrompt("");
+      if (!["summary", "agenda"].includes(commandKind)) setPrompt("");
       router.refresh();
     } catch {
       setError(
@@ -57,6 +60,7 @@ export function MeetingAssistantConsole({ meetingId, assistantName, initialHisto
           : "We couldn’t complete your request. Please try again.",
       );
     } finally {
+      inFlight.current = false;
       setPending(false);
     }
   }
@@ -65,14 +69,17 @@ export function MeetingAssistantConsole({ meetingId, assistantName, initialHisto
     remember: isItalian ? "Es. Ricorda che il lancio è fissato al 15 ottobre" : "E.g. Remember that launch is set for October 15",
     summary: "",
     agenda: "",
-    ask: isItalian ? "Fai una domanda sulla memoria della serie" : "Ask a question about series memory",
+    ask: isItalian ? "Fai una domanda sul meeting" : "Ask a question about the meeting",
     correct: isItalian ? "Inserisci l’affermazione da verificare" : "Enter the statement to verify",
     inform: "",
   };
-  const recentHistory = [...history].reverse().slice(0, 8);
+  // Include answers received by refreshed server props as well as the most recent
+  // local response. The same command must never appear twice.
+  const recentHistory = [...new Map([...history, ...initialHistory].map(event => [event.id, event])).values()]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 8);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#183728] bg-[#10251a] text-white shadow-[0_20px_60px_rgba(20,52,35,0.14)]">
+    <section aria-label={isItalian ? `Chiedi a ${assistantName}` : `Ask ${assistantName}`} aria-busy={pending} className="overflow-hidden rounded-2xl border border-[#183728] bg-[#10251a] text-white">
       <div className="border-b border-white/10 p-5 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -83,7 +90,7 @@ export function MeetingAssistantConsole({ meetingId, assistantName, initialHisto
         </div>
         <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-5">
           {selectableCommands.map((commandKind) => (
-            <button key={commandKind} type="button" aria-pressed={kind === commandKind} onClick={() => { setKind(commandKind); if (["summary", "agenda"].includes(commandKind)) void execute(commandKind); }} className={`rounded-xl border px-3 py-3 text-left transition ${kind === commandKind ? "border-[#bde88d]/50 bg-[#bde88d]/12 text-[#dfffb7]" : "border-white/10 bg-white/4 text-white/65 hover:bg-white/8"}`}>
+            <button key={commandKind} type="button" disabled={pending} aria-pressed={kind === commandKind} onClick={() => { setKind(commandKind); setError(undefined); if (["summary", "agenda"].includes(commandKind)) void execute(commandKind); }} className={`rounded-xl border px-3 py-3 text-left transition disabled:cursor-wait disabled:opacity-50 ${kind === commandKind ? "border-[#bde88d]/50 bg-[#bde88d]/12 text-[#dfffb7]" : "border-white/10 bg-white/4 text-white/65 hover:bg-white/8"}`}>
               <span className="mr-2 text-[#bde88d]" aria-hidden="true">{commandMeta[commandKind].icon}</span>
               <span className="text-sm font-semibold">{isItalian ? commandMeta[commandKind].it : commandMeta[commandKind].en}</span>
             </button>
@@ -91,11 +98,12 @@ export function MeetingAssistantConsole({ meetingId, assistantName, initialHisto
         </div>
         {!["summary", "agenda"].includes(kind) && (
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={placeholders[kind]} maxLength={2_000} className="min-h-16 flex-1 resize-none rounded-xl border border-white/12 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#bde88d]/60" />
+            <textarea aria-label={isItalian ? "Messaggio per l’assistente" : "Message for the assistant"} disabled={pending} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={placeholders[kind]} maxLength={2_000} className="min-h-16 min-w-0 flex-1 resize-none rounded-xl border border-white/12 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-white/50 focus:border-[#bde88d]/60" />
             <button type="button" onClick={() => execute()} disabled={pending || !prompt.trim()} className="min-w-28 rounded-xl bg-[#bde88d] px-4 py-3 text-sm font-bold text-[#142516] transition hover:bg-[#d7f5ae] disabled:opacity-50">{pending ? "…" : isItalian ? "Invia" : "Send"}</button>
           </div>
         )}
-        <p className="mt-3 text-xs leading-5 text-white/45">{isItalian ? "Le risposte si basano sulla memoria di questo meeting e degli appuntamenti collegati." : "Answers are based on this meeting and its connected appointments."}</p>
+        {pending && <p role="status" className="mt-3 text-sm text-[#dfffb7]">{isItalian ? "Richiesta in corso…" : "Working on your request…"}</p>}
+        <p className="mt-3 text-xs leading-5 text-white/60">{isItalian ? "Riepiloga e Scaletta rispondono subito; per gli altri comandi scrivi e premi Invia." : "Summarize and Agenda run immediately; for other commands, type and press Send."}</p>
         {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
       </div>
 

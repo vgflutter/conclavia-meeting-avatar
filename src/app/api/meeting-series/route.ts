@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     const createdSeries = await MeetingSeriesModel.create({
       title: input.title,
       objective: input.objective,
+      context: input.context || "",
       timezone: input.timezone,
       language: input.language,
       autoJoin: input.autoJoin,

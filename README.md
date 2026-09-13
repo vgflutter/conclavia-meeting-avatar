@@ -8,22 +8,27 @@
 
 # Conclavia Meeting Assistant
 
-Conclavia is a focused, single-workspace meeting assistant. The product contains three areas only:
+Conclavia is a focused, single-workspace meeting assistant with four areas:
 
 - **Meetings** for one appointment or a series of Microsoft Teams meetings.
 - **Memory** for remembered facts, decisions, actions, questions, and summaries.
+- **Context** for background shared by the assistant, refined per series and meeting.
 - **Avatar** for the digital colleague's identity, personality, voice, expressions, and hand raise.
 
 The management interface works without a meeting provider. Automatic Teams entry becomes available only after every required integration setting is present. Configuration readiness is not an external connectivity check: the public output page and webhook endpoint must also be reachable.
 
-## Latest update — 11 September 2026
+## Latest update — 13 September 2026
 
-- **Avatar workspace:** identity, appearance and behaviour are separate from voice preview. Choose an Italian/English voice, preview its speaking rate, then explicitly save or discard. Model comparisons and diagnostics are collapsed under Advanced.
+- **Layered context:** the new Context page saves shared background; series and meeting details add their own notes. All AI answer, verification, summary, proactive-intervention and final-memory prompts receive the same three scopes. Existing appointments inherit series edits at the next generation, without leaving/rejoining. Context is not recorded as a meeting decision. See [assistant context](#assistant-context).
+- **Contextual turn regression:** “Secondo me tre per tre fa 12” now prepares the arithmetic correction; “Ehi Riccardo, dimmi” grants the pending turn. Punctuation alone cannot become an ask/check/memory request. This parser fix does not fix the separate “Ciao Riccardo” → “Charlie cardo” recognition defect.
+- **Simpler GUI:** Teams link and language first, an optional collapsed agenda, a more compact avatar studio, question-first assistant controls, and memory search across decisions, actions and open questions. Pending actions prevent repeated submissions in the current view, and failed saves preserve the form. See the [GUI review](docs/gui-review-2026-09-13.md).
+- **Avatar workspace:** choose an appearance, select an Italian/English voice, listen, then explicitly save or discard. Optional speaking-rate adjustments, model comparisons and diagnostics are collapsed under Advanced settings.
 - **Two appearances:** male and female business avatars share expressions, idle motion, raised-hand animation and audio-clock mouth shapes. Appearance, invocation name and voice remain independent.
 - **Streaming-only speech:** Inworld TTS-2 / Flash supplies PCM and phoneme timings. The retired local/browser synthesis path is not an active option or fallback.
+- **Repeatable local tunnel setup:** `npm run tunnel` restores or reuses the authorized local app/Cloudflare connection; `npm run tunnel:check` checks it without restarting anything. The launcher preserves unrelated environment values and refuses to expose another project's server. See the [Cloudflare guide](#public-connection-for-a-local-teams-test).
 - **Safer meetings:** attempt-scoped entry/exit reconciliation, renderer health checks, caption language setup, conservative echo classification, optional realtime debug and summary-first paginated history.
 - **Acceptance status:** application regressions and browser/provider previews are covered; receiver-side Teams latency, voice naturalness and video/lip-sync quality are **not yet signed off**. See the [objective-based audit](docs/objective-audit-2026-09-11.md) and the historical [10 September audit](docs/poc-audit-2026-09-10.md) for evidence and limits.
-- **Fresh general check:** 199 automated tests passed in 2.7 minutes; TypeScript, ESLint and an isolated production build passed. No new live Teams call was performed for this check.
+- **Latest regression check:** 240 automated tests passed in 3.7 minutes, followed by a final 10-test context rerun; all 23 isolated tunnel-launcher tests also passed. TypeScript, ESLint and an isolated production build passed on 13 September. No new live Teams call or paid speech synthesis was performed for this check. See the [context verification report](docs/assistant-context-verification-2026-09-13.md) for coverage and limits.
 
 Start with [voice setup](#streaming-voice-setup), the [Cloudflare local test guide](#public-connection-for-a-local-teams-test), or [company deployment](#production-deployment).
 
@@ -66,6 +71,8 @@ The avatar can be tested independently from a meeting, including Italian and Eng
 
 Every meeting has an objective, a Teams link, a date, and an agenda whose items can be mandatory or optional. A series can contain up to 24 appointments with different Teams links.
 
+For a single meeting, paste the Teams link first, choose the language and decide when the colleague should join. The optional agenda is collapsed until needed; rescheduling an appointment with existing agenda items opens it automatically. Closing the section keeps the items. Entry/contribution preferences remain available separately, and the save action explains whether it starts an entry attempt or only schedules/saves the appointment.
+
 ![Create a Conclavia meeting](docs/images/new-meeting.png)
 
 ### Shared meeting memory
@@ -77,6 +84,8 @@ Completed appointments contribute their summary, remembered facts, decisions, op
 ### Summary-first history
 
 Memory is organized around concise meeting summaries. On a completed meeting's detail page, the summary, decisions and actions come before the agenda and assistant tools. Editing the summary is optional; the full transcript stays collapsed until someone needs to check a passage. The Memory area provides the broader record across meetings.
+
+Memory search includes meeting titles and objectives, summary text, remembered facts, decisions, action descriptions and open questions. Results remain paginated; details stay collapsed until requested.
 
 ![Conclavia meeting memory](docs/images/memory.png)
 
@@ -90,6 +99,8 @@ The participant name configured in **Avatar** is also its wake phrase. If the na
 - **Answer** responds from the current transcript and shared series memory.
 - **Verify** checks a statement against known meeting facts and decisions.
 
+The meeting's assistant console opens on **Answer**. **Summarize** and **Agenda** are immediate actions; the other commands use the message field. Immediate actions preserve an unfinished question and do not send it accidentally. While a request is pending, controls show progress and reject overlapping submissions in that view. Failed requests preserve the message for retry. Manual agenda changes refresh the page data so the agenda and latest assistant responses stay aligned.
+
 When proactive contributions are enabled, the colleague checks substantive statements for material errors and for reliable stored information that would advance the current objective or agenda. It raises its hand and prepares the contribution, but does not speak yet. A participant must grant the floor using its configured name, for example **“Nora, go ahead”** or **“Nora, vai pure”**. Because the answer is prepared while the hand is raised, playback can begin without a second model request.
 
 The raised hand is drawn by the avatar and reflected in its pending-intervention state. The current integration does not operate the native Teams hand button. Debug shows caption contributions and response text, not a general Teams chat integration.
@@ -101,6 +112,26 @@ Storage/context limits are intentional but relevant to long meetings: the meetin
 For testing, enable **Debug mode** on the meeting detail page, below the assistant commands. It is off by default and shows received transcript contributions and assistant response text with names and timestamps, updating roughly every second while the tab is visible. The latest acknowledged response also shows whether the avatar browser started, completed, or failed playback. A text response alone is not proof of audio, and browser playback does not establish what another Teams participant heard. This is a read-only view: it does not enable recording or change memory. Turning it off stops its requests. Only the latest 100 events are displayed; unchanged responses use conditional requests, and updates do not reload the page or pull focus away while reading older messages. Debug is not displayed in the avatar’s Teams video and does not ingest Teams text chat.
 
 The assistant personality has two deliberately simple controls: response length and attitude. Those choices are included in the meeting prompt.
+
+## Assistant context
+
+Open **Context** in the navigation to enter company background, terminology and working preferences. In a meeting, open **Context for the assistant** for appointment-specific notes and a read-only preview of inherited context. The series detail has its own **Series context** section. During creation, notes are optional and collapsed; the objective remains the result to achieve, not a second background field.
+
+| Scope | Where to edit | Applies to |
+| --- | --- | --- |
+| General | `/context` | Every meeting in this installation |
+| Series | Series detail → Series context | All appointments linked by `seriesId`, including existing and future ones |
+| Meeting | Meeting detail → Context for the assistant | Only that appointment |
+
+The effective background is **general + series + meeting**. Specific details take precedence over broader background, while non-conflicting information remains available. This is prompt guidance, not a guarantee of model reasoning. The common prompt rules keep owner-supplied background separate from transcript evidence: a planned budget in context must not be summarized as a budget approved in the meeting. Stored outcomes and original transcripts are not rewritten. Transcripts remain evidence, never replacement system instructions. This follows the [OpenAI instruction/input separation](https://developers.openai.com/api/docs/guides/prompt-engineering#message-roles-and-instruction-following).
+
+Implementation: `assistant-context-store.ts` resolves the latest general and series records at generation time; `assistant-context.ts` supplies shared rules and an escaped, scoped input block. The block is included in question answering, explicit verification, spoken summaries, proactive correction/relevant-information detection, and final meeting-memory extraction. Deterministic actions (greetings, presence checks, saving an explicit fact, agenda updates, elementary arithmetic and releasing an already prepared intervention) do not invoke AI and are not redefined by custom text. Without AI, question fallback can search the context but cannot reason about conflicting notes.
+
+Each scope accepts up to **8,000 characters**, at most 24,000 additional background characters per prompt. Keep notes focused: longer context increases input usage and may affect latency. No document upload, automatic context generation, vector retrieval or additional voice provider is introduced here.
+
+Changes require **Save context**, take effect on the next generation, and need no new Teams meeting. An in-flight answer or already prepared hand-raise response is not regenerated. Clearing a field removes only that scope. Versioned updates reject a stale edit with HTTP 409; the GUI preserves the draft, lets the user compare the latest saved version, then explicitly save or discard. The dedicated `/api/context?scope=global|series|meeting&id=…` endpoint only updates context fields, never bot state, voice configuration, transcript or summary. The `id` parameter is used only for series/meeting scopes.
+
+Context management routes are blocked on the temporary public Cloudflare hostname, and context is not serialized to the avatar rendering capability. The PoC has a **single shared workspace**: “general” means this installation, not an enterprise tenant. Before a multi-client deployment, enforce authenticated workspace ownership and tenant-scoped queries; do not enter secrets in these notes.
 
 ## Runtime architecture
 
@@ -156,6 +187,8 @@ Development hot reload must not reuse an older Mongoose model that silently drop
 
 ### Caption language after admission
 
+**Open recognition defect:** the spoken greeting "Ciao Riccardo" was again received as "Charlie cardo." on 13 September, after the language-setting API acknowledged the Italian request. This is not fixed by parser aliases or tunnel readiness. See the [caption investigation and acceptance requirement](docs/caption-recognition-2026-09-13.md); actual Teams language and microphone-to-transcript recognition still need verification.
+
 For new tracked Attendee entries, Conclavia persists the selected Italian/English language, omits the startup language setting and sends `PATCH /bots/{id}/transcription_settings` after a fresh `joined_recording` confirmation. This avoids a provider-side same-value no-op: Attendee's published adapter skips a language update when its internal setting already matches, even if startup did not successfully apply it. See the [adapter implementation](https://github.com/attendee-labs/attendee/blob/main/bots/teams_bot_adapter/teams_bot_adapter.py) and [request schema](https://github.com/attendee-labs/attendee/blob/main/bots/serializers.py).
 
 The monitor persists at most three attempts per entry, does not reapply after HTTP acknowledgement, and does not configure a stopped or replaced attempt. A failed request leaves an explicit warning in the meeting controls; it does not trigger departure or a replacement bot. `captionLanguageRequestedAt` means the API accepted the request, **not** that pronunciation or recognition has been verified. Caption language can affect other participants in Teams. `auto` and pre-existing active sessions are left unchanged; there is no automatic temporary switch to another language. The deferred-startup strategy has regression coverage but still needs a fresh real-admission test. The current live call was recovered separately without creating a replacement participant.
@@ -174,33 +207,60 @@ The monitor persists at most three attempts per entry, does not reapply after HT
 
 ### Choose the avatar appearance
 
-In **Avatar → Avatar appearance**, choose **Male · Business** or **Female · Business**, then **Save avatar**. The female variant uses the same animated vector style, blue blazer, expressions, hand raise and audio-driven mouth shapes, with chestnut hair and a green blouse. The preview changes immediately; the choice is persisted only when saved.
+Choose **Male · Business** or **Female · Business** in either **Identity & behaviour** or **Test avatar**. Both tabs share the same unsaved configuration: you can select the female avatar, change its name, switch to testing and hear it before saving. The female variant uses the same animated vector style, blue blazer, expressions, hand raise and audio-driven mouth shapes, with chestnut hair and a green blouse. Its chin has a softer contour and lighter shading without the dark chin crease.
 
-Appearance, name and Italian/English voice preferences are independent: selecting the female avatar does not rename Riccardo or change the saved voices. Existing profiles keep the male appearance. The voice studio uses the saved appearance, and an already open meeting renderer picks up saved appearance changes through its existing state polling, without creating another participant.
+Voices follow the selected appearance in both tabs: **male avatar → male voices only; female avatar → female voices only**, in Italian and English. Switching appearance immediately selects a compatible pair in the preview (Gianni/Dennis for male, Orietta/Eleanor for female), retaining compatible selections and remembering each appearance's last choices during the editing session. The name stays independent: selecting the female avatar does not rename Riccardo. The voice studio uses the current draft; the meeting renderer uses only the saved configuration. An already open meeting renderer picks up saved appearance changes through its existing state polling, without creating another participant.
+
+If an existing profile contains mismatched voices, preview uses compatible defaults and explicitly asks you to save the correction. Merely opening the page never rewrites the saved meeting profile. Custom server voice IDs without curated gender metadata are not offered in this filtered selector; their saved values remain visible under Advanced until explicitly replaced. Discarding other edits cannot restore a mismatched voice into the preview.
 
 The [female avatar verification report](docs/female-avatar-verification-2026-09-11.md) covers 64 pose combinations, movement, hand raise, controlled browser lip sync, Italian/English real voice previews and the full 197-test regression run. Receiver-side Teams sync remains a separate live acceptance check.
 
 ### Let the client choose the voice
 
-The avatar workspace has two sections: **Identity & behaviour** for name, appearance and personality, and **Test avatar · voice & movement** for listening and animation checks. Speaking rate belongs in the test studio so changes can be heard before saving.
+The avatar workspace has two sections: **Identity & behaviour** for name, appearance and personality, and **Test avatar · voice & movement** for listening and animation checks. Optional speaking-rate adjustments belong in the test studio's collapsed **Advanced settings**, so the main flow stays focused on choosing and hearing a voice.
 
-[Identity settings screenshot](docs/images/avatar-settings-en.png) · [Voice and movement studio screenshot](docs/images/avatar-studio-en.png)
+[Voice and movement studio screenshot](docs/images/avatar-studio-en.png) · [Mobile playback preview](docs/images/avatar-studio-mobile-speaking-en.png)
 
-Open **Test avatar · voice & movement**. The streaming studio offers two native Italian voices, **Gianni** and **Orietta**, and six English voices: **Dennis**, **Edward**, **Alex** (US), **Alistair**, **Olivia**, **Eleanor** (UK). This curated set was checked against the [Inworld system voice catalog](https://docs.inworld.ai/api-reference/voiceAPI/voiceservice/list-voices) on 11 September 2026. The catalog describes voice availability, not a guarantee that a client will prefer its timbre.
+Open **Test avatar · voice & movement**. Only the voices matching the preview's appearance and language are offered:
 
-1. Select the language and a voice, then adjust **Speaking rate** (0.80×–1.10×). This changes speech pace, not response latency. Compare the same phrase or enter a custom one.
+| Avatar | Italian | English |
+| --- | --- | --- |
+| Male | Gianni (System); Capitano, Ingegnere, Cuoco (Community) | Dennis, Edward, Alex (US); Alistair (UK) |
+| Female | Orietta (System); Voce Sistema (Community) | Olivia, Eleanor (UK) |
+
+**Voice provider: Inworld** is explicit in the GUI. The selector groups **Inworld · System** and **Inworld · Community**, and the selected voice's origin remains visible after closing the dropdown. Community voices are published by community members and served by Inworld; they are not additional providers or promises of the same quality as System voices. Despite its display name, **Voce Sistema is a Community voice**.
+
+The [official Inworld catalog API](https://docs.inworld.ai/api-reference/voiceAPI/voiceservice/list-voices) was queried on **13 September 2026**: the Italian System catalog returned Gianni and Orietta; the separate `community = "true" AND lang_code = "it"` query returned the four additional voices above. All six have Italian as their primary language. Capitano has an explicit male field; the other three community entries omit gender, so their classifications use the published descriptions explicitly stating man or woman, not guesses from names. The six existing English voices were also rechecked on 13 September with their gender and US/UK locale metadata. See the [verification record and exact voice IDs](docs/inworld-voice-catalog-2026-09-13.md).
+
+The catalog describes availability, not a guarantee that a client will prefer the timbre. The **Preview voices** summary shows readable names, not opaque community IDs; saved meeting voices are separate diagnostics under **Advanced**. Community availability can change, and an unavailable voice produces an error instead of silently switching speakers. Existing saved preferences and the default Gianni/Orietta pairing are not changed by adding these options.
+
+1. Select the language and a voice. Compare the same phrase or enter a custom one. If needed, expand **Advanced settings** to adjust **Speaking rate** (0.80×–1.10×), labelled **Ritmo del parlato** in Italian. New profiles start at **1.00×**; existing saved rates are preserved. **Reset · 1.00×** changes only the draft rate, not the chosen voices, and requires an explicit save to affect meetings. The rate is shared by both languages and changes speech pace, not response latency.
 2. Click **Listen to voice**. Previewing does not change the saved meeting voice; each synthesis uses Inworld credit. Stop playback before switching voices.
-3. Click **Save voice & rate** to save that language's voice and the rate shared by both languages. **Discard changes** restores the selected language's saved voice and saved rate. Italian and English voice preferences remain independent, persisted in MongoDB, and survive profile edits and server restarts. Unsaved preview changes do not alter meeting speech.
+3. Click **Save avatar** in either tab to save all pending changes, including appearance, identity, both language voices and the shared speaking rate. The save panel lists exactly which settings differ. **Discard changes** restores the saved configuration across both tabs (with compatible preview defaults if the saved profile is mismatched). Each language has its own compatible voice choice, persisted in MongoDB, and survives server restarts. Previewing never changes meeting speech.
 
-Hand and expression controls sit below the live avatar preview and affect only the preview. **Advanced · model & diagnostics** is collapsed by default; expand it for temporary model comparisons and technical playback metrics. Save identity/appearance changes before switching sections. Identity-only saves do not overwrite a newer rate selected in the voice studio.
+Hand and expression controls sit below the live avatar preview and affect only the preview. **Advanced settings** is collapsed by default; expand it for the optional speaking-rate control, temporary model comparisons and technical playback metrics. Rate adjustment and reset are disabled during playback and saving. Switching tabs preserves unsaved configuration; save before reloading or closing the page (the browser warns about pending changes). Each language retains its custom test phrase while switching languages in the studio. Identity-only saves do not overwrite voice selections or the rate changed elsewhere. Save failures retain the draft for retry; switching pages stops preview audio.
 
-Workspace verification on 11 September 2026: **199 automated tests passed in 2.6 minutes**, plus TypeScript and ESLint. Coverage includes unsaved rate previews, discard, failed-save recovery, shared rate across languages, independent voices, stale identity-form preservation, mobile layouts and existing avatar/meeting regressions. Tests used isolated data and deterministic audio, not paid synthesis or a live Teams call.
+Workspace regression coverage includes navigation with an unsaved female identity, all four appearance/language voice filters and synthesis payloads, remembered compatible choices, legacy mismatched profiles, both-language saves, global discard, custom test phrases, failed-save recovery, shared rate across languages, stale identity-form preservation, mobile layouts and existing avatar/meeting regressions. Tests use isolated data and deterministic audio, not paid synthesis or a live Teams call.
+
+The Advanced settings simplification passed **38 targeted tests** on 13 September 2026, plus TypeScript and ESLint. Coverage includes collapsed controls, English/Italian labels and number formatting, desktop/mobile layouts, keyboard adjustments, reset without changing voices, preservation of existing saved rates, explicit save/discard, and disabled controls during playback. This targeted run does not replace the separate full-suite result below.
+
+The preceding workspace revision passed **208 regression tests**, including appearance/voice pairing and explicit audio-device closure assertions. The Community expansion adds tests for all four new voices, provider/origin labels, readable names, synthesis payloads, save/reload, and rejection of unknown providers. Automated tests use isolated data and deterministic audio. See the [current verification record](docs/inworld-voice-catalog-2026-09-13.md) for separate real-provider checks. These checks do not certify subjective voice naturalness or receiver-side Teams synchronization.
+
+On mobile and tablet, a small floating avatar remains visible during speech even when the playback controls are below the main preview. Stopping returns it to its normal position; leaving the studio cancels the preview audio.
 
 Subsequent meeting speech requests use the saved preference, falling back to `INWORLD_VOICE_ID_IT` / `INWORLD_VOICE_ID` only when none is saved. No `.env.local` change or meeting restart is required. Speech already being played is not replaced. The model comparison control affects the preview only, not the meeting model.
 
-The management-only `/api/avatar/voices` endpoint validates the curated voice against its language, rejects cross-site writes and remains blocked on the public tunnel. No API key reaches the browser. Eight short real synthesis probes completed successfully with PCM audio and phoneme timings; first audio data reached the local test client in 283–574 ms. These are not receiver-side Teams playback measurements or a subjective naturalness rating.
+The management-only `/api/avatar` endpoint saves the shared configuration in one profile update, validates both voices against their language before writing, and rejects cross-site writes. The `/api/avatar/voices` endpoint remains available for scoped voice-only clients. Both routes remain blocked on the public tunnel. No API key reaches the browser. Eight earlier short real synthesis probes completed successfully with PCM audio and phoneme timings; first audio data reached the local test client in 283–574 ms. These are not receiver-side Teams playback measurements or a subjective naturalness rating.
 
 Verification: 30 targeted tests passed, including save/reload, independent language preferences, profile-edit preservation, failed saves, streaming playback and authorization. Two additional real GUI previews (Orietta and Eleanor) completed with no buffer underruns or browser errors; browser audio started in approximately 1.09 s and 0.63 s respectively. The actual public tunnel returned 404 for voice settings and the avatar test page, while health remained reachable. The existing Riccardo bot was confirmed `ended` before these tests; no replacement participant was created and the user's saved voices remained unchanged.
+
+### Future client-specific voice providers
+
+Today **only Inworld is integrated**; customers cannot connect another provider from the GUI yet. Catalog entries now carry a separate `provider` and `source`, and the preview request explicitly identifies Inworld. Unsupported provider requests are rejected, not silently routed to Inworld. This is an extension point, not a completed multi-provider implementation.
+
+For the company version, each customer's voice connection should contain a provider, server-side credential reference, and voice IDs per language. A provider adapter must expose catalog metadata (language, gender, origin) and normalize streamed audio and timing information for the shared avatar player. Each adapter needs availability, latency, cancellation, authorization, and received Teams audio/video tests. Providers without phoneme timing need an explicitly labelled alternative lip-sync strategy, not a claim of equivalent synchronization. The existing Inworld-specific saved fields need a backward-compatible migration when this is implemented.
+
+Credentials must be isolated per customer and never stored in browser state or returned by catalog APIs. The admin interface should offer only integrated, enabled providers, with an audition and explicit save flow. No new provider account, deployment, or credential configuration is required for the current Inworld additions.
 
 ### Transcript attribution and echo protection
 
@@ -286,6 +346,37 @@ Cloudflare is the temporary public doorway to the app on your computer. Attendee
 For **Avatar > Test avatar** at `http://localhost:3000`, no tunnel is needed: your browser already reaches the app, which calls Inworld directly. For a **real Teams test with the app hosted locally**, keep both the app and its public tunnel running. For **company deployment**, use an always-on container and stable HTTPS entry point; Cloudflare is optional, as described under [production deployment](#production-deployment).
 
 ### Public connection for a local Teams test
+
+#### Recommended: one command
+
+From `conclavia-meeting-avatar`, run:
+
+```bash
+npm run tunnel
+```
+
+This restores the same local setup without manually copying a Cloudflare hostname:
+
+1. Check the app on port 3000 and the public URL in the existing `.env.local`. If both work and public management routes are blocked, reuse them without a restart.
+2. Otherwise start a new Cloudflare Quick Tunnel and update **only** `CONCLAVIA_PUBLIC_URL`, preserving the rest of `.env.local` and its file permissions.
+3. Start the app, or restart only the verified Next development server belonging to this directory. It uses `dev:system-ca` and the new public URL. Another project's process on port 3000 is never stopped or exposed.
+4. Wait for local/database health, public health and blocked management routes before printing **PRONTO**. While supervising a newly started setup, check connectivity periodically and warn if it drops.
+
+If the command starts the app/tunnel, **keep that terminal open and the Mac awake**. `Ctrl+C` closes only the processes started by that invocation. It does not make an Attendee bot leave Teams: use the GUI and wait for confirmed departure first. If an existing healthy setup is reused, the command exits and leaves its original processes alone. Pre-existing standalone Cloudflare processes are not killed by this launcher.
+
+To check without changing configuration or restarting anything:
+
+```bash
+npm run tunnel:check
+```
+
+Requirements: macOS/Linux, Node.js 22.19+ or 24.5+, existing `.env.local`, installed npm dependencies and `cloudflared`. The launcher finds Homebrew's standard paths on macOS; it never installs software automatically. A loopback-only lock on port 39091 prevents concurrent launchers and is released automatically on exit/crash. Custom domains are refused rather than overwritten. If recovery fails, only its own configuration change is rolled back; a concurrent user edit is preserved. Its own child processes are closed, so a failed startup may require rerunning the command.
+
+**What this helps with:** Attendee runs the Teams participant remotely; its browser cannot reach the Mac's `localhost`. The tunnel provides a temporary HTTPS address leading to Conclavia on the Mac, so Attendee can load the avatar and exchange meeting events/audio data. It does not generate the voice, admit participants, or fix recognition/lip sync. If the hostname changes, already-created bots still have their old URL; start a fresh attempt only after the previous participant has confirmed departure.
+
+The script checks connectivity and management isolation without sending private meeting links or creating participants. The app's separate avatar-page/state/asset preflight still runs before sending a bot; actual received audio/video must be checked after admission. Launcher regressions run with `npm run test:tunnel`: 23 tests passed, covering isolated recovery/failure simulations, configuration preservation, locking and safety checks. `tunnel:check` also passed against the running local/public setup; this verification did not deliberately interrupt a live setup or spend speech credit.
+
+#### Manual alternative
 
 Use this only for development. [Cloudflare Quick Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/) allocate a temporary random hostname, have no uptime guarantee, and are not a production deployment. Do not save a particular test hostname in this README or reuse it after its tunnel stops working.
 
@@ -407,6 +498,8 @@ npm run verify
 
 This runs ESLint, TypeScript, a production build, and the Playwright regression suite covering:
 
+- general/series/meeting context persistence, inheritance, clearing, concurrent edits, input validation and public-route isolation;
+- actual AI task orchestration with intercepted provider calls, checking context injection in answers, checks, summaries, proactive interventions and final memory extraction (not a live-model reasoning certification);
 - single-meeting creation, agenda, commands, memory, and cleanup;
 - series creation and continuity across two appointments;
 - dashboard filtering, search, and large activity queues;
@@ -508,6 +601,7 @@ For streaming voice, inject the Inworld settings at container runtime and provid
 | `/meetings/series/[id]` | Manage appointments, shared agenda, and continuity. |
 | `/meetings/[id]` | Follow the agenda, use the assistant, review the summary, and optionally expand the full transcript. |
 | `/memory` | Review meeting and series memory. |
+| `/context` | Edit general assistant background; specific notes live in meeting and series details. |
 | `/avatar` | Manage identity, personality, and voice. |
 | `/avatar/test` | Test voice, expressions, lip sync, and gestures without a meeting. |
 | `/meeting-room/[token]` | Minimal 16:9 output consumed by the meeting participant. |

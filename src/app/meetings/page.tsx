@@ -87,7 +87,6 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Pro
     <MeetingDashboardRefresh enabled={data.counts.active > 0 || data.history.some((item) => item.status === "processing")} />
     <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div><h1 className="text-3xl font-bold tracking-tight">{it ? "Meeting" : "Meetings"}</h1><p className="mt-2 text-sm text-slate-500">{it ? "Segui gli incontri di oggi e ritrova ciò che avete deciso." : "Follow today's meetings and find what you decided."}</p></div>
-      <Link href="/meetings/new" className="button-primary">＋ {it ? "Nuovo meeting" : "New meeting"}</Link>
     </header>
     <nav aria-label={it ? "Filtra meeting" : "Filter meetings"} className="mb-5 grid grid-cols-4 gap-1 border-b border-slate-200 pb-2 sm:flex sm:flex-wrap">
       {(["overview", "upcoming", "history", "series"] as const).map((view) => <Link key={view} aria-current={filters.view === view ? "page" : undefined} href={dashboardHref(filters, { view, page: 1, state: "all" })} className={`rounded-lg px-1 py-2 text-center text-xs font-semibold sm:px-4 sm:text-sm ${filters.view === view ? "bg-[#e7f0e9] text-[#24563d]" : "text-slate-500 hover:bg-slate-100"}`}>
