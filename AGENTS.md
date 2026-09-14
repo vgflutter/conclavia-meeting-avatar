@@ -38,6 +38,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Named speaking turns
 
+- On 2026-09-14 the user explicitly authorized automatic contextual assessment of small batches of queued meeting transcript statements (including potentially confidential text) by OpenAI, the project's existing analysis provider, and asked not to be prompted for that same consent again. Keep payload/frequency bounded and diagnostics private. This consent does not cover unrelated data, new providers, extra meeting participants or unlimited paid runs.
+- Proactive hand checks collect captions in a fixed 2.5-second window, separately from named answers. Ingress only queues work; media-state polling drains it after the response with one worker per meeting. Preserve arriving captions and revalidate newer context before raising a hand; never make named replies wait on this queue or restore the former 30-second cooldown.
+
 - Require the configured invocation name for transcript-driven speech. Do not restore unnamed audio-check shortcuts or generic assistant aliases. A mention or quoted/conditional permission is not a direct speaking turn.
 - Keep prepared hand-raise contributions silent until a named grant. A bare named “dimmi” must recover a recent point, not become a punctuation-only question; this also applies without a prepared contribution when answers are enabled.
 - Deferred permission (“dimmi pure quando te lo dico”) stays silent until a later named grant; do not treat it as a question. Preserve actual questions such as “dimmi quando consegniamo”.

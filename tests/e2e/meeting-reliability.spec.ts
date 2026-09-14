@@ -67,6 +67,13 @@ test("affidabilità: recupera tutti i comandi tra due letture del video", async 
 test("affidabilità: una correzione certa alza la mano anche dopo un altro controllo", async ({request}) => {
   const meeting = await createMeeting(request);
   try {
+    // Captions alone do not confirm admission. Establish the provider's live
+    // state before testing a spoken turn, as a real admitted bot would do.
+    expect((await request.post(`/api/webhooks/attendee?meeting_token=${meeting.bot.outputToken}`, { data: {
+      idempotency_key: crypto.randomUUID(), bot_id: `test-${meeting.id}`,
+      bot_metadata: { conclavia_meeting_id: meeting.id }, trigger: "bot.state_change",
+      data: { new_state: "joined_recording", created_at: new Date().toISOString() },
+    } })).ok()).toBe(true);
     await webhook(request, meeting, "Il team sta preparando la proposta per il prossimo incontro.", 1000);
     await expect.poll(async () => {
       const r = await request.get(`/api/meetings/${meeting.id}`);
@@ -157,7 +164,7 @@ test(`streaming simulato ${appearance}${cpuOnly ? " senza GPU" : ""}: attende il
       });
       observer.observe(surface, { attributes: true, attributeFilter: ["data-speaking"] });
     });
-    await webhook(request, meeting, `${meeting.assistant.wakeWord}, vai pure`, 3000);
+    await webhook(request, meeting, `Sì, ${meeting.assistant.wakeWord}.`, 3000);
     // Capture the transient start in the browser. Locator retries measure when
     // Playwright notices it, not when the audio-driven speaking state started.
     const observedLatency = () => page.evaluate(() => {

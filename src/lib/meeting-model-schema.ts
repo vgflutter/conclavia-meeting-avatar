@@ -8,6 +8,8 @@ export const MEETING_LIFECYCLE_PATHS = [
   "bot.readyAt", "bot.stopRequestedAt", "bot.stopAcknowledgedAt", "bot.failureCode",
   "bot.monitorLeaseUntil", "bot.monitorCheckedAt",
   "bot.captionLanguage", "bot.captionLanguageAttempts", "bot.captionLanguageRequestedAt",
+  "bot.diagnosticLogsRequestedAt",
+  "bot.interventionNextCheckAt", "bot.interventionLeaseUntil",
   "bot.outputLastSeenAt", "bot.outputVoiceReady",
   "bot.outputSpeechCommandId", "bot.outputSpeechState", "bot.outputSpeechUpdatedAt",
 ] as const;
@@ -16,9 +18,12 @@ export function hasMeetingLifecycleSchema(model: Model<MeetingRecord>): boolean 
   const botSchema = (model.schema.path("bot") as unknown as { schema?: Schema } | undefined)?.schema;
   const transcriptSchema = (model.schema.path("transcript") as unknown as { schema?: Schema } | undefined)?.schema;
   const commandSchema = (model.schema.path("commandHistory") as unknown as { schema?: Schema } | undefined)?.schema;
-  return Boolean(botSchema && MEETING_LIFECYCLE_PATHS.every((path) => botSchema.path(path.slice(4))) &&
+  return Boolean(model.schema.path("participantRoster") && model.schema.path("participantSyncLeaseUntil") &&
+    transcriptSchema?.path("speakerId") && transcriptSchema.path("speakerIsParticipant") && transcriptSchema.path("entryAttemptId") &&
+    transcriptSchema.path("turnDecision") && transcriptSchema.path("automationClaimedAt") && transcriptSchema.path("interventionDecision") &&
+    botSchema && MEETING_LIFECYCLE_PATHS.every((path) => botSchema.path(path.slice(4))) &&
     transcriptSchema?.path("source") && transcriptSchema.path("echoCommandId") && transcriptSchema.path("segmentId") &&
-    commandSchema?.path("playbackStartedAt") && commandSchema.path("playbackEndedAt"));
+    commandSchema?.path("playbackStartedAt") && commandSchema.path("playbackEndedAt") && commandSchema.path("playbackMetrics"));
 }
 
 export function assertMeetingLifecycleSchema(model: Model<MeetingRecord>): void {

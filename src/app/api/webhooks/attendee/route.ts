@@ -15,6 +15,9 @@ import {
   storeMeetingTranscript,
 } from "@/lib/process-meeting-transcript";
 import { MeetingModel } from "@/models/Meeting";
+import { parseParticipantEvent } from "@/lib/meeting-participants";
+import { persistParticipantEvents } from "@/lib/sync-meeting-participants";
+import { parseAttendeeDiagnostic, storeAttendeeDiagnostic } from "@/lib/meeting-diagnostics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,6 +93,22 @@ export async function POST(request: Request) {
   if (meeting.bot.externalBotId && meeting.bot.externalBotId !== event.botId) {
     return NextResponse.json({ received: true });
   }
+  if (event.trigger === "bot_logs.update") {
+    // Authenticate/correlate above, but do NOT bind or advance a bot based on a
+    // log. Accept diagnostics even after timeout/exit for this same attempt.
+    if (meeting.bot.provider !== "attendee" || !meeting.bot.entryAttemptId) {
+      return NextResponse.json({ received: true });
+    }
+    const entry = parseAttendeeDiagnostic(event.data);
+    if (!entry) return NextResponse.json({ error: "Invalid diagnostic" }, { status: 400 });
+    try {
+      await storeAttendeeDiagnostic({ meetingId: meeting._id, attemptId: meeting.bot.entryAttemptId, botId: event.botId }, entry);
+    } catch {
+      console.error("Attendee diagnostic storage failed; requesting webhook retry.");
+      return NextResponse.json({ error: "Diagnostic storage unavailable" }, { status: 503 });
+    }
+    return NextResponse.json({ received: true });
+  }
   // Creation callbacks may arrive before the POST response. Bind only this attempt's bot.
   if (!meeting.bot.externalBotId) {
     await MeetingModel.updateOne({ _id: meeting._id, "bot.entryAttemptId": meeting.bot.entryAttemptId ?? null, "bot.externalBotId": null }, {
@@ -120,6 +139,16 @@ export async function POST(request: Request) {
   }
   if (meeting.bot.stopRequestedAt || meeting.bot.leftAt || ["failed", "completed", "cancelled"].includes(meeting.status)) {
     return NextResponse.json({ received: true });
+  }
+  if (event.trigger === "participant_events.join_leave" && meeting.bot.entryAttemptId) {
+    const participant = parseParticipantEvent(event.data);
+    try {
+      await persistParticipantEvents({
+        meetingId: meeting._id.toString(), attemptId: meeting.bot.entryAttemptId, externalBotId: event.botId,
+      }, participant ? [participant] : [], participant ? undefined : { complete: false, at: new Date() });
+    } catch {
+      return NextResponse.json({ error: "Participant update could not complete; retry delivery" }, { status: 503 });
+    }
   }
   meeting.bot.processedWebhookIds.push(event.idempotencyKey);
   if (meeting.bot.processedWebhookIds.length > 200) {

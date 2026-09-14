@@ -35,6 +35,14 @@ export function avatarVoiceName(id: string, provider: VoiceProviderId = "inworld
   return AVATAR_VOICES.find(voice => voice.provider === provider && voice.id === id)?.name ?? id;
 }
 
+export function avatarVoiceLocale(id: string, language: "it" | "en") {
+  if (language === "it") return "it-IT";
+  const voice = AVATAR_VOICES.find(voice => voice.id === id && voice.language === language);
+  // Respect a catalogued regional accent; do not impose an American accent on
+  // a custom English voice whose native region we do not know.
+  return voice?.accent === "UK" ? "en-GB" : voice?.accent === "US" ? "en-US" : "en";
+}
+
 export function voicesForAppearance(appearance: AssistantAppearance, language: "it" | "en", provider: VoiceProviderId = "inworld") {
   const gender = appearance === "business_clay_female" ? "female" : "male";
   return AVATAR_VOICES.filter(voice => voice.provider === provider && voice.language === language && voice.gender === gender);

@@ -322,7 +322,7 @@ export function MeetingCreateForm({
               <option value="en">English</option>
             </select>
             {usesTeamsCaptions && <p className="mt-2 text-sm text-slate-500">
-              {isItalian ? "Scegli la lingua parlata nel meeting: viene usata anche per i sottotitoli di Teams." : "Choose the language spoken in the meeting. It is also used for Teams captions."}
+              {isItalian ? "Scegli la lingua parlata: la richiediamo anche a Teams. L’applicazione effettiva nei sottotitoli deve essere verificata." : "Choose the spoken language: we also request it from Teams. Its actual application to captions must be verified."}
             </p>}
           </div>
           <details className="rounded-xl border border-slate-200 p-4" data-testid="create-context" open={initialMeeting?.context ? true : undefined}>

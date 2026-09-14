@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
 import { LOCAL_ORIGIN, acquireRecoveryLock, checkConnection, quickOrigin, readEnvironment, restoreTunnel, writeEnvironment } from "./lib/local-tunnel.mjs";
+import { captureDiagnosticStream, createLocalDiagnosticLog } from "./lib/local-diagnostic-log.mjs";
 
 const args = process.argv.slice(2);
 if (args.includes("--help")) {
@@ -25,6 +26,7 @@ const children = [];
 let connector;
 let stopping = false;
 let lock;
+let diagnostics;
 const log = message => console.log(`[Conclavia] ${message}`);
 const tool = async (binary, argv) => (await run(binary, argv, { timeout: 10000, maxBuffer: 128 * 1024 })).stdout.trim();
 
@@ -63,9 +65,10 @@ async function localHealthy() {
 function startChild(binary, argv, options = {}) {
   const child = spawn(binary, argv, { cwd: root, stdio: ["ignore", "pipe", "pipe"], ...options });
   child.on("error", () => { child.failed = true; });
-  // App logs may include private meeting paths. Never dump them to this console.
-  child.stdout?.resume();
-  child.stderr?.resume();
+  // Capture bounded/redacted records, never echo raw subprocess output.
+  const source = binary === connector ? "cloudflared" : "app";
+  captureDiagnosticStream(child.stdout, `${source}:stdout`, diagnostics);
+  captureDiagnosticStream(child.stderr, `${source}:stderr`, diagnostics);
   children.push(child);
   return child;
 }
@@ -93,7 +96,12 @@ async function cleanup() {
 try {
   if (!["darwin", "linux"].includes(process.platform)) throw new Error("Questo launcher supporta macOS/Linux. Per altri sistemi usa la procedura manuale nel README.");
   await import("./system-ca.mjs");
-  if (!args.includes("--check")) lock = await acquireRecoveryLock();
+  if (!args.includes("--check")) {
+    lock = await acquireRecoveryLock();
+    diagnostics = await createLocalDiagnosticLog(join(root, ".conclavia", "logs"), {
+      onError: () => log("ATTENZIONE: salvataggio diagnostico locale interrotto. Nessun output privato viene stampato."),
+    });
+  }
   process.on("SIGINT", () => { stopping = true; });
   process.on("SIGTERM", () => { stopping = true; });
   await restoreTunnel({
@@ -154,6 +162,7 @@ try {
       log("Health pubblico OK; pagine/API di gestione bloccate. Nessun bot inviato e nessun audio generato.");
       log("Il controllo completo dell'avatar viene eseguito dall'app prima di inviarlo. Audio/video Teams vanno verificati dopo l'ammissione.");
       log(owned ? "Lascia questo terminale aperto e il Mac sveglio. Ctrl+C ferma app e tunnel avviati qui." : "App e tunnel esistenti restano nei loro terminali: tienili aperti e il Mac sveglio.");
+      if (owned) log("Log locali ripuliti: .conclavia/logs/runtime.log (rotazione a 1 MiB, una copia precedente).");
       log("Se l'indirizzo è cambiato, un vecchio bot conserva il vecchio link: attendi l'uscita confermata prima di un nuovo tentativo dalla GUI.");
     },
     supervise: async origin => {
@@ -177,5 +186,6 @@ try {
   console.error(`[Conclavia] ${error.code ? "Operazione locale non riuscita. Controlla permessi e dipendenze; nessuna credenziale viene mostrata." : error.message}`);
   process.exitCode = stopping ? 130 : 1;
 } finally {
+  await diagnostics?.close();
   if (lock) await new Promise(resolve => lock.close(resolve));
 }

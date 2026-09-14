@@ -2,6 +2,8 @@
 
 Status: **unresolved speech-to-text acceptance failure**. No alias, transcript substitution, artificial greeting or live language change was applied during this investigation.
 
+Update, 14 September: the [native Teams language investigation](teams-language-verification-2026-09-14.md) documents Microsoft's language-setting support, confirms two new erroneous captions were already identical at Attendee, and fixes the GUI's acknowledgement-only warning suppression. Actual Teams language and microphone recognition remain unverified.
+
 ## User requirement
 
 The participant said **"Ciao Riccardo"**. Debug displayed **"Charlie cardo."**. The user explicitly clarified that the defect is incorrect transcription, not merely the absence of a greeting response. Making the wrong text trigger a response would not fix this defect.

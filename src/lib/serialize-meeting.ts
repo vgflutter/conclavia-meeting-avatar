@@ -2,17 +2,17 @@ import type { MeetingDocument } from "@/models/Meeting";
 import { classifyTranscriptSource } from "@/lib/meeting-transcript-source";
 import { meetingVoiceConfiguration, meetingAssistantConfiguration } from "@/lib/meeting-factory";
 import type { MeetingResponse } from "@/types/meeting";
+import { meetingParticipantStatus } from "@/lib/meeting-participants";
+import { visibleMeetingIntervention } from "@/lib/meeting-pending-intervention";
 
 function iso(value: Date | undefined): string | undefined {
   return value ? new Date(value).toISOString() : undefined;
 }
 
 export function serializeMeeting(document: MeetingDocument): MeetingResponse {
-  const pendingIntervention = document.pendingIntervention &&
-    document.pendingIntervention.expiresAt.getTime() > Date.now()
-    ? document.pendingIntervention
-    : undefined;
+  const pendingIntervention = visibleMeetingIntervention(document);
   return {
+    participantStatus: meetingParticipantStatus(document),
     id: document._id.toString(),
     archivedAt: iso(document.archivedAt),
     seriesId: document.seriesId?.toString(),
@@ -94,6 +94,7 @@ export function serializeMeeting(document: MeetingDocument): MeetingResponse {
       captionLanguage: document.bot.captionLanguage,
       captionLanguageAttempts: document.bot.captionLanguageAttempts,
       captionLanguageRequestedAt: iso(document.bot.captionLanguageRequestedAt),
+      diagnosticLogsRequestedAt: iso(document.bot.diagnosticLogsRequestedAt),
     },
     voice: meetingVoiceConfiguration(),
     retention: {

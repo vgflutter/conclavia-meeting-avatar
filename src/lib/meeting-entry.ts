@@ -70,6 +70,7 @@ export async function startAttendeeEntry(meeting: MeetingDocument, options: {
         ...(captionLanguage ? { "bot.captionLanguage": captionLanguage, "bot.captionLanguageAttempts": 0 } : {}),
       },
       $unset: {
+        participantRoster: 1, participantSyncAttemptAt: 1, participantSyncLeaseUntil: 1,
         "bot.externalBotId": 1, "bot.leftAt": 1, "bot.joinedAt": 1, "bot.readyAt": 1,
         "bot.stopRequestedAt": 1, "bot.stopAcknowledgedAt": 1, "bot.failureCode": 1,
         "bot.lastError": 1, "bot.lastStatusAt": 1, "bot.monitorCheckedAt": 1, "bot.monitorLeaseUntil": 1,
@@ -77,6 +78,8 @@ export async function startAttendeeEntry(meeting: MeetingDocument, options: {
         "bot.outputLastSeenAt": 1, "bot.outputVoiceReady": 1,
         "bot.outputSpeechCommandId": 1, "bot.outputSpeechState": 1, "bot.outputSpeechUpdatedAt": 1,
         "bot.captionLanguageRequestedAt": 1,
+        "bot.diagnosticLogsRequestedAt": 1,
+        "bot.interventionNextCheckAt": 1, "bot.interventionLeaseUntil": 1, "bot.lastCorrectionCheckAt": 1,
         ...(!captionLanguage ? { "bot.captionLanguage": 1, "bot.captionLanguageAttempts": 1 } : {}),
       },
     }, { new: true, strict: "throw" }).exec();
@@ -95,6 +98,7 @@ export async function startAttendeeEntry(meeting: MeetingDocument, options: {
       : await adapter.join(serializeMeeting(claimed), getMeetingBotRuntimeConfig().publicBaseUrl || "");
     await MeetingModel.updateOne({ _id: meeting._id, "bot.entryAttemptId": attemptId }, {
       $set: { "bot.externalBotId": session.externalBotId, "bot.outputUrl": session.outputUrl,
+        ...(session.diagnosticLogsRequested ? { "bot.diagnosticLogsRequestedAt": new Date() } : {}),
         ...(scheduledFor ? { "bot.scheduledFor": scheduledFor } : {}) },
     }).exec();
     // A fast webhook may already have advanced the state. Never overwrite it with "joining".
@@ -106,12 +110,14 @@ export async function startAttendeeEntry(meeting: MeetingDocument, options: {
     const certificateError = isProviderCertificateError(error);
     const definiteRejection = outputUnavailable || certificateError || (error instanceof MeetingBotProviderError &&
       Boolean(error.status && error.status >= 400 && error.status < 500 && ![408, 409].includes(error.status)));
-    const failureCode = outputUnavailable ? "output_unavailable" : certificateError ? "provider_tls_error" : "entry_failed";
+    const failureCode = outputUnavailable ? error.code : certificateError ? "provider_tls_error" : "entry_failed";
     await MeetingModel.updateOne({ _id: meeting._id, "bot.entryAttemptId": attemptId, "bot.externalBotId": null }, {
       $set: definiteRejection
         ? { status: "failed", "bot.status": "failed", "bot.failureCode": failureCode, "bot.lastError": meetingEntryError(failureCode) }
         : { "bot.failureCode": "create_uncertain", "bot.lastError": meetingEntryError("create_uncertain") },
-      ...(definiteRejection ? { $unset: { "bot.activeRoomKey": 1, "bot.joinDeadlineAt": 1 } } : {}),
+      // No participant exists: a concurrent cancellation must not leave the UI
+      // waiting for an exit acknowledgement that can never arrive.
+      ...(definiteRejection ? { $unset: { "bot.activeRoomKey": 1, "bot.joinDeadlineAt": 1, "bot.stopRequestedAt": 1, "bot.stopAcknowledgedAt": 1 } } : {}),
     }).exec();
     // An ambiguous response is reconciled by bot metadata, never by repeating POST /bots.
   }

@@ -103,6 +103,22 @@ export interface MeetingParticipantNote {
 }
 
 export interface MeetingTranscriptSegment {
+  interventionDecision?: {
+    state: "queued" | "checking" | "raised" | "none" | "skipped" | "error";
+    reason: string;
+    detail?: string;
+    decidedAt: Date;
+  };
+  automationClaimedAt?: Date;
+  turnDecision?: {
+    action: import("@/lib/meeting-speaking-turn").SpeakingTurnDecision["action"];
+    reason: import("@/lib/meeting-speaking-turn").TurnReason;
+    method: "rules" | "semantic";
+    decidedAt: Date;
+  };
+  speakerIsParticipant?: boolean;
+  speakerId?: string;
+  entryAttemptId?: string;
   segmentId?: string;
   source?: "participant" | "avatar" | "suspected_echo";
   echoCommandId?: string;
@@ -116,6 +132,7 @@ export interface MeetingTranscriptSegment {
 }
 
 export interface MeetingCommandEvent {
+  playbackMetrics?: import("@/lib/voice-playback-metrics").VoicePlaybackMetrics;
   playbackStartedAt?: Date;
   playbackEndedAt?: Date;
   id: string;
@@ -160,6 +177,8 @@ export interface MeetingBotConfiguration {
   providerStatusCode?: string;
   lastStatusAt?: Date;
   lastCorrectionCheckAt?: Date;
+  interventionNextCheckAt?: Date;
+  interventionLeaseUntil?: Date;
   processedWebhookIds?: string[];
   lastError?: string;
   entryAttemptId?: string;
@@ -180,6 +199,7 @@ export interface MeetingBotConfiguration {
   captionLanguageAttempts?: number;
   // Provider HTTP acknowledgement, not proof of transcription accuracy.
   captionLanguageRequestedAt?: Date;
+  diagnosticLogsRequestedAt?: Date;
 }
 
 export interface MeetingVoiceConfiguration {
@@ -196,6 +216,9 @@ export interface MeetingRetentionConfiguration {
 }
 
 export interface MeetingRecord {
+  participantRoster?: import("@/lib/meeting-participants").MeetingParticipantRoster;
+  participantSyncAttemptAt?: Date;
+  participantSyncLeaseUntil?: Date;
   context?: string;
   contextVersion?: number;
   archivedAt?: Date;
@@ -227,6 +250,7 @@ export interface MeetingRecord {
 }
 
 export interface MeetingResponse {
+  participantStatus?: import("@/lib/meeting-participants").MeetingParticipantStatus;
   context?: string;
   contextVersion?: number;
   archivedAt?: string;
@@ -280,6 +304,7 @@ export interface MeetingResponse {
     captionLanguage?: "it-it" | "en-us";
     captionLanguageAttempts?: number;
     captionLanguageRequestedAt?: string;
+    diagnosticLogsRequestedAt?: string;
   };
   voice: MeetingVoiceConfiguration;
   retention: MeetingRetentionConfiguration;

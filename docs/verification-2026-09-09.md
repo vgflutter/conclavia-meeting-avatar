@@ -85,7 +85,7 @@ These opt-in checks use real AI calls and their normal usage charges. The defaul
 
 The authorized temporary Cloudflare tunnel was active. Public health, the capability-protected output page, and its state endpoint returned HTTP 200, and the output browser showed the configured name without console errors. Public management pages and APIs returned 404; invalid capabilities returned 404 and a malformed webhook returned 400. Local management remained available on port 3000.
 
-Cloudflare supplies temporary HTTPS reachability for this local test, not Teams admission. The application and tunnel must remain running. A company deployment needs a persistent hosted application/worker and HTTPS origin with the access controls described in the [runtime architecture](../README.md#runtime-architecture), not a laptop-dependent quick tunnel.
+Cloudflare supplies temporary HTTPS reachability for this local test, not Teams admission. The application and tunnel must remain running. A company deployment needs a persistent hosted application/worker and HTTPS origin with the access controls described in the [runtime architecture](guide.md#runtime-architecture), not a laptop-dependent quick tunnel.
 
 Still required in an admitted real Teams call: microphone-to-caption delivery, Italian/English audible replies, actual response latency, perceived voice and video quality, lip sync, hand raise and permission, and a final summary based on real conversation. Unattended admission requires an appropriately configured test meeting or an accessible organizer session; the application cannot grant itself admission.
 

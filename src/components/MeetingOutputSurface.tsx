@@ -16,6 +16,7 @@ import {
   type RecallOutputTranscript,
 } from "@/lib/recall-transcript";
 import type { MeetingTtsProvider } from "@/lib/meeting-tts-config";
+import type { VoicePlaybackMetrics } from "@/lib/voice-playback-metrics";
 import type {
   MeetingBotProvider,
   MeetingCommandKind,
@@ -100,7 +101,7 @@ export function MeetingOutputSurface({
     let lastHeartbeat = 0;
     let lastConnectedAt = Date.now();
     let currentVoiceCommandId: string | undefined;
-    let playback: { commandId: string; state: "speaking" | "completed" | "error" } | undefined;
+    let playback: { commandId: string; state: "speaking" | "completed" | "error"; metrics?: VoicePlaybackMetrics } | undefined;
     let reporting = Promise.resolve();
 
     function reportReadiness() {
@@ -135,8 +136,8 @@ export function MeetingOutputSurface({
         setMood(performanceFor(command.kind).mood);
         setGesture("rest");
       },
-      onComplete: (id) => {
-        playback = { commandId: id, state: "completed" };
+      onComplete: (id, metrics) => {
+        playback = { commandId: id, state: "completed", metrics };
         reportReadiness();
         setCompletedCommandId(id);
         setMood(pendingInterventionRef.current ? "focused" : "friendly");
@@ -173,7 +174,16 @@ export function MeetingOutputSurface({
         if (payload.appearance) setParticipantAppearance(payload.appearance);
         if (payload.displayName) setParticipantName(payload.displayName);
         if (inMeeting && payload.status !== "live") {
-          if (["failed", "processing", "completed", "cancelled"].includes(payload.status)) voicePlayer.dispose();
+          if (["failed", "processing", "completed", "cancelled"].includes(payload.status)) {
+            pendingInterventionRef.current = undefined;
+            voicePlayer.dispose();
+            voiceStateRef.current = "ready";
+            setVoiceState("ready");
+            setViseme("rest");
+            setVoiceLevel(0);
+            setMood("friendly");
+            setGesture("rest");
+          }
           return;
         }
         const nextInterventionId = payload.pendingIntervention?.id;

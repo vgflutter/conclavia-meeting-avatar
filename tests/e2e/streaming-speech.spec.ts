@@ -86,6 +86,26 @@ for (const status of [401, 429, 500]) {
   });
 }
 
+for (const [voiceId, language, locale] of [
+  ["Gianni", "it", "it-IT"], ["Orietta", "it", "it-IT"],
+  ["community-wogdp7fnk36a", "it", "it-IT"],
+  ["Dennis", "en", "en-US"], ["Alistair", "en", "en-GB"],
+  ["Olivia", "en", "en-GB"], ["Eleanor", "en", "en-GB"],
+  ["EnglishCustom", "en", "en"],
+] as const) test(`streaming: respects the selected voice accent (${voiceId})`, async () => {
+  // Exercise both the configured default and an explicit GUI override.
+  for (const override of [false, true]) {
+    const config = { ...fakeConfig, voiceId, italianVoiceId: voiceId };
+    const response = await inworldSpeechResponse({ ...input(), language, ...(override ? { voiceId } : {}) }, {
+      config, fetcher: async (_url, init) => {
+        expect(JSON.parse(String(init?.body))).toMatchObject({ voiceId, language: locale });
+        return new Response(encode(upstreamFrame()));
+      },
+    });
+    expect(await response.text()).toContain('"done":true');
+  }
+});
+
 test("streaming: errore dopo primo audio non diventa un falso completamento", async () => {
   const response = await inworldSpeechResponse(input(), { config: fakeConfig, fetcher: async () => new Response(
     `${JSON.stringify(upstreamFrame())}\n${JSON.stringify({ error: { message: "secret test-not-a-real-key" } })}\n`,

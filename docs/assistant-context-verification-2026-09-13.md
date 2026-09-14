@@ -44,4 +44,4 @@ npm run test:e2e
 npm run test:e2e -- tests/e2e/assistant-context.spec.ts tests/e2e/context-prompts.spec.ts
 ```
 
-Use the existing isolated test configuration, not the live meeting database. See the [README](../README.md#assistant-context) for usage and [Cloudflare setup](../README.md#public-connection-for-a-local-teams-test) for real meeting connectivity.
+Use the existing isolated test configuration, not the live meeting database. See the [README](guide.md#assistant-context) for usage and [Cloudflare setup](guide.md#public-connection-for-a-local-teams-test) for real meeting connectivity.

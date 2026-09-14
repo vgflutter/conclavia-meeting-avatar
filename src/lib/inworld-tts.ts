@@ -1,4 +1,5 @@
 import { meetingTtsConfig, type InworldModel } from "./meeting-tts-config";
+import { avatarVoiceLocale } from "./avatar-voice-catalog";
 import { inworldFrame, readSpeechLines, SPEECH_SAMPLE_RATE, type SpeechFrame } from "./streaming-speech";
 
 export class SpeechServiceError extends Error {
@@ -14,6 +15,7 @@ export async function inworldSpeechResponse(options: {
   const config = dependencies.config || meetingTtsConfig();
   if (!config.ready || !config.apiKey) throw new SpeechServiceError();
   if (!options.text.trim() || options.text.length > 4_000) throw new SpeechServiceError(400);
+  const voiceId = options.voiceId || (options.language === "it" ? config.italianVoiceId : config.voiceId);
   const controller = new AbortController();
   const signal = AbortSignal.any([options.signal, controller.signal, AbortSignal.timeout(90_000)]);
   const firstByteTimer = setTimeout(() => controller.abort(), 10_000);
@@ -23,8 +25,8 @@ export async function inworldSpeechResponse(options: {
       method: "POST", redirect: "error", cache: "no-store", signal,
       headers: { Authorization: `Basic ${config.apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        text: options.text, voiceId: options.voiceId || (options.language === "it" ? config.italianVoiceId : config.voiceId), modelId: options.model || config.model,
-        language: options.language === "it" ? "it-IT" : "en-US",
+        text: options.text, voiceId, modelId: options.model || config.model,
+        language: avatarVoiceLocale(voiceId, options.language),
         audioConfig: { audioEncoding: "PCM", sampleRateHertz: SPEECH_SAMPLE_RATE,
           speakingRate: Math.max(0.8, Math.min(1.2, options.speakingRate || 1)) },
         timestampType: "WORD", timestampTransportStrategy: "SYNC",

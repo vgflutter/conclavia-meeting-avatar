@@ -34,7 +34,7 @@ test("voice routing: the selected voice reaches synthesis without changing langu
     const voiceId = selectedMeetingVoices({inworldVoiceIdIt: "Orietta", inworldVoiceIdEn: "Eleanor"}, config)[language];
     const response = await inworldSpeechResponse({text: "Voice test", language, voiceId, speakingRate: 1.04, signal: new AbortController().signal}, {
       config, fetcher: async (_url, options) => {
-        expect(JSON.parse(String(options?.body))).toMatchObject({voiceId, language: language === "it" ? "it-IT" : "en-US", audioConfig: {speakingRate: 1.04}});
+        expect(JSON.parse(String(options?.body))).toMatchObject({voiceId, language: language === "it" ? "it-IT" : "en-GB", audioConfig: {speakingRate: 1.04}});
         return new Response(JSON.stringify({result: {audioContent: "AAAAAA=="}}) + "\n");
       },
     });

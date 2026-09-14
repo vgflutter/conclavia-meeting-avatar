@@ -60,6 +60,10 @@ const assistantSchema = new Schema<MeetingAssistantConfiguration>(
 
 const commandEventSchema = new Schema<MeetingCommandEvent>(
   {
+    playbackMetrics: { type: new Schema({
+      firstAudioMs: Number, totalMs: Number, audioChunks: Number,
+      underruns: Number, gapMs: Number, maxAnimationGapMs: Number,
+    }, { _id: false }), default: undefined },
     playbackStartedAt: { type: Date },
     playbackEndedAt: { type: Date },
     id: { type: String, required: true, trim: true },
@@ -103,6 +107,22 @@ const participantNoteSchema = new Schema<MeetingParticipantNote>(
 
 const transcriptSegmentSchema = new Schema<MeetingTranscriptSegment>(
   {
+    interventionDecision: { type: new Schema({
+      state: { type: String, enum: ["queued", "checking", "raised", "none", "skipped", "error"] },
+      reason: { type: String, maxlength: 80 },
+      detail: { type: String, maxlength: 500 },
+      decidedAt: { type: Date },
+    }, { _id: false }), default: undefined },
+    automationClaimedAt: { type: Date },
+    turnDecision: { type: new Schema({
+      action: { type: String, enum: ["ignore", "grant", "decline", "defer", "request", "unresolved"] },
+      reason: { type: String, maxlength: 80 },
+      method: { type: String, enum: ["rules", "semantic"] },
+      decidedAt: { type: Date },
+    }, { _id: false }), default: undefined },
+    speakerId: { type: String, maxlength: 256 },
+    speakerIsParticipant: { type: Boolean },
+    entryAttemptId: { type: String },
     segmentId: { type: String },
     source: { type: String, enum: ["participant", "avatar", "suspected_echo"] },
     echoCommandId: { type: String },
@@ -160,6 +180,8 @@ const botSchema = new Schema<MeetingBotConfiguration>(
     providerStatusCode: { type: String, trim: true, maxlength: 160 },
     lastStatusAt: { type: Date },
     lastCorrectionCheckAt: { type: Date },
+    interventionNextCheckAt: { type: Date },
+    interventionLeaseUntil: { type: Date },
     processedWebhookIds: { type: [String], required: true, default: [] },
     lastError: { type: String, trim: true, maxlength: 2_000 },
     entryAttemptId: { type: String },
@@ -179,6 +201,7 @@ const botSchema = new Schema<MeetingBotConfiguration>(
     captionLanguage: { type: String, enum: ["it-it", "en-us"] },
     captionLanguageAttempts: { type: Number, min: 0 },
     captionLanguageRequestedAt: { type: Date },
+    diagnosticLogsRequestedAt: { type: Date },
   },
   { _id: false },
 );
@@ -195,6 +218,21 @@ const voiceSchema = new Schema<MeetingVoiceConfiguration>(
 
 const meetingSchema = new Schema<MeetingRecord>(
   {
+    participantRoster: { type: new Schema({
+      attemptId: { type: String, required: true },
+      revision: { type: Number, required: true },
+      synchronizedAt: { type: Date },
+      incomplete: { type: Boolean },
+      entries: { type: [new Schema({
+        participantId: { type: String, required: true, maxlength: 256 },
+        name: { type: String, required: true, maxlength: 160 },
+        present: { type: Boolean, required: true },
+        timestampMs: { type: Number, required: true },
+        eventId: { type: String, required: true, maxlength: 256 },
+      }, { _id: false })], default: [] },
+    }, { _id: false }) },
+    participantSyncAttemptAt: { type: Date },
+    participantSyncLeaseUntil: { type: Date },
     context: { type: String, default: "", maxlength: CONTEXT_MAX_LENGTH },
     contextVersion: { type: Number, default: 0, min: 0 },
     archivedAt: { type: Date },

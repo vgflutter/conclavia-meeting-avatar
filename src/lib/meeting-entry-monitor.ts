@@ -6,6 +6,7 @@ import { persistAttendeeState } from "@/lib/persist-attendee-state";
 import { connectToDatabase } from "@/lib/mongodb";
 import { MeetingModel } from "@/models/Meeting";
 import { CAPTION_LANGUAGE_MAX_ATTEMPTS } from "@/lib/meeting-caption-language";
+import { syncMeetingParticipants } from "@/lib/sync-meeting-participants";
 
 export async function reconcileMeetingEntry(id: string, options: { now?: Date; adapter?: MeetingBotAdapter } = {}): Promise<void> {
   const now = options.now || new Date();
@@ -54,6 +55,9 @@ export async function reconcileMeetingEntry(id: string, options: { now?: Date; a
           if (claimed) {
             try {
               await adapter.setCaptionLanguage(claimed.bot.externalBotId!, claimed.bot.captionLanguage!);
+              // Dispatch acknowledgement only. Attendee's public API does not
+              // return the language actually used in Teams. Keep the UI
+              // unverified; blind same-value retries can be provider no-ops.
               await MeetingModel.updateOne(captionGuard, {
                 $set: { "bot.captionLanguageRequestedAt": now },
               }).exec();
@@ -66,6 +70,9 @@ export async function reconcileMeetingEntry(id: string, options: { now?: Date; a
         if (state.state === "ended" && meeting.status === "processing") {
           const { finalizeMeeting } = await import("@/lib/finalize-meeting");
           await finalizeMeeting(id);
+        }
+        if (meeting.bot.status === "joined" && !meeting.bot.stopRequestedAt) {
+          await syncMeetingParticipants(id, { adapter, now });
         }
       }
     } catch {

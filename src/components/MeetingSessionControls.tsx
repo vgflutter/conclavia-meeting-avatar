@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "@/i18n/I18nProvider";
 import { attendeeAttemptFinished, meetingEntryError } from "@/lib/meeting-entry-policy";
 import { meetingOutputReadiness } from "@/lib/meeting-output-health";
-import { CAPTION_LANGUAGE_MAX_ATTEMPTS } from "@/lib/meeting-caption-language";
+import { captionLanguageSetupStatus } from "@/lib/meeting-caption-language";
 import type { MeetingResponse, MeetingStatus } from "@/types/meeting";
 import type { MeetingAutomationPublicConfig } from "@/types/meeting-automation";
+import { MeetingParticipantStatus } from "@/components/MeetingParticipantStatus";
 
 export function MeetingSessionControls({
   meetingId,
@@ -16,17 +17,20 @@ export function MeetingSessionControls({
   autoJoin,
   bot,
   automation,
+  participantStatus,
 }: {
   meetingId: string;
   status: MeetingStatus;
   autoJoin: boolean;
   bot: MeetingResponse["bot"];
   automation: MeetingAutomationPublicConfig;
+  participantStatus?: MeetingResponse["participantStatus"];
 }) {
   const router = useRouter();
   const { locale } = useTranslations();
   const isItalian = locale === "it";
-  const [pending, setPending] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"join" | "schedule" | "leave" | "refresh_output">();
+  const pending = Boolean(pendingAction);
   const [error, setError] = useState<string>();
 
   useEffect(() => {
@@ -39,7 +43,7 @@ export function MeetingSessionControls({
   }, [bot, router]);
 
   async function runAction(action: "join" | "schedule" | "leave" | "refresh_output") {
-    setPending(true);
+    setPendingAction(action);
     setError(undefined);
     try {
       const response = await fetch(`/api/meetings/${meetingId}/session`, {
@@ -48,8 +52,10 @@ export function MeetingSessionControls({
         body: JSON.stringify({ action }),
       });
       const payload = (await response.json()) as { meeting?: unknown; code?: string };
-      if (payload.code === "output_unavailable") {
-        setError(isItalian ? "L’avatar non è raggiungibile. Il collegamento del servizio deve essere ripristinato." : "The avatar is unreachable. The service connection must be restored.");
+      const outputError = payload.code?.startsWith("output_") && meetingEntryError(payload.code, isItalian);
+      if (outputError) {
+        setError(outputError);
+        router.refresh();
         return;
       }
       if (payload.code === "output_not_active") {
@@ -66,7 +72,7 @@ export function MeetingSessionControls({
           : "We couldn’t update the meeting entry. Please try again.",
       );
     } finally {
-      setPending(false);
+      setPendingAction(undefined);
     }
   }
 
@@ -77,17 +83,34 @@ export function MeetingSessionControls({
   const exitConfirmed = Boolean(bot.leftAt && ["ended", "fatal_error", "cancelled"].includes(bot.providerStatusCode?.split(":")[0] || ""));
   const failed = bot.status === "failed" || status === "failed";
   const outputReadiness = meetingOutputReadiness(bot);
+  const captionStatus = captionLanguageSetupStatus(bot);
+  const captionLanguageLabel = bot.captionLanguage === "it-it" ? isItalian ? "italiano" : "Italian"
+    : bot.captionLanguage === "en-us" ? isItalian ? "inglese" : "English" : undefined;
 
   if (!liveIntegration && !active && !stopping && !failed && !scheduled) return null;
 
   return (
     <div className="space-y-3">
-      {status === "live" && !stopping && bot.captionLanguage && !bot.captionLanguageRequestedAt && (
-        <p role="status" data-testid="caption-language-status" className="rounded-xl bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-          {(bot.captionLanguageAttempts || 0) >= CAPTION_LANGUAGE_MAX_ATTEMPTS
-            ? isItalian ? "Non è stato possibile impostare la lingua dei sottotitoli. Controllala in Teams: i richiami vocali potrebbero non essere riconosciuti." : "Could not set the caption language. Check it in Teams: voice commands may not be recognized."
-            : isItalian ? "Stiamo impostando la lingua dei sottotitoli per l’ascolto." : "Setting the caption language for listening."}
-        </p>
+      {status === "live" && !stopping && captionStatus && (
+        <div data-testid="caption-language-status" data-state={captionStatus} className="rounded-xl bg-amber-50 p-3 text-sm leading-6 text-amber-900">
+          <p role="status">
+            <span className="font-semibold">{isItalian ? "Lingua dell’ascolto Teams non verificata." : "Teams listening language is unverified."}</span>{" "}
+            {captionStatus === "request_failed"
+              ? isItalian ? "La richiesta di lingua dei sottotitoli non è stata confermata da Attendee." : "Attendee has not acknowledged the caption language request."
+              : captionStatus === "requested_unverified"
+                ? isItalian ? `Attendee ha ricevuto la richiesta per ${captionLanguageLabel}, ma non conferma quale lingua Teams stia usando.` : `Attendee received the request for ${captionLanguageLabel}, but does not confirm which language Teams is using.`
+                : captionStatus === "request_pending"
+                  ? isItalian ? `Richiesta per ${captionLanguageLabel} in corso.` : `Request for ${captionLanguageLabel} in progress.`
+                  : isItalian ? "Questa sessione non ha una richiesta di lingua tracciata. Non viene riconfigurata automaticamente." : "This session has no tracked language request. It is not automatically reconfigured."}
+          </p>
+          <details className="mt-2">
+            <summary className="cursor-pointer font-semibold">{isItalian ? "Come verificare in Teams" : "How to check in Teams"}</summary>
+            <p className="mt-2">{isItalian
+              ? "Controlla la lingua parlata nelle impostazioni dei sottotitoli, non la lingua dell’app o della traduzione. Con la trascrizione attiva potrebbe servire l’organizzatore. I menu di Teams Free possono differire. Il controllo decisivo riguarda la sessione Teams del bot: una trascrizione corretta nel tuo client, da sola, non la verifica."
+              : "Check the spoken language in caption settings, not the app or translation language. The organizer may be needed when transcription is active. Teams Free menus may differ. The decisive check concerns the bot’s Teams session: correct captions in your own client alone do not verify it."}</p>
+            <a className="mt-2 inline-block underline" href="https://support.microsoft.com/en-us/teams/meetings/use-live-captions-in-microsoft-teams-meetings" target="_blank" rel="noreferrer">{isItalian ? "Guida Microsoft alla lingua parlata" : "Microsoft spoken-language guide"}</a>
+          </details>
+        </div>
       )}
       <>
           {stopping ? (
@@ -104,9 +127,9 @@ export function MeetingSessionControls({
               className="button-primary w-full bg-[#9a3d24]! hover:bg-[#7c2f1c]!"
             >
               {pending
-                ? isItalian
-                  ? "Uscita in corso…"
-                  : "Leaving…"
+                ? pendingAction === "leave"
+                  ? isItalian ? "Uscita in corso…" : "Leaving…"
+                  : isItalian ? "Verifica in corso…" : "Checking…"
                 : isItalian
                   ? "Fai uscire dal meeting"
                   : "Remove from meeting"}
@@ -124,11 +147,11 @@ export function MeetingSessionControls({
             >
               {pending
                 ? isItalian
-                  ? "Programmazione…"
-                  : "Scheduling…"
+                  ? "Verifica e programmazione…"
+                  : "Checking and scheduling…"
                 : isItalian
-                  ? "Riprova programmazione"
-                  : "Retry scheduling"}
+                  ? "Riprova ingresso"
+                  : "Retry entry"}
             </button>
           ) : (
             <button
@@ -139,8 +162,8 @@ export function MeetingSessionControls({
             >
               {pending
                 ? isItalian
-                  ? "Accesso in corso…"
-                  : "Joining…"
+                  ? "Verifica e ingresso…"
+                  : "Checking and joining…"
                 : isItalian
                   ? "Fai entrare ora"
                   : "Join now"}
@@ -184,7 +207,11 @@ export function MeetingSessionControls({
           )}
           {["scheduling", "joining", "waiting_room"].includes(bot.status) && !stopping && (
             <p className="text-xs leading-5 text-slate-600">
-              {bot.joinedAt
+              {bot.status === "scheduling" && !bot.externalBotId
+                ? isItalian
+                  ? "Verifica del collegamento avatar e richiesta d’ingresso in corso. Il controllo dell’avatar dura al massimo 45 secondi; l’ammissione su Teams non è ancora confermata."
+                  : "Checking the avatar connection and requesting entry. The avatar check takes at most 45 seconds; Teams admission is not yet confirmed."
+                : bot.joinedAt
                 ? isItalian
                   ? "Ammissione confermata. Stiamo avviando l’ascolto: il collega non è ancora operativo."
                   : "Admission confirmed. We are starting meeting listening: the colleague is not operational yet."
@@ -195,9 +222,18 @@ export function MeetingSessionControls({
           )}
       </>
 
+      {bot.provider === "attendee" && bot.status === "joined" && !stopping && (
+        <MeetingParticipantStatus key={`${meetingId}:${bot.entryAttemptId}`} meetingId={meetingId} initial={participantStatus} />
+      )}
+
       {(error || (bot.lastError && !((stopping || exitConfirmed) && bot.failureCode === "entry_cancelled"))) && (
         <p className="rounded-xl bg-red-50 p-3 text-xs leading-5 text-red-800">
           {error || meetingEntryError(bot.failureCode, isItalian) || bot.lastError}
+          {!bot.externalBotId && bot.status === "failed" && bot.failureCode?.startsWith("output_") && (
+            <span className="mt-2 block" data-testid="entry-not-sent">
+              {isItalian ? "Nessun bot è stato inviato. Puoi riprovare da questo meeting, senza ricrearlo." : "No bot was sent. You can retry this meeting without recreating it."}
+            </span>
+          )}
         </p>
       )}
     </div>

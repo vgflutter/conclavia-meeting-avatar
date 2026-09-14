@@ -8,7 +8,20 @@ export interface MeetingDebugEvent {
   speakerName: string;
   text: string;
   prompt?: string;
+  playbackMetrics?: import("@/lib/voice-playback-metrics").VoicePlaybackMetrics;
   createdAt: string;
+  interventionDecision?: {
+    state: "queued" | "checking" | "raised" | "none" | "skipped" | "error";
+    reason: string;
+    detail?: string;
+    decidedAt: string;
+  };
+  turnDecision?: {
+    action: import("@/lib/meeting-speaking-turn").SpeakingTurnDecision["action"];
+    reason: import("@/lib/meeting-speaking-turn").TurnReason;
+    method: "rules" | "semantic";
+    decidedAt: string;
+  };
 }
 
 export interface MeetingDebugResponse {

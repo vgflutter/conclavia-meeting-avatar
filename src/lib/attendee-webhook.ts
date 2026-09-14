@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export type AttendeeWebhookTrigger =
+  | "bot_logs.update"
   | "bot.state_change"
   | "transcript.update"
   | "participant_events.join_leave";
@@ -61,6 +62,7 @@ export function parseAttendeeWebhook(
     typeof value.idempotency_key !== "string" ||
     typeof value.bot_id !== "string" ||
     ![
+      "bot_logs.update",
       "bot.state_change",
       "transcript.update",
       "participant_events.join_leave",
@@ -83,6 +85,7 @@ export function attendeeTranscript(
 ):
   | {
       speakerName: string;
+      speakerId?: string;
       text: string;
       startMs?: number;
       endMs?: number;
@@ -107,6 +110,8 @@ export function attendeeTranscript(
     : undefined;
 
   return {
+    speakerId: typeof event.data.speaker_uuid === "string" && event.data.speaker_uuid.length <= 256
+      ? event.data.speaker_uuid || undefined : undefined,
     speakerName:
       typeof event.data.speaker_name === "string" && event.data.speaker_name.trim()
         ? event.data.speaker_name.trim().slice(0, 160)

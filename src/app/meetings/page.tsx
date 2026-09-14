@@ -4,7 +4,6 @@ import { getRequestLocale } from "@/i18n/server";
 import type { Locale } from "@/i18n/locale";
 import { formatMeetingDate, meetingStatusLabel } from "@/lib/meeting-presentation";
 import { dashboardFilters, dashboardHref, loadMeetingDashboard, DASHBOARD_PAGE_SIZE, type DashboardFilters, type DashboardView, type MeetingListItem } from "@/lib/meeting-dashboard";
-import { MeetingArchiveButton } from "@/components/MeetingArchiveButton";
 import { MeetingDashboardRefresh } from "@/components/MeetingDashboardRefresh";
 
 export const dynamic = "force-dynamic";
@@ -23,34 +22,57 @@ function rowStatus(item: MeetingListItem, locale: Locale, history: boolean) {
   if (item.status === "processing") return text(["Riepilogo in preparazione", "Preparing summary"], locale);
   return meetingStatusLabel(locale, item.status);
 }
+function HistoryRows({ items, locale }: { items: MeetingListItem[]; locale: Locale }) {
+  const it = locale === "it";
+  return <div className="card divide-y divide-slate-100 overflow-hidden" data-testid="meeting-list-history">
+    {items.map((item) => {
+      const counts = [
+        item.decisionCount > 0 ? `${item.decisionCount} ${it ? item.decisionCount === 1 ? "decisione" : "decisioni" : item.decisionCount === 1 ? "decision" : "decisions"}` : "",
+        item.actionCount > 0 ? `${item.actionCount} ${it ? "attività" : item.actionCount === 1 ? "action" : "actions"}` : "",
+      ].filter(Boolean).join(" · ");
+      const showStatus = item.archived || item.status !== "completed";
+      return <article key={item.id} data-testid="meeting-row">
+        <Link href={`/meetings/${item.id}${item.status === "completed" ? "#summary" : ""}`} className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3 transition-colors hover:bg-[#f4f8f5] focus-visible:bg-[#f4f8f5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#295c43] sm:px-5">
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-col gap-x-5 sm:flex-row sm:items-baseline sm:justify-between">
+              <span className="min-w-0 truncate text-sm font-semibold text-[#1a2921] group-hover:text-[#295c43] sm:text-base" title={item.title}>{item.title}</span>
+              <time dateTime={item.scheduledStart} className="shrink-0 text-xs leading-5 text-slate-500">{formatMeetingDate(item.scheduledStart, locale, item.timezone)}</time>
+            </div>
+            {(showStatus || item.seriesLabel || counts) && <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-slate-500">
+              {showStatus && <span data-testid="history-status" className="max-w-full rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">{rowStatus(item, locale, true)}</span>}
+              {item.seriesLabel && <span className="min-w-0 max-w-full truncate" title={item.seriesLabel}>{item.seriesLabel}</span>}
+              {counts && <span>{counts}</span>}
+            </div>}
+            {!showStatus && <span className="sr-only">{rowStatus(item, locale, true)}</span>}
+          </div>
+          <span aria-hidden="true" className="text-[#295c43]">→</span>
+        </Link>
+      </article>;
+    })}
+  </div>;
+}
 function MeetingRows({ items, view, locale }: { items: MeetingListItem[]; view: DashboardView; locale: Locale }) {
   const it = locale === "it";
-  const history = view === "history";
+  if (view === "history") return <HistoryRows items={items} locale={locale} />;
   return <div className="card divide-y divide-slate-100 overflow-hidden" data-testid={`meeting-list-${view}`}>
     {items.map((item) => {
-      const missed = history && ["scheduled", "failed"].includes(item.status);
       const action = item.issue === "lobby" ? text(["Apri per ammettere", "Open to admit"], locale)
         : item.issue === "output" ? text(["Ripristina avatar", "Restore avatar"], locale)
         : text(["Verifica ingresso", "Review entry"], locale);
       return <article key={item.id} data-testid="meeting-row" className="grid min-w-0 gap-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-5 sm:px-5">
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-            <Link href={`/meetings/${item.id}${history ? "#summary" : view === "attention" ? "#session" : ""}`} className="min-w-0 break-words text-sm font-semibold text-[#1a2921] hover:text-[#295c43] hover:underline sm:text-base">{item.title}</Link>
-            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${view === "attention" || (view === "active" && ["waiting_room", "failed"].includes(item.status)) ? "bg-amber-50 text-amber-800" : view === "active" ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{rowStatus(item, locale, history)}</span>
+            <Link href={`/meetings/${item.id}${view === "attention" ? "#session" : ""}`} className="min-w-0 break-words text-sm font-semibold text-[#1a2921] hover:text-[#295c43] hover:underline sm:text-base">{item.title}</Link>
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${view === "attention" || (view === "active" && ["waiting_room", "failed"].includes(item.status)) ? "bg-amber-50 text-amber-800" : view === "active" ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{rowStatus(item, locale, false)}</span>
           </div>
           <p className="mt-1 flex flex-wrap gap-x-3 text-xs leading-5 text-slate-500">
             <time dateTime={item.scheduledStart}>{formatMeetingDate(item.scheduledStart, locale, item.timezone)}</time>
             {item.seriesLabel && <span className="break-words">{item.seriesLabel}</span>}
           </p>
-          {history && item.overview && <p className="mt-1 line-clamp-2 max-w-4xl text-sm leading-5 text-slate-600">{item.overview}</p>}
-          {history && (item.decisionCount > 0 || item.actionCount > 0) && <p className="mt-1 text-xs text-slate-500">{item.decisionCount} {it ? item.decisionCount === 1 ? "decisione" : "decisioni" : item.decisionCount === 1 ? "decision" : "decisions"} · {item.actionCount} {it ? "attività" : item.actionCount === 1 ? "action" : "actions"}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs font-semibold sm:justify-end">
           {view === "attention" ? <Link href={`/meetings/${item.id}#session`} className="rounded-lg border border-amber-200 px-3 py-2 text-amber-900 hover:bg-amber-50">{action} →</Link>
-            : missed ? <>
-              <Link href={item.seriesId ? `/meetings/series/${item.seriesId}` : `/meetings/new?from=${item.id}`} className="rounded-lg px-2 py-2 text-[#295c43] hover:underline">{it ? "Riprogramma" : "Reschedule"}</Link>
-              <MeetingArchiveButton meetingId={item.id} archived={item.archived} />
-            </> : <Link href={`/meetings/${item.id}${history ? "#summary" : ""}`} className="rounded-lg px-2 py-2 text-[#295c43] hover:underline">{history && item.status !== "processing" ? it ? "Leggi riepilogo" : "Read summary" : it ? "Apri meeting" : "Open meeting"} →</Link>}
+            : <Link href={`/meetings/${item.id}`} className="rounded-lg px-2 py-2 text-[#295c43] hover:underline">{it ? "Apri meeting" : "Open meeting"} →</Link>}
         </div>
       </article>;
     })}
@@ -63,7 +85,7 @@ function Section({ view, items, total, locale, filters }: { view: Exclude<Dashbo
       <h2 className="text-lg font-semibold tracking-tight">{text(headings[view], locale)} <span className="ml-2 text-sm font-normal text-slate-500">{total}</span></h2>
       {filters.view === "overview" && total > items.length && <Link className="text-sm font-semibold text-[#295c43] hover:underline" href={dashboardHref(filters, {view, page: 1})}>{it ? "Vedi tutti" : "View all"} →</Link>}
     </div>
-    {view === "history" && <p className="mb-3 text-sm text-slate-500">{it ? "Riepiloghi, decisioni e attività. La trascrizione resta nei dettagli." : "Summaries, decisions and actions. Full transcripts remain in the details."}</p>}
+    {view === "history" && <p className="mb-3 text-sm text-slate-500">{it ? "Apri un meeting per riepilogo e dettagli." : "Open a meeting for its summary and details."}</p>}
     {items.length ? <MeetingRows items={items} view={view} locale={locale} /> : <p className="rounded-xl border border-dashed border-slate-200 p-5 text-sm text-slate-500">
       {filters.q || filters.from || filters.to || filters.state !== "all" ? it ? "Nessun meeting corrisponde ai filtri." : "No meetings match these filters."
         : view === "active" ? it ? "Nessun meeting in corso." : "No meetings in progress."

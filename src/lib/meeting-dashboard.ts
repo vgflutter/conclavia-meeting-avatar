@@ -10,7 +10,7 @@ export interface DashboardFilters { view: DashboardView; q: string; from: string
 export interface MeetingListItem {
   id: string; title: string; status: MeetingStatus; scheduledStart: string; scheduledEnd: string;
   timezone: string; seriesId?: string; seriesLabel?: string; archived: boolean;
-  overview: string; decisionCount: number; actionCount: number; issue?: "lobby" | "output" | "entry";
+  decisionCount: number; actionCount: number; issue?: "lobby" | "output" | "entry";
 }
 export interface SeriesListItem { id: string; title: string; objective: string; total: number; completed: number; nextAt?: string; timezone: string }
 
@@ -96,7 +96,6 @@ export function dashboardQueries(filters: DashboardFilters, now: Date) {
 export const MEETING_LIST_PROJECTION = {
   _id: 0, id: { $toString: "$_id" }, title: 1, status: 1, scheduledStart: 1, scheduledEnd: 1, timezone: 1,
   seriesId: { $toString: "$seriesId" }, seriesLabel: 1, archived: { $ne: [{ $ifNull: ["$archivedAt", null] }, null] },
-  overview: { $substrCP: [{ $ifNull: ["$summary.overview", ""] }, 0, 240] },
   decisionCount: { $size: { $ifNull: ["$summary.decisions", []] } },
   actionCount: { $size: { $ifNull: ["$summary.actionItems", []] } },
   issue: { $switch: { branches: [

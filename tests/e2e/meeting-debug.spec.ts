@@ -73,6 +73,78 @@ test("debug: eco sospetto non è presentato come un intervento umano certo", asy
   await expect(log.getByText("Certo, perché il libro.", {exact: true})).toBeVisible();
 });
 
+for (const locale of ["it", "en"]) {
+  test(`debug: groups the screenshot's repeated avatar caption live, preserving the raw evidence (${locale})`, async ({ page, request }) => {
+    const meeting = await createMeeting(request);
+    const answer = "Solo una correzione: 9 per 9 fa 81, non 13.";
+    const rawCaption = "Solo una correzione 9 per 9 fa 81, non 13.";
+    const human = "Tornassi indietro a fare le stesse cose che ho scelto di fare.";
+    await MeetingModel.updateOne({ _id: meeting.id }, { $set: {
+      commandHistory: [{ id: "screenshot-answer", kind: "correct", response: answer, createdAt: new Date(Date.now() - 5000) }],
+      transcript: [{ sequence: 1, speakerName: "Vincenzo Giacchina", source: "participant", text: human, createdAt: new Date() }],
+    } });
+    const log = await openDebug(page, meeting.id, locale);
+    await expect(log.locator("article")).toHaveCount(2);
+    await MeetingModel.updateOne({ _id: meeting.id }, { $push: { transcript: {
+      sequence: 2, speakerName: "Riccardo", source: "avatar", text: rawCaption, createdAt: new Date(),
+    } } });
+    const label = locale === "it" ? "Trascrizioni ricevute" : "Received transcripts";
+    await expect(log.locator("summary").filter({ hasText: `${label} (1)` })).toBeVisible();
+    await expect(log.locator("article")).toHaveCount(2);
+    await expect(log.getByText(answer, { exact: true })).toBeVisible();
+    await expect(log.getByText(human, { exact: true })).toBeVisible();
+    await expect(log.getByText(rawCaption, { exact: true })).toBeHidden();
+    await log.locator("summary").filter({ hasText: `${label} (1)` }).click();
+    await expect(log.getByText(rawCaption, { exact: true })).toBeVisible();
+    await expect(log.getByText(locale === "it"
+      ? /Non indica una seconda riproduzione audio/
+      : /This does not indicate a second audio playback/)).toBeVisible();
+    // A second STT fragment updates the existing group rather than creating a
+    // new contribution; polling keeps the expanded evidence open.
+    await MeetingModel.updateOne({ _id: meeting.id }, { $push: { transcript: {
+      sequence: 3, speakerName: "Riccardo", source: "avatar", text: "9 per 9 fa 81, non 13.", createdAt: new Date(),
+    } } });
+    await expect(log.locator("summary").filter({ hasText: `${label} (2)` })).toBeVisible();
+    await expect(log.locator("article")).toHaveCount(2);
+    await expect(log.getByText(rawCaption, { exact: true })).toBeVisible();
+    const payload = await (await request.get(`/api/meetings/${meeting.id}/debug`)).json() as MeetingDebugResponse;
+    expect(payload.events).toHaveLength(4);
+    expect(payload.events.filter(event => event.kind === "response")).toHaveLength(1);
+    expect(payload.events.find(event => event.id === "transcript-2")?.text).toBe(rawCaption);
+    const saved = await MeetingModel.findById(meeting.id).orFail();
+    expect(saved.transcript).toHaveLength(3);
+    expect(saved.commandHistory).toHaveLength(1);
+    await page.getByRole("region", { name: locale === "it" ? "Modalità debug" : "Debug mode" })
+      .screenshot({ path: test.info().outputPath(`grouped-avatar-caption-${locale}.png`) });
+  });
+}
+
+test("debug: late roster identity prevents grouping a human namesake under the avatar response", async ({ page, request }) => {
+  const meeting = await createMeeting(request);
+  const entryAttemptId = randomUUID();
+  const text = "La prossima riunione sarà lunedì mattina.";
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: {
+    "bot.entryAttemptId": entryAttemptId,
+    commandHistory: [{ id: "namesake-answer", kind: "ask", response: text, createdAt: new Date(Date.now() - 2000) }],
+    // The caption arrived before the roster. Its ID becomes authoritative once
+    // the already-present participant is recovered, without rewriting history.
+    transcript: [{ sequence: 1, speakerName: "Riccardo", speakerId: "human-riccardo", entryAttemptId,
+      source: "avatar", text, createdAt: new Date() }],
+    participantRoster: { attemptId: entryAttemptId, revision: 1, synchronizedAt: new Date(), entries: [{
+      participantId: "human-riccardo", name: "Riccardo", present: true, timestampMs: Date.now(), eventId: "human-join",
+    }] },
+  } });
+  const payload = await (await request.get(`/api/meetings/${meeting.id}/debug`)).json() as MeetingDebugResponse;
+  expect(payload.events.find(event => event.kind === "transcript")?.source).toBe("participant");
+  expect(JSON.stringify(payload)).not.toContain("human-riccardo");
+  expect(JSON.stringify(payload)).not.toContain(entryAttemptId);
+  const log = await openDebug(page, meeting.id);
+  await expect(log.locator("article")).toHaveCount(2);
+  await expect(log.getByText(text, { exact: true })).toHaveCount(2);
+  await expect(log.getByText("Intervento", { exact: true })).toBeVisible();
+  await expect(log.locator("summary").filter({ hasText: "Trascrizioni ricevute" })).toHaveCount(0);
+});
+
 test("debug: opzionale, webhook in diretta, risposta con nome dinamico e spegnimento", async ({ page, request }) => {
   const meeting = await createMeeting(request);
   const path = `/api/meetings/${meeting.id}/debug`;
@@ -133,6 +205,25 @@ test("debug: opzionale, webhook in diretta, risposta con nome dinamico e spegnim
   await page.reload();
   await expect(toggle).not.toBeChecked();
   expect(browserErrors).toEqual([]);
+});
+
+test("debug: a late playback acknowledgement updates provisional attribution and ETag", async ({ request }) => {
+  const meeting = await createMeeting(request);
+  const at = Date.now();
+  const commandId = randomUUID();
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: {
+    transcript: [{ sequence: 1, source: "participant", speakerName: "Vincenzo", text: "Certo perché il libro.", startMs: at, createdAt: new Date(at) }],
+    commandHistory: [{ id: commandId, kind: "ask", response: "Certo perché il libro è triste.", createdAt: new Date(at - 2000) }],
+  } });
+  const url = `/api/meetings/${meeting.id}/debug`;
+  const before = await request.get(url);
+  expect((await before.json()).events.at(-1).source).toBe("participant");
+  await MeetingModel.updateOne({ _id: meeting.id, "commandHistory.id": commandId }, { $set: {
+    "commandHistory.$.playbackStartedAt": new Date(at - 1000), "commandHistory.$.playbackEndedAt": new Date(at + 1000),
+  } });
+  const after = await request.get(url, { headers: { "If-None-Match": before.headers().etag } });
+  expect(after.status()).toBe(200);
+  expect((await after.json()).events.at(-1)).toMatchObject({ source: "suspected_echo", speakerName: "Vincenzo", text: "Certo perché il libro." });
 });
 
 test("debug: endpoint limitato, ordinato, senza configurazione privata e senza cache condivisa", async ({ request }) => {

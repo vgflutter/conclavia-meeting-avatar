@@ -6,6 +6,7 @@ import { connectToDatabase } from "../../src/lib/mongodb";
 import { MeetingModel } from "../../src/models/Meeting";
 import { participantTranscript } from "../../src/lib/meeting-transcript-source";
 import { serializeMeeting } from "../../src/lib/serialize-meeting";
+import { INTERVENTION_CHECK_INTERVAL_MS } from "../../src/lib/meeting-intervention-context";
 
 const ownedIds: string[] = [];
 let transcriptRequest: APIRequestContext;
@@ -36,7 +37,21 @@ async function fixture(request: APIRequestContext, policy = "important_only") {
   return meeting as { id: string; bot: { outputToken: string } };
 }
 
-async function speak(id: string, text: string, speakerName = "Elena Costa") {
+async function drainHandQueue(id: string) {
+  // Advance only the isolated fixture's collection window; exercise the real
+  // after-response drain. Named speaking turns never call or wait for this.
+  const document = await MeetingModel.findById(id).orFail();
+  if (!document.bot.interventionNextCheckAt) return;
+  await MeetingModel.updateOne({ _id: id }, { $set: {
+    "bot.lastCorrectionCheckAt": new Date(Date.now() - INTERVENTION_CHECK_INTERVAL_MS - 100),
+    "bot.interventionNextCheckAt": new Date(Date.now() - 100),
+  } });
+  expect((await transcriptRequest.get(`/api/meeting-room/${document.bot.outputToken}/state`)).ok()).toBe(true);
+  await expect.poll(async () => (await MeetingModel.findById(id).orFail()).transcript
+    .some(segment => ["queued", "checking"].includes(segment.interventionDecision?.state || ""))).toBe(false);
+}
+
+async function speak(id: string, text: string, speakerName = "Elena Costa", drain = true) {
   const document = await MeetingModel.findById(id).orFail();
   // Exercise the synchronous transcript ingress with a DB-only provider fixture.
   // No external bot is created; the separate webhook test exercises Attendee ingress.
@@ -47,8 +62,43 @@ async function speak(id: string, text: string, speakerName = "Elena Costa") {
     data: { text, speakerName, startMs: document.transcript.length * 2000 },
   });
   expect(response.status()).toBe(200);
+  if (drain) await drainHandQueue(id);
   return MeetingModel.findById(id).orFail();
 }
+
+test("hand diagnostics: short collection window retains the caption and polling drains it without new speech", async ({ request }) => {
+  const meeting = await fixture(request);
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "bot.lastCorrectionCheckAt": new Date() } });
+  const saved = await speak(meeting.id, "Sono prontissimi. Andiamo tre per tre fa 12, deve cominciare.", "Elena Costa", false);
+  expect(saved.transcript.at(-1)?.interventionDecision).toMatchObject({ state: "queued", reason: "awaiting_check" });
+  expect(saved.pendingIntervention).toBeUndefined();
+  expect(saved.commandHistory).toHaveLength(0);
+  const debug = await (await request.get(`/api/meetings/${meeting.id}/debug`)).json();
+  expect(debug.events.at(-1).interventionDecision).toMatchObject({ state: "queued", reason: "awaiting_check" });
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: {
+    "bot.lastCorrectionCheckAt": new Date(Date.now() - INTERVENTION_CHECK_INTERVAL_MS - 100), "bot.interventionNextCheckAt": new Date(Date.now() - 1_000),
+  } });
+  expect((await request.get(`/api/meeting-room/${meeting.bot.outputToken}/state`)).status()).toBe(200);
+  await expect.poll(async () => (await MeetingModel.findById(meeting.id).orFail()).transcript.at(-1)?.interventionDecision?.reason).toBe("ai_unavailable");
+});
+
+test("hand diagnostics: a local correction logs the reason but remains silent", async ({ request }) => {
+  const meeting = await fixture(request);
+  const saved = await speak(meeting.id, "Tre per tre fa 12.");
+  expect(saved.transcript.at(-1)?.interventionDecision).toMatchObject({ state: "raised", reason: "arithmetic_error" });
+  expect(saved.pendingIntervention?.response).toContain("fa 9");
+  expect(saved.commandHistory).toHaveLength(0);
+});
+
+test("hand diagnostics: disabled policy is distinct from unavailable AI", async ({ request }) => {
+  const meeting = await fixture(request, "off");
+  let saved = await speak(meeting.id, "Questa affermazione dovrebbe essere valutata nel contesto.");
+  expect(saved.transcript.at(-1)?.interventionDecision).toMatchObject({ state: "skipped", reason: "policy_disabled" });
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "assistant.correctionPolicy": "important_only" } });
+  saved = await speak(meeting.id, "Questa nuova affermazione richiede una valutazione del contesto.");
+  expect(saved.transcript.at(-1)?.interventionDecision).toMatchObject({ state: "error", reason: "ai_unavailable" });
+  expect(saved.commandHistory).toHaveLength(0);
+});
 
 for (const text of [
   "Ciao Marco, mi senti?", "Hello Nora, can you hear me?",
@@ -126,6 +176,27 @@ test("segnalazione reale: secondo me tre per tre fa 12, poi Ehi Riccardo Dimmi r
   expect(result.transcript.at(-1)?.text).toBe("Ehi Riccardo, Dimmi.");
 });
 
+test("segnalazione reale: ci sta ascoltando non produce risposta e non consuma la mano alzata", async ({ request }) => {
+  const meeting = await fixture(request);
+  const mention = "Riprenderò la mia vita in mano. Riccardo ci sta ascoltando.";
+  let saved = await speak(meeting.id, mention);
+  expect(saved.commandHistory).toHaveLength(0);
+  expect(saved.transcript.at(-1)?.text).toBe(mention);
+  expect(saved.transcript.at(-1)?.turnDecision?.action).toBe("unresolved");
+  saved = await speak(meeting.id, "Secondo me tre per tre fa 12.");
+  const pendingId = saved.pendingIntervention?.id;
+  expect(pendingId).toBeTruthy();
+  for (const text of ["Riccardo ci sta ascoltando?", "Riccardo is listening to us."]) {
+    saved = await speak(meeting.id, text);
+    expect(saved.commandHistory).toHaveLength(0);
+    expect(saved.pendingIntervention?.id).toBe(pendingId);
+  }
+  saved = await speak(meeting.id, "Sì, Riccardo.");
+  expect(saved.commandHistory).toHaveLength(1);
+  expect(saved.commandHistory[0].response).toBe("Sì, 3 per 3 fa 9, non 12.");
+  expect(saved.pendingIntervention).toBeUndefined();
+});
+
 test("dimmi is a named floor control; a real question is not swallowed and punctuation is not a question", () => {
   expect(meetingPermissionDecision("Ehi Riccardo, Dimmi.", "Riccardo")).toBe("grant");
   expect(meetingPermissionDecision("Riccardo, dimmi quanto costa", "Riccardo")).toBeUndefined();
@@ -136,6 +207,106 @@ test("dimmi is a named floor control; a real question is not swallowed and punct
   for (const statement of ["Secondo me non è vero che tre per tre fa dodici.", "Secondo me tre per tre fa dodici?", 'Secondo me "tre per tre fa dodici".', "Secondo me 1,5 per 2 fa 3."]) {
     expect(detectElementaryArithmetic(statement)).toBeUndefined();
   }
+});
+
+for (const grant of ["Sì, Riccardo.", "Sì, Riccardo, dimmi.", "Vai Riccardo", "Sentiamo Riccardo", "Yes, Riccardo.", "Temperatura? Non si può. Sì, Riccardo, dimmi."]) {
+  test(`raised hand: original incident through transcript ingress with ${grant}`, async ({ request }) => {
+    const meeting = await fixture(request);
+    let saved = await speak(meeting.id, "Tre per tre fa 13.");
+    expect(saved.pendingIntervention?.response).toBe("Sì, 3 per 3 fa 9, non 13.");
+    expect(saved.commandHistory).toHaveLength(0);
+    saved = await speak(meeting.id, "Non mi manca sostenendoti con le mani sulla sbarra e appoggiando i piedi.");
+    expect(saved.commandHistory).toHaveLength(0);
+    saved = await speak(meeting.id, grant);
+    expect(saved.commandHistory).toHaveLength(1);
+    expect(saved.commandHistory[0]).toMatchObject({ kind: "correct", response: "Sì, 3 per 3 fa 9, non 13." });
+    expect(saved.pendingIntervention).toBeUndefined();
+    expect(saved.transcript.at(-1)?.text).toBe(grant);
+    expect(saved.transcript.at(-1)?.turnDecision).toMatchObject({ action: "grant", reason: "named_grant" });
+    saved = await speak(meeting.id, "Sì, Riccardo.");
+    expect(saved.commandHistory).toHaveLength(1);
+    const debug = await (await request.get(`/api/meetings/${meeting.id}/debug`)).json();
+    expect(debug.events.some((event: { turnDecision?: { reason: string } }) => event.turnDecision?.reason === "named_grant")).toBe(true);
+  });
+}
+
+test("raised hand: expiry/refusal/disabled corrections do not resurrect a response on named yes", async ({ request }) => {
+  const meeting = await fixture(request);
+  await speak(meeting.id, "Tre per tre fa 13.");
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "pendingIntervention.expiresAt": new Date(Date.now() - 1000) } });
+  let saved = await speak(meeting.id, "Sì, Riccardo.");
+  expect(saved.commandHistory).toHaveLength(0);
+  await speak(meeting.id, "Tre per tre fa 14.");
+  await speak(meeting.id, "Aspetta Riccardo");
+  saved = await speak(meeting.id, "Sì, Riccardo.");
+  expect(saved.commandHistory).toHaveLength(0);
+  await speak(meeting.id, "Tre per tre fa 15.");
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "assistant.correctionPolicy": "off" } });
+  saved = await speak(meeting.id, "Sì, Riccardo.");
+  expect(saved.commandHistory).toHaveLength(0);
+});
+
+test("GUI floor grant: works with a namesake, is idempotent, and stays off the public tunnel", async ({ request, page }) => {
+  const meeting = await fixture(request);
+  let saved = await speak(meeting.id, "Tre per tre fa 13.");
+  const interventionId = saved.pendingIntervention!.id;
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: {
+    "bot.provider": "attendee", "bot.status": "joined", "bot.entryAttemptId": "floor-fixture",
+    participantRoster: { attemptId: "floor-fixture", revision: 1, synchronizedAt: new Date(), entries: [
+      { participantId: "namesake", name: "Riccardo Bianchi", present: true, timestampMs: Date.now(), eventId: "fixture-join" },
+    ] },
+  } });
+  const path = `/api/meetings/${meeting.id}/turn`;
+  expect((await request.post(path, { data: { interventionId }, headers: { origin: "https://unrelated.example" } })).status()).toBe(403);
+  expect((await request.post(path, { data: { interventionId }, headers: { "sec-fetch-site": "cross-site" } })).status()).toBe(403);
+  expect((await request.post(path, { data: { interventionId }, headers: { host: "test.trycloudflare.com" } })).status()).toBe(404);
+  expect((await request.post(path, { data: { interventionId: "old-hand" } })).status()).toBe(409);
+  await page.context().addCookies([{ name: "conclavia_locale", value: "it", url: "http://127.0.0.1:3101" }]);
+  await page.goto(`/meetings/${meeting.id}`);
+  await expect(page.getByRole("button", { name: "Dai la parola", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Dai la parola", exact: true }).click();
+  await expect.poll(async () => (await MeetingModel.findById(meeting.id).orFail()).commandHistory.length).toBe(1);
+  await expect(page.getByRole("button", { name: "Dai la parola", exact: true })).toHaveCount(0);
+  expect((await request.post(path, { data: { interventionId } })).status()).toBe(409);
+  saved = await MeetingModel.findById(meeting.id).orFail();
+  expect(saved.commandHistory[0].response).toBe("Sì, 3 per 3 fa 9, non 13.");
+  expect(saved.transcript).toHaveLength(1);
+});
+
+test("GUI floor grant rejects expired or stopped contributions", async ({ request }) => {
+  const meeting = await fixture(request);
+  let saved = await speak(meeting.id, "Tre per tre fa 13.");
+  const path = `/api/meetings/${meeting.id}/turn`;
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "pendingIntervention.expiresAt": new Date(Date.now() - 1000) } });
+  expect((await request.post(path, { data: { interventionId: saved.pendingIntervention!.id } })).status()).toBe(409);
+  saved = await speak(meeting.id, "Tre per tre fa 14.");
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { "bot.stopRequestedAt": new Date() } });
+  expect((await request.post(path, { data: { interventionId: saved.pendingIntervention!.id } })).status()).toBe(409);
+  expect((await MeetingModel.findById(meeting.id).orFail()).commandHistory).toHaveLength(0);
+});
+
+test("webhook: simultaneous named acknowledgements consume the prepared contribution only once", async ({ request }) => {
+  const meeting = await fixture(request);
+  await speak(meeting.id, "Tre per tre fa 13.");
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: {
+    status: "live", "bot.provider": "attendee", "bot.externalBotId": `audit-${meeting.id}`,
+  } });
+  const path = `/api/webhooks/attendee?meeting_token=${meeting.bot.outputToken}`;
+  const caption = (text: string, timestamp: number) => ({
+    idempotency_key: randomUUID(), bot_id: `audit-${meeting.id}`, trigger: "transcript.update",
+    data: { speaker_name: "Elena Costa", timestamp_ms: timestamp, duration_ms: 500,
+      transcription: { transcript: text, words: [] } },
+  });
+  const first = caption("Sì, Riccardo.", 3000);
+  const second = caption("Yes, Riccardo.", 4000);
+  const results = await Promise.all([request.post(path, { data: first }), request.post(path, { data: second })]);
+  expect(results.every(response => response.ok())).toBe(true);
+  await expect.poll(async () => (await MeetingModel.findById(meeting.id).orFail()).commandHistory.length).toBe(1);
+  await request.post(path, { data: first });
+  await expect.poll(async () => (await MeetingModel.findById(meeting.id).orFail()).transcript.filter(s => s.automationClaimedAt).length).toBe(3);
+  const saved = await MeetingModel.findById(meeting.id).orFail();
+  expect(saved.commandHistory).toHaveLength(1);
+  expect(saved.pendingIntervention).toBeUndefined();
 });
 
 test("named floor controls are complete requests, never quoted or conditional permissions", () => {
@@ -436,6 +607,7 @@ test("configurazione: rispetta le funzionalità vocali disabilitate senza scrive
 
 test("webhook: consegna duplicata produce una sola trascrizione e una sola risposta", async ({ request }) => {
   const meeting = await fixture(request);
+  await MeetingModel.updateOne({ _id: meeting.id }, { $set: { status: "live", "bot.provider": "attendee", "bot.externalBotId": `audit-${meeting.id}` } });
   const body = { idempotency_key: randomUUID(), bot_id: `audit-${meeting.id}`,
     bot_metadata: { conclavia_meeting_id: meeting.id }, trigger: "transcript.update",
     data: { speaker_name: "Elena", timestamp_ms: 1000, duration_ms: 1000,
@@ -466,6 +638,8 @@ for (const policy of ["important_only", "off"]) {
     const statement = "Secondo me tre per tre fa 12.";
     expect((await request.post(path, { data: caption(statement, 1000) })).ok()).toBe(true);
     if (policy === "important_only") {
+      await expect.poll(async () => (await MeetingModel.findById(meeting.id).orFail()).bot.interventionNextCheckAt).toBeTruthy();
+      await drainHandQueue(meeting.id);
       await expect.poll(async () => (await MeetingModel.findById(meeting.id).orFail()).pendingIntervention?.sourceStatement).toBe(statement);
     }
     expect((await request.post(path, { data: caption("Riccardo, dimmi pure quando te lo dico.", 3000) })).ok()).toBe(true);

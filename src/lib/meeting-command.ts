@@ -68,13 +68,24 @@ function wakeMatch(text: string, wakeWord: string): RegExpExecArray | null {
   return new RegExp(`(?<![\\p{L}\\p{N}])(?:${trigger})(?![\\p{L}\\p{N}])`, "iu").exec(text);
 }
 
+// Shared with roster collision detection so accepted spelling variants cannot
+// bypass the ambiguity check. This detects a name, NOT permission to speak.
+export function meetingInvocationNameOccurs(text: string, wakeWord: string): boolean {
+  return Boolean(wakeMatch(text, wakeWord));
+}
+
+export function meetingAddressParts(text: string, wakeWord: string): { before: string; after: string } | undefined {
+  const match = wakeMatch(text, wakeWord);
+  return match ? { before: text.slice(0, match.index), after: text.slice(match.index + match[0].length) } : undefined;
+}
+
 function isDirectAddressPrefix(prefix: string): boolean {
   // A name in a quotation or reported speech is not a command addressed to us.
   if (/["“”«»]/u.test(prefix)) return false;
   // Teams can merge a previous sentence with a new direct address. Only a
   // sentence boundary resets the prefix, never a comma or reported-speech colon.
   const currentSentence = prefix.split(/[.!?]\s+/u).at(-1) || "";
-  return /^(?:(?:ciao|chao|salve|buongiorno|buonasera|hello|hi|hey|ehi|scusa|scusami|senti|ascolta|please|per favore|ok|okay|allora)\s*)*$/u
+  return /^(?:(?:ciao|chao|salve|buongiorno|buonasera|hello|hi|hey|ehi|scusa|scusami|senti|ascolta|please|per favore|si|yes|ok|okay|allora)\s*)*$/u
     .test(normalizedSpeech(currentSentence));
 }
 
@@ -119,27 +130,35 @@ export function detectElementaryArithmetic(
 export function meetingPermissionDecision(
   text: string,
   wakeWord: string,
+  state: { awaitingPermission?: boolean } = {},
 ): "grant" | "decline" | "defer" | undefined {
   const match = wakeMatch(text, wakeWord);
   if (!match) return undefined;
   const before = text.slice(0, match.index);
   const after = text.slice(match.index + match[0].length).replace(/^[\s,.:;!?–—-]+|[\s.!?]+$/gu, "").trim();
+  // A named acknowledgement is a floor grant ONLY while a contribution is
+  // waiting. Without that state it is neither a greeting nor a new question.
+  const prefix = normalizedSpeech(before.split(/[.!?]\s+/u).at(-1) || "");
+  if (state.awaitingPermission && !/["“”«»]/u.test(text) &&
+      ((!after && /^(?:si|yes|ok|okay)$/u.test(prefix)) ||
+       (!prefix && /^(?:si|yes|ok|okay)$/u.test(normalizedSpeech(after))))) return "grant";
   const request = isDirectAddressPrefix(before) ? after : after ? undefined : before.trim();
   if (!request || /["“”«»]/u.test(request)) return undefined;
   const permission = normalizedSpeech(request)
     .replace(/^(?:si|yes|ok|okay)\s+/u, "")
     .replace(/\s+(?:per favore|grazie|please|thanks)$/u, "");
-  if (/^(?:lascia stare|non ora|abbassa la mano|non intervenire|non (?:puoi|devi) (?:parlare|intervenire|rispondere)|non parlare|non rispondere|never mind|not now|lower your hand|(?:do not|don t) (?:speak|talk|answer|go ahead))\b/iu.test(permission)) {
+  if (/^(?:aspetta|attendi|lascia stare|non ora|abbassa la mano|non intervenire|non (?:puoi|devi) (?:parlare|intervenire|rispondere)|non parlare|non rispondere|wait|hold on|never mind|not now|lower your hand|(?:do not|don t) (?:speak|talk|answer|go ahead))\b/iu.test(permission)) {
     return "decline";
   }
-  if (/^(?:dimmi(?: pure)?|vai pure|puoi parlare|puoi intervenire|intervieni|go ahead)\b.*\b(?:ma|but)\s+(?:non|not|don t|do not)\b/iu.test(permission)) return "decline";
-  if (/^(?:dimmi(?: pure)?|vai pure|prego|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)(?: ora| adesso| now)?$/iu.test(permission)) {
+  if (/^(?:dimmi(?: pure)?|vai(?: pure)?|prego|sentiamo|puoi parlare|puoi intervenire|intervieni|go ahead)\b.*\b(?:ma|but)\s+(?:non|not|don t|do not)\b/iu.test(permission) ||
+      /^(?:ma|but)\s+(?:aspetta|attendi|non ora|wait|hold on|not now)\b/iu.test(permission)) return "decline";
+  if (/^(?:dimmi(?: pure)?|vai(?: pure)?|prego|sentiamo|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)(?: ora| adesso| now)?$/iu.test(permission)) {
     return "grant";
   }
   // A future invitation is not permission now and not a question for the LLM.
   // Keep this distinct from actual requests such as "dimmi quando consegniamo".
   if (/^dimmi(?: pure)?(?: solo)? (?:quando|se) (?:te lo (?:dico|chiedo|diro|chiedero)|ti (?:chiamo|chiamero|do la parola|daro la parola))\b/u.test(permission) ||
-      /^(?:vai pure|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)\b.*\b(?:quando|se|when|if|until)\b/u.test(permission)) return "defer";
+      /^(?:vai(?: pure)?|prego|sentiamo|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)\b.*\b(?:quando|se|when|if|until)\b/u.test(permission)) return "defer";
   return undefined;
 }
 
@@ -165,6 +184,18 @@ export function isMeetingWakePhrase(spokenText: string, wakeWord: string): boole
   }
 
   return false;
+}
+
+// Conservative local fast path, not a semantic classifier. A name followed by
+// arbitrary prose is NOT a question. Unsupported/ambiguous phrasing must stay
+// unresolved; punctuation from speech recognition alone cannot grant the floor.
+function hasDirectRequestSyntax(request: string): boolean {
+  const text = normalizedSpeech(request).replace(/^(?:per favore|please)\s+/u, "");
+  return /^(?:ciao|salve|buongiorno|buonasera|hello|hi|hey)$/u.test(text) ||
+    /^(?:che|cosa|come|chi|qual|quale|quali|quanto|quanti|quante|quando|dove|perche|what|which|who|how|when|where|why)\b/u.test(text) ||
+    /^(?:sei|hai|sai|puoi|potresti|riesci|ricordi|pensi|ritieni|conosci|mi senti|ci senti|ci sei|mi ascolti|ci ascolti|ci stai ascoltando|mi stai ascoltando)\b/u.test(text) ||
+    /^(?:(?:can|could|would|will|do|did|are|have) you|you (?:can|could|know|think))\b/u.test(text) ||
+    /^(?:raccontami|spiegami|ricordami|mostrami|aiutami|dammi|fammi|ripeti|traduci|calcola|tell me|explain|remind me|show me|help me|give me|repeat|translate|calculate)\b/u.test(text);
 }
 
 export function parseMeetingVoiceCommand(
@@ -193,7 +224,8 @@ export function parseMeetingVoiceCommand(
   // Turn control is handled separately, never sent as a question or a command
   // hidden inside a quotation/conditional permission.
   if (meetingPermissionDecision(spokenText, wakeWord) ||
-      /^(?:vai pure|prego|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)\b/iu.test(request) ||
+      /^(?:si|yes|ok|okay)[.!?\s]*$/iu.test(request) ||
+      /^(?:vai(?: pure)?|sentiamo|prego|puoi parlare|puoi intervenire|intervieni|go ahead|you can speak|please speak)\b/iu.test(request) ||
       /^(?:ha detto|dice che|pensa che|said|says|thinks)\b/iu.test(request)) return undefined;
 
   const rules: Array<{
@@ -219,6 +251,8 @@ export function parseMeetingVoiceCommand(
     if (!["summary", "agenda"].includes(rule.kind) && !/[\p{L}\p{N}]/u.test(prompt)) return undefined;
     return { kind: rule.kind, prompt };
   }
+
+  if (!hasDirectRequestSyntax(request)) return undefined;
 
   if (/\b(?:scaletta|agenda|prossimo\s+punto|next\s+(?:agenda\s+)?item)\b/iu.test(request)) {
     return { kind: "agenda", prompt: request };

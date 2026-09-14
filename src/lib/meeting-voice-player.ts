@@ -2,6 +2,7 @@ import type { AvatarViseme } from "@/lib/avatar-visemes";
 import { splitMeetingSpeech } from "@/lib/meeting-speech";
 import type { MeetingCommandKind } from "@/types/meeting";
 import { playStreamingSpeech } from "@/lib/streaming-voice-player";
+import type { VoicePlaybackMetrics } from "@/lib/voice-playback-metrics";
 
 export type MeetingSpeechCommand = { id: string; kind: MeetingCommandKind; response: string };
 export type MeetingVoiceState = "ready" | "preparing" | "speaking" | "error";
@@ -10,7 +11,7 @@ export type MeetingVoiceState = "ready" | "preparing" | "speaking" | "error";
 export function createMeetingVoicePlayer(options: {
   remote: { endpoint: string; attemptId: string };
   onCommand: (command: MeetingSpeechCommand) => void;
-  onComplete: (id: string) => void;
+  onComplete: (id: string, metrics: VoicePlaybackMetrics) => void;
   onState: (state: MeetingVoiceState) => void;
   onFrame: (viseme: AvatarViseme, level: number) => void;
 }) {
@@ -32,18 +33,29 @@ export function createMeetingVoicePlayer(options: {
           const chunks = splitMeetingSpeech(command.response, 3_800);
           if (!chunks.length) throw new Error("Empty speech command");
           remoteAbort = new AbortController();
+          const started = performance.now();
+          let metrics: VoicePlaybackMetrics | undefined;
           for (let chunk = 0; chunk < chunks.length && active; chunk++) {
-            await playStreamingSpeech({
+            const part = await playStreamingSpeech({
               endpoint: options.remote.endpoint,
               payload: { attemptId: options.remote.attemptId, commandId: command.id, chunk },
               signal: remoteAbort.signal,
               onFrame: (viseme, level) => { if (active) options.onFrame(viseme, level); },
               onStart: () => { if (active) options.onState("speaking"); },
             });
+            metrics = metrics ? {
+              firstAudioMs: metrics.firstAudioMs,
+              totalMs: performance.now() - started,
+              audioChunks: metrics.audioChunks + part.audioChunks,
+              underruns: metrics.underruns + part.underruns,
+              gapMs: metrics.gapMs + part.gapMs,
+              maxAnimationGapMs: Math.max(metrics.maxAnimationGapMs, part.maxAnimationGapMs),
+            } : part;
           }
           if (!active) return;
+          if (!metrics) throw new Error("No playback observed");
           queue.shift();
-          options.onComplete(command.id);
+          options.onComplete(command.id, metrics);
           options.onState("ready");
         } catch {
           if (!active) return;

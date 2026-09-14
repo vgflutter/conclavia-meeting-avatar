@@ -2,10 +2,8 @@ import type { AvatarViseme } from "./avatar-visemes";
 import { speechBlockStart, speechOutputTime } from "./speech-playback-clock";
 import { decodeSpeechPcm, readSpeechLines, SPEECH_SAMPLE_RATE, speechFrameAt, type SpeechFrame, type SpeechPhone } from "./streaming-speech";
 
-export type StreamingVoiceMetrics = {
-  firstAudioMs: number; totalMs: number; audioChunks: number;
-  underruns: number; gapMs: number; maxAnimationGapMs: number;
-};
+export type { VoicePlaybackMetrics as StreamingVoiceMetrics } from "./voice-playback-metrics";
+import type { VoicePlaybackMetrics as StreamingVoiceMetrics } from "./voice-playback-metrics";
 
 /** Schedule PCM directly on Web Audio's clock. No full-utterance Blob or TTS model in the browser. */
 export async function playStreamingSpeech(options: {

@@ -26,6 +26,31 @@ test("echo: screenshot fragment remains raw but is quarantined", () => {
   expect(classifyTranscriptSource(meeting, { ...segment, speakerName: "Riccardo (Guest)" }).source).toBe("avatar");
 });
 
+test("echo: provisional participant is rechecked when playback confirmation arrives later", () => {
+  const beforeAck = { ...meeting, commandHistory: [{ id: command.id, response: command.response, createdAt: command.createdAt }] };
+  const stored = { ...segment, ...classifyTranscriptSource(beforeAck, segment) };
+  expect(stored.source).toBe("participant");
+  expect(classifyTranscriptSource(meeting, stored)).toEqual({ source: "suspected_echo", echoCommandId: "reply" });
+  expect(participantTranscript({ ...meeting, transcript: [stored] })).toEqual([]);
+  // Classification is derived: neither the provider text nor speaker is rewritten.
+  expect(stored).toEqual({ ...segment, source: "participant" });
+});
+
+test("echo: rechecking a participant still requires matching text and confirmed playback", () => {
+  const stored = { ...segment, source: "participant" as const };
+  expect(classifyTranscriptSource({ ...meeting, commandHistory: [] }, stored).source).toBe("participant");
+  expect(classifyTranscriptSource(meeting, { ...stored, createdAt: new Date(start - 1) }).source).toBe("participant");
+  expect(classifyTranscriptSource(meeting, { ...stored, text: "Certo perché il libro, ma non ho capito." }).source).toBe("participant");
+  expect(classifyTranscriptSource(meeting, { ...stored, text: "Riccardo, mi senti?" }).source).toBe("participant");
+});
+
+test("echo: confirmed classifications survive expired playback history and avatar renaming", () => {
+  const later = { ...meeting, assistant: { wakeWord: "Nora" }, commandHistory: [] };
+  expect(classifyTranscriptSource(later, { ...segment, source: "avatar" }).source).toBe("avatar");
+  expect(classifyTranscriptSource(later, { ...segment, source: "suspected_echo", echoCommandId: "reply" }))
+    .toEqual({ source: "suspected_echo", echoCommandId: "reply" });
+});
+
 for (const text of ["Sì", "Va bene", "Il libro", "Certo perché", "Riccardo, mi senti?", "Certo, perché il libro? Non ho capito la battuta.", "Il libro è triste ma il budget è confermato"]) {
   test(`echo: keeps short or additional human speech: ${text}`, () => {
     expect(classifyTranscriptSource(meeting, { ...segment, text }).source).toBe("participant");

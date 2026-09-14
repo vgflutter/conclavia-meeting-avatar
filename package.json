@@ -11,6 +11,11 @@
     "tunnel": "node scripts/local-tunnel.mjs",
     "tunnel:check": "node scripts/local-tunnel.mjs --check",
     "test:tunnel": "node --test tests/scripts/local-tunnel.test.mjs",
+    "test:scripts": "node --test tests/scripts/*.test.mjs",
+    "diagnose:captions": "node scripts/diagnose-captions.mjs",
+    "diagnose:entry": "node scripts/diagnose-entry.mjs",
+    "test:diagnostics": "node --test tests/scripts/diagnostics.test.mjs",
+    "test:captions": "node --test tests/scripts/diagnose-captions.test.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -19,7 +24,7 @@
     "test:e2e:ui": "playwright test --ui",
     "docs:screenshots": "playwright test --config playwright.docs.config.ts",
     "test:live": "node scripts/verify-live.mjs",
-    "verify": "npm run lint && npm run typecheck && npm run test:tunnel && npm run build && npm run test:e2e"
+    "verify": "npm run lint && npm run typecheck && npm run test:scripts && npm run build && npm run test:e2e"
   },
   "dependencies": {
     "mongoose": "8.24.2",

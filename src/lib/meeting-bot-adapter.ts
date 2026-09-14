@@ -5,8 +5,10 @@ import { MEETING_ENTRY_TIMEOUT_SECONDS } from "@/lib/meeting-entry-policy";
 import { teamsCaptionLanguage } from "@/lib/meeting-caption-language";
 import type { AttendeeState } from "@/lib/attendee-state";
 import type { MeetingBotProvider, MeetingResponse } from "@/types/meeting";
+import { parseParticipantEvent, type ParticipantEvent } from "@/lib/meeting-participants";
 
 export interface MeetingBotSession {
+  diagnosticLogsRequested?: boolean;
   provider: MeetingBotProvider;
   externalBotId: string;
   outputUrl: string;
@@ -22,6 +24,7 @@ export interface MeetingBotAdapter {
   cancel(externalBotId: string): Promise<void>;
   leave(externalBotId: string): Promise<{ leftAt: Date }>;
   getStatus?(externalBotId: string): Promise<AttendeeState>;
+  getParticipantEvents?(externalBotId: string): Promise<{ events: ParticipantEvent[]; complete: boolean }>;
   setCaptionLanguage?(externalBotId: string, language: "it-it" | "en-us"): Promise<void>;
   refreshOutput?(meeting: MeetingResponse, options?: { restart?: boolean }): Promise<string>;
   findAttempt?(meetingId: string, attemptId: string): Promise<{ externalBotId: string; state: AttendeeState } | undefined>;
@@ -282,7 +285,7 @@ export class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
         ...init.headers,
       },
       cache: "no-store",
-      signal: AbortSignal.timeout(15_000),
+      signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
     });
 
     if (!acceptedStatuses.includes(response.status)) {
@@ -395,6 +398,7 @@ export class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
             {
               url: this.webhookUrl(meeting),
               triggers: [
+                "bot_logs.update",
                 "bot.state_change",
                 "transcript.update",
                 "participant_events.join_leave",
@@ -417,6 +421,7 @@ export class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
       provider: this.provider,
       externalBotId: payload.id,
       outputUrl,
+      diagnosticLogsRequested: true,
       scheduledFor: joinAt ? new Date(joinAt) : undefined,
       joinedAt: joinAt ? undefined : new Date(),
     };
@@ -459,6 +464,37 @@ export class AttendeeMeetingBotAdapter implements MeetingBotAdapter {
   async getStatus(externalBotId: string): Promise<AttendeeState> {
     const response = await this.request(`/bots/${encodeURIComponent(externalBotId)}`, { method: "GET" }, [200]);
     return this.parseState(await response.json());
+  }
+
+  async getParticipantEvents(externalBotId: string): Promise<{ events: ParticipantEvent[]; complete: boolean }> {
+    const path = `/bots/${encodeURIComponent(externalBotId)}/participant_events`;
+    const first = new URL(`${this.config.apiBaseUrl}${path}`);
+    const visited = new Set<string>();
+    const events: ParticipantEvent[] = [];
+    const signal = AbortSignal.timeout(12_000); // One total budget, not per page.
+    let url: URL | undefined = first;
+    let complete = true;
+    while (url) {
+      if (url.origin !== first.origin || url.pathname !== first.pathname || url.username || url.password ||
+          url.hash || visited.has(url.href) || visited.size >= 20) return { events, complete: false };
+      visited.add(url.href);
+      const response = await this.request(`${path}${url.search}`, { method: "GET", signal }, [200]);
+      const payload = await response.json() as { results?: unknown[]; next?: unknown };
+      if (!payload || !Array.isArray(payload.results)) throw new MeetingBotProviderError("Invalid participant events response");
+      for (const row of payload.results) {
+        // This endpoint can also include speech events, which do not change presence.
+        const type = row && typeof row === "object" ? (row as Record<string, unknown>).event_type : undefined;
+        if (type === "speech_start" || type === "speech_stop") continue;
+        const event = parseParticipantEvent(row);
+        if (event) events.push(event);
+        else complete = false;
+        if (events.length >= 5_000) return { events, complete: false };
+      }
+      if (payload.next === null) url = undefined;
+      else if (typeof payload.next === "string" && payload.next) url = new URL(payload.next, url);
+      else return { events, complete: false };
+    }
+    return { events, complete };
   }
 
   async setCaptionLanguage(externalBotId: string, language: "it-it" | "en-us"): Promise<void> {

@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 const headers = { "Cache-Control": "private, no-store" };
 
-type DebugMeeting = Pick<MeetingRecord, "assistant" | "transcript" | "commandHistory" | "bot"> & {
+type DebugMeeting = Pick<MeetingRecord, "assistant" | "transcript" | "commandHistory" | "bot" | "participantRoster"> & {
   totalEvents: number;
 };
 
@@ -32,6 +32,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       { $project: {
         _id: 0,
         "assistant.wakeWord": 1,
+        "bot.entryAttemptId": 1,
+        "participantRoster.attemptId": 1,
+        "participantRoster.entries.participantId": 1,
         "bot.outputSpeechCommandId": 1,
         "bot.outputSpeechState": 1,
         "bot.outputSpeechUpdatedAt": 1,
@@ -52,6 +55,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         kind: "transcript" as const,
         speakerName: segment.speakerName,
         text: segment.text,
+        ...(segment.interventionDecision ? { interventionDecision: {
+          ...segment.interventionDecision, decidedAt: segment.interventionDecision.decidedAt.toISOString(),
+        } } : {}),
+        ...(segment.turnDecision ? { turnDecision: {
+          action: segment.turnDecision.action, reason: segment.turnDecision.reason,
+          method: segment.turnDecision.method, decidedAt: segment.turnDecision.decidedAt.toISOString(),
+        } } : {}),
         createdAt: segment.createdAt.toISOString(),
       })),
       ...meeting.commandHistory.map((command) => ({
@@ -60,6 +70,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         speakerName: meeting.assistant.wakeWord,
         text: command.response,
         prompt: command.prompt || undefined,
+        playbackMetrics: command.playbackMetrics,
         createdAt: command.createdAt.toISOString(),
       })),
     ];

@@ -1,11 +1,12 @@
 import type { MeetingTranscriptSegment } from "@/types/meeting";
 
 type Timestamp = Date | string;
-type Segment = Pick<MeetingTranscriptSegment, "speakerName" | "text" | "startMs" | "source" | "echoCommandId"> & { createdAt: Timestamp };
+type Segment = Pick<MeetingTranscriptSegment, "speakerName" | "speakerId" | "speakerIsParticipant" | "entryAttemptId" | "text" | "startMs" | "source" | "echoCommandId"> & { createdAt: Timestamp };
 type Context = {
   assistant: { wakeWord: string };
   commandHistory: Array<{ id: string; response: string; createdAt: Timestamp; playbackStartedAt?: Timestamp; playbackEndedAt?: Timestamp }>;
-  bot: { outputSpeechCommandId?: string; outputSpeechState?: string; outputSpeechUpdatedAt?: Timestamp };
+  bot: { entryAttemptId?: string; outputSpeechCommandId?: string; outputSpeechState?: string; outputSpeechUpdatedAt?: Timestamp };
+  participantRoster?: { attemptId: string; entries: Array<{ participantId: string }> };
 };
 
 function normalized(text: string): string {
@@ -19,13 +20,26 @@ function milliseconds(value?: Timestamp): number {
 // A suspicion, not a corrected speaker identity. Preserve the provider's raw text/name.
 // Only a complete, substantial text fragment within confirmed playback is quarantined.
 export function classifyTranscriptSource(meeting: Context, segment: Segment): {
-  source: NonNullable<MeetingTranscriptSegment["source"]>; echoCommandId?: string;
+  source: NonNullable<MeetingTranscriptSegment["source"]>; echoCommandId?: string; speakerIsParticipant?: boolean;
 } {
-  if (segment.source) return { source: segment.source, echoCommandId: segment.echoCommandId };
+  // Attendee excludes the bot from participant events. A matching stable ID is
+  // stronger evidence than a display name, including a human named Riccardo.
+  const knownParticipant = segment.speakerIsParticipant || Boolean(segment.speakerId && segment.entryAttemptId &&
+    segment.entryAttemptId === meeting.bot.entryAttemptId &&
+    meeting.participantRoster?.attemptId === segment.entryAttemptId &&
+    meeting.participantRoster.entries.some(entry => entry.participantId === segment.speakerId));
+  const identity = knownParticipant ? { speakerIsParticipant: true } : {};
+  // Webhooks can arrive before the renderer's playback acknowledgement. A stored
+  // "participant" is provisional, not a manual speaker correction: reconsider it
+  // using the original speech time once playback evidence becomes available.
+  // Preserve existing quarantines even after command history has been trimmed.
+  if ((segment.source === "avatar" && !knownParticipant) || segment.source === "suspected_echo") {
+    return { source: segment.source, echoCommandId: segment.echoCommandId, ...identity };
+  }
   const speaker = normalized(segment.speakerName.replace(/\s*\((?:guest|unverified|ospite|non verificato)\)\s*$/iu, ""));
-  if (speaker && speaker === normalized(meeting.assistant.wakeWord)) return { source: "avatar" };
+  if (!knownParticipant && speaker && speaker === normalized(meeting.assistant.wakeWord)) return { source: "avatar" };
   const text = normalized(segment.text);
-  if (text.length < 18 || text.split(" ").length < 4) return { source: "participant" };
+  if (text.length < 18 || text.split(" ").length < 4) return { source: "participant", ...identity };
   // Attendee timestamps are epoch milliseconds; relative timestamps from other
   // providers cannot be compared to the playback clock. Use receipt time there.
   const at = segment.startMs && segment.startMs > 1e12 ? segment.startMs : milliseconds(segment.createdAt);
@@ -45,10 +59,10 @@ export function classifyTranscriptSource(meeting: Context, segment: Segment): {
     const until = Number.isFinite(end) ? end : start + 90_000;
     if (at < start || at > until + 5_000) continue;
     if (` ${normalized(command.response)} `.includes(` ${text} `)) {
-      return { source: "suspected_echo", echoCommandId: command.id };
+      return { source: "suspected_echo", echoCommandId: command.id, ...identity };
     }
   }
-  return { source: "participant" };
+  return { source: "participant", ...identity };
 }
 
 export function participantTranscript<T extends Segment>(meeting: Context & { transcript: T[] }): T[] {

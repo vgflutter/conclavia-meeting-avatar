@@ -153,7 +153,7 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ meeting: serializeMeeting(meeting) });
   } catch (error) {
     if (error instanceof MeetingOutputUnavailableError) {
-      return NextResponse.json({ error: "Avatar unavailable", code: "output_unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "Avatar unavailable", code: error.code }, { status: 503 });
     }
     if (error instanceof MeetingEntryConflictError) {
       return NextResponse.json({ error: "Il tentativo precedente non è ancora terminato oppure il collega è già stato inviato a questo meeting." }, { status: 409 });

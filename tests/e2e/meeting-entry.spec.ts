@@ -13,6 +13,10 @@ import { meetingEntryDeadline } from "../../src/lib/meeting-entry-policy";
 import { MeetingBotProviderError, type MeetingBotAdapter, type MeetingBotSession } from "../../src/lib/meeting-bot-adapter";
 import type { MeetingResponse } from "../../src/types/meeting";
 import { MeetingOutputUnavailableError } from "../../src/lib/meeting-output-health";
+import { installVoiceProbe } from "./voice-probe";
+import { parseVoicePlaybackMetrics } from "../../src/lib/voice-playback-metrics";
+import { captionLanguageSetupStatus } from "../../src/lib/meeting-caption-language";
+import { serializeMeeting } from "../../src/lib/serialize-meeting";
 
 const ownedIds: string[] = [];
 const origin = new Date("2030-01-01T10:00:00Z");
@@ -22,6 +26,7 @@ class FakeAttendee implements MeetingBotAdapter {
   readonly provider = "attendee" as const;
   readonly live = true;
   joins = 0;
+  diagnosticLogsRequested = false;
   leaves = 0;
   error?: Error;
   leaveError?: Error;
@@ -36,7 +41,7 @@ class FakeAttendee implements MeetingBotAdapter {
     this.joins++;
     if (this.onJoin) await this.onJoin(meeting);
     if (this.error) throw this.error;
-    return { provider: "attendee", externalBotId: this.lastId, outputUrl: "https://example.invalid/output" };
+    return { provider: "attendee", externalBotId: this.lastId, outputUrl: "https://example.invalid/output", diagnosticLogsRequested: this.diagnosticLogsRequested };
   }
   async schedule(meeting: MeetingResponse) { return this.join(meeting); }
   async cancel() {}
@@ -90,6 +95,20 @@ async function italianEntry(request: APIRequestContext, adapter: FakeAttendee) {
   return startAttendeeEntry(meeting, { adapter, now: origin });
 }
 
+test("diagnostica: ACK della sottoscrizione salvato e azzerato al tentativo successivo", async ({request}) => {
+  const adapter = new FakeAttendee(); adapter.diagnosticLogsRequested = true;
+  let meeting = await startAttendeeEntry(await create(request), {adapter, now: origin});
+  expect(meeting.bot.diagnosticLogsRequestedAt).toBeInstanceOf(Date);
+  expect(serializeMeeting(meeting).bot.diagnosticLogsRequestedAt).toBeTruthy();
+  await requestAttendeeExit(meeting, {adapter, now: later(120), reason: "join_timeout"});
+  meeting = await reload(meeting);
+  await persistAttendeeState(meeting, {state: "ended", occurredAt: later(130)});
+  adapter.diagnosticLogsRequested = false;
+  meeting = await startAttendeeEntry(await reload(meeting), {adapter, now: later(140)});
+  expect(meeting.bot.diagnosticLogsRequestedAt).toBeUndefined();
+  expect(adapter.joins).toBe(2);
+});
+
 test("lingua: aspetta l’ascolto confermato e invia una sola richiesta anche con monitor concorrenti", async ({request}) => {
   const adapter = new FakeAttendee();
   const meeting = await italianEntry(request, adapter);
@@ -118,6 +137,38 @@ test("lingua: errore transitorio riprovato senza uscita o nuovo bot", async ({re
   expect(adapter.captionCalls).toHaveLength(2);
   expect(adapter.joins).toBe(1);
   expect(adapter.leaves).toBe(0);
+});
+
+test("lingua: HTTP 200 resta non verificato nella GUI, anche dopo refresh", async ({request, page}) => {
+  const adapter = new FakeAttendee();
+  const meeting = await italianEntry(request, adapter);
+  adapter.current = { state: "joined_recording", occurredAt: later(5) };
+  await reconcileMeetingEntry(meeting.id, { adapter, now: later(10) });
+  const current = await reload(meeting);
+  expect(captionLanguageSetupStatus(serializeMeeting(current).bot)).toBe("requested_unverified");
+  await page.goto(`/meetings/${meeting.id}`);
+  const warning = page.getByTestId("caption-language-status");
+  await expect(warning).toHaveAttribute("data-state", "requested_unverified");
+  await expect(warning).toContainText(/non verificata|unverified/iu);
+  await expect(warning).toContainText(/Attendee/);
+  await page.reload();
+  await expect(warning).toBeVisible();
+  await warning.locator("summary").click();
+  await expect(warning.getByRole("link")).toHaveAttribute("href", /support\.microsoft\.com/);
+  expect(adapter.captionCalls).toHaveLength(1);
+  expect(adapter.leaves).toBe(0);
+});
+
+test("lingua: richiesta, ACK e sessione non configurata non diventano lingua verificata", () => {
+  const bot = { provider: "attendee", status: "joined", captionLanguage: "it-it" } as MeetingResponse["bot"];
+  expect(captionLanguageSetupStatus(bot)).toBe("request_pending");
+  expect(captionLanguageSetupStatus({...bot, captionLanguageAttempts: 3})).toBe("request_failed");
+  expect(captionLanguageSetupStatus({...bot, captionLanguageRequestedAt: origin.toISOString()})).toBe("requested_unverified");
+  expect(captionLanguageSetupStatus({...bot, captionLanguage: undefined})).toBe("not_requested");
+  expect(captionLanguageSetupStatus({...bot, leftAt: origin.toISOString()})).toBeUndefined();
+  expect(captionLanguageSetupStatus({...bot, stopRequestedAt: origin.toISOString()})).toBeUndefined();
+  expect(captionLanguageSetupStatus({...bot, status: "leaving"})).toBeUndefined();
+  expect(captionLanguageSetupStatus({...bot, provider: "mock"})).toBeUndefined();
 });
 
 test("lingua: tre tentativi al massimo e avviso visibile, senza falsi successi", async ({request, page}) => {
@@ -248,6 +299,64 @@ test("avatar: preflight fallito non lascia un bot incerto o un blocco sul rientr
   expect(retried.bot.externalBotId).toBe(adapter.lastId);
 });
 
+for (const locale of ["it", "en"] as const) {
+test(`avatar: timeout mostra il controllo fallito e consente rientro sullo stesso meeting (${locale})`, async ({request, page, baseURL}) => {
+  await page.context().addCookies([{name: "conclavia_locale", value: locale, url: baseURL!}]);
+  const adapter = new FakeAttendee();
+  adapter.error = new MeetingOutputUnavailableError("scripts", "timeout");
+  const initial = await create(request);
+  initial.autoJoin = true;
+  await initial.save();
+  const failed = await startAttendeeEntry(initial, {adapter});
+  expect(failed.status).toBe("failed");
+  expect(failed.bot.failureCode).toBe("output_scripts_timeout");
+  expect(failed.bot.lastError).toContain("JavaScript");
+  expect(failed.bot.externalBotId).toBeUndefined();
+  expect(failed.bot.activeRoomKey).toBeUndefined();
+  expect(failed.bot.joinDeadlineAt).toBeUndefined();
+  await page.goto(`/meetings/${failed.id}`);
+  await expect(page.getByText(locale === "it" ? "JavaScript dell’avatar: tempo massimo" : "Avatar JavaScript: the time limit", {exact: false})).toBeVisible();
+  await expect(page.getByTestId("entry-not-sent")).toContainText(locale === "it" ? "senza ricrearlo" : "without recreating it");
+  await expect(page.getByRole("button", {name: locale === "it" ? "Riprova ingresso" : "Retry entry"})).toBeVisible();
+  adapter.error = undefined;
+  const retried = await startAttendeeEntry(failed, {adapter});
+  expect(retried.id).toBe(initial.id);
+  expect(retried.bot.entryAttemptId).not.toBe(failed.bot.entryAttemptId);
+  expect(retried.bot.externalBotId).toBe(adapter.lastId);
+  await expect(startAttendeeEntry(retried, {adapter})).rejects.toBeInstanceOf(MeetingEntryConflictError);
+  expect(adapter.joins).toBe(2); // One failed preflight, one successful attempt; no third create.
+});
+}
+
+test("avatar: annullamento durante preflight fallito non aspetta un’uscita impossibile", async ({request, page, baseURL}) => {
+  await page.context().addCookies([{name: "conclavia_locale", value: "it", url: baseURL!}]);
+  const adapter = new FakeAttendee();
+  adapter.onJoin = async snapshot => {
+    const current = (await MeetingModel.findById(snapshot.id).exec())!;
+    await requestAttendeeExit(current, {adapter});
+  };
+  adapter.error = new MeetingOutputUnavailableError("page", "network");
+  const failed = await startAttendeeEntry(await create(request), {adapter});
+  expect(failed.bot.status).toBe("failed");
+  expect(failed.bot.stopRequestedAt).toBeUndefined();
+  expect(failed.bot.externalBotId).toBeUndefined();
+  expect(adapter.leaves).toBe(0);
+  await page.goto(`/meetings/${failed.id}`);
+  await expect(page.getByText("Uscita in corso.", {exact: false})).toHaveCount(0);
+  await expect(page.getByTestId("entry-not-sent")).toBeVisible();
+  adapter.onJoin = undefined;
+  adapter.error = undefined;
+  expect((await startAttendeeEntry(failed, {adapter})).bot.externalBotId).toBe(adapter.lastId);
+});
+
+test("avatar: preflight in corso non è presentato come ammissione in sala d’attesa", async ({request, page}) => {
+  const fixture = await create(request);
+  await MeetingModel.updateOne({_id: fixture._id}, {$set: {status: "joining", "bot.provider": "attendee", "bot.status": "scheduling"}});
+  await page.goto(`/meetings/${fixture.id}`);
+  await expect(page.getByText("The avatar check takes at most 45 seconds", {exact: false})).toBeVisible();
+  await expect(page.getByText("admit the colleague if it appears", {exact: false})).toHaveCount(0);
+});
+
 for (const code of ["SELF_SIGNED_CERT_IN_CHAIN", "ERR_TLS_CERT_ALTNAME_INVALID", "CERT_HAS_EXPIRED"]) {
   test(`ingresso: ${code} non crea un blocco incerto e consente riprova`, async ({request}) => {
     const adapter = new FakeAttendee();
@@ -347,6 +456,48 @@ test("avatar: anteprima non conferma il bot; il renderer segnala caricamento e d
   await page.route(`**/api/meeting-room/${meeting.bot.outputToken}/state**`, route => route.abort());
   await expect(page.getByTestId("meeting-status-badge")).toContainText(/COLLEGAMENTO|CONNECTING/, {timeout: 12_000});
   await expect(page.locator('[data-output-runtime="conclavia-v1"]')).toHaveAttribute("data-live", "false");
+});
+
+test("audio metrics: renderer → attempt-scoped storage → optional debug, without replay", async ({ request, page }) => {
+  const adapter = new FakeAttendee();
+  let meeting = await startAttendeeEntry(await create(request), { adapter });
+  await persistAttendeeState(meeting, { state: "joined_recording", occurredAt: new Date() });
+  meeting = await reload(meeting);
+  await installVoiceProbe(page);
+  await page.addInitScript(() => {
+    navigator.mediaDevices.getUserMedia = async () => { throw new DOMException("Fixture microphone disabled", "NotAllowedError"); };
+  });
+  await page.context().addCookies([{ name: "conclavia_locale", value: "it", url: "http://127.0.0.1:3101" }]);
+  await page.goto(`/meeting-room/${meeting.bot.outputToken}?mode=meeting&attempt=${meeting.bot.entryAttemptId}`);
+  await page.locator('[data-output-runtime="conclavia-v1"]').click({ position: { x: 20, y: 20 } });
+  const response = await request.post(`/api/meetings/${meeting.id}/commands`, { data: { kind: "ask", prompt: "Ciao" } });
+  expect(response.status()).toBe(200);
+  const id = (await response.json()).meeting.commandHistory.at(-1).id;
+  await expect.poll(async () => (await reload(meeting)).commandHistory.at(-1)?.playbackMetrics?.audioChunks).toBe(1);
+  const metrics = JSON.parse(JSON.stringify((await reload(meeting)).commandHistory.at(-1)!.playbackMetrics!));
+  expect(parseVoicePlaybackMetrics(metrics)).toEqual(metrics);
+  expect(metrics.underruns).toBe(0);
+  expect(metrics.firstAudioMs).toBeGreaterThan(0);
+  await page.goto(`/meetings/${meeting.id}`);
+  await page.getByRole("switch", { name: "Modalità debug" }).click();
+  const details = page.getByRole("log").locator("details");
+  await expect(details).not.toHaveAttribute("open", "");
+  await details.locator("summary").click();
+  await expect(details.getByText("Richiesta voce → primo audio")).toBeVisible();
+  await expect(details.getByText(/non della ricezione su Teams/)).toBeVisible();
+  const url = `/api/meeting-room/${meeting.bot.outputToken}/state`;
+  const report = (value: unknown, state = "completed", attemptId = meeting.bot.entryAttemptId, commandId = id) => request.post(url, { data: {
+    attemptId, voiceReady: true, playback: { commandId, state, metrics: value },
+  } });
+  expect((await report({ ...metrics, gapMs: -1 })).status()).toBe(400);
+  expect((await report({ ...metrics, text: "untrusted" })).status()).toBe(400);
+  expect((await report(metrics, "speaking")).status()).toBe(400);
+  expect((await report(metrics, "completed", randomUUID())).status()).toBe(404);
+  expect((await report(metrics, "completed", meeting.bot.entryAttemptId, randomUUID())).status()).toBe(404);
+  expect((await report({ ...metrics, firstAudioMs: 0 })).status()).toBe(204);
+  expect(JSON.parse(JSON.stringify((await reload(meeting)).commandHistory.at(-1)?.playbackMetrics))).toEqual(metrics);
+  await requestAttendeeExit(await reload(meeting), { adapter });
+  expect((await report(metrics)).status()).toBe(404);
 });
 
 test("ingresso: timeout persistente senza GUI e nuovo tentativo solo dopo uscita reale", async ({ request }) => {

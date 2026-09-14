@@ -1,6 +1,7 @@
 import { isMeetingWakePhrase, meetingPermissionDecision, parseMeetingVoiceCommand, statementBeforeMeetingAddress } from "@/lib/meeting-command";
 import { classifyTranscriptSource } from "@/lib/meeting-transcript-source";
 import type { MeetingDocument } from "@/models/Meeting";
+import { sameTranscriptSpeaker } from "@/lib/meeting-participants";
 
 export const FOLLOW_UP_WINDOW_MS = 90_000;
 export interface MeetingFollowUpStatement { speakerName: string; text: string }
@@ -23,8 +24,12 @@ export function recentMeetingFollowUp(meeting: MeetingDocument, index: number): 
     const age = current.createdAt.getTime() - segment.createdAt.getTime();
     if (age < 0 || age > FOLLOW_UP_WINDOW_MS || Date.now() - segment.createdAt.getTime() > FOLLOW_UP_WINDOW_MS) return undefined;
     if (classifyTranscriptSource(meeting, segment).source !== "participant") continue;
+    if (segment.entryAttemptId !== current.entryAttemptId) return undefined;
+    if (segment.turnDecision?.action === "defer") continue;
+    if (["grant", "decline", "request"].includes(segment.turnDecision?.action || "") ||
+        segment.turnDecision?.reason === "no_pending_turn") return undefined;
     if (isMeetingWakePhrase(segment.text, wakeWord)) {
-      if (age <= 8_000 && segment.speakerName.toLowerCase() === current.speakerName.toLowerCase()) continue;
+      if (age <= 8_000 && sameTranscriptSpeaker(segment, current) && segment.entryAttemptId === current.entryAttemptId) continue;
       return undefined;
     }
     const permission = meetingPermissionDecision(segment.text, wakeWord);

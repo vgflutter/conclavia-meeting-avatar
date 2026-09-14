@@ -84,6 +84,7 @@ export async function generateMeetingStructured<T>({
   schema,
   maxOutputTokens = 220,
   promptCacheKey,
+  timeoutMs = REQUEST_TIMEOUT_MS,
 }: {
   instructions: string;
   input: string;
@@ -91,6 +92,7 @@ export async function generateMeetingStructured<T>({
   schema: Record<string, unknown>;
   maxOutputTokens?: number;
   promptCacheKey?: string;
+  timeoutMs?: number;
 }): Promise<T> {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) throw new Error("Meeting intelligence is not configured");
@@ -120,7 +122,7 @@ export async function generateMeetingStructured<T>({
       store: false,
     }),
     cache: "no-store",
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(Math.max(1_000, Math.min(timeoutMs, REQUEST_TIMEOUT_MS))),
   });
 
   const payload = (await response.json().catch(() => undefined)) as unknown;

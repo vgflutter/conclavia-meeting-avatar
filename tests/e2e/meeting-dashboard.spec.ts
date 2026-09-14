@@ -78,7 +78,9 @@ test("storico: 250 meeting, payload ridotto, pagine stabili e filtri persistenti
   expect(new Set([...first.history, ...second.history].map((item) => item.id)).size).toBe(40);
   expect(JSON.stringify(first)).not.toMatch(/TRANSCRIPT_NOT_FOR_LIST|outputToken|commandHistory|meetingUrl/);
   expect(JSON.stringify(first).length).toBeLessThan(20_000);
-  expect(first.history.every((item) => item.overview.length <= 240)).toBe(true);
+  expect(first.history.every((item) => !("overview" in item) && !("summary" in item))).toBe(true);
+  // Summary text is still searchable in storage, but never included in list rows.
+  expect((await loadMeetingDashboard({...filters, q: `Decisione condivisa ${marker}`})).counts.history).toBe(250);
   await page.goto(dashboardHref(filters));
   await expect(page.getByTestId("meeting-row")).toHaveCount(20);
   await expect(page.getByRole("navigation", {name: "Paginazione meeting"})).toContainText("1–20 di 250");
@@ -116,6 +118,8 @@ test("archiviazione: reversibile, conserva dati, blocca ingresso e partecipanti 
   const doc = await seed("Da archiviare", -2);
   const id = String(doc._id);
   await page.goto(`/meetings?view=history&q=${encodeURIComponent(doc.title)}`);
+  await expect(page.getByRole("button", {name: "Archivia", exact: true})).toHaveCount(0);
+  await page.getByTestId("meeting-row").getByRole("link").click();
   await page.getByRole("button", {name: "Archivia", exact: true}).click();
   await expect(page.getByRole("button", {name: "Annulla archiviazione"})).toBeVisible();
   const archived = await MeetingModel.findById(id).lean();
@@ -136,11 +140,25 @@ test("archiviazione: reversibile, conserva dati, blocca ingresso e partecipanti 
   expect((await request.post(`/api/meetings/${id}/archive`, {data: {archived: true}})).status()).toBe(409);
   const attention = await loadMeetingDashboard(dashboardFilters({view: "attention", q: doc.title}));
   expect(attention.attention.map((item) => item.id)).toContain(id);
+  await page.goto(`/meetings/${id}`);
+  await expect(page.getByRole("button", {name: "Archivia", exact: true})).toHaveCount(0);
+  await expect(page.getByRole("link", {name: "Riprogramma", exact: true})).toHaveCount(0);
+  await MeetingModel.updateOne({_id: id}, {$set: {
+    "bot.status": "left", "bot.failureCode": "entry_cancelled", "bot.externalBotId": "inactive-test-participant",
+    "bot.entryAttemptId": "finished-test-attempt", "bot.leftAt": new Date(), "bot.providerStatusCode": "ended",
+  }});
+  await page.reload();
+  await expect(page.getByRole("button", {name: "Archivia", exact: true})).toBeVisible();
+  await page.getByRole("button", {name: "Archivia", exact: true}).click();
+  await expect(page.getByRole("button", {name: "Annulla archiviazione"})).toBeVisible();
 });
 
 test("riprogrammazione: modulo precompilato, nuova data obbligatoria e nessun ingresso automatico", async ({page, request}) => {
-  const doc = await seed("Da riprogrammare", -2);
-  await page.goto(`/meetings/new?from=${doc._id}`);
+  const doc = await seed("Da riprogrammare", -2, "failed");
+  await page.goto(`/meetings?view=history&q=${encodeURIComponent(doc.title)}`);
+  await page.getByTestId("meeting-row").getByRole("link").click();
+  await expect(page.getByRole("button", {name: "Archivia", exact: true})).toBeVisible();
+  await page.getByRole("link", {name: "Riprogramma", exact: true}).click();
   await expect(page.getByText(/quello originale resterà nello storico/)).toBeVisible();
   await expect(page.getByLabel("Titolo del meeting")).toHaveValue(doc.title);
   await expect(page.getByLabel("Link Microsoft Teams")).toHaveValue(doc.meetingUrl);
@@ -186,10 +204,14 @@ test("mobile e inglese: righe compatte, riepilogo prioritario e trascrizione opz
   await page.context().addCookies([{name: "conclavia_locale", value: "en", url: origin}]);
   await page.setViewportSize({width: 390, height: 844});
   await page.goto(`/meetings?view=history&q=${encodeURIComponent(doc.title)}`);
-  await expect(page.getByRole("link", {name: /Read summary/})).toBeVisible();
+  const rowLink = page.getByTestId("meeting-row").getByRole("link");
+  await expect(rowLink).toHaveAccessibleName(new RegExp(doc.title));
+  await expect(rowLink).toHaveAttribute("href", `/meetings/${doc._id}#summary`);
+  await expect(page.getByTestId("meeting-row")).toContainText("1 decision · 1 action");
+  await expect(page.getByTestId("meeting-row")).not.toContainText(doc.summary.overview);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({path: test.info().outputPath("history-mobile-en.png"), fullPage: true});
-  await page.getByRole("link", {name: /Read summary/}).click();
+  await rowLink.click();
   await expect(page.getByRole("heading", {name: "Meeting summary"})).toBeVisible();
   await expect(page.getByText("Optional transcript passage")).toBeHidden();
   const order = await page.locator("#summary").evaluate((summary) => {
@@ -200,6 +222,72 @@ test("mobile e inglese: righe compatte, riepilogo prioritario e trascrizione opz
   await page.screenshot({path: test.info().outputPath("summary-mobile-en.png"), fullPage: true});
   await page.getByText("Full transcript", {exact: true}).click();
   await expect(page.getByText("Optional transcript passage")).toBeVisible();
+});
+
+test("storico compatto: cinque recenti, riga unica da tastiera, conteggi e stati utili", async ({page}) => {
+  const marker = randomUUID();
+  const doc = await seed(`${marker} Revisione prodotto`, -1, "completed", {seriesLabel: ""});
+  doc.summary.overview = "Questo riepilogo deve restare nel dettaglio, non nella lista.";
+  doc.summary.decisions = ["Consegna approvata", "Budget approvato"];
+  await doc.save();
+  await seed(`${marker} Solo attività`, -2, "completed", {seriesLabel: "", summary: {
+    overview: "", rememberedFacts: [], decisions: [], actionItems: [{description: "Preparare demo", completed: false}], openQuestions: [], participantNotes: [],
+  }});
+  await seed(`${marker} Da preparare`, -3, "processing", {seriesLabel: ""});
+  await seed(`${marker} Annullato`, -4, "cancelled", {seriesLabel: ""});
+  await seed(`${marker} Non svolto`, -5, "scheduled", {seriesLabel: ""});
+  await seed(`${marker} Archiviato`, -6, "completed", {archivedAt: new Date(), seriesLabel: ""});
+  await page.setViewportSize({width: 1440, height: 1000});
+  await page.goto(`/meetings?q=${marker}`);
+  const history = page.getByRole("region", {name: "Storico", exact: true});
+  await expect(history.getByTestId("meeting-row")).toHaveCount(5);
+  await history.getByRole("link", {name: "Vedi tutti"}).click();
+  await expect(page).toHaveURL(new RegExp(`view=history&q=${marker}`));
+  const rows = history.getByTestId("meeting-row");
+  await expect(rows).toHaveCount(6);
+  await expect(rows.first()).toContainText("2 decisioni");
+  await expect(rows.nth(1)).toContainText("1 attività");
+  await expect(history).not.toContainText(/0 attività|0 decisioni|Leggi riepilogo/);
+  await expect(rows.first().getByTestId("history-status")).toHaveCount(0);
+  await expect(history.getByTestId("history-status")).toHaveText(["Riepilogo in preparazione", "Annullato", "Non svolto", "Archiviato"]);
+  await expect(history.getByRole("link")).toHaveCount(6);
+  await expect(history.getByRole("button")).toHaveCount(0);
+  expect((await rows.first().boundingBox())!.height).toBeLessThanOrEqual(72);
+  await expect(history).not.toContainText(doc.summary.overview);
+  const time = await rows.first().locator("time").boundingBox();
+  const title = await rows.first().locator(`[title="${doc.title}"]`).boundingBox();
+  expect(Math.abs(time!.y - title!.y)).toBeLessThan(10);
+  await history.screenshot({path: test.info().outputPath("history-compact-desktop-it.png")});
+  // Native link: one focus target, enter opens the retained summary.
+  const link = rows.first().getByRole("link");
+  await link.focus();
+  await expect(link).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(new RegExp(`/meetings/${doc._id}#summary$`));
+  await expect(page.locator("#summary p").filter({hasText: doc.summary.overview})).toBeVisible();
+});
+
+test("storico compatto: titoli lunghi, mobile stretto e stato senza contatori vuoti", async ({page}) => {
+  const title = `Revisione ${"prodotto ".repeat(15)}`;
+  const doc = await seed(title, -1, "completed", {seriesLabel: "Serie molto lunga ".repeat(8)});
+  await seed("Senza decisioni", -2, "completed", {seriesLabel: ""});
+  for (const locale of ["it", "en"] as const) {
+    await page.context().addCookies([{name: "conclavia_locale", value: locale, url: origin}]);
+    for (const width of [1440, 320, 390]) {
+      await page.setViewportSize({width, height: 900});
+      await page.goto(`/meetings?view=history&q=${encodeURIComponent(prefix)}`);
+      const rows = page.getByTestId("meeting-list-history").getByTestId("meeting-row");
+      await expect(rows).toHaveCount(2);
+      await expect(rows.first().getByRole("link")).toHaveAccessibleName(new RegExp(doc.title.trim()));
+      await expect(rows.nth(1).getByTestId("history-status")).toHaveCount(0);
+      await expect(rows.nth(1)).not.toContainText(/0 (decision|attività|action)/);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      const truncatedTitle = rows.first().locator(`[title="${doc.title}"]`);
+      expect(await truncatedTitle.evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
+      expect((await rows.first().boundingBox())!.height).toBeLessThanOrEqual(width < 640 ? 100 : 76);
+      if (width === 320) await page.getByTestId("meeting-list-history").screenshot({path: test.info().outputPath(`history-long-mobile-${locale}.png`)});
+    }
+  }
 });
 
 test("panoramica inglese: schermata desktop e avvisi compatti", async ({page}) => {

@@ -3,6 +3,7 @@ import { MeetingOutputUnavailableError, meetingOutputReadiness, verifyMeetingOut
 import { AttendeeMeetingBotAdapter } from "../../src/lib/meeting-bot-adapter";
 import type { MeetingBotRuntimeConfig } from "../../src/lib/meeting-bot-config";
 import type { MeetingResponse } from "../../src/types/meeting";
+import { meetingEntryError } from "../../src/lib/meeting-entry-policy";
 
 const url = "https://avatar.example/meeting-room/00000000-0000-4000-8000-000000000000?mode=meeting";
 const validPage = () => new Response('<main data-output-runtime="conclavia-v1"></main><script src="/_next/runtime.js"></script>', { headers: { "Content-Type": "text/html" } });
@@ -100,7 +101,12 @@ for (const language of ["it-it", "en-us"] as const) {
       if (endpoint.pathname.startsWith("/_next/")) return validScript();
       return endpoint.pathname.endsWith("/state") ? Response.json({status: "joining"}) : validPage();
     });
-    await adapter.join({...meeting, bot: {...meeting.bot, captionLanguage: language}});
+    const session = await adapter.join({...meeting, bot: {...meeting.bot, captionLanguage: language}});
+    expect(session.diagnosticLogsRequested).toBe(true);
+    expect(calls[0].body.webhooks).toEqual([expect.objectContaining({triggers: [
+      "bot_logs.update", "bot.state_change", "transcript.update", "participant_events.join_leave",
+    ]})]);
+    expect(calls[0].body.debug_settings).toBeUndefined(); // No opt-in video recording.
     expect(calls[0].body.transcription_settings).toEqual({meeting_closed_captions: {}});
     await adapter.setCaptionLanguage("bot_test", language);
     expect(calls).toHaveLength(2);
@@ -117,6 +123,156 @@ test("avatar preflight: pagina corretta e stato raggiungibile", async () => {
     return String(input).includes("/state") ? Response.json({status: "joining"}) : validPage();
   });
   expect(calls).toHaveLength(3);
+});
+
+test("avatar preflight: pagina lenta non consuma il tempo dei successivi JavaScript", async () => {
+  const signals = new Set<AbortSignal>();
+  let scriptCalls = 0;
+  let concurrent = 0;
+  let maxConcurrent = 0;
+  const started = Date.now();
+  await verifyMeetingOutput(url, async (input, init) => {
+    signals.add(init!.signal!);
+    const path = new URL(String(input)).pathname;
+    if (path.endsWith("/state")) return Response.json({status: "joining", voice: {ready: true}});
+    if (path.startsWith("/_next/")) {
+      scriptCalls++;
+      maxConcurrent = Math.max(maxConcurrent, ++concurrent);
+      await new Promise(resolve => setTimeout(resolve, 180));
+      concurrent--;
+      return validScript();
+    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const scripts = Array.from({length: 9}, (_, i) => `<script src="/_next/${i}.js"></script>`).join("");
+    return new Response(`<main data-output-runtime="conclavia-v1"></main>${scripts}<script src="/_next/0.js"></script>`, {headers: {"Content-Type": "text/html"}});
+  }, {requestMs: 500, totalMs: 3_000, retryDelayMs: 0});
+  expect(Date.now() - started).toBeGreaterThan(500);
+  expect(scriptCalls).toBe(9); // Duplicate HTML references do not refetch the asset.
+  expect(maxConcurrent).toBe(4);
+  expect(signals.size).toBe(11); // Page, state, nine assets: no shared per-request clock.
+  expect([...signals].every(signal => signal.aborted)).toBeTruthy();
+});
+
+for (const status of [408, 429, 502]) {
+  test(`avatar preflight: recupera HTTP ${status}, poi crea un solo bot`, async () => {
+    let pages = 0;
+    let creations = 0;
+    const adapter = new AttendeeMeetingBotAdapter(config, async (input, init) => {
+      const endpoint = new URL(String(input));
+      if (endpoint.hostname === "app.attendee.dev") {
+        expect(init?.method).toBe("POST");
+        creations++;
+        return Response.json({id: "bot_test"}, {status: 201});
+      }
+      expect(init?.method).toBe("GET");
+      if (endpoint.pathname.startsWith("/_next/")) return validScript();
+      if (endpoint.pathname.endsWith("/state")) return Response.json({status: "joining"});
+      return ++pages === 1 ? new Response("temporary", {status}) : validPage();
+    });
+    await adapter.join(meeting);
+    expect(pages).toBe(2);
+    expect(creations).toBe(1);
+  });
+}
+
+test("avatar preflight: timeout temporaneo recuperato con un nuovo segnale", async () => {
+  const pageSignals: AbortSignal[] = [];
+  await verifyMeetingOutput(url, async (input, init) => {
+    if (String(input).includes("/state")) return Response.json({status: "joining"});
+    if (String(input).includes("/_next/")) return validScript();
+    pageSignals.push(init!.signal!);
+    if (pageSignals.length === 1) return new Promise<Response>(() => {});
+    return validPage();
+  }, {requestMs: 50, totalMs: 2_000, retryDelayMs: 0});
+  expect(pageSignals).toHaveLength(2);
+  expect(pageSignals[0]).not.toBe(pageSignals[1]);
+  expect(pageSignals.every(signal => signal.aborted)).toBeTruthy();
+});
+
+for (const [scenario, expectedCode] of [
+  ["403", "output_page_http_403"], ["redirect", "output_page_http_302"],
+  ["html", "output_page_invalid"], ["state", "output_state_invalid"],
+  ["voice", "output_state_voice"], ["script", "output_scripts_http_404"],
+  ["tls", "output_page_tls"],
+] as const) {
+  test(`avatar preflight: diagnostica sicura ${scenario}, nessun retry permanente`, async () => {
+    const calls = new Map<string, number>();
+    const error = await verifyMeetingOutput(url, async (input) => {
+      const path = new URL(String(input)).pathname;
+      calls.set(path, (calls.get(path) || 0) + 1);
+      if (path.startsWith("/_next/")) return scenario === "script" ? new Response("private provider details", {status: 404}) : validScript();
+      if (path.endsWith("/state")) {
+        if (scenario === "state") return new Response("private invalid JSON");
+        return Response.json({status: "joining", voice: {ready: scenario !== "voice"}});
+      }
+      if (scenario === "403") return new Response("private provider details", {status: 403});
+      if (scenario === "redirect") return new Response(null, {status: 302});
+      if (scenario === "html") return new Response("private provider details", {headers: {"Content-Type": "text/html"}});
+      if (scenario === "tls") throw new TypeError(`private ${url}`, {cause: {code: "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"}});
+      return validPage();
+    }).catch(error => error);
+    expect(error).toBeInstanceOf(MeetingOutputUnavailableError);
+    expect(error.code).toBe(expectedCode);
+    expect(error.retryable).toBeFalsy();
+    expect([...calls.values()].every(count => count === 1)).toBeTruthy();
+    for (const italian of [true, false]) {
+      const message = meetingEntryError(error.code, italian);
+      expect(message).toBeTruthy();
+      expect(`${error.message} ${error.code} ${message}`).not.toMatch(/private|avatar\.example|00000000/u);
+    }
+  });
+}
+
+test("avatar preflight: blocco totale include i body e interrompe anche i controlli fratelli", async () => {
+  const signals: AbortSignal[] = [];
+  let calls = 0;
+  const started = Date.now();
+  await expect(verifyMeetingOutput(url, async (_input, init) => {
+    calls++;
+    signals.push(init!.signal!);
+    // Headers arrive, but neither JSON nor HTML ever finishes loading.
+    return new Response(new ReadableStream({start() {}}), {headers: {"Content-Type": "text/html"}});
+  }, {requestMs: 2_000, totalMs: 80, retryDelayMs: 0})).rejects.toMatchObject({code: expect.stringMatching(/^output_(page|state)_timeout$/u)});
+  expect(calls).toBe(2);
+  expect(signals.every(signal => signal.aborted)).toBeTruthy();
+  expect(Date.now() - started).toBeLessThan(1_500);
+});
+
+test("avatar preflight: il limite totale interrompe anche l’attesa fra retry", async () => {
+  let calls = 0;
+  const started = Date.now();
+  await expect(verifyMeetingOutput(url, async input => {
+    if (String(input).includes("/state")) return Response.json({status: "joining"});
+    calls++;
+    throw new TypeError("temporary DNS failure");
+  }, {requestMs: 1_000, totalMs: 80, retryDelayMs: 3_000})).rejects.toMatchObject({code: "output_page_timeout"});
+  expect(calls).toBe(1);
+  expect(Date.now() - started).toBeLessThan(1_500);
+});
+
+test("avatar preflight: DNS persistente termina dopo due GET, senza dettagli sensibili", async () => {
+  let calls = 0;
+  await expect(verifyMeetingOutput(url, async input => {
+    if (String(input).includes("/state")) return Response.json({status: "joining"});
+    calls++;
+    throw new TypeError(`private URL ${url}`);
+  }, {retryDelayMs: 0})).rejects.toMatchObject({code: "output_page_network", message: "The public avatar check failed."});
+  expect(calls).toBe(2);
+});
+
+test("avatar preflight: indirizzi e script esterni restano bloccati", async () => {
+  let calls = 0;
+  const fetcher: typeof fetch = async input => {
+    calls++;
+    expect(new URL(String(input)).hostname).toBe("avatar.example");
+    if (String(input).includes("/state")) return Response.json({status: "joining"});
+    return new Response('<main data-output-runtime="conclavia-v1"></main><script src="https://other.example/code.js"></script>', {headers: {"Content-Type": "text/html"}});
+  };
+  await expect(verifyMeetingOutput(url.replace("https:", "http:"), fetcher)).rejects.toMatchObject({code: "output_url_invalid"});
+  expect(calls).toBe(0);
+  await expect(verifyMeetingOutput(url, fetcher)).rejects.toMatchObject({code: "output_scripts_invalid"});
+  expect(calls).toBe(2);
+  expect(meetingEntryError("output_page_private=https://private.example")).toBeUndefined();
 });
 
 test("avatar readiness: presenza nel meeting non basta e una conferma vecchia scade", () => {

@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { DeleteMeetingButton } from "@/components/DeleteMeetingButton";
 import { MeetingAgendaManager } from "@/components/MeetingAgendaManager";
 import { MeetingAssistantConsole } from "@/components/MeetingAssistantConsole";
+import { MeetingFloorControl } from "@/components/MeetingFloorControl";
 import { MeetingDebugPanel } from "@/components/MeetingDebugPanel";
 import { MeetingArchiveButton } from "@/components/MeetingArchiveButton";
 import { MeetingSummaryCard } from "@/components/MeetingSummaryCard";
@@ -16,6 +17,7 @@ import { getRequestLocale } from "@/i18n/server";
 import type { Locale } from "@/i18n/locale";
 import { buildMeetingContinuity } from "@/lib/meeting-continuity";
 import { getMeetingAutomationPublicConfig } from "@/lib/meeting-bot-config";
+import { attendeeAttemptFinished } from "@/lib/meeting-entry-policy";
 import {
   formatMeetingDate,
   meetingPlatformLabel,
@@ -196,9 +198,19 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
       new Date(meeting.scheduledStart).getTime()) /
       60_000,
   );
+  const now = new Date().getTime();
   const meetingIsOverdue =
     meeting.status === "scheduled" &&
-    new Date(meeting.scheduledStart).getTime() < new Date().getTime();
+    new Date(meeting.scheduledStart).getTime() < now;
+  const participantInactive =
+    !["scheduling", "scheduled", "joining", "waiting_room", "joined", "leaving"].includes(meeting.bot.status) &&
+    !document.bot.activeRoomKey && meeting.bot.failureCode !== "create_uncertain" &&
+    (!meeting.bot.externalBotId || attendeeAttemptFinished(meeting.bot));
+  const canManageMissedMeeting = participantInactive && (meetingIsOverdue || (
+    meeting.status === "failed" && (
+      new Date(meeting.scheduledEnd).getTime() < now || meeting.bot.failureCode === "entry_cancelled"
+    )
+  ));
   const meetingInProgress = ["joining", "waiting_room", "live", "processing"].includes(
     meeting.status,
   );
@@ -291,9 +303,9 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
                   : "The scheduled time has passed and the meeting did not start. Reschedule or archive it; its history is preserved."}
               </p>
             )}
-            {(meetingIsOverdue || meeting.archivedAt) && <div className="mb-4 flex flex-wrap items-center gap-3">
+            {(canManageMissedMeeting || meeting.archivedAt) && <div className="mb-4 flex flex-wrap items-center gap-3">
               <Link href={meeting.seriesId ? `/meetings/series/${meeting.seriesId}` : `/meetings/new?from=${meeting.id}`} className="text-sm font-semibold text-[#295c43] hover:underline">{isItalian ? "Riprogramma" : "Reschedule"}</Link>
-              <MeetingArchiveButton meetingId={meeting.id} archived={Boolean(meeting.archivedAt)} />
+              {participantInactive && new Date(meeting.scheduledStart).getTime() < now && <MeetingArchiveButton meetingId={meeting.id} archived={Boolean(meeting.archivedAt)} />}
             </div>}
             {!meeting.archivedAt && <MeetingSessionControls
               meetingId={meeting.id}
@@ -301,6 +313,7 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
               autoJoin={meeting.autoJoin}
               bot={meeting.bot}
               automation={automation}
+              participantStatus={meeting.participantStatus}
             />}
             <a
               href={meeting.meetingUrl}
@@ -346,9 +359,11 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
               </h2>
               <p className="mt-2 text-sm leading-6 text-amber-900/75">
                 {isItalian
-                  ? `Per ascoltarlo, dì nel meeting: “${meeting.assistant.wakeWord}, vai pure”.`
-                  : `To hear it, say in the meeting: “${meeting.assistant.wakeWord}, go ahead”.`}
+                  ? `Attende che gli concedi il turno, per esempio “Sì, ${meeting.assistant.wakeWord}”, oppure usa il pulsante.`
+                  : `It is waiting for a turn, for example “Yes, ${meeting.assistant.wakeWord}”, or use the button.`}
               </p>
+              {meeting.status === "live" && !meeting.bot.stopRequestedAt && <MeetingFloorControl key={meeting.pendingIntervention.id}
+                meetingId={meeting.id} interventionId={meeting.pendingIntervention.id} />}
             </section>
           )}
 

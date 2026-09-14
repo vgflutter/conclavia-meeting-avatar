@@ -9,9 +9,29 @@ export function attendeeAttemptFinished(bot: { entryAttemptId?: string; external
 }
 
 export function meetingEntryError(code: string | undefined, italian = true): string | undefined {
+  // Closed vocabulary: never display arbitrary provider errors or private URLs.
+  const output = code?.match(/^output_(url|page|state|scripts)_(timeout|network|tls|invalid|voice|http(?:_[1-5][0-9]{2})?)$/u);
+  if (output) {
+    const stages: Record<string, [string, string]> = {
+      url: ["Indirizzo dell’avatar", "Avatar address"], page: ["Pagina dell’avatar", "Avatar page"],
+      state: ["Stato dell’avatar", "Avatar state"], scripts: ["JavaScript dell’avatar", "Avatar JavaScript"],
+    };
+    const reasons: Record<string, [string, string]> = {
+      timeout: ["tempo massimo di attesa superato. Verifica che app e tunnel siano attivi, poi riprova.", "the time limit was exceeded. Check that the app and tunnel are running, then retry."],
+      network: ["collegamento non riuscito. Verifica che app e tunnel siano raggiungibili, poi riprova.", "connection failed. Check that the app and tunnel are reachable, then retry."],
+      tls: ["certificato HTTPS non verificabile. Ripristina il collegamento sicuro prima di riprovare.", "the HTTPS certificate could not be verified. Restore the secure connection before retrying."],
+      invalid: ["risposta non valida. Controlla l’app e il suo indirizzo pubblico prima di riprovare.", "invalid response. Check the app and its public address before retrying."],
+      voice: ["voce non pronta. Controlla la configurazione del servizio vocale prima di riprovare.", "voice is not ready. Check the voice service configuration before retrying."],
+    };
+    const index = italian ? 0 : 1;
+    const reason = output[2].startsWith("http")
+      ? (italian ? `errore HTTP${output[2].slice(4).replace("_", " ")}. Controlla app e tunnel prima di riprovare.` : `HTTP error${output[2].slice(4).replace("_", " ")}. Check the app and tunnel before retrying.`)
+      : reasons[output[2]][index];
+    return `${stages[output[1]][index]}: ${reason}`;
+  }
   const messages: Record<string, [string, string]> = {
     provider_tls_error: ["Il collegamento HTTPS al servizio meeting non supera la verifica del certificato. Nessun bot è stato inviato. Ripristina le autorità HTTPS fidate del server e riprova.", "The meeting service HTTPS certificate could not be verified. No bot was sent. Restore the server's trusted HTTPS authorities and retry."],
-    output_unavailable: ["L’avatar non è raggiungibile. Non lo abbiamo inviato al meeting. Ripristina il collegamento del servizio prima di riprovare.", "The avatar is unreachable. It was not sent to the meeting. Restore the service connection before retrying."],
+    output_unavailable: ["L’avatar non è raggiungibile. Ripristina il collegamento del servizio prima di riprovare.", "The avatar is unreachable. Restore the service connection before retrying."],
     request_to_join_denied: ["Il collega digitale non è stato ammesso al meeting.", "The digital colleague was not admitted to the meeting."],
     waiting_room_timeout_exceeded: ["Il collega digitale non è stato ammesso dalla sala d’attesa.", "The digital colleague was not admitted from the lobby."],
     meeting_not_found: ["Il collegamento Teams non è valido o il meeting non è disponibile.", "The Teams link is invalid or the meeting is unavailable."],
