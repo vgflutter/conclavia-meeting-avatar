@@ -1,13 +1,15 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import type { AssistantProfileResponse } from "@/types/assistant-profile";
+import { ASSISTANT_VISUAL_STYLES, type AssistantProfileResponse } from "@/types/assistant-profile";
 import type { Locale } from "@/i18n/locale";
 import { compatibleAvatarVoice } from "@/lib/avatar-voice-catalog";
+import { avatarVisualStyleLabel } from "@/lib/avatar-visual-style";
 
 function settings(profile: AssistantProfileResponse, voices: { it: string; en: string }) {
   return {
     displayName: profile.displayName, role: profile.role, appearance: profile.appearance,
+    visualStyle: profile.visualStyle || "editorial",
     responseStyle: profile.personality.responseStyle, attitude: profile.personality.attitude,
     voiceStyle: profile.voice.style, speakingRate: profile.voice.speakingRate,
     voiceIt: profile.voice.inworldVoiceIdIt ?? voices.it,
@@ -63,10 +65,12 @@ export function AvatarWorkspace({ profile, voices, children }: {
     savingRef.current = true;
     setSaving(true); setStatus("idle");
     try {
-      const { voiceIt, voiceEn, speakingRate, ...identity } = draft;
+      const { voiceIt, voiceEn, speakingRate, visualStyle, ...identity } = draft;
       const response = await fetch("/api/avatar", {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...identity,
+          // An unchanged local style must not overwrite a choice saved elsewhere.
+          ...(visualStyle !== saved.visualStyle ? { visualStyle } : {}),
           // Do not overwrite voice choices changed elsewhere when only editing identity.
           ...(speakingRate !== saved.speakingRate ? { speakingRate } : {}),
           ...(voiceIt !== saved.voiceIt ? { inworldVoiceIdIt: voiceIt } : {}),
@@ -96,16 +100,34 @@ export function useAvatarWorkspace() {
 export function AvatarAppearanceSelect({ locale, disabled = false }: { locale: Locale; disabled?: boolean }) {
   const { draft, update, saving } = useAvatarWorkspace();
   const it = locale === "it";
-  return <div>
+  return <div className="space-y-4">
+    <div>
+      <label className="label" htmlFor="avatar-visual-style">{it ? "Stile dell’avatar" : "Avatar style"}</label>
+      <select id="avatar-visual-style" className="input" value={draft.visualStyle} disabled={disabled || saving}
+        aria-describedby="avatar-style-help"
+        onChange={event => update({ visualStyle: event.target.value as Settings["visualStyle"] })}>
+        {ASSISTANT_VISUAL_STYLES.map(style => <option key={style} value={style}>{avatarVisualStyleLabel(style, it)}</option>)}
+      </select>
+      <p id="avatar-style-help" className="mt-2 text-xs leading-5 text-slate-500">{draft.visualStyle === "portrait_2_5d"
+        ? it ? "Ritratto animato: respiro, testa, battito degli occhi, espressioni e labiale semplificato sull’audio. La mano passa tra due pose. Non è un modello 3D."
+          : "Animated portrait: breathing, head motion, blinking, expressions and simplified audio-driven lip sync. The hand transitions between two poses. Not a 3D model."
+        : draft.visualStyle === "stylized_3d"
+          ? it ? "Personaggio 3D articolato: braccia, mani, sguardo, espressioni e labiale sull’audio. Nessuna transizione tra fotografie. Provalo prima di salvare."
+            : "Rigged 3D character: arms, hands, gaze, expressions and audio-driven lips. No photo crossfades. Preview before saving."
+        : it ? "Lo stile cambia solo l’aspetto, non la voce. Provalo prima di salvare."
+          : "Style changes the look, not the voice. Preview before saving."}</p>
+    </div>
+    <div>
     <label className="label" htmlFor="avatar-appearance">{it ? "Aspetto dell’avatar" : "Avatar appearance"}</label>
     <select id="avatar-appearance" className="input" value={draft.appearance} disabled={disabled || saving}
       onChange={event => update({ appearance: event.target.value as Settings["appearance"] })}>
-      <option value="business_clay">{it ? "Maschile · Business" : "Male · Business"}</option>
-      <option value="business_clay_female">{it ? "Femminile · Business" : "Female · Business"}</option>
+      <option value="business_clay">{it ? "Maschile" : "Male"}</option>
+      <option value="business_clay_female">{it ? "Femminile" : "Female"}</option>
     </select>
     <p className="mt-2 text-xs leading-5 text-slate-500">{it
       ? "Le voci si adattano all’aspetto. Il nome non cambia."
       : "Voice choices match the appearance. The name stays unchanged."}</p>
+    </div>
   </div>;
 }
 
@@ -114,6 +136,7 @@ export function AvatarSaveControls({ locale, disabled = false }: { locale: Local
   const it = locale === "it";
   const valid = Boolean(draft.displayName.trim() && draft.role.trim());
   const changes = [
+    draft.visualStyle !== saved.visualStyle && (it ? "stile visivo" : "visual style"),
     draft.appearance !== saved.appearance && (it ? "aspetto" : "appearance"),
     (draft.displayName !== saved.displayName || draft.role !== saved.role) && (it ? "identità" : "identity"),
     (draft.attitude !== saved.attitude || draft.responseStyle !== saved.responseStyle) && (it ? "comportamento" : "behaviour"),

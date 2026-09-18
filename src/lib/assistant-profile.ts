@@ -1,5 +1,6 @@
 import { meetingTtsConfig } from "@/lib/meeting-tts-config";
 import { DEFAULT_SPEAKING_RATE } from "@/lib/avatar-voice-catalog";
+import { isAvatarVisualStyle } from "@/lib/avatar-visual-style";
 import { connectToDatabase } from "@/lib/mongodb";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
 import type { AssistantProfileResponse } from "@/types/assistant-profile";
@@ -9,6 +10,7 @@ export const DEFAULT_ASSISTANT_PROFILE = {
   displayName: "Conclavia",
   role: "Collega digitale",
   appearance: "business_clay" as const,
+  visualStyle: "editorial" as const,
   personality: {
     responseStyle: "balanced" as const,
     attitude: "collaborative" as const,
@@ -31,6 +33,7 @@ export async function getAssistantProfile(): Promise<AssistantProfileResponse> {
     displayName: source.displayName,
     role: source.role,
     appearance: source.appearance,
+    visualStyle: isAvatarVisualStyle(source.visualStyle) ? source.visualStyle : "editorial",
     personality: {
       responseStyle:
         source.personality?.responseStyle ||

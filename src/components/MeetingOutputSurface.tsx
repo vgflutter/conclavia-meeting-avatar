@@ -7,7 +7,7 @@ import {
   type AvatarGesture,
   type AvatarMood,
 } from "@/components/BusinessAvatar";
-import type { AssistantAppearance } from "@/types/assistant-profile";
+import type { AssistantAppearance, AssistantVisualStyle } from "@/types/assistant-profile";
 import type { Locale } from "@/i18n/locale";
 import type { AvatarViseme } from "@/lib/avatar-visemes";
 import { createMeetingVoicePlayer, type MeetingVoiceState } from "@/lib/meeting-voice-player";
@@ -49,6 +49,7 @@ export function MeetingOutputSurface({
   initialInterventionId,
   displayName,
   appearance,
+  visualStyle = "editorial",
   role,
   locale,
   inMeeting,
@@ -62,6 +63,7 @@ export function MeetingOutputSurface({
   initialInterventionId?: string;
   displayName: string;
   appearance: AssistantAppearance;
+  visualStyle?: AssistantVisualStyle;
   role: string;
   locale: Locale;
   inMeeting: boolean;
@@ -82,6 +84,7 @@ export function MeetingOutputSurface({
   const voiceStateRef = useRef(voiceState);
   useEffect(() => { voiceStateRef.current = voiceState; }, [voiceState]);
   const [participantAppearance, setParticipantAppearance] = useState(appearance);
+  const [participantVisualStyle, setParticipantVisualStyle] = useState(visualStyle);
   const [participantName, setParticipantName] = useState(displayName);
   const [completedCommandId, setCompletedCommandId] = useState<string>();
   const speaking = voiceState === "speaking";
@@ -159,6 +162,7 @@ export function MeetingOutputSurface({
           commands?: SpokenCommand[];
           displayName?: string;
           appearance?: AssistantAppearance;
+          visualStyle?: AssistantVisualStyle;
           pendingIntervention?: { id: string; response?: string };
         };
         if (!active) return;
@@ -172,6 +176,7 @@ export function MeetingOutputSurface({
           reportReadiness();
         }
         if (payload.appearance) setParticipantAppearance(payload.appearance);
+        if (payload.visualStyle) setParticipantVisualStyle(payload.visualStyle);
         if (payload.displayName) setParticipantName(payload.displayName);
         if (inMeeting && payload.status !== "live") {
           if (["failed", "processing", "completed", "cancelled"].includes(payload.status)) {
@@ -351,6 +356,7 @@ export function MeetingOutputSurface({
       <div className={styles.avatarWrap}>
         <BusinessAvatar
           appearance={participantAppearance}
+          visualStyle={participantVisualStyle}
           viseme={viseme}
           mood={mood}
           gesture={gesture}

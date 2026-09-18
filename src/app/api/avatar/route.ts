@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { DEFAULT_ASSISTANT_PROFILE, getAssistantProfile } from "@/lib/assistant-profile";
 import { isAvatarVoice } from "@/lib/avatar-voice-catalog";
+import { isAvatarVisualStyle } from "@/lib/avatar-visual-style";
 import { connectToDatabase } from "@/lib/mongodb";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
 import { MeetingModel } from "@/models/Meeting";
@@ -48,6 +49,10 @@ export async function PATCH(request: Request) {
   const attitude = payload.attitude as AssistantAttitude;
   const speakingRate = payload.speakingRate;
   const appearance = payload.appearance;
+  const visualStyle = payload.visualStyle;
+  if (visualStyle !== undefined && !isAvatarVisualStyle(visualStyle)) {
+    return NextResponse.json({ error: "Invalid avatar visual style" }, { status: 400 });
+  }
   const voiceIt = payload.inworldVoiceIdIt;
   const voiceEn = payload.inworldVoiceIdEn;
   if ((voiceIt !== undefined && !isAvatarVoice(voiceIt, "it")) || (voiceEn !== undefined && !isAvatarVoice(voiceEn, "en"))) {
@@ -75,7 +80,7 @@ export async function PATCH(request: Request) {
     await AssistantProfileModel.findOneAndUpdate(
       { key: "default" },
       {
-        $set: { displayName, role, ...(appearance ? { appearance } : {}), personality: { responseStyle, attitude },
+        $set: { displayName, role, ...(appearance ? { appearance } : {}), ...(visualStyle !== undefined ? { visualStyle } : {}), personality: { responseStyle, attitude },
           "voice.style": style, ...(speakingRate !== undefined ? { "voice.speakingRate": speakingRate } : {}),
           ...(voiceIt !== undefined ? { "voice.inworldVoiceIdIt": voiceIt } : {}),
           ...(voiceEn !== undefined ? { "voice.inworldVoiceIdEn": voiceEn } : {}) },

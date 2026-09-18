@@ -24,6 +24,9 @@ export function proxy(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname;
+  if (/^\/avatars\/rigged-v1\/(?:male|female)\.glb$/u.test(pathname)) {
+    return NextResponse.next();
+  }
   if (PUBLIC_MEETING_PATHS.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }

@@ -31,7 +31,8 @@
     "next": "16.3.0",
     "onnxruntime-web": "^1.23.2",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
@@ -39,6 +40,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.185.4",
     "eslint": "^9.0.0",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "4.3.3",

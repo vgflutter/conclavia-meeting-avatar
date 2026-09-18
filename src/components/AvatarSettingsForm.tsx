@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BusinessAvatar } from "@/components/BusinessAvatar";
 import { AvatarAppearanceSelect, AvatarSaveControls, useAvatarWorkspace } from "@/components/AvatarWorkspace";
 import { useTranslations } from "@/i18n/I18nProvider";
+import { avatarVisualStyleLabel } from "@/lib/avatar-visual-style";
 import type {
   AssistantAttitude,
   AssistantResponseStyle,
@@ -18,18 +19,17 @@ export function AvatarSettingsForm() {
 
   return (
     <form onSubmit={event => { event.preventDefault(); void save(); }} className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-      <section className="relative h-64 overflow-hidden rounded-2xl bg-[#09100d] sm:h-auto sm:aspect-[4/5] sm:max-h-[36rem] lg:sticky lg:top-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(79,170,126,0.28),transparent_42%)]" />
+      <section className="relative h-64 overflow-hidden rounded-2xl bg-[#f2efe6] sm:h-auto sm:aspect-[4/5] sm:max-h-[36rem] lg:sticky lg:top-24" data-avatar-stage={draft.visualStyle}>
         <div className="absolute inset-x-[8%] bottom-0 top-4">
-          <BusinessAvatar appearance={appearance} ariaLabel={isItalian ? "Avatar del collega digitale in abito business" : "Business-style digital colleague avatar"} />
+          <BusinessAvatar appearance={appearance} visualStyle={draft.visualStyle} ariaLabel={isItalian ? "Avatar del collega digitale in abito business" : "Business-style digital colleague avatar"} />
         </div>
-        <div className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-white/10 px-5 py-4 text-[11px] font-bold uppercase tracking-[0.17em] text-white/45">
+        <div className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#d3dfd5] px-5 py-4 text-[11px] font-bold uppercase tracking-[0.17em] text-[#526a60]">
           <span>{isItalian ? "Anteprima avatar" : "Avatar preview"}</span>
-          <span className="text-[#bde88d]">{isItalian ? "Stile professionale" : "Professional style"}</span>
+          <span className="text-[#295c43]">{avatarVisualStyleLabel(draft.visualStyle, isItalian)}</span>
         </div>
-        <div className="absolute bottom-5 left-5 border-l-4 border-[#bde88d] bg-black/65 px-4 py-3 backdrop-blur">
-          <strong className="block text-sm uppercase tracking-[0.14em] text-[#bde88d]">{displayName || "Conclavia"}</strong>
-          <span className="mt-1 block text-sm text-white/80">{role || (isItalian ? "Collega digitale" : "Digital colleague")}</span>
+        <div className="absolute bottom-5 left-5 max-w-[calc(100%-2.5rem)] rounded-r-xl border-l-4 border-[#578473] bg-white/95 px-4 py-3">
+          <strong className="block truncate text-sm font-semibold text-[#295c43]">{displayName || "Conclavia"}</strong>
+          <span className="mt-1 block truncate text-sm text-[#526a60]">{role || (isItalian ? "Collega digitale" : "Digital colleague")}</span>
         </div>
       </section>
 

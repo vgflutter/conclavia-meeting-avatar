@@ -1,135 +1,149 @@
-import type { CSSProperties } from "react";
+"use client";
 
-import type { AssistantAppearance } from "@/types/assistant-profile";
+import dynamic from "next/dynamic";
+import { useId, type CSSProperties } from "react";
+
+import type { AssistantAppearance, AssistantVisualStyle } from "@/types/assistant-profile";
 import type { AvatarViseme } from "@/lib/avatar-visemes";
 
 import styles from "./BusinessAvatar.module.css";
+import { PortraitAvatar } from "./PortraitAvatar";
 
 export type AvatarMood = "neutral" | "friendly" | "focused" | "confident";
 export type AvatarGesture = "rest" | "hand_raise";
 
-export function BusinessAvatar({
-  appearance = "business_clay",
-  viseme = "rest",
-  mood = "neutral",
-  gesture = "rest",
-  voiceLevel,
+export type BusinessAvatarProps = {
+  appearance?: AssistantAppearance; visualStyle?: AssistantVisualStyle;
+  viseme?: AvatarViseme; mood?: AvatarMood; gesture?: AvatarGesture;
+  voiceLevel?: number; ariaLabel?: string;
+};
+
+// Three.js stays out of the 2D path and is loaded only when explicitly selected.
+const StylizedAvatar3D = dynamic(() => import("./StylizedAvatar3D"), { ssr: false });
+
+export function BusinessAvatar(props: BusinessAvatarProps) {
+  if (props.visualStyle === "portrait_2_5d") {
+    return <PortraitAvatar {...props} fallback={<EditorialAvatar {...props} />} />;
+  }
+  return props.visualStyle === "stylized_3d"
+    ? <StylizedAvatar3D {...props} fallback={<EditorialAvatar {...props} />} />
+    : <EditorialAvatar {...props} />;
+}
+
+/** Adult editorial portraits, drawn around the existing audio-clock rig. */
+function EditorialAvatar({
+  appearance = "business_clay", viseme = "rest", mood = "neutral", gesture = "rest", voiceLevel,
   ariaLabel = "Avatar del collega digitale in abito business",
-}: {
-  appearance?: AssistantAppearance;
-  viseme?: AvatarViseme;
-  mood?: AvatarMood;
-  gesture?: AvatarGesture;
-  voiceLevel?: number;
-  ariaLabel?: string;
-}) {
+}: BusinessAvatarProps) {
+  // Persisted appearance IDs and voice pairing stay compatible with old meetings.
   const female = appearance === "business_clay_female";
+  const faceClip = `avatar-face-${useId().replace(/:/gu, "")}`;
   const facePath = female
-    ? "M209 201c16-90 77-137 135-137 71 0 129 48 141 137l-8 132c-4 62-42 107-100 144q-36 18-72 0c-38-25-90-73-96-141V201Z"
-    : "M209 201c16-90 77-137 135-137 71 0 129 48 141 137l-5 138c-5 89-64 161-139 161-77 0-132-67-139-158l7-141Z";
-  const avatarStyle = voiceLevel === undefined
-    ? undefined
+    ? "M231 209c0-63 39-94 109-94 73 0 110 37 110 101l-7 88c-3 32-18 57-38 76l-38 29q-27 16-52 0l-38-29c-22-21-37-48-40-78l-6-93Z"
+    : "M231 209c-2-61 34-93 109-93 74 0 111 31 111 97l-5 98c-2 26-16 45-34 63l-39 32q-33 18-64 0l-41-32c-20-16-32-36-34-63l-3-102Z";
+  const avatarStyle = voiceLevel === undefined ? undefined
     : ({ "--jaw-open": Math.max(0, Math.min(1, voiceLevel)) } as CSSProperties);
 
   return (
-    <svg
-      className={styles.businessAvatar}
-      data-appearance={appearance}
-      data-viseme={viseme}
-      data-mood={mood}
-      data-gesture={gesture}
+    <svg className={styles.businessAvatar} data-design="editorial-comic"
+      data-appearance={appearance} data-viseme={viseme} data-mood={mood} data-gesture={gesture}
       data-audio-driven={voiceLevel !== undefined ? "true" : undefined}
-      style={avatarStyle}
-      viewBox="0 0 680 760"
-      role="img"
-      aria-label={ariaLabel}
-    >
-      <defs>
-        <linearGradient id="avatar-suit" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#284a61" /><stop offset="0.46" stopColor="#112838" /><stop offset="1" stopColor="#061119" /></linearGradient>
-        <linearGradient id="avatar-lapel" x1="0" x2="0.9" y1="0" y2="1"><stop offset="0" stopColor="#3a5d73" /><stop offset="0.52" stopColor="#193447" /><stop offset="1" stopColor="#091721" /></linearGradient>
-        <linearGradient id="avatar-shirt" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#f2eadc" /><stop offset="1" stopColor="#bdb2a0" /></linearGradient>
-        <linearGradient id="avatar-tie" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#75b988" /><stop offset="0.48" stopColor="#2f7151" /><stop offset="1" stopColor="#123b29" /></linearGradient>
-        <linearGradient id="avatar-tie-shine" x1="0" x2="1"><stop offset="0" stopColor="#d6f3ae" stopOpacity="0" /><stop offset="0.48" stopColor="#d6f3ae" stopOpacity="0.34" /><stop offset="1" stopColor="#d6f3ae" stopOpacity="0" /></linearGradient>
-        <radialGradient id="avatar-skin" cx="34%" cy="22%" r="83%"><stop offset="0" stopColor="#f1d6ad" /><stop offset="0.48" stopColor="#c69668" /><stop offset="0.78" stopColor="#a66e4c" /><stop offset="1" stopColor="#70432f" /></radialGradient>
-        <radialGradient id="avatar-skin-female" cx="34%" cy="22%" r="83%"><stop offset="0" stopColor="#f1d6ad" /><stop offset="0.48" stopColor="#ddb68f" /><stop offset="0.78" stopColor="#d3a580" /><stop offset="1" stopColor="#c79575" /></radialGradient>
-        <linearGradient id="avatar-hand" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#e0af86" /><stop offset="0.56" stopColor="#c58d66" /><stop offset="1" stopColor="#9e654a" /></linearGradient>
-        <linearGradient id="avatar-ear" x1="0" x2="1"><stop offset="0" stopColor="#8d5a40" /><stop offset="1" stopColor="#c48c63" /></linearGradient>
-        <linearGradient id="avatar-hair" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#6b513d" /><stop offset="0.48" stopColor="#34291f" /><stop offset="1" stopColor="#17130f" /></linearGradient>
-        <filter id="avatar-shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="24" stdDeviation="22" floodColor="#000" floodOpacity="0.52" /></filter>
-        <clipPath id="avatar-face-clip"><path d={facePath} /></clipPath>
-        <clipPath id="avatar-tie-clip"><path d="m326 589 29 1 27 129-42 34-42-34 28-130Z" /></clipPath>
-      </defs>
-      <ellipse className={styles.avatarFloorShadow} cx="340" cy="733" rx="254" ry="24" />
-      <g className={styles.avatarBody} filter="url(#avatar-shadow)">
-        {female && <g data-testid="female-hair-back" fill="url(#avatar-hair)">
-          <path d="M161 245c-8-146 60-222 181-222 118 0 183 88 176 219l-4 189c0 60 22 85 32 105-56 30-115 8-141-31H275c-35 38-93 54-142 22 24-42 29-92 26-144l2-138Z" />
-          <path d="M183 208c-17 145 14 233-26 302m345-302c16 143-14 226 24 307" fill="none" stroke="#9d7756" strokeOpacity=".24" strokeWidth="9" strokeLinecap="round" />
+      style={avatarStyle} viewBox="0 0 680 760" role="img" aria-label={ariaLabel}>
+      <defs><clipPath id={faceClip} data-avatar-face-clip><path d={facePath} /></clipPath></defs>
+      <g className={styles.avatarBody}>
+        {female && <g className={styles.hairBack} data-testid="female-hair-back">
+          <path d="M199 226c-8-93 40-145 141-145 104 0 151 58 143 150l-5 159 13 43c-34 13-60 7-92-9H276c-25 11-58 13-87 4l9-39 1-163Z" />
         </g>}
-        <path className={styles.suitBack} fill="url(#avatar-suit)" d="M35 756c10-129 60-215 208-249l97 53 98-53c146 34 197 120 207 249H35Z" />
+        {/* Sleeve caps continue the shoulder slope. Their inner closure stays
+            behind the torso, so neither pose exposes a detached shoulder cap. */}
+        <path className={styles.leftArm} d="M204 480c-41 17-91 33-114 61-17 21-22 47-27 85L43 756h109l18-211 48-55-14-10Z" />
+        <g className={styles.restingArm} aria-hidden="true" data-testid="avatar-resting-arm">
+          <path className={styles.rightArm} d="M478 480c41 17 89 33 112 61 17 21 22 47 27 85l20 130H528l-18-211-46-55 14-10Z" />
+        </g>
+        <g className={styles.raisedHand} aria-hidden="true" data-shoulder-anchor="529 510">
+          <path className={styles.raisedSleeve} d="M478 480c41 17 69 34 94 65l45 54-15-160 49-7 18 148c4 33-11 55-33 59-23 3-39-12-55-35l-50-52-53-18v-54Z" />
+          <path className={styles.raisedArmSeam} d="m606 607 29 13" />
+          <path className={styles.raisedCuff} d="m588 449 8-41 58 7-4 43-62-9Z" />
+          <path className={styles.raisedPalm} d="M586 419q-16-11-20-30l-18-24q-10-15 0-23 10-9 20 6l11 15-5-72q-1-15 10-15 11-2 12 13l3 46 1-69q0-14 11-14 11-1 12 14l1 69 7-54q2-14 12-11 11 2 9 16l-7 60 9-37q3-13 13-9 10 4 6 16l-13 74q-8 34-35 43-25 5-39-14Z" />
+          <path className={styles.handDetail} d="M579 363q16 10 20 32m25-48-2 46m23-40-7 41" />
+        </g>
+        <path className={styles.suitBack} d="m134 756 10-214c0-32 19-45 60-62l68-32h138l68 32c41 17 60 30 60 62l8 214H134Z" />
+        <path className={styles.avatarNeck} d="M292 370h99v86q-49 48-99 0v-86Z" />
+        <path className={styles.neckShadow} d="M293 389q49 29 97 0v23l-97 24v-47Z" />
         {female ? <g data-testid="female-blouse">
-          <path className={styles.shirtFront} fill="url(#avatar-tie)" d="m244 514 96 30 97-30-26 221H269l-25-221Z" />
-          <path d="M280 535q60 68 122 0" fill="none" stroke="#a0c8a4" strokeOpacity=".6" strokeWidth="4" />
-          <path d="M291 544q49 68 99 0" fill="none" stroke="#d6a85f" strokeWidth="3" />
-          <path d="m341 589 8 10-8 11-8-11Z" fill="#dfbe7d" />
-        </g> : <>
-        <path className={styles.shirtFront} fill="url(#avatar-shirt)" d="m244 514 96 47 97-47-26 221H269l-25-221Z" />
-        <path className={styles.shirtCollar} fill="url(#avatar-shirt)" d="m244 514 96 47-39 47-47-65-10-29Z" />
-        <path className={styles.shirtCollar} fill="url(#avatar-shirt)" d="m437 514-97 47 39 47 48-65 10-29Z" />
-        <path className={styles.tieKnot} fill="url(#avatar-tie)" d="m312 559 28-18 29 18-13 37h-31l-13-37Z" />
-        <path className={styles.tieBody} fill="url(#avatar-tie)" d="m326 589 29 1 27 129-42 34-42-34 28-130Z" />
-        <g clipPath="url(#avatar-tie-clip)"><path className={styles.tieHighlight} fill="url(#avatar-tie-shine)" d="m330 585 14 2 21 151-25 15-10-168Z" /><path className={styles.tieTexture} d="m304 635 67-34m-61 76 67-35m-60 77 62-34" /></g>
-        <rect className={styles.tieBar} x="309" y="646" width="62" height="7" rx="3.5" />
-        </>}
-        <path className={styles.leftLapel} fill="url(#avatar-lapel)" d="M243 507 77 556l116 180h96l34-139-80-90Z" /><path className={styles.rightLapel} fill="url(#avatar-lapel)" d="m438 507 166 49-116 180h-96l-34-139 80-90Z" />
-        <path className={styles.leftLapelEdge} d="m244 513-17 130 77-48" /><path className={styles.rightLapelEdge} d="m437 513 17 130-77-48" /><path className={styles.suitSeam} d="M150 594c-30 42-47 96-53 162m433-162c30 42 47 96 53 162" /><path className={styles.pocket} d="M470 657h94l-9 55h-81l-4-55Z" /><path className={styles.pocketSquare} d="m481 658 19-24 22 18 20-21 14 27h-75Z" /><circle className={styles.lapelPin} cx="476" cy="602" r="7" />
-        <g className={styles.raisedHand} aria-hidden="true">
-          <path className={styles.raisedSleeve} fill="url(#avatar-suit)" d="M525 550c31 9 57 31 78 60 6-54 2-111-9-170l56 5c11 61 18 122 18 173 0 35-14 64-38 79-23 14-48-2-71-26-21-22-38-42-57-59l23-62Z" />
-          <path className={styles.raisedSleeveShade} d="M622 444l28 5c11 61 18 121 18 170 0 34-14 63-38 77-13 8-28 6-41-2 30-24 43-53 39-91-4-50-10-103-16-159Z" />
-          <path className={styles.raisedArmSeam} d="M531 565c29 15 54 44 75 79" />
-          <path className={styles.raisedCuff} fill="url(#avatar-shirt)" d="m588 449 8-41 58 7-4 43-62-9Z" />
-          <path className={styles.raisedPalm} fill="url(#avatar-hand)" d="M573 418c-10-13-16-28-18-43l-18-25c-7-10-3-23 8-25 8-2 14 6 20 17l9 12-5-74c-1-12 10-19 19-13 4 3 5 8 6 15l3 52 1-85c0-13 16-19 23-8 2 4 2 8 2 13v77l6-68c1-12 16-17 23-7 2 4 2 8 2 13l-7 70 7-42c2-11 15-14 21-5 3 4 3 9 2 14-1 39-6 70-17 94-9 20-25 34-44 38-18 4-34-3-43-19Z" />
-          <path className={styles.handHighlight} d="M582 288c2 38 4 76 5 112m22-145c0 48-1 96-3 145" />
-          <path className={styles.handDetail} d="M623 331c0 25-2 48-5 69m29-61c-3 22-7 42-12 59M564 354c7 6 13 15 17 26" />
+          <path className={styles.blouse} d="m286 451 7-4q48 39 97 0l9 4 36 305H247l39-305Z" />
+          <path className={styles.necklace} d="M297 463q44 55 87 0" />
+          <path className={styles.jewellery} d="m341 496 5 8-5 8-5-8 5-8Z" />
+        </g> : <g>
+          <path className={styles.shirtFront} d="m284 449 9-5q48 42 97 0l9 5 36 307H247l37-307Z" />
+          <path className={styles.shirtCollar} d="M288 452q53 57 107 0l4 14q-58 57-115 0l4-14Z" />
+          <path className={styles.shirtSeam} d="M285 566v130m112-130v130" />
+        </g>}
+        <path className={styles.leftLapel} d="m278 444-41 12-19 64 30 24-21 25 82 187h22l-53-312Z" />
+        <path className={styles.rightLapel} d="m404 444 41 12 19 64-30 24 21 25-82 187h-22l53-312Z" />
+        <path className={styles.suitSeam} d="M168 574 152 746m360-172 16 172" />
+        <path className={styles.pocket} d="m454 605 55-3v10l-55 3v-10Z" />
+        <path className={styles.lapelPin} d="m441 502 7 7-7 7-7-7 7-7Z" />
+        <path className={styles.leftEar} d="M235 258c-24-19-29 6-23 32 4 18 12 31 25 22l-2-54Z" />
+        <path className={styles.rightEar} d="M447 258c24-19 29 6 23 32-4 18-12 31-25 22l2-54Z" />
+        <path className={styles.earDetail} d="M226 268q-9 3 0 24m230-24q9 3 0 24" />
+        <path className={styles.avatarHead} d={facePath} />
+        <g clipPath={`url(#${faceClip})`}>
+          <path className={styles.facePlane} d="M226 174h19l4 148q3 27 17 45l-33-14-7-179Z" />
         </g>
-        <path className={styles.avatarNeck} fill={female ? "url(#avatar-skin-female)" : "url(#avatar-skin)"} d="M276 424h129l17 106c-42 42-119 42-162 0l16-106Z" /><path className={styles.neckShadow} d="M277 431c15 70 110 85 128 0v59c-29 45-98 45-129 0l1-59Z" />
-        <path className={styles.leftEar} fill="url(#avatar-ear)" d="M210 236c-53-25-74 22-48 85 13 31 38 50 67 30l-19-115Z" /><path className={styles.rightEar} fill="url(#avatar-ear)" d="M476 236c53-25 73 22 48 85-13 31-38 50-67 30l19-115Z" /><path className={styles.earDetail} d="M197 268c-27-15-28 42 4 52m286-52c27-15 28 42-4 52" />
-        <path className={styles.avatarHead} fill={female ? "url(#avatar-skin-female)" : "url(#avatar-skin)"} d={facePath} />
-        <g clipPath="url(#avatar-face-clip)"><ellipse className={styles.faceLight} cx="283" cy="216" rx="108" ry="166" /><ellipse className={styles.templeShade} cx="459" cy="292" rx="70" ry="174" /><path className={styles.clayStrokeOne} d="M238 153c50-35 145-38 200 3M228 371c48 35 167 35 214-2" /><path className={styles.clayStrokeTwo} d="M245 195c-19 76-12 166 21 231m167-235c19 77 11 167-19 231" /></g>
         {female ? <g data-testid="female-hair">
-          <g className={styles.avatarHair} fill="url(#avatar-hair)">
-            <path d="M188 256c-20-94 4-164 66-200 56-33 128-27 178 5 66 43 86 126 66 220l-22 62-3-145c-64-11-108-57-142-102-23 70-73 107-114 124l-9 155-26-34 6-85Z" />
-            <path d="M331 96c-13 50-58 92-109 111 11-76 39-112 109-139v28Z" fill="#75563e" fillOpacity=".6" />
-            <path d="M342 83c45 17 97 66 128 109-66-14-99-60-128-109Z" fill="#8d6c4e" fillOpacity=".4" />
-          </g>
-          <g className={styles.hairGrooves}>
-            <path d="M319 63c-55 24-92 67-109 125m142-122c59 22 107 75 131 137M200 249l-2 93m291-93 3 94" />
-          </g>
-          <circle cx="207" cy="347" r="8" fill="#dbb677" stroke="#fae0a8" strokeWidth="2" />
-          <circle cx="479" cy="347" r="8" fill="#dbb677" stroke="#fae0a8" strokeWidth="2" />
-        </g> : <>
-        <g className={styles.avatarHair} fill="url(#avatar-hair)"><path d="M205 219c-23-84 4-153 76-188 52-26 122-15 165 27 40 39 51 99 36 166l-31-52c-68-3-139-37-166-91-3 57-33 101-80 138Z" /><path d="M249 111c17-61 75-101 139-87-44 13-77 42-98 84l-41 3Z" /><path d="M284 87c32-56 108-72 155-34-55-3-100 17-126 58l-29-24Z" /><path d="M331 77c45-40 115-14 139 35-42-27-90-26-131 2l-8-37Z" /><path d="M391 87c49-12 91 25 96 80-26-35-60-51-101-45l5-35Z" /></g>
-        <g className={styles.hairGrooves}><path d="M236 174c17-49 48-91 90-121" /><path d="M286 144c27-50 66-83 115-99" /><path d="M343 141c38-37 79-52 122-42" /><path d="M398 147c37-15 66-7 87 22" /></g>
-        </>}
-        <g className={styles.avatarBrows}><path className={styles.leftBrow} d="M244 237c29-18 60-18 89-2" /><path className={styles.rightBrow} d="M374 235c29-15 59-13 85 6" /></g>
-        <g className={styles.avatarEyes}><g className={styles.eyesExpression}><path className={styles.eyeWhite} d="M240 273c22-26 66-27 94-2-25 27-69 28-94 2Z" /><path className={styles.eyeWhite} d="M372 272c26-25 69-24 94 2-25 27-69 27-94-2Z" /><g className={styles.pupils}><ellipse className={styles.iris} cx="291" cy="272" rx="17" ry="20" /><ellipse className={styles.iris} cx="416" cy="272" rx="17" ry="20" /><circle cx="291" cy="274" r="8" /><circle cx="416" cy="274" r="8" /><circle className={styles.eyeSpark} cx="285" cy="265" r="4" /><circle className={styles.eyeSpark} cx="410" cy="265" r="4" /></g><path className={styles.upperLid} d="M240 273c22-26 66-27 94-2m38 1c26-25 69-24 94 2" /></g></g>
-        <path className={styles.avatarNose} d="M346 273c-3 42-12 73-1 91 10 11 31 10 42 1-13 3-22-2-26-8" /><path className={styles.noseLight} d="M343 292c-2 29-7 48-5 62" /><path className={styles.cheekDetail} d="M235 346c22 18 48 21 73 10m91 0c24 12 49 9 69-9" /><path className={styles.friendlyCheeks} d="M247 364c17 11 35 12 52 4m105 0c17 8 35 6 51-5" />
-        <g className={styles.faceExpressions} aria-hidden="true">
-          <ellipse className={styles.friendlyBlush} cx="271" cy="354" rx="30" ry="16" />
-          <ellipse className={styles.friendlyBlush} cx="430" cy="354" rx="30" ry="16" />
-          <path className={styles.focusedBridge} d="M337 238c6-4 13-4 19 0" />
-          <path className={styles.focusedEyeLines} d="M253 303c21 8 43 8 63 0m72 0c20 8 42 8 62 0" />
-          <path className={styles.confidentEyeLine} d="M386 303c20 7 41 6 59-2" />
+          <path className={styles.avatarHair} d="M217 339c-15-35-17-71-14-122 2-84 45-126 132-126 92 0 143 48 143 132l-5 121-26 45-1-152c-40-15-72-46-92-92-20 49-58 81-111 101l-3 124-23-31Z" />
+          <path className={styles.hairSweep} d="M224 210q22-63 94-93m58 20q26 56 77 80" />
+          <path className={styles.hairEdge} d="M222 269v77m241-80-2 83" />
+          <path className={styles.earring} d="M241 315c-19-5-20 28-2 28m204-28c19-5 20 28 2 28" />
+        </g> : <g>
+          <path className={styles.avatarHair} d="m227 271-11-39 2-65c2-23 15-42 36-54l-7-17 34 1c35-32 102-30 137-8 42 13 52 44 47 88l-9 66-10 28-6-85c-26 1-46-11-62-27-34 28-90 41-134 34l-8 78h-9Z" />
+          <path className={styles.hairSweep} d="M250 166q73 3 120-46m29 4q18 26 44 29" />
+          <path className={styles.hairEdge} d="m229 207 5-31m214 15 1 39" />
+        </g>}
+        <g className={styles.avatarBrows}>
+          <path className={styles.leftBrow} d={female ? "M264 230q22-10 45-1" : "m263 229 22-6 24 4"} />
+          <path className={styles.rightBrow} d={female ? "M374 229q22-9 44 1" : "m374 227 24-4 21 6"} />
         </g>
-        <g className={styles.lowerFace}>{!female && <path className={styles.chinDetail} d="M309 461c21 8 45 8 66 0" />}<g className={styles.mouthRig}>
-          <g className={`${styles.mouthShape} ${styles.mouthRest}`}><path className={styles.lipUpper} d="M299 407c23-13 62-13 85 0-25 3-60 3-85 0Z" /><path className={styles.lipLower} d="M299 407c25 5 60 5 85 0-15 20-70 20-85 0Z" /><path className={styles.lipLine} d="M301 407c24 4 56 4 81 0" /></g>
-          <g className={`${styles.mouthShape} ${styles.mouthMbp}`}><path className={styles.lipUpper} d="M301 406c23-11 58-11 81 0-24 3-57 3-81 0Z" /><path className={styles.lipLower} d="M301 407c24 4 57 4 81 0-14 16-67 16-81 0Z" /><path className={styles.lipLine} d="M303 407c23 2 53 2 77 0" /></g>
+        <g className={styles.avatarEyes}><g className={styles.eyesExpression}>
+          <path className={styles.eyeWhite} d="M263 254q22-18 46 0-23 13-46 0Zm110 0q23-18 46 0-23 13-46 0Z" />
+          <g className={styles.pupils}>
+            <circle className={styles.eye} cx="287" cy="252" r="7" />
+            <circle className={styles.eye} cx="395" cy="252" r="7" />
+            <circle className={styles.eyeSpark} cx="289" cy="250" r="1.5" />
+            <circle className={styles.eyeSpark} cx="397" cy="250" r="1.5" />
+          </g>
+          <path className={styles.eyeLid} d="M263 254q22-18 46 0m64 0q23-18 46 0" />
+        </g></g>
+        {!female && <g className={styles.glasses} aria-hidden="true">
+          <path d="M251 238h68l-3 29q-1 9-12 9h-35q-13 0-15-10l-3-28Zm112 0h68l-3 28q-2 10-15 10h-35q-11 0-12-9l-3-29Z" />
+          <path d="M319 247q22-9 44 0m-132-4 20 4m180 0 15-5" />
+        </g>}
+        <path className={styles.avatarNose} d="m337 266-9 34q6 9 21 3m6-5 5 4" />
+        <g className={styles.faceExpressions} aria-hidden="true">
+          <path className={styles.focusedEyeLines} d="M277 278q11 3 22 0m85 0q11 3 22 0" />
+          <path className={styles.confidentEyeLine} d="M384 278q11 3 22 0" />
+        </g>
+        <g className={styles.lowerFace}><g className={styles.mouthRig}>
+          <g className={`${styles.mouthShape} ${styles.mouthRest}`}>
+            <path className={styles.lipLower} d="M311 408q31 9 61-4-27 23-61 4Z" />
+            <path className={styles.lipLine} d="M306 405q35 13 70-3" />
+          </g>
+          <g className={`${styles.mouthShape} ${styles.mouthMbp}`}>
+            <path className={styles.lipLower} d="M310 407q31 10 62 0-31 18-62 0Z" />
+            <path className={styles.lipLine} d="M308 407q33 8 66 0" />
+          </g>
           <g className={`${styles.mouthShape} ${styles.mouthFv}`}><path className={styles.mouthCavity} d="M303 404c23-14 54-14 78 0-11 24-67 24-78 0Z" /><path className={styles.teeth} d="M307 404c21-8 48-8 70 0-20 10-50 10-70 0Z" /><path className={styles.lipLower} d="M307 414c20-5 49-5 69 0-18 16-51 16-69 0Z" /></g>
           <g className={`${styles.mouthShape} ${styles.mouthA}`}><path className={styles.mouthCavity} d="M302 402c23-15 55-15 78 0 6 36-11 57-39 57-27 0-45-21-39-57Z" /><path className={styles.teeth} d="M307 402c20-8 48-8 68 0-18 12-50 12-68 0Z" /><path className={styles.tongue} d="M313 443c17-11 40-11 56 0-14 14-43 15-56 0Z" /><path className={styles.lipOutline} d="M302 402c23-15 55-15 78 0 6 36-11 57-39 57-27 0-45-21-39-57Z" /></g>
           <g className={`${styles.mouthShape} ${styles.mouthE}`}><path className={styles.mouthCavity} d="M295 407c27-18 65-18 92 0-22 29-70 29-92 0Z" /><path className={styles.teeth} d="M300 406c24-10 58-10 82 0-22 12-60 12-82 0Z" /><path className={styles.lipOutline} d="M295 407c27-18 65-18 92 0-22 29-70 29-92 0Z" /></g>
           <g className={`${styles.mouthShape} ${styles.mouthO}`}><ellipse className={styles.mouthCavity} cx="341" cy="421" rx="27" ry="34" /><ellipse className={styles.tongue} cx="341" cy="439" rx="15" ry="7" /><ellipse className={styles.lipOutline} cx="341" cy="421" rx="29" ry="36" /></g>
           <g className={`${styles.mouthShape} ${styles.mouthU}`}><ellipse className={styles.mouthCavity} cx="341" cy="418" rx="19" ry="25" /><ellipse className={styles.lipOutline} cx="341" cy="418" rx="24" ry="29" /></g>
           <g className={`${styles.mouthShape} ${styles.mouthConsonant}`}><path className={styles.mouthCavity} d="M302 405c23-15 55-15 78 0-12 25-66 25-78 0Z" /><path className={styles.teeth} d="M307 405c20-8 48-8 68 0-18 9-50 9-68 0Z" /><path className={styles.lipOutline} d="M302 405c23-15 55-15 78 0-12 25-66 25-78 0Z" /></g>
-        </g><g className={styles.moodMouthLines} aria-hidden="true"><path className={styles.friendlySmileLines} d="M299 408c-7 0-12-4-15-10m100 10c7 0 12-4 15-10" /><path className={styles.focusedMouthLine} d="M313 432c18 4 37 4 56 0" /><path className={styles.confidentSmileLine} d="M383 408c8-1 13-5 16-12" /></g></g>
+        </g><g className={styles.moodMouthLines} aria-hidden="true">
+          <path className={styles.friendlySmileLines} d="M297 402q-3-5 0-10m87 10q3-5 0-10" />
+          <path className={styles.focusedMouthLine} d="M326 431q15 2 30 0" />
+          <path className={styles.confidentSmileLine} d="M384 402q4-6 1-12" />
+        </g></g>
       </g>
     </svg>
   );

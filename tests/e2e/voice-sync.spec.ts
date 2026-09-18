@@ -15,7 +15,7 @@ test("avatar: pelle senza rumore rettangolare e geometria del volto intatta", as
   await expect(avatar).toBeVisible();
   await expect(avatar.locator("feTurbulence")).toHaveCount(0);
   const head = avatar.locator('path[class*="avatarHead"]');
-  const clip = avatar.locator("#avatar-face-clip path");
+  const clip = avatar.locator("[data-avatar-face-clip] path");
   expect(await head.getAttribute("d")).toBe(await clip.getAttribute("d"));
   expect(await head.getAttribute("filter")).toBeNull();
 });

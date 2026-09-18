@@ -20,21 +20,22 @@ async function openStudio(page: Page) {
   await expect(page.locator('svg[data-appearance="business_clay_female"]')).toBeVisible();
 }
 
-test("female face: lighter chin without crease, male shading unchanged", async ({ page }, testInfo) => {
+test("illustrated faces: uniform skin, soft chin and distinct silhouettes without shadow filters", async ({ page }, testInfo) => {
   await page.goto("/avatar");
   const avatar = page.locator("svg[data-appearance]");
   const head = avatar.locator('path[class*="avatarHead"]');
-  await expect(head).toHaveAttribute("fill", "url(#avatar-skin-female)");
+  await expect(avatar).toHaveAttribute("data-design", "editorial-comic");
+  await expect(head).toHaveCSS("fill", "rgb(239, 197, 169)");
   await expect(avatar.locator('path[class*="chinDetail"]')).toHaveCount(0);
-  await expect(avatar.locator("#avatar-skin-female stop").last()).toHaveAttribute("stop-color", "#c79575");
+  await expect(avatar.locator("filter, radialGradient, image")).toHaveCount(0);
   const femalePath = await head.getAttribute("d");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await avatar.screenshot({ path: testInfo.outputPath("female-soft-chin.png") });
-  // Changing only the local preview must leave the existing male design intact.
+  // Both variants use the lighter illustrated design, retaining separate faces.
   await page.getByLabel("Avatar appearance").selectOption("business_clay");
-  await expect(head).toHaveAttribute("fill", "url(#avatar-skin)");
-  await expect(avatar.locator('path[class*="chinDetail"]')).toHaveCount(1);
-  await expect(avatar.locator("#avatar-skin stop").last()).toHaveAttribute("stop-color", "#70432f");
+  await expect(head).toHaveCSS("fill", "rgb(232, 183, 147)");
+  await expect(avatar.locator('path[class*="chinDetail"]')).toHaveCount(0);
+  await expect(avatar.locator("filter, radialGradient, image")).toHaveCount(0);
   expect(await head.getAttribute("d")).not.toBe(femalePath);
 });
 
@@ -54,15 +55,24 @@ test("female rig: all 64 expression, mouth and hand combinations", async ({ page
     expect(visible).toHaveLength(1);
     expect(visible[0]).toContain(classes[shapes.indexOf(shape)]);
     await expect(avatar.locator('g[class*="raisedHand"]')).toHaveCSS("opacity", gesture === "rest" ? "0" : "1");
+    await expect(avatar.getByTestId("avatar-resting-arm")).toHaveCSS("opacity", gesture === "rest" ? "1" : "0");
     expect(await avatar.locator('[data-testid="female-hair"]').count()).toBe(1);
     const head = await avatar.locator('path[class*="avatarHead"]').getAttribute("d");
-    expect(await avatar.locator("#avatar-face-clip path").getAttribute("d")).toBe(head);
+    expect(await avatar.locator("[data-avatar-face-clip] path").getAttribute("d")).toBe(head);
+    const mouthWithinFace = await avatar.evaluate(node => {
+      const head = node.querySelector('[class*="avatarHead"]')!.getBoundingClientRect();
+      const shape = Array.from(node.querySelectorAll('[class*="mouthShape"]'))
+        .find(el => Number(getComputedStyle(el).opacity) > .9)!;
+      const mouth = shape.getBoundingClientRect();
+      return mouth.left > head.left && mouth.right < head.right && mouth.top > head.top && mouth.bottom < head.bottom;
+    });
+    expect(mouthWithinFace).toBe(true);
   }
   // Inspect eight representative poses on one board, retaining actual SVG/CSS.
   await avatar.evaluate((svg) => {
     const board = document.createElement("div");
     board.id = "pose-board";
-    Object.assign(board.style, { display: "grid", gridTemplateColumns: "repeat(4, 240px)", gap: "16px", padding: "24px", background: "#101d17", color: "#e7eddf" });
+    Object.assign(board.style, { display: "grid", gridTemplateColumns: "repeat(4, 240px)", gap: "16px", padding: "24px", background: "#f2efe6", color: "#263f36" });
     for (const gesture of ["rest", "hand_raise"]) for (const mood of ["neutral", "friendly", "focused", "confident"]) {
       const cell = document.createElement("div");
       const clone = svg.cloneNode(true) as SVGElement;

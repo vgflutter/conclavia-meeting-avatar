@@ -32,6 +32,7 @@ export function StreamingVoiceTestStudio({ locale, model: initialModel, configur
   const [gesture, setGesture] = useState<AvatarGesture>("rest");
   const controller = useRef<AbortController | undefined>(undefined);
   const busy = state === "preparing" || state === "speaking";
+  const portraitPreview = draft.visualStyle === "portrait_2_5d";
   useEffect(() => () => controller.current?.abort(), []);
 
   async function listen() {
@@ -62,11 +63,11 @@ export function StreamingVoiceTestStudio({ locale, model: initialModel, configur
   return (
     <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]" data-streaming-voice-state={state}>
       <div className="card min-w-0 overflow-hidden lg:sticky lg:top-24">
-        <div className="bg-[#09100d] p-5 text-white">
-          <p className="text-xs font-semibold uppercase tracking-widest text-white/60">{it ? "Anteprima dal vivo" : "Live preview"}</p>
-        <div className="mx-auto aspect-square max-h-[180px] sm:max-h-[440px]">
-          <div className={`h-full w-full ${busy ? "max-lg:fixed max-lg:right-3 max-lg:top-28 max-lg:z-40 max-lg:h-36 max-lg:w-32 max-lg:rounded-xl max-lg:bg-[#09100d] max-lg:shadow-xl" : ""}`} data-testid="speech-preview">
-          <BusinessAvatar appearance={draft.appearance} viseme={frame.viseme} voiceLevel={frame.level} mood={mood} gesture={gesture}
+        <div className="bg-[#f2efe6] p-5 text-[#263f36]" data-avatar-stage={draft.visualStyle}>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#526a60]">{it ? "Anteprima dal vivo" : "Live preview"}</p>
+        <div className={`mx-auto aspect-square ${portraitPreview ? "max-h-[280px]" : "max-h-[180px]"} sm:max-h-[440px]`}>
+          <div className={`h-full w-full ${busy ? "max-lg:fixed max-lg:right-3 max-lg:top-28 max-lg:z-40 max-lg:h-36 max-lg:w-32 max-lg:rounded-xl max-lg:bg-[#f2efe6] max-lg:shadow-xl" : ""}`} data-testid="speech-preview">
+          <BusinessAvatar appearance={draft.appearance} visualStyle={draft.visualStyle} viseme={frame.viseme} voiceLevel={frame.level} mood={mood} gesture={gesture}
             ariaLabel={it ? "Avatar del collega digitale" : "Digital colleague avatar"} />
           </div>
         </div>
@@ -82,7 +83,10 @@ export function StreamingVoiceTestStudio({ locale, model: initialModel, configur
               setMood(moods[(moods.indexOf(mood) + 1) % moods.length]);
             }}>{it ? "Cambia espressione" : "Change expression"}</button>
           </div>
-          <p className="text-xs text-slate-500">{it ? "Gesti in anteprima, non comandi per Teams. Il labiale segue l’audio." : "Preview gestures, not Teams commands. Lip sync follows the audio."}</p>
+          <p className="text-xs text-slate-500">{portraitPreview
+            ? it ? "Il labiale segue l’audio. La mano usa una transizione tra due immagini, non un braccio 3D articolato. I pulsanti non inviano comandi a Teams."
+              : "Lip sync follows the audio. The hand transitions between two images, not an articulated 3D arm. Buttons do not send Teams commands."
+            : it ? "Gesti in anteprima, non comandi per Teams. Il labiale segue l’audio." : "Preview gestures, not Teams commands. Lip sync follows the audio."}</p>
           <p role="status" className={state === "error" ? "text-red-700" : "text-sm text-slate-600"}>
             {state === "error" ? it ? "La voce non è disponibile. Controlla il collegamento del servizio e riprova." : "Voice unavailable. Check the service connection and try again."
               : state === "preparing" ? it ? "Preparo la risposta…" : "Preparing response…"

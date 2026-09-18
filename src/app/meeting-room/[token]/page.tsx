@@ -35,6 +35,7 @@ export default async function MeetingRoomPage({
       displayName={meeting.assistant.wakeWord || profile.displayName}
       role={profile.role}
       appearance={profile.appearance}
+      visualStyle={profile.visualStyle}
       locale={locale}
       inMeeting={query.mode === "meeting"}
       meetingProvider={meeting.bot.provider}
