@@ -25,5 +25,5 @@ test("retired voice links cannot enable browser synthesis or download a model", 
   }
   await page.goto("/avatar");
   await expect(page.locator("#voice-style")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Prova avatar · voce e movimenti|Test avatar · voice & movement/ })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: /Configurazione avatar|Avatar configuration/ }).getByRole("link", { name: /Voce e movimenti|Voice & movement/ })).toBeVisible();
 });

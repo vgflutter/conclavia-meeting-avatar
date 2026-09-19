@@ -14,6 +14,7 @@ import {
 } from "../../src/lib/meeting-command";
 import { parseRecallOutputTranscript } from "../../src/lib/recall-transcript";
 import { installVoiceProbe, voiceProbeStats } from "./voice-probe";
+import type { AssistantVisualStyle } from "../../src/types/assistant-profile";
 
 const teamLink =
   "https://teams.microsoft.com/l/meetup-join/19%3ameeting_conclavia-e2e%40thread.v2/0?context=%7B%7D";
@@ -79,6 +80,7 @@ test("meeting singolo: creazione, comandi, memoria e cancellazione", async ({
   let outputToken: string | undefined;
   let assistantName = "Conclavia";
   let assistantRole = "Collega digitale";
+  let visualStyle: AssistantVisualStyle = "editorial";
   const browserErrors: string[] = [];
   page.on("pageerror", (error) => browserErrors.push(error.message));
 
@@ -86,10 +88,11 @@ test("meeting singolo: creazione, comandi, memoria e cancellazione", async ({
     await test.step("crea il meeting dalla schermata cliente", async () => {
       const avatarResponse = await request.get("/api/avatar");
       const avatarPayload = (await avatarResponse.json()) as {
-        profile: { displayName: string; role: string };
+        profile: { displayName: string; role: string; visualStyle?: AssistantVisualStyle };
       };
       assistantName = avatarPayload.profile.displayName;
       assistantRole = avatarPayload.profile.role;
+      visualStyle = avatarPayload.profile.visualStyle ?? "editorial";
       await page.goto("/meetings/new");
       await waitForClientReady(page);
       await expect(
@@ -129,7 +132,8 @@ test("meeting singolo: creazione, comandi, memoria e cancellazione", async ({
       );
       expect(outputResponse.ok()).toBeTruthy();
       const outputState = await outputResponse.json();
-      expect(Object.keys(outputState).sort()).toEqual(["appearance", "status", "voice"]);
+      expect(Object.keys(outputState).sort()).toEqual(["appearance", "status", "visualStyle", "voice"]);
+      expect(outputState.visualStyle).toBe(visualStyle);
       expect(["business_clay", "business_clay_female"]).toContain(outputState.appearance);
       // The capability exposes readiness and provider selection, never credentials or voice secrets.
       expect(Object.keys(outputState.voice).sort()).toEqual(["model", "provider", "ready"]);
@@ -166,7 +170,13 @@ test("meeting singolo: creazione, comandi, memoria e cancellazione", async ({
       const outputPage = await page.context().newPage();
       try {
         await outputPage.goto(`/meeting-room/${outputToken}`);
-        await expect(outputPage.locator("svg[data-gesture='rest']")).toBeVisible();
+        if (visualStyle === "editorial") {
+          await expect(outputPage.locator("svg[data-gesture='rest']")).toBeVisible();
+        } else {
+          const renderer = outputPage.getByTestId(visualStyle === "stylized_3d" ? "avatar-3d-canvas" : "portrait-canvas");
+          await expect(renderer).toHaveAttribute("data-renderer-ready", "true");
+          await expect(renderer).toBeVisible();
+        }
         await expect(outputPage.getByText(assistantName, { exact: true })).toBeVisible();
         await expect(outputPage.getByText(assistantRole, { exact: true })).toBeVisible();
         await expect(outputPage.getByText("PRONTO", { exact: true })).toBeVisible();
@@ -508,8 +518,8 @@ test("l'avatar si prova in streaming senza creare un meeting", async ({ page }) 
   await installVoiceProbe(page);
   await useItalian(page);
   await page.goto("/avatar");
-  await page.getByRole("navigation", { name: "Configurazione avatar" }).getByRole("link", { name: "Prova avatar · voce e movimenti", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Prova avatar", exact: true })).toBeVisible();
+  await page.getByRole("navigation", { name: "Configurazione avatar" }).getByRole("link", { name: "Voce e movimenti", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Voce e movimenti", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Alza / abbassa la mano" }).click();
   await expect(page.locator("svg[data-gesture='hand_raise']")).toBeVisible();
   for (const language of ["it", "en"]) {

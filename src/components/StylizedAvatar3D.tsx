@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { createRiggedAvatarStage } from "@/lib/rigged-avatar-stage";
 import { createRiggedAvatar } from "@/lib/rigged-avatar";
 import type { BusinessAvatarProps } from "@/components/BusinessAvatar";
 import styles from "./StylizedAvatar3D.module.css";
@@ -26,33 +26,11 @@ export default function StylizedAvatar3D({ appearance = "business_clay", mood = 
     try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" }); }
     catch { queueMicrotask(() => setFailed(true)); return; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = .90;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
-    const scene = new THREE.Scene();
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const room = new RoomEnvironment();
-    const environment = pmrem.fromScene(room, .04);
-    scene.environment = environment.texture;
-    room.dispose(); pmrem.dispose();
-    scene.add(new THREE.HemisphereLight(0xfff5e8, 0x606876, .8));
-    const key = new THREE.DirectionalLight(0xffefdf, 1.8); key.position.set(-3, 4, 5); scene.add(key);
-    key.target.position.set(0, 1.3, 0); scene.add(key.target);
-    key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
-    Object.assign(key.shadow.camera, { left: -.9, right: .9, top: .9, bottom: -.9, near: .1, far: 12 });
-    key.shadow.bias = -.00015; key.shadow.normalBias = .002;
-    const fill = new THREE.DirectionalLight(0xe3eeff, .65); fill.position.set(3, 2, 4); scene.add(fill);
-    const rim = new THREE.DirectionalLight(0xffe2c3, 1.6); rim.position.set(1, 3, -2); scene.add(rim);
-    const camera = new THREE.PerspectiveCamera(28, 1, .05, 20);
-    camera.position.set(0, 1.46, 2.05); camera.lookAt(0, 1.43, 0);
+    const stage = createRiggedAvatarStage(renderer);
+    const { scene, camera } = stage;
     function resize() {
       const { width, height } = element!.getBoundingClientRect();
-      if (!width || !height) return;
-      camera.aspect = width / height;
-      camera.position.z = Math.max(1.65, 1.56 / camera.aspect);
-      camera.updateProjectionMatrix(); renderer.setSize(width, height, false);
+      stage.resize(width, height);
     }
     element.append(renderer.domElement);
     renderer.domElement.setAttribute("aria-hidden", "true");
@@ -60,6 +38,10 @@ export default function StylizedAvatar3D({ appearance = "business_clay", mood = 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const lost = (event: Event) => { event.preventDefault(); if (!disposed) setFailed(true); };
     renderer.domElement.addEventListener("webglcontextlost", lost);
+    let last = 0;
+    let animationSeconds = 1;
+    const visibility = () => { last = 0; };
+    document.addEventListener("visibilitychange", visibility);
     const name = appearance === "business_clay_female" ? "female" : "male";
     void (async () => {
       try {
@@ -72,16 +54,29 @@ export default function StylizedAvatar3D({ appearance = "business_clay", mood = 
         loaded.update(pose.current, 1, 0, motion.matches);
         await renderer.compileAsync(scene, camera);
         if (disposed) return;
-        let last = 0; let maxFrameGap = 0;
+        let maxFrameGap = 0;
         renderer.setAnimationLoop((ms: number) => {
           if (document.hidden) { last = 0; return; }
           const dt = last ? (ms - last) / 1000 : 0;
           if (dt > 0) maxFrameGap = Math.max(maxFrameGap, dt * 1000);
           last = ms;
-          const state = loaded.update(pose.current, ms / 1000, dt, motion.matches);
+          const step = Math.min(.1, Math.max(0, dt));
+          animationSeconds += step;
+          const state = loaded.update(pose.current, animationSeconds, step, motion.matches);
           renderer.render(scene, camera);
           element.dataset.renderedViseme = state.viseme;
           element.dataset.mouthOpen = String(state.mouthOpen);
+          element.dataset.mouthAmplitude = state.mouthAmplitude.toFixed(5);
+          element.dataset.shoulderProgress = state.shoulder.toFixed(5);
+          element.dataset.torsoProgress = state.torso.toFixed(5);
+          element.dataset.headRotation = state.headRotation.map(v => v.toFixed(5)).join(",");
+          element.dataset.idleAttention = state.idleAttention.toFixed(5);
+          element.dataset.idleAction = state.idleAction;
+          element.dataset.torsoRotation = state.torsoRotation.map(v => v.toFixed(7)).join(",");
+          element.dataset.lowerSpineRotation = state.lowerSpineRotation.map(v => v.toFixed(7)).join(",");
+          element.dataset.chestExpansion = state.chestExpansion.toFixed(6);
+          element.dataset.shoulderSettle = state.shoulderSettle.toFixed(5);
+          element.dataset.reducedMotion = String(motion.matches);
           element.dataset.handRaised = String(state.raise > .98);
           element.dataset.raiseProgress = state.raise.toFixed(4);
           element.dataset.handPosition = state.handPosition.map(v => v.toFixed(5)).join(",");
@@ -94,8 +89,9 @@ export default function StylizedAvatar3D({ appearance = "business_clay", mood = 
     })();
     return () => {
       disposed = true; abort.abort(); observer.disconnect(); renderer.setAnimationLoop(null);
+      document.removeEventListener("visibilitychange", visibility);
       renderer.domElement.removeEventListener("webglcontextlost", lost);
-      rig?.dispose(); key.shadow.dispose(); environment.dispose(); renderer.dispose();
+      rig?.dispose(); stage.dispose(); renderer.dispose();
       if (!renderer.getContext().isContextLost()) renderer.forceContextLoss();
       renderer.domElement.remove();
     };

@@ -25,7 +25,7 @@ for (const locale of ["it", "en"] as const) {
       const summary = advanced.locator("summary");
       const rate = page.getByLabel(it ? "Ritmo del parlato" : "Speaking rate", { exact: true });
       const reset = page.getByRole("button", { name: it ? "Ripristina · 1,00×" : "Reset · 1.00×", exact: true });
-      const voice = page.getByLabel(it ? "Voce da provare" : "Voice to preview");
+      const voice = page.getByLabel(it ? "Voce" : "Voice");
       const save = page.getByRole("button", { name: it ? "Salva avatar" : "Save avatar", exact: true });
       await expect(summary).toHaveText(it ? "Regolazioni avanzate" : "Advanced settings");
       await expect(advanced).not.toHaveAttribute("open");

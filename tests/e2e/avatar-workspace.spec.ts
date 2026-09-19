@@ -12,7 +12,7 @@ test("avatar workspace: rate preview, discard, explicit save and identity edits 
   await expect(page.locator("#speaking-rate")).toHaveCount(0);
   const nav = page.getByRole("navigation", { name: "Avatar configuration" });
   await expect(nav.getByRole("link", { name: "Identity & behaviour" })).toHaveAttribute("aria-current", "page");
-  await nav.getByRole("link", { name: "Test avatar · voice & movement" }).click();
+  await nav.getByRole("link", { name: "Voice & movement" }).click();
   await expect(page.getByLabel("Speaking rate", { exact: true })).toHaveValue("1");
   await expect(page.getByTestId("voice-advanced")).not.toHaveAttribute("open");
   await expect(page.getByLabel("Speaking rate", { exact: true })).not.toBeVisible();

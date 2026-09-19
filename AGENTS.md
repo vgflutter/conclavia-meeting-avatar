@@ -12,8 +12,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - This repository, `conclavia-meeting-avatar`, is the single working copy of the meeting assistant. Run development, tests, builds, and Git operations from this repository.
 - `../conclavia-frontend` is a historical local backup, not a source or mirror. Do not synchronize changes back to it.
-- The local runtime configuration is `.env.local` at this repository root. Preserve it when updating or installing dependencies; `.env.example` is only a template for new installations.
+- The local runtime configuration is `.env.local` at this repository root. Preserve it when updating or installing dependencies. This checkout does not include `.env.example`; fresh-installation guidance is in `docs/guide.md`.
 - Meetings, series, memory, and the avatar profile remain in the MongoDB database configured by the local environment. Do not create an empty replacement database during setup.
+- Regression and documentation captures use temporary MongoDB at `mongodb://127.0.0.1:27018` with a `conclavia_e2e_*` database. Pass this URI explicitly; a separate database name alone does not isolate the real SSH-connected MongoDB server. Never use the real database for fixtures or test saves.
+- Keep the existing app on port 3000 running during verification. Playwright owns port 3101 and `.next-e2e`; do not run regression and screenshot capture concurrently. Use `.next-build-avatar` or `.next-build-verify` for a separate production build.
 
 # Authorized local test recovery
 

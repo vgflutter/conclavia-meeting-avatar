@@ -18,19 +18,19 @@ test("unsaved female identity follows both tabs, both voices save together and s
   await page.getByLabel("Avatar appearance").selectOption("business_clay_female");
   await page.getByLabel("Name and call phrase").fill("Sofia");
   const nav = page.getByRole("navigation", { name: "Avatar configuration" });
-  await nav.getByRole("link", { name: "Test avatar · voice & movement" }).click();
+  await nav.getByRole("link", { name: "Voice & movement" }).click();
   const avatar = page.locator("svg[data-appearance]");
   await expect(avatar).toHaveAttribute("data-appearance", "business_clay_female");
-  await expect(page.getByLabel("Test phrase")).toHaveValue(/Hello, I'm Sofia/);
-  await page.getByLabel("Voice to preview").selectOption("Eleanor");
+  await expect(page.getByLabel("Text to read")).toHaveValue(/Hello, I'm Sofia/);
+  await page.getByLabel("Voice").selectOption("Eleanor");
   await page.getByLabel("Language", { exact: true }).selectOption("it");
-  await page.getByLabel("Voice to preview").selectOption("Orietta");
+  await page.getByLabel("Voice").selectOption("Orietta");
   await page.getByTestId("voice-advanced").locator("summary").click();
   await page.getByLabel("Speaking rate", { exact: true }).fill("0.95");
-  await page.getByLabel("Test phrase").fill("Buongiorno, questa è la mia prova.");
+  await page.getByLabel("Text to read").fill("Buongiorno, questa è la mia prova.");
   await page.getByLabel("Language", { exact: true }).selectOption("en");
   await page.getByLabel("Language", { exact: true }).selectOption("it");
-  await expect(page.getByLabel("Test phrase")).toHaveValue("Buongiorno, questa è la mia prova.");
+  await expect(page.getByLabel("Text to read")).toHaveValue("Buongiorno, questa è la mia prova.");
   await page.getByRole("button", { name: "Listen to voice" }).click();
   await expect(avatar).toHaveAttribute("data-viseme", "a");
   await expect(page.getByRole("button", { name: "Save avatar", exact: true })).toBeDisabled();
@@ -65,9 +65,9 @@ test("test page switches either appearance; global discard restores identity and
     await page.getByLabel("Avatar appearance").selectOption(appearance);
     await expect(page.locator("svg[data-appearance]")).toHaveAttribute("data-appearance", appearance);
   }
-  await page.getByLabel("Voice to preview").selectOption("Eleanor");
+  await page.getByLabel("Voice").selectOption("Eleanor");
   await page.getByLabel("Language", { exact: true }).selectOption("it");
-  await page.getByLabel("Voice to preview").selectOption("Orietta");
+  await page.getByLabel("Voice").selectOption("Orietta");
   await page.getByTestId("voice-advanced").locator("summary").click();
   await page.getByLabel("Speaking rate", { exact: true }).fill("0.9");
   await page.getByRole("navigation", { name: "Avatar configuration" }).getByRole("link", { name: "Identity & behaviour" }).click();
@@ -75,11 +75,11 @@ test("test page switches either appearance; global discard restores identity and
   await page.getByRole("button", { name: "Discard changes" }).click();
   await expect(page.getByLabel("Avatar appearance")).toHaveValue("business_clay");
   await expect(page.getByLabel("Name and call phrase")).toHaveValue("Riccardo");
-  await page.getByRole("navigation", { name: "Avatar configuration" }).getByRole("link", { name: "Test avatar · voice & movement" }).click();
-  await expect(page.getByLabel("Voice to preview")).toHaveValue("Dennis");
+  await page.getByRole("navigation", { name: "Avatar configuration" }).getByRole("link", { name: "Voice & movement" }).click();
+  await expect(page.getByLabel("Voice")).toHaveValue("Dennis");
   await expect(page.getByLabel("Speaking rate", { exact: true })).toHaveValue("1");
   await page.getByLabel("Language", { exact: true }).selectOption("it");
-  await expect(page.getByLabel("Voice to preview")).toHaveValue("Gianni");
+  await expect(page.getByLabel("Voice")).toHaveValue("Gianni");
   expect((await (await request.get("/api/avatar")).json()).profile).toEqual(before);
 });
 
@@ -134,7 +134,7 @@ test("mobile: lip sync stays on screen during playback and navigating stops the 
     (window as unknown as { previewContexts: BaseAudioContext[] }).previewContexts.map(context => context.state)),
   { timeout: 1000 }).toEqual(["closed", "closed"]);
   await expect(page.getByLabel("Avatar appearance")).toHaveValue("business_clay_female");
-  await page.getByRole("navigation", { name: "Avatar configuration" }).getByRole("link", { name: "Test avatar · voice & movement" }).click();
+  await page.getByRole("navigation", { name: "Avatar configuration" }).getByRole("link", { name: "Voice & movement" }).click();
   await expect(page.locator("svg[data-viseme]")).toHaveAttribute("data-viseme", "rest");
   await expect(page.locator('[data-streaming-voice-state="ready"]')).toBeVisible();
 });

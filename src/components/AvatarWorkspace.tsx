@@ -109,13 +109,13 @@ export function AvatarAppearanceSelect({ locale, disabled = false }: { locale: L
         {ASSISTANT_VISUAL_STYLES.map(style => <option key={style} value={style}>{avatarVisualStyleLabel(style, it)}</option>)}
       </select>
       <p id="avatar-style-help" className="mt-2 text-xs leading-5 text-slate-500">{draft.visualStyle === "portrait_2_5d"
-        ? it ? "Ritratto animato: respiro, testa, battito degli occhi, espressioni e labiale semplificato sull’audio. La mano passa tra due pose. Non è un modello 3D."
-          : "Animated portrait: breathing, head motion, blinking, expressions and simplified audio-driven lip sync. The hand transitions between two poses. Not a 3D model."
+        ? it ? "Brevi movimenti della testa e assestamenti della spalla, separati da pause. Il labiale segue l’audio."
+          : "Brief head adjustments and a shoulder settle, separated by pauses, with simplified audio-driven lip sync."
         : draft.visualStyle === "stylized_3d"
-          ? it ? "Personaggio 3D articolato: braccia, mani, sguardo, espressioni e labiale sull’audio. Nessuna transizione tra fotografie. Provalo prima di salvare."
-            : "Rigged 3D character: arms, hands, gaze, expressions and audio-driven lips. No photo crossfades. Preview before saving."
-        : it ? "Lo stile cambia solo l’aspetto, non la voce. Provalo prima di salvare."
-          : "Style changes the look, not the voice. Preview before saving."}</p>
+          ? it ? "Sguardi brevi, piccoli movimenti della testa e assestamenti della spalla. Il corpo resta stabile durante l’attesa."
+            : "Brief glances, small head movements and shoulder adjustments. The body stays stable while waiting."
+        : it ? "Sguardo e testa si muovono brevemente, poi si fermano. Braccio rilassato al fianco e labiale che segue l’audio."
+          : "Brief eye and head movements, followed by pauses. Relaxed arm at the side and audio-driven lips."}</p>
     </div>
     <div>
     <label className="label" htmlFor="avatar-appearance">{it ? "Aspetto dell’avatar" : "Avatar appearance"}</label>
@@ -146,13 +146,13 @@ export function AvatarSaveControls({ locale, disabled = false }: { locale: Local
   ].filter(Boolean);
   return <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4" data-testid="avatar-save-controls">
     <p role="status" className={`text-sm ${status === "error" ? "text-red-700" : "text-slate-700"}`}>
-      {status === "error" ? it ? "Non è stato possibile confermare il salvataggio. Le modifiche in prova sono ancora qui: riprova." : "Could not save. Your preview changes are still here: please retry."
+      {status === "error" ? it ? "Non è stato possibile confermare il salvataggio. Le modifiche sono ancora disponibili: riprova." : "Could not save. Your changes are still here: please retry."
         : status === "saved" && !changed ? it ? "Avatar aggiornato." : "Avatar updated."
         : changed ? `${it ? "Modifiche non salvate" : "Unsaved changes"}: ${changes.join(", ")}.`
         : it ? "Stai usando la configurazione salvata." : "Using the saved configuration."}
     </p>
     {changed && !canDiscard && <p className="text-sm text-amber-800" data-testid="voice-compatibility-notice">{it
-      ? "Le voci precedenti non corrispondono all’aspetto. La prova usa già quelle compatibili; salva per applicarle ai meeting."
+      ? "Le voci precedenti non corrispondono all’aspetto. L’anteprima usa già quelle compatibili; salva per applicarle ai meeting."
       : "The previous voices do not match the appearance. Preview uses compatible voices; save to apply them to meetings."}</p>}
     {!valid && <p className="text-sm text-amber-800">{it ? "Completa nome e ruolo nella scheda Identità prima di salvare." : "Complete the name and role in Identity before saving."}</p>}
     <div className="flex flex-wrap gap-3">

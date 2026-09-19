@@ -14,8 +14,8 @@ test("both tabs: only compatible voices, automatic pairing and remembered choice
   await page.goto("/avatar");
   await page.getByLabel("Avatar appearance").selectOption("business_clay_female");
   const nav = page.getByRole("navigation", { name: "Avatar configuration" });
-  await nav.getByRole("link", { name: "Test avatar · voice & movement" }).click();
-  const voice = page.getByLabel("Voice to preview");
+  await nav.getByRole("link", { name: "Voice & movement" }).click();
+  const voice = page.getByLabel("Voice");
   const language = page.getByLabel("Language", { exact: true });
   const options = () => voice.locator("option").evaluateAll(nodes => nodes.map(node => (node as HTMLOptionElement).value));
   await expect(voice).toHaveValue("Eleanor");
@@ -37,7 +37,7 @@ test("both tabs: only compatible voices, automatic pairing and remembered choice
   await nav.getByRole("link", { name: "Identity & behaviour" }).click();
   await expect(page.getByLabel("Name and call phrase")).toHaveValue("Riccardo");
   await page.getByLabel("Avatar appearance").selectOption("business_clay");
-  await nav.getByRole("link", { name: "Test avatar · voice & movement" }).click();
+  await nav.getByRole("link", { name: "Voice & movement" }).click();
   await expect(voice).toHaveValue("Alistair");
   expect((await (await request.get("/api/avatar")).json()).profile.voice.inworldVoiceIdEn).toBe("Edward");
   await page.getByRole("button", { name: "Save avatar", exact: true }).click();
@@ -80,14 +80,14 @@ for (const appearance of ["business_clay", "business_clay_female"]) {
     await request.patch("/api/avatar", { data: { ...identity, appearance, ...oldVoices } });
     const before = (await (await request.get("/api/avatar")).json()).profile;
     await page.goto("/avatar/test");
-    await expect(page.getByLabel("Voice to preview")).toHaveValue(expectedVoices.inworldVoiceIdEn);
+    await expect(page.getByLabel("Voice")).toHaveValue(expectedVoices.inworldVoiceIdEn);
     await expect(page.getByTestId("voice-compatibility-notice")).toBeVisible();
     await expect(page.getByRole("button", { name: "Discard changes" })).toHaveCount(0);
     // Discarding other preview edits must not restore an incompatible voice.
     await page.getByTestId("voice-advanced").locator("summary").click();
     await page.getByLabel("Speaking rate", { exact: true }).fill("0.9");
     await page.getByRole("button", { name: "Discard changes" }).click();
-    await expect(page.getByLabel("Voice to preview")).toHaveValue(expectedVoices.inworldVoiceIdEn);
+    await expect(page.getByLabel("Voice")).toHaveValue(expectedVoices.inworldVoiceIdEn);
     expect((await (await request.get("/api/avatar")).json()).profile).toEqual(before);
     await page.getByRole("button", { name: "Save avatar", exact: true }).click();
     await expect(page.getByText("Avatar updated.", { exact: true })).toBeVisible();

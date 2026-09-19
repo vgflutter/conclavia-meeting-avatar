@@ -38,7 +38,7 @@ test("actual geometry: continuous wrist positions, morph deformation and bounded
       Math.hypot(mouthDelta.getX(i), mouthDelta.getY(i), mouthDelta.getZ(i)));
     expect(face!.geometry.morphTargetsRelative).toBe(true);
     expect(maxDisplacement).toBeGreaterThan(.01);
-    rig.update({ viseme: "a", voiceLevel: .8 }, .095, 1 / 60);
+    for (let frame = 0; frame < 4; frame++) rig.update({ viseme: "a", voiceLevel: .8 }, .095, 1 / 60);
     expect(face!.morphTargetInfluences![face!.morphTargetDictionary!.viseme_aa]).toBeGreaterThan(.6);
     expect(face!.morphTargetInfluences![face!.morphTargetDictionary!.eyeBlinkLeft]).toBeCloseTo(1, 3);
     rig.update({ viseme: "a", voiceLevel: 0 }, 1, 1 / 60, true);

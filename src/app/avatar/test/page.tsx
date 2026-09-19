@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
-  return { title: locale === "it" ? "Prova avatar" : "Test avatar" };
+  return { title: locale === "it" ? "Voce e movimenti" : "Voice & movement" };
 }
 
 export default async function AvatarTestPage() {
@@ -21,12 +21,12 @@ export default async function AvatarTestPage() {
     <div className="container-page py-8 sm:py-10">
       <header className="mb-6 max-w-3xl">
         <h1 className="text-3xl font-bold tracking-tight">
-          {isItalian ? "Prova avatar" : "Test avatar"}
+          {isItalian ? "Voce e movimenti" : "Voice & movement"}
         </h1>
         <p className="mt-2 text-sm text-slate-600">
           {isItalian
-            ? "Scegli una voce, ascolta e salva quella che preferisci."
-            : "Choose a voice, listen and save your favourite."}
+            ? "Scegli l’aspetto e la voce del tuo avatar. Guarda come si muove, ascoltalo e salva le modifiche."
+            : "Choose your avatar’s appearance and voice. See it move, listen and save your changes."}
         </p>
       </header>
       <AvatarNavigation active="test" locale={locale} />

@@ -21,9 +21,11 @@ Conclavia is a focused, single-workspace meeting assistant with four areas:
 
 The management interface works without a meeting provider. Automatic Teams entry becomes available only after every required integration setting is present. Configuration readiness is not an external connectivity check: the public output page and webhook endpoint must also be reachable.
 
-## Latest update — 14 September 2026
+## Latest avatar update — 20 September 2026
 
-The README is a short entry point; this guide preserves the full setup, architecture, screenshots and historical verification detail. The [final application review](final-audit-2026-09-14.md) covers the latest complete checks, stale-hand/late-echo race fixes and remaining acceptance work. The earlier [playback review](playback-review-2026-09-13.md) records the regional voice fix, browser timing diagnostics and three real Inworld probes. These do not close the live Teams recognition/receiver acceptance gate.
+The README is a short entry point; this guide preserves setup, architecture and historical verification detail. The [avatar refinement review](avatar-refinement-2026-09-19.md) covers the current three renderers, both appearances, successive visual corrections, final production recordings and local regression results. **Voice & movement / Voce e movimenti** at `/avatar/test` now has one silent nine-second animation sequence for all styles, separate from provider voice playback. Both lips and the jaw participate in the 2.5D mouth; all styles retain discrete waiting actions and explicit save/discard.
+
+The earlier [14 September application review](final-audit-2026-09-14.md) covers meeting lifecycle, stale-hand/late-echo race fixes and remaining acceptance work. The earlier [playback review](playback-review-2026-09-13.md) records the regional voice fix, browser timing diagnostics and three real Inworld probes. These do not close the live Teams recognition/receiver acceptance gate.
 
 - **Layered context:** the new Context page saves shared background; series and meeting details add their own notes. All AI answer, verification, summary, proactive-intervention and final-memory prompts receive the same three scopes. Existing appointments inherit series edits at the next generation, without leaving/rejoining. Context is not recorded as a meeting decision. See [assistant context](#assistant-context).
 - **Named contextual turns:** speech automation requires the configured name, not a generic “hello, can you hear me?”. “Ehi Riccardo, dimmi” releases a valid prepared contribution or retrieves the recent participant statement, even when proactive contributions are off. Punctuation alone cannot become a request. This parser fix does not fix the separate “Ciao Riccardo” → “Charlie cardo” recognition defect.
@@ -55,7 +57,7 @@ Start with [voice setup](#streaming-voice-setup), the [Cloudflare local test gui
 
 ## Product tour
 
-The desktop figures below were refreshed on **13 September 2026**, with the compact meeting dashboard updated on **14 September**, using fictional Aurora meetings in an isolated database. They show the real GUI, not design mockups or recordings of a Teams call. Paid integrations are disabled during capture; the Inworld configuration warning in the voice studio is intentional. See [refreshing the screenshots](#refreshing-the-readme-screenshots).
+The desktop figures below were refreshed on **20 September 2026**, using fictional Aurora meetings in an isolated database. Separate avatar production captures and motion recordings document the 19–20 September visual revision. They show the real GUI, not design mockups or recordings of a Teams call. Paid integrations are disabled during capture; the Inworld configuration warning in the voice studio is intentional. See [refreshing the screenshots](#refreshing-the-readme-screenshots).
 
 ### Meetings at a glance
 
@@ -69,13 +71,15 @@ See the [dashboard verification report](dashboard-verification-2026-09-09.md) fo
 
 ![Conclavia meetings dashboard](images/meetings.png)
 
-### Avatar and voice test
+### Avatar voice and movement
 
-The avatar can be tested independently from a meeting, including Italian and English voice, speaking rate, facial mood, audio-driven lip sync, and hand raise. Save voice and rate only after comparing them; advanced model comparisons affect the preview only. This local preview does not require Cloudflare or an Attendee participant.
+At `/avatar/test`, choose the editorial 2D, 3D character or 2.5D portrait, then male/female appearance. **Play animation / Avvia animazione** runs waiting, a hand gesture, connected mouth shapes and return to rest without audio, credits or saving. **Listen to voice / Ascolta la voce** exercises actual Inworld playback and the audio-driven mouth. Stop closes the mouth immediately. Both pages share the draft; save explicitly to apply it to meetings. Advanced model comparisons affect playback only. This local preview does not require Cloudflare or an Attendee participant.
 
 Start in [Identity & behaviour](images/avatar-settings-en.png) to choose the name and appearance, then move to the studio below. The provider is explicitly labelled **Inworld**, and optional speed/model controls stay under **Advanced settings**.
 
-![Conclavia voice and movement studio](images/avatar-studio-en.png)
+![Current voice and movement studio with isolated demonstration data](images/avatar-studio-en.png)
+
+[Three styles, both appearances and mobile captures](avatar-styles.md) · [Final motion recordings and limits](avatar-refinement-2026-09-19.md).
 
 ### One meeting or a series
 
@@ -259,11 +263,11 @@ The monitor persists at most three attempts per entry, does not blindly reapply 
 
 ### Choose the avatar appearance
 
-Choose **Male · Business** or **Female · Business** in either **Identity & behaviour** or **Test avatar**. Both tabs share the same unsaved configuration: you can select the female avatar, change its name, switch to testing and hear it before saving. The female variant uses the same animated vector style, blue blazer, expressions, hand raise and audio-driven mouth shapes, with chestnut hair and a green blouse. Its chin has a softer contour and lighter shading without the dark chin crease.
+Choose **Male** or **Female** in either **Identity & behaviour** or **Voice & movement**. Choose the visual style separately: editorial 2D, 3D character or 2.5D portrait. The same unsaved configuration is shared across both pages. Appearance does not rename the colleague.
 
-The female studio example below uses the independently configured name **Nora**, the Italian voice **Orietta**, and the preview's raised-hand control. The hand is an avatar gesture, not the native Teams toolbar hand.
+The current artwork, clothing and motion differ by style; [the style overview](avatar-styles.md) shows both appearances. The hand is an avatar gesture, not the native Teams toolbar hand.
 
-![Female business avatar with its hand raised and the Italian Inworld voice Orietta selected](images/avatar-studio-female-en.png)
+![Current female portrait on mobile during the silent sequence](images/avatar-styles/portrait_2_5d-mobile-it.png)
 
 Voices follow the selected appearance in both tabs: **male avatar → male voices only; female avatar → female voices only**, in Italian and English. Switching appearance immediately selects a compatible pair in the preview (Gianni/Dennis for male, Orietta/Eleanor for female), retaining compatible selections and remembering each appearance's last choices during the editing session. The name stays independent: selecting the female avatar does not rename Riccardo. The voice studio uses the current draft; the meeting renderer uses only the saved configuration. An already open meeting renderer picks up saved appearance changes through its existing state polling, without creating another participant.
 
@@ -273,11 +277,11 @@ The [female avatar verification report](female-avatar-verification-2026-09-11.md
 
 ### Let the client choose the voice
 
-The avatar workspace has two sections: **Identity & behaviour** for name, appearance and personality, and **Test avatar · voice & movement** for listening and animation checks. Optional speaking-rate adjustments belong in the test studio's collapsed **Advanced settings**, so the main flow stays focused on choosing and hearing a voice.
+The avatar workspace has two sections: **Identity & behaviour** for name, appearance and personality, and **Voice & movement** for listening and animation checks. Optional speaking-rate adjustments belong in the studio's collapsed **Advanced settings**, so the main flow stays focused on choosing and hearing a voice.
 
 [Voice and movement studio](images/avatar-studio-en.png) · [Identity & behaviour](images/avatar-settings-en.png). Earlier mobile playback evidence remains in the [female avatar verification report](female-avatar-verification-2026-09-11.md).
 
-Open **Test avatar · voice & movement**. Only the voices matching the preview's appearance and language are offered:
+Open **Voice & movement**. Only the voices matching the preview's appearance and language are offered:
 
 | Avatar | Italian | English |
 | --- | --- | --- |
@@ -344,7 +348,7 @@ INWORLD_VOICE_ID_IT=Gianni
 
 Create a **Standard** key in [Inworld Settings > API Keys](https://platform.inworld.ai/), with **Read** permissions for Voices and Router. TTS does not require their Write permissions; a Realtime-only key is for a different API. Copy the **Base64 credentials**, without encoding them again. Italian uses `Gianni` by default, configurable through `INWORLD_VOICE_ID_IT`; English uses `INWORLD_VOICE_ID` (default `Dennis`). Audition the voice before the company pilot. The key stays server-side and is never passed to the avatar page or client bundle. No account, subscription or paid deployment is created by installing this integration.
 
-Restart the server after configuration changes, then open **Avatar > Test avatar** (`/avatar/test`). Compare Flash and TTS-2 using the same Italian text. The selector changes that preview request only; change `INWORLD_TTS_MODEL` to `inworld-tts-2` to use TTS-2 in meetings. Preview timing measures click-to-audio in that browser, **not end-of-question-to-audio in Teams**. An existing active bot needs its output page reloaded using Restore avatar to pick up a provider change; do not create a second participant.
+Restart the server after configuration changes, then open **Avatar > Voice & movement** (`/avatar/test`). Compare Flash and TTS-2 using the same Italian text. The selector changes that preview request only; change `INWORLD_TTS_MODEL` to `inworld-tts-2` to use TTS-2 in meetings. Preview timing measures click-to-audio in that browser, **not end-of-question-to-audio in Teams**. An existing active bot needs its output page reloaded using Restore avatar to pick up a provider change; do not create a second participant.
 
 Inworld streaming is the only supported speech path. Missing credentials, an invalid model or an obsolete provider setting fail closed with an unavailable-voice error. There is no browser synthesis fallback or comparison option. Existing voice preferences and meeting history are preserved. Preflight checks configuration presence, not authentication or audible Teams output; audition through the preview before sending a participant.
 
@@ -387,11 +391,9 @@ For a new installation:
 git clone https://github.com/vgflutter/conclavia-meeting-avatar.git
 cd conclavia-meeting-avatar
 npm ci
-[ -f .env.local ] || cp .env.example .env.local
-npm run dev
 ```
 
-Set `MONGODB_URI`, then open [http://localhost:3000/meetings](http://localhost:3000/meetings). Preview mode stores meetings and memory and runs manual commands without joining an external call. For a fresh copy using the template's Inworld setting, complete [streaming voice setup](#streaming-voice-setup) before testing speech.
+For a fresh installation only, create `.env.local` using the [environment-variable reference](#environment-variables), pointing `MONGODB_URI` at the intended database. This checkout does not include `.env.example`. Use `MEETING_BOT_PROVIDER=preview` and `MEETING_AI_ENABLED=false` for local work without external meeting participants or analysis; configure Inworld separately before using voice playback. Then run `npm run dev` and open [http://localhost:3000/meetings](http://localhost:3000/meetings). Preview mode still stores meetings and memory, so it is not a substitute for an isolated test database.
 
 For an existing installation, open `conclavia-meeting-avatar` and run `npm run dev`. Keep the existing `.env.local`: it contains the connection to your saved meetings, memory, and avatar profile, together with the configured integrations. Git updates do not include or replace this file.
 
@@ -399,7 +401,7 @@ For an existing installation, open `conclavia-meeting-avatar` and run `npm run d
 
 Cloudflare is the temporary public doorway to the app on your computer. Attendee's hosted browser must fetch the avatar page, poll commands, receive streamed speech and deliver callbacks; it cannot use your computer's `localhost`. Cloudflare does not run the app or generate speech. **Inworld changes the voice engine, not this reachability requirement.**
 
-For **Avatar > Test avatar** at `http://localhost:3000`, no tunnel is needed: your browser already reaches the app, which calls Inworld directly. For a **real Teams test with the app hosted locally**, keep both the app and its public tunnel running. For **company deployment**, use an always-on container and stable HTTPS entry point; Cloudflare is optional, as described under [production deployment](#production-deployment).
+For **Avatar > Voice & movement** at `http://localhost:3000`, no tunnel is needed: your browser already reaches the app, which calls Inworld directly. For a **real Teams test with the app hosted locally**, keep both the app and its public tunnel running. For **company deployment**, use an always-on container and stable HTTPS entry point; Cloudflare is optional, as described under [production deployment](#production-deployment).
 
 ### Public connection for a local Teams test
 
@@ -469,7 +471,7 @@ Once loaded, the meeting renderer sends an attempt-scoped heartbeat every five s
 
 For a still-active Attendee participant, **Restore avatar** checks the new origin and requests a page reload on the same bot using the provider's [voice-agent API](https://docs.attendee.dev/guides/voiceagents). A successful API acknowledgement is not renderer confirmation. This restores the video-page URL only: existing webhooks are not rewritten by that operation. After a hostname change, a fresh attempt after confirmed exit is needed for the complete callback configuration. A terminated bot cannot be restored.
 
-Keep the laptop powered and awake during local tests. Sleep, lid closure, or low-battery hibernation interrupts the application even if the terminal later still shows its process. For an uninterrupted macOS test run, `caffeinate -i npm run test:e2e` prevents idle sleep only for that command; it does not prevent low-battery shutdown or make a laptop a hosted service.
+Keep the laptop powered and awake during local tests. Sleep, lid closure, or low-battery hibernation interrupts the application even if the terminal later still shows its process. For an uninterrupted macOS test run, `env MONGODB_URI=mongodb://127.0.0.1:27018 caffeinate -i npm run test:e2e` prevents idle sleep only for that command; it does not prevent low-battery shutdown or make a laptop a hosted service.
 
 `/api/health` verifies app/database reachability, not the complete avatar, captions, speech or Teams path. Complete the live test after admission and use **Debug mode** to check transcript reception separately from audible responses.
 
@@ -548,11 +550,17 @@ The organizer's Teams policy must allow anonymous guests and captions. If compan
 
 ## Verification
 
+The [20 September pre-commit report](verification-2026-09-20.md) records the current avatar/documentation checks, corrected legacy test assumptions and their exact scope. Earlier full-suite reports retain their original dates.
+
+With a temporary MongoDB running on **127.0.0.1:27018**:
+
 ```bash
-npm run verify
+env NEXT_DIST_DIR=.next-build-verify MONGODB_URI=mongodb://127.0.0.1:27018 \
+  MONGODB_DB_NAME=conclavia_e2e_verify MEETING_BOT_PROVIDER=preview \
+  MEETING_AI_ENABLED=false INWORLD_API_KEY= npm run verify
 ```
 
-This runs ESLint, TypeScript, all isolated script tests (tunnel, caption diagnostics and log safety), a production build, and the Playwright regression suite. While a local dev server is active, use `NEXT_DIST_DIR=.next-build-verify npm run verify` to keep production output separate from its `.next` directory. Build-generated paths in `tsconfig.json` are local verification artifacts, not application changes. Coverage includes:
+This runs ESLint, TypeScript, all isolated script tests (tunnel, caption diagnostics and log safety), a production build, and the Playwright regression suite. The command keeps production output separate from the existing app’s `.next` directory. Playwright uses `.next-e2e` and port 3101. Generated type paths in `tsconfig.json` describe those separate outputs. Preserve `.env.local`; never point regression or screenshot commands at the application’s SSH-connected database. Coverage includes:
 
 - general/series/meeting context persistence, inheritance, clearing, concurrent edits, input validation and public-route isolation;
 - actual AI task orchestration with intercepted provider calls, checking context injection in answers, checks, summaries, proactive interventions and final memory extraction (not a live-model reasoning certification);
@@ -583,7 +591,7 @@ This runs ESLint, TypeScript, all isolated script tests (tunnel, caption diagnos
 - wrong addressees and quoted wake words, accented/multiword names, recall without memory mutation, safe arithmetic scope, negative/ambiguous agenda completion, human names resembling the bot and disabled voice features.
 - bounded human/assistant conversation, older-point retrieval, original caption preservation, structured intent validation and late model-result races against exit, re-entry, namesakes, replacement hands and refusal.
 
-Tests run on an isolated local port and a per-run `conclavia_e2e_…` database with meeting AI and the external participant disabled. `MONGODB_DB_NAME` selects this test database without modifying `.env.local`; normal runtime continues using the database in `MONGODB_URI`. Tests create uniquely named records and remove them after their scenarios, without creating paid external usage or modifying user meeting history.
+Tests run on an isolated local port and a `conclavia_e2e_…` database with meeting AI and external participants disabled. The Playwright configuration creates a per-run name when no test database name is supplied. **Both** the temporary `MONGODB_URI` and test database name are important: a different database name alone does not move writes off the real MongoDB server. Environment overrides affect only the verification process and preserve `.env.local`. Tests create uniquely named records and remove them after their scenarios, without creating paid external usage or modifying user meeting history.
 
 The regression runner selects streaming with an empty provider credential. Deterministic PCM fixtures test playback, queue ordering, permission gating, errors, stop, and lip sync without paid synthesis. On 11 September 2026, the streaming-only regression run passed **187 tests in 2.0 minutes**, plus ESLint and TypeScript. The running application's old preview URL also opened only the streaming studio, the retired model endpoint returned 404, and no browser errors were observed. No Teams participant or paid synthesis was started for this run. Real provider probes are separate from these regressions; older audit reports describe the implementation at their recorded date.
 
@@ -599,10 +607,10 @@ Without `--run` it only prints usage. Each pass requires an actual successful pr
 
 ### Refreshing the README screenshots
 
-After installing dependencies and configuring a reachable MongoDB connection for local development, run from `conclavia-meeting-avatar`:
+After installing dependencies and starting the temporary MongoDB on port 27018, run from `conclavia-meeting-avatar`:
 
 ```bash
-npm run docs:screenshots
+env MONGODB_URI=mongodb://127.0.0.1:27018 npm run docs:screenshots
 ```
 
 This opt-in Playwright workflow regenerates **ten desktop PNGs** under `docs/images/`: meetings, creation, series, memory, identity, male/female voice studios, general context, inherited meeting context and debug. It uses Chrome, an isolated server on **port 3101**, and a dedicated `conclavia_e2e_docs_…` database. It preserves `.env.local`, the normal application's database and the server on port 3000. Do not run it alongside another regression run using port 3101 or `.next-e2e`.
@@ -627,7 +635,7 @@ The comparison makes two Flash requests and one TTS-2 request. These checks use 
 
 The preview displays the configured voice, buffer underruns, inserted gap duration and maximum animation callback interval. The player now uses a 180 ms initial jitter cushion (up to 500 ms on rebuffering), keeps on-time PCM blocks contiguous, and drives the mouth from the browser output-device timestamp rather than the audio render thread's leading clock. This does not compensate for separate video encoding or Teams transport delay. See [Web Audio output timestamps](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/getOutputTimestamp).
 
-Italian synthesis uses `Gianni` by default, independently of the English `Dennis` voice. Inworld's live voice catalog identifies their native languages as Italian and English respectively. Passing `it-IT` alone does not guarantee accent-free output from an English voice; see [Inworld language/localization guidance](https://docs.inworld.ai/tts/capabilities/multilingual). Existing `.env.local` credentials are unchanged. Audition the configured voice under **Avatar > Test avatar** before the next receiving-participant Teams check. The [audio recovery report](audio-recovery-2026-09-10.md) separates reproduced defects, measured browser results and remaining live checks.
+Italian synthesis uses `Gianni` by default, independently of the English `Dennis` voice. Inworld's live voice catalog identifies their native languages as Italian and English respectively. Passing `it-IT` alone does not guarantee accent-free output from an English voice; see [Inworld language/localization guidance](https://docs.inworld.ai/tts/capabilities/multilingual). Existing `.env.local` credentials are unchanged. Audition the configured voice under **Avatar > Voice & movement** before the next receiving-participant Teams check. The [audio recovery report](audio-recovery-2026-09-10.md) separates reproduced defects, measured browser results and remaining live checks.
 
 ### Real answer and memory checks
 

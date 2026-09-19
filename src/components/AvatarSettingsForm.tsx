@@ -126,8 +126,8 @@ export function AvatarSettingsForm() {
 
         <AvatarSaveControls locale={locale} />
         <p className="text-right text-sm text-slate-500">
-          {isItalian ? "Prova queste modifiche prima di salvarle: " : "Try these changes before saving: "}
-          <Link href="/avatar/test" className="font-semibold text-[#295c43] underline">{isItalian ? "Prova avatar" : "Test avatar"}</Link>.
+          {isItalian ? "Ascolta la voce e guarda l’avatar in movimento: " : "Listen to the voice and see the avatar in motion: "}
+          <Link href="/avatar/test" className="font-semibold text-[#295c43] underline">{isItalian ? "Voce e movimenti" : "Voice & movement"}</Link>.
         </p>
       </fieldset>
     </form>

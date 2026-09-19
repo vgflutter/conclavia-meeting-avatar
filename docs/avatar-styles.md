@@ -1,29 +1,53 @@
 # Avatar styles
 
-At `/avatar` or `/avatar/test`, choose **Avatar style** (editorial 2D / portrait 2.5D trial / **3D character · Animated**) separately from **Avatar appearance** (male / female). Changes stay in the shared draft between both tabs. **Save avatar** applies them to the meeting renderer; **Discard changes** restores the saved choices. Switching style alone does not change the name or either language's voice. Existing profiles and clients default to 2D and omitted style fields do not overwrite a saved choice.
+Latest revision: [coordinated lips, illustration and 3D surface/gesture review](avatar-refinement-2026-09-19.md). This preserves the [fixed torso, natural arm rest and separate waiting actions](avatar-presence-review-2026-09-19.md) and addresses the subsequent rejection of the lower-lip hinge and artificial appearance.
 
-16 September: the primitive procedural 3D figures have been replaced with **actual rigged male/female meshes**. [Current previews, build/provenance and checks](avatar-rigged-3d.md). The original portrait is retained as a separate image-based trial; it is not the source of a claimed photorealistic 3D reconstruction.
+At `/avatar/test` (**Voce e movimenti / Voice & movement**), choose a style and a male or female appearance. **Avvia animazione / Play animation** runs the same nine-second silent sequence for all three styles: waiting, raising the hand, sample lip movements, lowering the hand and returning to rest. Stop it at any time. It makes no speech-provider calls and consumes no voice credit. **Ascolta la voce / Listen to voice** uses Inworld and takes over from the silent sequence.
 
-## Approved-look portrait trial (16 September 2026)
+| Style | Current treatment | Implementation and visual evidence |
+| --- | --- | --- |
+| Fumetto editoriale · 2D / Editorial comic · 2D | Refined illustration, filled lip contours, distinct rounded vowels, coordinated upper lip/jaw, arm at the side and discrete waiting actions | [2D details](avatar-editorial-2d.md) |
+| Personaggio 3D / 3D character | Skinned male/female meshes, matte surfaces, restrained hair highlights, relaxed articulated fingers and separate glances/shoulder adjustment | [3D details](avatar-rigged-3d.md) |
+| Ritratto 2.5D / Portrait 2.5D | Original upper/lower lips and jaw move together, bounded O/U corners, progressive tooth occlusion, transparent arm and fixed seated base | [2.5D details](avatar-portrait-2-5d.md) |
 
-**Portrait 2.5D · Preview** preserves the approved male/female artwork with a local texture rig: gentle breathing/head motion, blinking, subtle brow/smile expressions and simplified visemes driven by the existing audio clock. The expression control is available again. The hand blends between registered resting/raised portraits over 280 ms; it is **not** an articulated 3D arm or generated video. Voice playback remains unchanged.
+The styles share the existing PCM-driven speech clock and envelope. Mouth transitions use a 22 ms exponential time constant, while silence, stop and closed-lip consonants close the mouth immediately. This is a smoothing constant, not an end-to-end audio latency claim. Ambient motion yields during speech/gestures. Reduced motion removes ambient movement; intentional controls and audio-driven lips remain available.
 
-The original portrait atlas plus a registered mouth/closed-eye texture load from bundled static assets, including through the restricted meeting tunnel. Only small feathered facial regions use the new texture. No image-generation service is contacted at runtime. WebGL loads on demand; reduced motion disables idle movement/blinking and makes the hand transition immediate, while speech and expression controls still work. Missing assets or unavailable/lost WebGL display an explicit notice with the existing animated 2D fallback, without changing the saved selection. [Artwork provenance, prompt and implementation scope](avatar-portrait-2-5d.md).
+Changes stay in the shared draft between the identity and movement pages. **Save avatar** applies them to the meeting renderer; **Discard changes** restores the saved choices. Switching style alone changes neither the name nor either language's voice. Existing profiles and clients default to 2D; omitted style fields preserve the saved selection. The animation preview itself never saves.
 
-## Animated 2D and 3D options
+WebGL renderers load on demand and dispose their loops, geometry, materials and textures when switching away. Missing assets, unavailable WebGL or a lost context produce an explicit notice and the animated 2D fallback without changing the selected style. Assets are local; no image-generation service is called at runtime. The 3D meshes are not reconstructions of the portrait photographs.
 
-The 2D artwork separates the resting arm from the torso; raising the hand replaces that arm at the shoulder instead of adding an arm over the chest. The current 3D version loads two local GLB models, with weighted meshes and a continuous shoulder/elbow/wrist/finger animation. Both use the existing PCM-clock visemes and envelope; the renderer adds no synthesis call, wake-name change or speech-permission rule.
+## Validation, 19–20 September 2026
 
-3D loads on demand and requires WebGL 2. The pixel ratio is capped at 1.75 and geometry/materials/textures/render loops are disposed when switching away. Breathing/blinks respect reduced motion; intentional gestures and speech still work. If a model cannot load, WebGL is unavailable or its context is lost, a visible notice accompanies the animated 2D fallback without silently changing the saved style. The 2D default remains the lighter option. No additional avatar provider or recurring service fee is introduced; actual voice previews still consume Inworld credit.
+The latest [pre-commit check](verification-2026-09-20.md) covered **120 application cases in the changed files**, **36 script tests** and the screenshot workflow. One legacy public-state assertion was corrected; all 12 cases in its file passed on rerun. Lint, TypeScript, the production build and diff checks passed. [Earlier visual review, pixel/motion checks and final recordings](avatar-refinement-2026-09-19.md). Test writes used only temporary MongoDB on port 27018; saved settings and the real database were preserved.
 
-## Verification boundaries
+```sh
+env MONGODB_URI=mongodb://127.0.0.1:27018 npm run test:e2e -- \
+  avatar-animation-preview avatar-illustrated female-avatar-motion editorial-animation \
+  avatar-styles avatar-rigged rigged-avatar-motion avatar-portrait portrait- \
+  avatar-draft-workflow avatar-workspace avatar-appearance
+npm run lint
+npm run typecheck
+env NEXT_DIST_DIR=.next-build-avatar MONGODB_URI=mongodb://127.0.0.1:27018 \
+  MONGODB_DB_NAME=conclavia_e2e_avatar_build MEETING_BOT_PROVIDER=preview \
+  MEETING_AI_ENABLED=false npm run build
+```
 
-15 September 2026: **65 targeted regression tests passed**, plus lint, TypeScript and a production build. A read-only browser check also rendered 3D on the existing local server with no page errors, no save and no voice playback.
+Synthetic PCM and browser captures verify local animation/playback behaviour. They do not validate received Teams audio/video, microphone recognition or client approval of the artwork. No Teams participant is created by these checks.
 
-Isolated browser tests cover all four style/appearance combinations, attached arms, expression/viseme combinations, synthetic PCM playback, draft/save/reload, old clients, invalid styles, live renderer configuration polling, mobile layout and loss of the WebGL context. These tests do **not** certify the design's client acceptance, GPU performance on every device, or received audio/video/lip sync in Teams. A real Teams run is still needed for 3D reception and performance.
+The final standalone build was exercised on port 3102 with the temporary MongoDB: all six variants rendered, played the silent sequence and closed their mouths on stop, without browser errors or mutation requests. All three styles fitted the 390 × 844 mobile viewport. Four management routes remained blocked through the public-proxy host. The earlier 45-second recordings of every variant establish the fixed torso behavior and contain no saves: [production recordings and before/after comparison](avatar-presence-review-2026-09-19.md). The existing app at `localhost:3000/avatar/test` returned 200 and its tunnel check passed without a restart or configuration change.
 
-Renderer reference: [Three.js WebGLRenderer lifecycle and capabilities](https://threejs.org/docs/pages/WebGLRenderer.html).
+
+## Current visual review
+
+These are actual browser captures of the standalone production build, with temporary default profile data. Both appearances were inspected at rest and while gesturing/articulating, including the 390 × 844 mobile layout. Silent recordings demonstrate the motion; they contain no generated voice.
+
+| Editorial 2D | 3D character | Portrait 2.5D |
+| --- | --- | --- |
+| ![Male editorial](images/avatar-styles/editorial-business_clay-rest.png) | ![Male 3D](images/avatar-styles/stylized_3d-business_clay-rest.png) | ![Male portrait](images/avatar-styles/portrait_2_5d-business_clay-rest.png) |
+| ![Female editorial](images/avatar-styles/editorial-business_clay_female-rest.png) | ![Female 3D](images/avatar-styles/stylized_3d-business_clay_female-rest.png) | ![Female portrait](images/avatar-styles/portrait_2_5d-business_clay_female-rest.png) |
+| [Male motion](images/avatar-refinement/editorial-business_clay.webm) · [Female motion](images/avatar-refinement/editorial-business_clay_female.webm) | [Male motion](images/avatar-refinement/stylized_3d-business_clay.webm) · [Female motion](images/avatar-refinement/stylized_3d-business_clay_female.webm) | [Male motion](images/avatar-refinement/portrait_2_5d-business_clay.webm) · [Female motion](images/avatar-refinement/portrait_2_5d-business_clay_female.webm) |
+| [Mobile](images/avatar-styles/editorial-mobile-it.png) | [Mobile](images/avatar-styles/stylized_3d-mobile-it.png) | [Mobile](images/avatar-styles/portrait_2_5d-mobile-it.png) |
 
 ## Separate dependency follow-up
 
-The installation audit on 15 September 2026 also reports existing findings in Next.js 16.3.0, sharp 0.35.3 and js-yaml 4.3.1. Those versions were already present before the avatar changes; Three.js and its types are not flagged by this audit. No unrelated framework upgrade was applied during this design change. Schedule a dedicated dependency upgrade and regression check before exposing a production pilot.
+The installation audit on 15 September 2026 reported existing findings in Next.js 16.3.0, sharp 0.35.3 and js-yaml 4.3.1. Those versions were already present before the avatar changes; Three.js and its types were not flagged by that audit. No unrelated framework upgrade is part of this design change.

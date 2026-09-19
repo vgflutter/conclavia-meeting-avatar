@@ -1,0 +1,50 @@
+[
+  {
+    "style": "editorial",
+    "appearance": "business_clay",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "video": "editorial-business_clay.webm"
+  },
+  {
+    "style": "editorial",
+    "appearance": "business_clay_female",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "video": "editorial-business_clay_female.webm"
+  },
+  {
+    "style": "stylized_3d",
+    "appearance": "business_clay",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "video": "stylized_3d-business_clay.webm"
+  },
+  {
+    "style": "stylized_3d",
+    "appearance": "business_clay_female",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "video": "stylized_3d-business_clay_female.webm"
+  },
+  {
+    "style": "portrait_2_5d",
+    "appearance": "business_clay",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "video": "portrait_2_5d-business_clay.webm"
+  },
+  {
+    "style": "portrait_2_5d",
+    "appearance": "business_clay_female",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "video": "portrait_2_5d-business_clay_female.webm"
+  }
+]

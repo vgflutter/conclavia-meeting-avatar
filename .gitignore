@@ -5,6 +5,7 @@
 /.next
 /.next-e2e
 /.next-build-verify
+/.next-build-avatar
 /out
 
 # local environment files

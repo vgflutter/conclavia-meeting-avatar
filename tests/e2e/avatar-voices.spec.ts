@@ -80,7 +80,7 @@ test("voice GUI: preview does not save, explicit save survives reload and preser
   });
   await page.goto("/avatar/test?voice=inworld");
   await page.getByLabel("Aspetto dell’avatar").selectOption("business_clay_female");
-  await expect(page.getByLabel("Voce da provare")).toHaveValue("Orietta");
+  await expect(page.getByLabel("Voce")).toHaveValue("Orietta");
   await page.getByRole("button", {name: "Ascolta la voce", exact: true}).click();
   await expect(page.locator('[data-streaming-voice-state="ready"]')).toBeVisible();
   expect(preview).toMatchObject({language: "it", voiceId: "Orietta"});
@@ -88,11 +88,11 @@ test("voice GUI: preview does not save, explicit save survives reload and preser
   await page.getByRole("button", {name: "Salva avatar", exact: true}).click();
   await expect(page.getByTestId("saved-voices")).toContainText("Italiano — Orietta; English — Eleanor");
   await page.reload();
-  await expect(page.getByLabel("Voce da provare")).toHaveValue("Orietta");
+  await expect(page.getByLabel("Voce")).toHaveValue("Orietta");
   await page.getByLabel("Lingua", {exact: true}).selectOption("en");
-  await expect(page.getByLabel("Frase da provare")).toHaveValue(/^Hello,/u);
-  await expect(page.getByLabel("Voce da provare").locator("option")).toHaveCount(2);
-  await page.getByLabel("Voce da provare").selectOption("Olivia");
+  await expect(page.getByLabel("Testo da leggere")).toHaveValue(/^Hello,/u);
+  await expect(page.getByLabel("Voce").locator("option")).toHaveCount(2);
+  await page.getByLabel("Voce").selectOption("Olivia");
   await page.getByRole("button", {name: "Salva avatar", exact: true}).click();
   await expect(page.getByTestId("saved-voices")).toContainText("Italiano — Orietta; English — Olivia");
 });
@@ -102,7 +102,7 @@ test("voice GUI: failed save leaves the configured voice unchanged", async ({pag
   await page.context().addCookies([{name: "conclavia_locale", value: "en", url: "http://127.0.0.1:3101"}]);
   await page.goto("/avatar/test?voice=inworld");
   await page.getByLabel("Language", {exact: true}).selectOption("it");
-  await page.getByLabel("Voice to preview").selectOption("Orietta");
+  await page.getByLabel("Voice").selectOption("Orietta");
   await page.route("**/api/avatar", route => route.fulfill({status: 503, json: {error: "Unavailable"}}));
   await page.getByRole("button", {name: "Save avatar", exact: true}).click();
   await expect(page.getByText(/Could not save/)).toBeVisible();

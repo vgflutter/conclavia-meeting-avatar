@@ -27,7 +27,7 @@ for (const [voiceId, name, appearance] of [
     });
     await page.goto("/avatar/test");
     await page.getByLabel("Aspetto dell’avatar").selectOption(appearance);
-    const voice = page.getByLabel("Voce da provare");
+    const voice = page.getByLabel("Voce");
     await voice.selectOption(voiceId);
     await expect(page.getByTestId("voice-provider")).toContainText("Fornitore della voce: Inworld");
     await expect(voice.locator('optgroup[label="Inworld · Community"] option:checked')).toHaveAttribute("value", voiceId);

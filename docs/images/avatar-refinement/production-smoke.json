@@ -1,0 +1,69 @@
+{
+  "build": "standalone",
+  "database": "temporary localhost:27018",
+  "appearances": [
+    {
+      "style": "editorial",
+      "appearance": "business_clay",
+      "ready": true,
+      "animation": true,
+      "stopped": true
+    },
+    {
+      "style": "editorial",
+      "appearance": "business_clay_female",
+      "ready": true,
+      "animation": true,
+      "stopped": true
+    },
+    {
+      "style": "stylized_3d",
+      "appearance": "business_clay",
+      "ready": true,
+      "animation": true,
+      "stopped": true
+    },
+    {
+      "style": "stylized_3d",
+      "appearance": "business_clay_female",
+      "ready": true,
+      "animation": true,
+      "stopped": true
+    },
+    {
+      "style": "portrait_2_5d",
+      "appearance": "business_clay",
+      "ready": true,
+      "animation": true,
+      "stopped": true
+    },
+    {
+      "style": "portrait_2_5d",
+      "appearance": "business_clay_female",
+      "ready": true,
+      "animation": true,
+      "stopped": true
+    }
+  ],
+  "mobile": "all three fitted",
+  "management": [
+    {
+      "path": "/avatar/test",
+      "status": 404
+    },
+    {
+      "path": "/api/avatar",
+      "status": 404
+    },
+    {
+      "path": "/context",
+      "status": 404
+    },
+    {
+      "path": "/api/meetings",
+      "status": 404
+    }
+  ],
+  "errors": [],
+  "writes": []
+}

@@ -1,0 +1,118 @@
+[
+  {
+    "style": "editorial",
+    "appearance": "business_clay",
+    "seconds": 45,
+    "browserErrors": [],
+    "mutationRequests": [],
+    "samples": 852,
+    "bodyLean": [
+      "0.0000"
+    ],
+    "torsoRotation": [],
+    "lowerSpineRotation": [],
+    "idleActions": [],
+    "lateralPortraitShift": [],
+    "video": "editorial-male.webm"
+  },
+  {
+    "style": "editorial",
+    "appearance": "business_clay_female",
+    "seconds": 45,
+    "browserErrors": [],
+    "mutationRequests": [],
+    "samples": 849,
+    "bodyLean": [
+      "0.0000"
+    ],
+    "torsoRotation": [],
+    "lowerSpineRotation": [],
+    "idleActions": [],
+    "lateralPortraitShift": [],
+    "video": "editorial-female.webm"
+  },
+  {
+    "style": "stylized_3d",
+    "appearance": "business_clay",
+    "seconds": 45,
+    "browserErrors": [],
+    "mutationRequests": [],
+    "samples": 839,
+    "bodyLean": [],
+    "torsoRotation": [
+      "0.7053015,-0.0000000,0.0000000"
+    ],
+    "lowerSpineRotation": [
+      "-0.1995961,0.0036461,0.0007376"
+    ],
+    "idleActions": [
+      "still",
+      "glance-right",
+      "glance-down",
+      "shoulder-settle",
+      "glance-left"
+    ],
+    "lateralPortraitShift": [],
+    "video": "stylized_3d-male.webm"
+  },
+  {
+    "style": "stylized_3d",
+    "appearance": "business_clay_female",
+    "seconds": 45,
+    "browserErrors": [],
+    "mutationRequests": [],
+    "samples": 850,
+    "bodyLean": [],
+    "torsoRotation": [
+      "-0.0480044,0.0000000,0.0000000"
+    ],
+    "lowerSpineRotation": [
+      "0.0274968,0.0037186,-0.0001023"
+    ],
+    "idleActions": [
+      "still",
+      "glance-right",
+      "glance-down",
+      "shoulder-settle",
+      "glance-left"
+    ],
+    "lateralPortraitShift": [],
+    "video": "stylized_3d-female.webm"
+  },
+  {
+    "style": "portrait_2_5d",
+    "appearance": "business_clay",
+    "seconds": 45,
+    "browserErrors": [],
+    "mutationRequests": [],
+    "samples": 853,
+    "bodyLean": [
+      "0.00000"
+    ],
+    "torsoRotation": [],
+    "lowerSpineRotation": [],
+    "idleActions": [],
+    "lateralPortraitShift": [
+      "0.00000"
+    ],
+    "video": "portrait_2_5d-male.webm"
+  },
+  {
+    "style": "portrait_2_5d",
+    "appearance": "business_clay_female",
+    "seconds": 45,
+    "browserErrors": [],
+    "mutationRequests": [],
+    "samples": 855,
+    "bodyLean": [
+      "0.00000"
+    ],
+    "torsoRotation": [],
+    "lowerSpineRotation": [],
+    "idleActions": [],
+    "lateralPortraitShift": [
+      "0.00000"
+    ],
+    "video": "portrait_2_5d-female.webm"
+  }
+]

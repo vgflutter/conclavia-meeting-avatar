@@ -1,0 +1,205 @@
+[
+  {
+    "renderer": "Portrait",
+    "appearance": "business_clay",
+    "drifts": [
+      {
+        "viseme": "a",
+        "driftMs": 38.96666666815682
+      },
+      {
+        "viseme": "e",
+        "driftMs": 39.0423333333334
+      },
+      {
+        "viseme": "o",
+        "driftMs": 39.068666662195994
+      },
+      {
+        "viseme": "u",
+        "driftMs": 38.94033333184321
+      },
+      {
+        "viseme": "fv",
+        "driftMs": 38.47866666815669
+      },
+      {
+        "viseme": "consonant",
+        "driftMs": 38.56333333333328
+      }
+    ],
+    "metrics": {
+      "firstAudioMs": 463.20000000298023,
+      "totalMs": 7750.70000000298,
+      "audioChunks": 1,
+      "underruns": 0,
+      "gapMs": 0,
+      "maxAnimationGapMs": 33.400000000000546
+    }
+  },
+  {
+    "renderer": "Portrait",
+    "appearance": "business_clay_female",
+    "drifts": [
+      {
+        "viseme": "a",
+        "driftMs": 40.18766666368642
+      },
+      {
+        "viseme": "e",
+        "driftMs": 40.763333336313764
+      },
+      {
+        "viseme": "o",
+        "driftMs": 40.697666663686235
+      },
+      {
+        "viseme": "u",
+        "driftMs": 39.85233333035332
+      },
+      {
+        "viseme": "fv",
+        "driftMs": 39.79066666517728
+      },
+      {
+        "viseme": "consonant",
+        "driftMs": 39.94033333184266
+      }
+    ],
+    "metrics": {
+      "firstAudioMs": 464.29999999701977,
+      "totalMs": 7743,
+      "audioChunks": 1,
+      "underruns": 0,
+      "gapMs": 0,
+      "maxAnimationGapMs": 33.5
+    }
+  },
+  {
+    "renderer": "Rigged",
+    "appearance": "business_clay",
+    "drifts": [
+      {
+        "viseme": "a",
+        "driftMs": 41.20499999999996
+      },
+      {
+        "viseme": "e",
+        "driftMs": 41.15033333482354
+      },
+      {
+        "viseme": "o",
+        "driftMs": 41.21399999999964
+      },
+      {
+        "viseme": "u",
+        "driftMs": 41.162333334823664
+      },
+      {
+        "viseme": "fv",
+        "driftMs": 41.008999997019124
+      },
+      {
+        "viseme": "consonant",
+        "driftMs": 40.95133333184364
+      },
+      {
+        "viseme": "mbp",
+        "driftMs": 41.103999998509444
+      }
+    ],
+    "p95FrameMs": 16.700000000000728,
+    "metrics": {
+      "firstAudioMs": 462.6000000014901,
+      "totalMs": 7745.10000000149,
+      "audioChunks": 1,
+      "underruns": 0,
+      "gapMs": 0,
+      "maxAnimationGapMs": 33.5
+    }
+  },
+  {
+    "renderer": "Rigged",
+    "appearance": "business_clay_female",
+    "drifts": [
+      {
+        "viseme": "a",
+        "driftMs": 42.89899999552962
+      },
+      {
+        "viseme": "e",
+        "driftMs": 42.74333333631364
+      },
+      {
+        "viseme": "o",
+        "driftMs": 41.808000001489546
+      },
+      {
+        "viseme": "u",
+        "driftMs": 41.95533333184321
+      },
+      {
+        "viseme": "fv",
+        "driftMs": 42.60599999850889
+      },
+      {
+        "viseme": "consonant",
+        "driftMs": 41.65833333482283
+      },
+      {
+        "viseme": "mbp",
+        "driftMs": 41.802000001490036
+      }
+    ],
+    "p95FrameMs": 16.700000000000728,
+    "metrics": {
+      "firstAudioMs": 428.80000000447035,
+      "totalMs": 7741.20000000298,
+      "audioChunks": 1,
+      "underruns": 0,
+      "gapMs": 0,
+      "maxAnimationGapMs": 33.5
+    }
+  },
+  {
+    "renderer": "Female",
+    "drifts": [
+      {
+        "viseme": "mbp",
+        "driftMs": 17.84933333035313
+      },
+      {
+        "viseme": "fv",
+        "driftMs": 18.009999997019797
+      },
+      {
+        "viseme": "a",
+        "driftMs": 16.948333331843422
+      },
+      {
+        "viseme": "e",
+        "driftMs": 17.924999995529987
+      },
+      {
+        "viseme": "o",
+        "driftMs": 17.845333330352986
+      },
+      {
+        "viseme": "u",
+        "driftMs": 17.60999999850954
+      },
+      {
+        "viseme": "consonant",
+        "driftMs": 17.447333331842785
+      }
+    ],
+    "metrics": {
+      "firstAudioMs": 546.1000000014901,
+      "totalMs": 4851.79999999702,
+      "audioChunks": 1,
+      "underruns": 0,
+      "gapMs": 0,
+      "maxAnimationGapMs": 33.5
+    }
+  }
+]

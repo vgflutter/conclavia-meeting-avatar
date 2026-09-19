@@ -14,6 +14,7 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
   page.on("request", req => { if (req.url().endsWith("/speech")) speechCalls.push(req.url()); });
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.goto("/avatar/test");
+  await page.getByLabel("Avatar style", { exact: true }).selectOption("editorial");
   const pictures: Array<{ label: string; svg: string }> = [];
   for (const [appearance, label] of [["business_clay", "Maschile"], ["business_clay_female", "Femminile"]]) {
     await page.getByLabel("Avatar appearance").selectOption(appearance);
@@ -33,16 +34,16 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
     expect(proportions).toBeGreaterThan(0.32);
     expect(proportions).toBeLessThan(0.42);
     await expect(page.locator("[data-avatar-stage]")).toHaveCSS("background-color", "rgb(242, 239, 230)");
-    const clip = await svg.locator("clipPath").getAttribute("id");
-    await expect(svg.locator("g[clip-path]")).toHaveAttribute("clip-path", `url(#${clip})`);
+    const clip = await svg.locator("[data-avatar-face-clip]").getAttribute("id");
+    await expect(svg.locator(`g[clip-path="url(#${clip})"]`)).toHaveAttribute("clip-path", `url(#${clip})`);
     for (const gesture of ["rest", "hand_raise"]) {
-      await svg.evaluate((node, pose) => { node.dataset.gesture = pose; }, gesture);
-      await expect(svg.locator('g[class*="raisedHand"]')).toHaveCSS("opacity", gesture === "rest" ? "0" : "1");
+      if (await svg.getAttribute("data-gesture") !== gesture) await page.getByRole("button", { name: "Raise / lower hand" }).click();
+      await expect(svg).toHaveAttribute("data-hand-progress", gesture === "rest" ? "0.0000" : "1.0000");
       // Inspect the union of the real jacket paths, in SVG coordinates. The
       // shoulder profile must slope smoothly outwards, without the old cap's
       // upward notch, and the sleeve must meet the torso without a gap.
-      const shoulders = await svg.evaluate((node, pose) => {
-        const names = ["suitBack", "leftArm", pose === "rest" ? "rightArm" : "raisedSleeve"];
+      const shoulders = await svg.evaluate(node => {
+        const names = ["suitBack", "leftArm", "rightArm"];
         const paths = names.map(name => node.querySelector<SVGGeometryElement>(`[class*="${name}"]`)!);
         const filled = (x: number, y: number) => paths.some(path => path.isPointInFill(new DOMPoint(x, y)));
         const profile = (from: number, to: number) => {
@@ -63,7 +64,7 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
           }
         }
         return { left: profile(100, 218), right: profile(462, 580), gap };
-      }, gesture);
+      });
       expect(shoulders.gap).toBe(false);
       expect(shoulders.left.every((y, i, ys) => i === 0 || y <= ys[i - 1] + 1)).toBe(true);
       expect(shoulders.right.every((y, i, ys) => i === 0 || y >= ys[i - 1] - 1)).toBe(true);
@@ -85,8 +86,13 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
       const wrapper = document.createElement("div"); wrapper.innerHTML = picture.svg;
       const svg = wrapper.querySelector("svg")!;
       // The snapshots came from one React mount; give the board clones own IDs.
-      const clip = svg.querySelector("clipPath")!; clip.id = `board-face-${index}`;
-      svg.querySelector("g[clip-path]")!.setAttribute("clip-path", `url(#${clip.id})`);
+      for (const definition of svg.querySelectorAll("defs [id]")) {
+        const old = definition.id, next = `board-${index}-${old}`;
+        definition.id = next;
+        for (const element of svg.querySelectorAll("*")) for (const attribute of [...element.attributes]) {
+          if (attribute.value.includes(`url(#${old})`)) element.setAttribute(attribute.name, attribute.value.replaceAll(`url(#${old})`, `url(#${next})`));
+        }
+      }
       svg.style.cssText = "height:550px;width:100%;--jaw-open:0";
       svg.dataset.mood = "friendly"; svg.dataset.viseme = "rest";
       cell.append(title, wrapper); board.append(cell);
@@ -97,34 +103,26 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
   await page.locator("#illustrated-pair").screenshot({ path: testInfo.outputPath("illustrated-pair.png") });
 });
 
-test("illustrated male rig retains all 64 expression, mouth and hand combinations", async ({ page }) => {
+test("illustrated male rig: real expression and hand controls preserve face geometry", async ({ page }) => {
   await page.goto("/avatar/test");
+  await page.getByLabel("Avatar style", { exact: true }).selectOption("editorial");
   await page.getByLabel("Avatar appearance").selectOption("business_clay");
   const avatar = page.locator("svg[data-appearance]");
-  const shapes = ["rest", "mbp", "fv", "a", "e", "o", "u", "consonant"];
-  const classes = ["mouthRest", "mouthMbp", "mouthFv", "mouthA", "mouthE", "mouthO", "mouthU", "mouthConsonant"];
-  for (const mood of ["neutral", "friendly", "focused", "confident"]) for (const gesture of ["rest", "hand_raise"]) for (const viseme of shapes) {
-    await avatar.evaluate((node, pose) => {
-      node.dataset.mood = pose.mood; node.dataset.gesture = pose.gesture; node.dataset.viseme = pose.viseme;
-      node.style.setProperty("--jaw-open", pose.viseme === "rest" ? "0" : "0.8");
-    }, { mood, gesture, viseme });
-    const visible = await avatar.locator('g[class*="mouthShape"]').evaluateAll(nodes => nodes
-      .filter(node => Number(getComputedStyle(node).opacity) > .9).map(node => node.getAttribute("class")));
-    expect(visible).toHaveLength(1);
-    expect(visible[0]).toContain(classes[shapes.indexOf(viseme)]);
-    await expect(avatar.locator('g[class*="raisedHand"]')).toHaveCSS("opacity", gesture === "rest" ? "0" : "1");
-    await expect(avatar.getByTestId("avatar-resting-arm")).toHaveCSS("opacity", gesture === "rest" ? "1" : "0");
-    const mouthWithinFace = await avatar.evaluate(node => {
-      const head = node.querySelector('[class*="avatarHead"]')!.getBoundingClientRect();
-      const shape = Array.from(node.querySelectorAll('[class*="mouthShape"]'))
-        .find(el => Number(getComputedStyle(el).opacity) > .9)!;
-      const mouth = shape.getBoundingClientRect();
-      return mouth.left > head.left && mouth.right < head.right && mouth.top > head.top && mouth.bottom < head.bottom;
-    });
-    expect(mouthWithinFace).toBe(true);
-    // The global reduced-motion rule uses 0.01ms rather than literal zero.
-    const duration = await avatar.locator('g[class*="mouthRig"]').evaluate(node =>
-      Math.max(...getComputedStyle(node).transitionDuration.split(",").map(Number.parseFloat)));
-    expect(duration).toBeLessThanOrEqual(0.00001);
+  for (let mood = 0; mood < 4; mood++) {
+    for (const gesture of ["hand_raise", "rest"]) {
+      await page.getByRole("button", { name: "Raise / lower hand" }).click();
+      await expect(avatar).toHaveAttribute("data-gesture", gesture);
+      await expect(avatar).toHaveAttribute("data-hand-progress", gesture === "rest" ? "0.0000" : "1.0000");
+      await expect(avatar.getByTestId("avatar-resting-arm")).toHaveCSS("opacity", "1");
+      expect(await avatar.evaluate(node => {
+        const head = node.querySelector('[class*="avatarHead"]')!.getBoundingClientRect();
+        const mouth = node.querySelector('[data-testid="editorial-mouth"]')!.getBoundingClientRect();
+        return mouth.left > head.left && mouth.right < head.right && mouth.top > head.top && mouth.bottom < head.bottom;
+      })).toBe(true);
+      await expect(avatar.locator('[data-mouth-part="cavity"]')).toHaveCount(1);
+    }
+    const previous = await avatar.getAttribute("data-mood");
+    await page.getByRole("button", { name: "Change expression" }).click();
+    await expect(avatar).not.toHaveAttribute("data-mood", previous!);
   }
 });

@@ -21,7 +21,8 @@ test("styles: 2D/3D and male/female preview without writes; real WebGL and PCM s
       if (style === "editorial") {
         await expect(page.locator('svg[data-appearance]')).toHaveAttribute("data-appearance", appearance);
         await page.getByRole("button", { name: "Raise / lower hand" }).click();
-        await expect(page.getByTestId("avatar-resting-arm")).toHaveCSS("opacity", "0");
+        await expect(page.locator('svg[data-design="editorial-comic"]')).toHaveAttribute("data-hand-progress", "1.0000");
+        await expect(page.getByTestId("editorial-articulated-arm")).toBeVisible();
       } else {
         const canvas = page.getByTestId("avatar-3d-canvas");
         await expect(canvas).toHaveAttribute("data-renderer-ready", "true");

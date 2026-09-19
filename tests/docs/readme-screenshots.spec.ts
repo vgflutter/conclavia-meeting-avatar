@@ -39,7 +39,7 @@ test("capture current README screens with isolated demonstration data", async ({
   const { profile } = await (await request.get("/api/avatar")).json();
   const originalContext = await (await request.get("/api/context")).json();
   const profileInput = {
-    displayName: profile.displayName, role: profile.role, appearance: profile.appearance,
+    displayName: profile.displayName, role: profile.role, appearance: profile.appearance, visualStyle: profile.visualStyle,
     responseStyle: profile.personality.responseStyle, attitude: profile.personality.attitude,
     voiceStyle: profile.voice.style, speakingRate: profile.voice.speakingRate,
     inworldVoiceIdIt: profile.voice.inworldVoiceIdIt, inworldVoiceIdEn: profile.voice.inworldVoiceIdEn,
@@ -62,7 +62,7 @@ test("capture current README screens with isolated demonstration data", async ({
   }
   try {
     expect((await request.patch("/api/avatar", { data: { ...profileInput, displayName: "Riccardo", role: "Digital colleague",
-      appearance: "business_clay", inworldVoiceIdIt: "Gianni", inworldVoiceIdEn: "Dennis", speakingRate: 1 } })).ok()).toBe(true);
+      appearance: "business_clay", visualStyle: "editorial", inworldVoiceIdIt: "Gianni", inworldVoiceIdEn: "Dennis", speakingRate: 1 } })).ok()).toBe(true);
     const general = "Aurora is a fictional customer onboarding product.\nMVP means the first version customers can use.\nKeep answers brief; distinguish proposals from confirmed decisions.\nDo not infer an approved budget from planning notes.";
     expect((await request.patch("/api/context", { data: { context: general, version: originalContext.version } })).ok()).toBe(true);
     const seriesResponse = await request.post("/api/meeting-series", { data: {
@@ -119,19 +119,20 @@ test("capture current README screens with isolated demonstration data", async ({
     await capture("avatar-settings-en.png");
     await page.goto("/avatar/test");
     await expect(page.getByTestId("voice-provider")).toContainText("Inworld");
-    await expect(page.getByLabel("Voice to preview")).toHaveValue("Dennis");
+    await expect(page.getByLabel("Voice", { exact: true })).toHaveValue("Dennis");
     await capture("avatar-studio-en.png");
     expect((await request.patch("/api/avatar", { data: { ...profileInput, displayName: "Nora", role: "Digital colleague",
-      appearance: "business_clay_female", inworldVoiceIdIt: "Orietta", inworldVoiceIdEn: "Eleanor", speakingRate: 1 } })).ok()).toBe(true);
+      appearance: "business_clay_female", visualStyle: "editorial", inworldVoiceIdIt: "Orietta", inworldVoiceIdEn: "Eleanor", speakingRate: 1 } })).ok()).toBe(true);
     await page.reload();
     await page.getByLabel("Language", { exact: true }).selectOption("it");
-    await expect(page.getByLabel("Voice to preview")).toHaveValue("Orietta");
+    await expect(page.getByLabel("Voice", { exact: true })).toHaveValue("Orietta");
     await page.getByRole("button", { name: "Raise / lower hand" }).click();
     await expect(page.locator("svg[data-appearance]")).toHaveAttribute("data-gesture", "hand_raise");
+    await expect(page.locator("svg[data-appearance]")).toHaveAttribute("data-hand-progress", "1.0000");
     await capture("avatar-studio-female-en.png");
     // Keep the named-turn example consistent with the meetings created as Riccardo.
     expect((await request.patch("/api/avatar", { data: { ...profileInput, displayName: "Riccardo", role: "Digital colleague",
-      appearance: "business_clay", inworldVoiceIdIt: "Gianni", inworldVoiceIdEn: "Dennis", speakingRate: 1 } })).ok()).toBe(true);
+      appearance: "business_clay", visualStyle: "editorial", inworldVoiceIdIt: "Gianni", inworldVoiceIdEn: "Dennis", speakingRate: 1 } })).ok()).toBe(true);
 
     await page.goto("/context");
     await expect(page.getByLabel("General context", { exact: true })).toHaveValue(general);
