@@ -84,6 +84,12 @@ Final verification: **17 browser tests passed** across `editorial-animation`, `a
 
 Tests/builds used only temporary MongoDB at `127.0.0.1:27018` with `conclavia_e2e_*` database names; browser captures blocked writes. The app on port 3000, real database, saved settings and `.env.local` were preserved. No paid speech or Teams validation was performed.
 
+### Sleeve line follow-up
+
+The user's close-up revealed the torso's stroked edge and an adjacent long decorative seam running through the sleeve. Removed both internal lines and placed the moving forearm behind the torso fill, matching the opposite sleeve; the hand stays in front. The shoulder proportions and animation trajectory are unchanged. [Before/after detail](images/editorial-tailoring/sleeve-detail.png); current rest/raised screenshots and both motion recordings were refreshed.
+
+The same **17 focused browser tests passed**, including rest, gesture, mouth and responsive fitting. The mobile geometry test now finds the forearm from the SVG root so the layer change cannot silently remove it from coverage. Both consumer builds, shared TypeScript/lint and the modified test's lint passed. Browser recordings completed with no errors or non-GET requests. Regression/build isolation and the limitations described above still apply.
+
 ## Coordinated repository alignment
 
 The shared kit, both Conclavia consumers and the AIHat adapter were aligned for publication. A fresh 62-case Meeting avatar/player run passed, together with 11 Onboarding unit cases, 5 AIHat contract cases, 5 Onboarding browser cases and 2 cross-frontend handoff cases. Production builds passed for Meeting, Onboarding and AIHat. The standalone Meeting server returned both GLBs byte-for-byte from the shared kit. See [workspace alignment](https://github.com/vgflutter/conclavia-onboarding-avatar/blob/main/docs/workspace-alignment.md) for the source fingerprint, reproducible sharing check, repository workflow and Docker verification limit.

@@ -157,15 +157,18 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 720 
     await page.getByRole("button", { name: "Raise / lower hand" }).click();
     await expect(page.locator("svg[data-appearance]")).toHaveAttribute("data-hand-progress", "1.0000");
     const geometry = await page.getByTestId("editorial-articulated-arm").evaluate(hand => {
-      const svg = hand.closest("svg")!.getBoundingClientRect();
+      const root = hand.closest("svg")!;
+      const svg = root.getBoundingClientRect();
       // Check the painted parts too: a stale wrist transform must not be hidden
       // by accepting only an aggregate group bound or the target-pose dataset.
-      return [hand, ...hand.querySelectorAll('[data-rig="palm"], [data-rig="forearm"], [class*="raisedCuff"]')].map(part => {
+      // The sleeve is behind the jacket fill; the hand remains in front.
+      return [hand, ...root.querySelectorAll('[data-rig="palm"], [data-rig="forearm"], [class*="raisedCuff"]')].map(part => {
         const box = part.getBoundingClientRect();
         return { part: part.getAttribute("data-rig") ?? "cuff", left: box.left >= svg.left - 1,
           right: box.right <= svg.right + 1, top: box.top >= svg.top - 1, bottom: box.bottom <= svg.bottom + 1 };
       });
     });
+    expect(geometry.some(({ part }) => part === "forearm")).toBe(true);
     for (const { part, ...bounds } of geometry) expect(Object.values(bounds).every(Boolean), part).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath("female-" + viewport.width + ".png"), fullPage: true });
