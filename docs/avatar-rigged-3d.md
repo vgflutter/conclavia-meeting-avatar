@@ -31,7 +31,7 @@ The hand is an avatar gesture, **not** the Teams toolbar raised-hand status. Spe
 
 ## Loading, performance and failure
 
-The GLBs and their embedded WebP textures are served by this app. Three.js and the model load only for this style. Shader compilation precedes the ready state; a loading message is shown meanwhile. Lighting uses a local environment, one shadow map and capped pixel density. No new avatar subscription or per-frame cloud rendering is involved.
+The GLBs and their embedded WebP textures live in `conclavia-avatar-kit/assets/rigged-v1` and are served by each application through its `/avatars/rigged-v1/[asset]` route. Three.js and the model load only for this style. Shader compilation precedes the ready state; a loading message is shown meanwhile. Lighting uses a local environment, one shadow map and capped pixel density. No new avatar subscription or per-frame cloud rendering is involved.
 
 This adds an initial model download/GPU setup (8.1 MB male, 9.8 MB female, including textures) and a continuous GPU rendering workload, **not another request in the answer-generation pipeline**. It is not a promise of zero impact on slow devices. The illustrated option is lighter. Voice samples still consume Inworld credit unless a synthetic test fixture intercepts them.
 
@@ -53,7 +53,7 @@ Character proportions, material treatment, gesture clip and runtime animation we
 
 ### Rebuild
 
-The app already includes ready-to-use GLBs; these steps are only for changing the models.
+The shared kit already includes ready-to-use GLBs; these steps are only for changing the models.
 
 1. Install/run Blender 4.5.9 and extract MPFB tag `v2.0.17` into a build workspace.
 2. Extract the five asset ZIPs (system, visemes02, faceunits01, suits01, glasses01) into `<workspace>/data`, preserving their `skins`, `hair`, `clothes`, `custom`, etc. directories.
@@ -66,7 +66,7 @@ blender --background --factory-startup --python scripts/build-rigged-avatars.py 
   --output /path/to/avatar-build/export
 ```
 
-4. Inspect both `.blend` files and rest/mid-gesture/raised/speaking browser renders. Copy only the resulting `.glb` files to `public/avatars/rigged-v1/`, then run the checks below. Bump the asset version when changing already-deployed files.
+4. Inspect both `.blend` files and rest/mid-gesture/raised/speaking browser renders. Copy only the resulting `.glb` files to `../conclavia-avatar-kit/assets/rigged-v1/`, then run the checks below for both consumers. Do not recreate app-local GLB copies. Bump the asset version when changing already-deployed files.
 
 The build uses a temporary MPFB configuration path; it does not save Blender user preferences. Its downloads and intermediate `.blend` files are not runtime dependencies or committed assets.
 

@@ -1,9 +1,2 @@
-export type AvatarViseme =
-  | "rest"
-  | "mbp"
-  | "fv"
-  | "a"
-  | "e"
-  | "o"
-  | "u"
-  | "consonant";
+// Shared source: ../conclavia-avatar-kit/src/lib/avatar-visemes.ts
+export * from "@conclavia/avatar-kit/lib/avatar-visemes";

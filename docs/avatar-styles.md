@@ -43,9 +43,9 @@ These are actual browser captures of the standalone production build, with tempo
 
 | Editorial 2D | 3D character | Portrait 2.5D |
 | --- | --- | --- |
-| ![Male editorial](images/avatar-styles/editorial-business_clay-rest.png) | ![Male 3D](images/avatar-styles/stylized_3d-business_clay-rest.png) | ![Male portrait](images/avatar-styles/portrait_2_5d-business_clay-rest.png) |
-| ![Female editorial](images/avatar-styles/editorial-business_clay_female-rest.png) | ![Female 3D](images/avatar-styles/stylized_3d-business_clay_female-rest.png) | ![Female portrait](images/avatar-styles/portrait_2_5d-business_clay_female-rest.png) |
-| [Male motion](images/avatar-refinement/editorial-business_clay.webm) · [Female motion](images/avatar-refinement/editorial-business_clay_female.webm) | [Male motion](images/avatar-refinement/stylized_3d-business_clay.webm) · [Female motion](images/avatar-refinement/stylized_3d-business_clay_female.webm) | [Male motion](images/avatar-refinement/portrait_2_5d-business_clay.webm) · [Female motion](images/avatar-refinement/portrait_2_5d-business_clay_female.webm) |
+| ![Male editorial](images/editorial-shoulder/business_clay-rest.png) | ![Male 3D](images/avatar-styles/stylized_3d-business_clay-rest.png) | ![Male portrait](images/avatar-styles/portrait_2_5d-business_clay-rest.png) |
+| ![Female editorial](images/editorial-shoulder/business_clay_female-rest.png) | ![Female 3D](images/avatar-styles/stylized_3d-business_clay_female-rest.png) | ![Female portrait](images/avatar-styles/portrait_2_5d-business_clay_female-rest.png) |
+| [Male motion](images/editorial-shoulder/business_clay-motion.webm) · [Female motion](images/editorial-shoulder/business_clay_female-motion.webm) | [Male motion](images/avatar-refinement/stylized_3d-business_clay.webm) · [Female motion](images/avatar-refinement/stylized_3d-business_clay_female.webm) | [Male motion](images/avatar-refinement/portrait_2_5d-business_clay.webm) · [Female motion](images/avatar-refinement/portrait_2_5d-business_clay_female.webm) |
 | [Mobile](images/avatar-styles/editorial-mobile-it.png) | [Mobile](images/avatar-styles/stylized_3d-mobile-it.png) | [Mobile](images/avatar-styles/portrait_2_5d-mobile-it.png) |
 
 ## Separate dependency follow-up

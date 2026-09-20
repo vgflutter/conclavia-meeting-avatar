@@ -8,7 +8,7 @@ Input: `src/assets/avatar/portraits-2-5d-v1.png`.
 
 Selected output: `exec-c2444d08-de9a-4ec5-8701-042bd1f8f85e.png`.
 
-Saved asset: [`portraits-2-5d-adult-v3.png`](../src/assets/avatar/portraits-2-5d-adult-v3.png).
+Saved asset: [`portraits-2-5d-adult-v3.png`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/assets/avatar/portraits-2-5d-adult-v3.png).
 
 Exact prompt:
 
@@ -20,7 +20,7 @@ Input: the adult base atlas above.
 
 Selected output: `exec-393b3a9b-a434-48e9-b1fe-37831cf52472.png`.
 
-Saved asset: [`portraits-2-5d-adult-features-v3.png`](../src/assets/avatar/portraits-2-5d-adult-features-v3.png).
+Saved asset: [`portraits-2-5d-adult-features-v3.png`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/assets/avatar/portraits-2-5d-adult-features-v3.png).
 
 Exact prompt:
 
@@ -28,4 +28,4 @@ Exact prompt:
 
 These prompts record asset generation, not the current animation constraints. The runtime keeps both original lips and the surrounding skin from the base atlas, articulates upper/lower lips and jaw in code, and samples the feature atlas only for registered eyelids and the oral cavity/teeth. The prompt's pinned upper lip is therefore not a current renderer invariant. Generated background, jaw outline and clothing from the feature atlas are not composited. Landmark registration is declared in `portrait-renderer.ts`; [the implementation report](avatar-portrait-2-5d.md) describes current movement and visual evidence.
 
-The existing transparent arm layer [`portraits-2-5d-arm-layers-v2.png`](../src/assets/avatar/portraits-2-5d-arm-layers-v2.png) supplies the separate sleeve, cuff and hand. The current rendering uses that layer continuously around the elbow instead of dissolving between the resting and raised portrait cells.
+The existing transparent arm layer [`portraits-2-5d-arm-layers-v2.png`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/assets/avatar/portraits-2-5d-arm-layers-v2.png) supplies the separate sleeve, cuff and hand. The current rendering uses that layer continuously around the elbow instead of dissolving between the resting and raised portrait cells.

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { DEFAULT_ASSISTANT_PROFILE, getAssistantProfile } from "@/lib/assistant-profile";
 import { isAvatarVoice } from "@/lib/avatar-voice-catalog";
 import { isAvatarVisualStyle } from "@/lib/avatar-visual-style";
+import { isAvatarAppearance } from '@conclavia/avatar-kit/lib/avatar-catalog';
 import { connectToDatabase } from "@/lib/mongodb";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
 import { MeetingModel } from "@/models/Meeting";
@@ -58,7 +59,7 @@ export async function PATCH(request: Request) {
   if ((voiceIt !== undefined && !isAvatarVoice(voiceIt, "it")) || (voiceEn !== undefined && !isAvatarVoice(voiceEn, "en"))) {
     return NextResponse.json({ error: "Invalid voice selection" }, { status: 400 });
   }
-  if (appearance !== undefined && appearance !== "business_clay" && appearance !== "business_clay_female") {
+  if (appearance !== undefined && !isAvatarAppearance(appearance)) {
     return NextResponse.json({ error: "Invalid avatar appearance" }, { status: 400 });
   }
 

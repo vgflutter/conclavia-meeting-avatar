@@ -1,6 +1,26 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { advanceEditorialMouth, advanceEditorialSpring, editorialMouthPaths, editorialMouthTarget, editorialPresence, editorialArmPose } from "../../src/lib/editorial-motion";
 import { installVoiceProbe } from "./voice-probe";
+
+// Sample the rendered filled silhouette in SVG space, including nested sleeve
+// transforms. A path bounding box alone misses a shoulder that flares locally.
+async function jacketSilhouette(avatar: Locator) {
+  return avatar.evaluate(svg => {
+    const root = svg as SVGSVGElement;
+    const paths = [...root.querySelectorAll<SVGPathElement>(
+      '[class*="suitBack"], [class*="leftArm"], [data-rig="upper-arm"], [data-rig="forearm"]',
+    )].map(path => ({ path, inverse: path.getScreenCTM()!.inverse() }));
+    const matrix = root.getScreenCTM()!;
+    return [515, 540, 570, 620, 700, 740].map(y => {
+      const filled: number[] = [];
+      for (let x = 0; x < 680; x++) {
+        const point = new DOMPoint(x, y).matrixTransform(matrix);
+        if (paths.some(({ path, inverse }) => path.isPointInFill(point.matrixTransform(inverse)))) filled.push(x);
+      }
+      return { y, left: filled[0], right: filled[filled.length - 1] };
+    });
+  });
+}
 
 test("editorial rig: phonemes scale with finite audio energy and close in the same update", () => {
   for (const viseme of ["rest", "mbp", "a", "e", "o", "u", "fv", "consonant"] as const) {
@@ -73,6 +93,12 @@ for (const appearance of ["business_clay", "business_clay_female"]) {
     const avatar = page.locator('svg[data-design="editorial-comic"]');
     await expect(avatar).toHaveAttribute("data-animation-ready", "true");
     await expect(avatar).toHaveAttribute("data-reduced-motion", "true");
+    const restingSilhouette = await jacketSilhouette(avatar);
+    for (const row of restingSilhouette) {
+      // The torso is centred at x=341. Both relaxed sleeves must have similar
+      // bulk at the shoulder, upper arm and cuff, not only the same top edge.
+      expect(Math.abs((341 - row.left) - (row.right - 341)), `Uneven sleeves at y=${row.y}`).toBeLessThanOrEqual(4);
+    }
     const restingFace = await avatar.locator('[data-rig="face-outline"]').getAttribute("d");
     const resting = await avatar.locator('[data-rig="wrist"]').getAttribute("transform");
     await avatar.screenshot({ path: info.outputPath(`${appearance}-rest.png`) });
@@ -80,6 +106,9 @@ for (const appearance of ["business_clay", "business_clay_female"]) {
     await expect(avatar).toHaveAttribute("data-hand-progress", "1.0000");
     await expect(avatar.locator('[data-rig="wrist"]')).not.toHaveAttribute("transform", resting!);
     await expect(page.getByTestId("avatar-resting-arm")).toHaveCSS("opacity", "1");
+    const raisedSilhouette = await jacketSilhouette(avatar);
+    expect(raisedSilhouette.map(row => row.left)).toEqual(restingSilhouette.map(row => row.left));
+    await info.attach("jacket-silhouette.json", { body: JSON.stringify({ restingSilhouette, raisedSilhouette }), contentType: "application/json" });
     await avatar.screenshot({ path: info.outputPath(`${appearance}-raised.png`) });
     await page.getByRole("button", { name: "Listen to voice" }).click();
     await expect.poll(async () => Number(await avatar.getAttribute("data-rendered-mouth-open"))).toBeGreaterThan(.2);

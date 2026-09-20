@@ -37,7 +37,11 @@
     ".next-e2e/types/**/*.ts",
     ".next-e2e/dev/types/**/*.ts",
     ".next-build-avatar/types/**/*.ts",
-    ".next-build-avatar/dev/types/**/*.ts"
+    ".next-build-avatar/dev/types/**/*.ts",
+    ".next-build-onboarding-kit/types/**/*.ts",
+    ".next-build-onboarding-kit/dev/types/**/*.ts",
+    ".next-build-verify/types/**/*.ts",
+    ".next-build-verify/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -2,7 +2,7 @@
 
 ## 3D avatar assets
 
-The bundled `male.glb` and `female.glb` use modified MakeHuman/MPFB assets, including the CC0 body, facial targets, rig, hair, clothing and spectacles. Full contributor credits and asset terms are in [the bundled attribution](public/avatars/rigged-v1/LICENSE.md); source versions and build details are in [the 3D renderer documentation](docs/avatar-rigged-3d.md). Runtime material and animation refinements preserve those source attributions.
+The bundled `male.glb` and `female.glb` use modified MakeHuman/MPFB assets, including the CC0 body, facial targets, rig, hair, clothing and spectacles. Full contributor credits and asset terms are in [the bundled attribution](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/assets/rigged-v1/LICENSE.md); source versions and build details are in [the 3D renderer documentation](docs/avatar-rigged-3d.md). Runtime material and animation refinements preserve those source attributions.
 
 The separate 2.5D portraits are project-generated raster artwork. Their inputs, editing prompts and current asset paths are recorded in [the portrait artwork record](docs/avatar-portrait-artwork-2026-09-19.md).
 

@@ -373,7 +373,7 @@ See the [streaming voice verification report](streaming-voice-verification-2026-
 
 ## Requirements
 
-- Node.js 22 recommended; Node.js 20.9 or newer is supported.
+- Node.js 22.21.1 or newer for the shared avatar workspace.
 - MongoDB.
 - Google Chrome for the Playwright browser suite.
 - For automatic entry as an anonymous guest: an Attendee workspace and a public HTTPS deployment. No Teams account is required.
@@ -383,15 +383,19 @@ See the [streaming voice verification report](streaming-voice-verification-2026-
 
 ## Local setup
 
-`conclavia-meeting-avatar` is the single working directory for the application. Open this repository in your editor and run all development, test, and build commands here. The former `conclavia-frontend` directory is a historical backup and is no longer synchronized.
+`conclavia-meeting-avatar` is the working directory for meeting-specific code and commands. Shared renderer, animation and asset changes belong to the sibling [conclavia-avatar-kit](https://github.com/vgflutter/conclavia-avatar-kit), also used by Onboarding. The former `conclavia-frontend` directory is a historical backup and is no longer synchronized.
 
 For a new installation:
 
 ```bash
+git clone https://github.com/vgflutter/conclavia-avatar-kit.git
 git clone https://github.com/vgflutter/conclavia-meeting-avatar.git
+npm --prefix conclavia-avatar-kit ci
 cd conclavia-meeting-avatar
 npm ci
 ```
+
+The kit is a private repository: use an authorized GitHub account. Keep both directories side by side because the dependency is `file:../conclavia-avatar-kit`. Follow the [coordinated update workflow](https://github.com/vgflutter/conclavia-avatar-kit#aggiornamento-coordinato).
 
 For a fresh installation only, create `.env.local` using the [environment-variable reference](#environment-variables), pointing `MONGODB_URI` at the intended database. This checkout does not include `.env.example`. Use `MEETING_BOT_PROVIDER=preview` and `MEETING_AI_ENABLED=false` for local work without external meeting participants or analysis; configure Inworld separately before using voice playback. Then run `npm run dev` and open [http://localhost:3000/meetings](http://localhost:3000/meetings). Preview mode still stores meetings and memory, so it is not a substitute for an isolated test database.
 
@@ -675,12 +679,14 @@ Implementation and evidence: [participant-roster verification](participant-roste
 
 ## Production deployment
 
-The repository includes a multi-stage, non-root Docker image using the Next.js standalone output:
+The repository includes a multi-stage, non-root Docker image using the Next.js standalone output. Run from Meeting with Docker BuildKit/buildx and provide the sibling kit as a named local build context:
 
 ```bash
-docker build -t conclavia .
+docker build --build-context avatar-kit=../conclavia-avatar-kit -t conclavia .
 docker run --env-file .env.production -p 3000:3000 conclavia
 ```
+
+The runner preserves the standalone sibling-directory layout and includes the kit assets. Only package manifests, source and assets are copied from the kit; credentials stay outside the image. The Docker CLI was unavailable for the 20 September workspace alignment, so that update was checked through the standalone build/runtime, not a container build.
 
 Use `GET /api/health` for readiness checks. Terminate TLS before the application and set `CONCLAVIA_PUBLIC_URL` to the final HTTPS origin.
 

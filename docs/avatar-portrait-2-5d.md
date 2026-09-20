@@ -16,9 +16,9 @@ The `portrait_2_5d` style animates the existing male and female portraits with a
 
 | Asset | Current use |
 | --- | --- |
-| [`portraits-2-5d-adult-v3.png`](../src/assets/avatar/portraits-2-5d-adult-v3.png) | Resting male/female face and body, left atlas column |
-| [`portraits-2-5d-adult-features-v3.png`](../src/assets/avatar/portraits-2-5d-adult-features-v3.png) | Registered closed eyelids, teeth and oral cavity; no replacement facial skin or lips |
-| [`portraits-2-5d-arm-layers-v2.png`](../src/assets/avatar/portraits-2-5d-arm-layers-v2.png) | Transparent sleeve/cuff/hand, right atlas column |
+| [`portraits-2-5d-adult-v3.png`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/assets/avatar/portraits-2-5d-adult-v3.png) | Resting male/female face and body, left atlas column |
+| [`portraits-2-5d-adult-features-v3.png`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/assets/avatar/portraits-2-5d-adult-features-v3.png) | Registered closed eyelids, teeth and oral cavity; no replacement facial skin or lips |
+| [`portraits-2-5d-arm-layers-v2.png`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/assets/avatar/portraits-2-5d-arm-layers-v2.png) | Transparent sleeve/cuff/hand, right atlas column |
 
 Each character cell is 627 × 627 pixels. The shader clamps sampling to the selected cell and clips letterboxes, so adjacent portraits cannot bleed into tall/wide layouts. Next serves imported assets under `/_next/static/media/`; rendering does not fetch a generator output or require a profile migration.
 
@@ -28,11 +28,11 @@ These assets were produced with the built-in imagegen editing tool. The adult at
 
 | Source | Responsibility |
 | --- | --- |
-| [`PortraitAvatar.tsx`](../src/components/PortraitAvatar.tsx) | Decode assets, load renderer on demand, expose current pose and select fallback |
-| [`portrait-animation.ts`](../src/lib/portrait-animation.ts) | Viseme/audio targets, restrained mouth width, speech activity, blink and expression targets |
-| [`portrait-motion.ts`](../src/lib/portrait-motion.ts) | Mouth interpolation, damped arm/shoulder/torso response, expression transitions and body deformation |
-| [`portrait-idle.ts`](../src/lib/portrait-idle.ts) | Discrete listening actions and local head/neck field |
-| [`portrait-renderer.ts`](../src/lib/portrait-renderer.ts) | Texture registration, lip/jaw/eyelid shader, articulated arm and render lifecycle |
+| [`PortraitAvatar.tsx`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/components/PortraitAvatar.tsx) | Decode assets, load renderer on demand, expose current pose and select fallback |
+| [`portrait-animation.ts`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/lib/portrait-animation.ts) | Viseme/audio targets, restrained mouth width, speech activity, blink and expression targets |
+| [`portrait-motion.ts`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/lib/portrait-motion.ts) | Mouth interpolation, damped arm/shoulder/torso response, expression transitions and body deformation |
+| [`portrait-idle.ts`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/lib/portrait-idle.ts) | Discrete listening actions and local head/neck field |
+| [`portrait-renderer.ts`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/src/lib/portrait-renderer.ts) | Texture registration, lip/jaw/eyelid shader, articulated arm and render lifecycle |
 
 ### Mouth and expression
 

@@ -5,6 +5,7 @@ import { ASSISTANT_VISUAL_STYLES, type AssistantProfileResponse } from "@/types/
 import type { Locale } from "@/i18n/locale";
 import { compatibleAvatarVoice } from "@/lib/avatar-voice-catalog";
 import { avatarVisualStyleLabel } from "@/lib/avatar-visual-style";
+import { AVATAR_APPEARANCES } from '@conclavia/avatar-kit/lib/avatar-catalog';
 
 function settings(profile: AssistantProfileResponse, voices: { it: string; en: string }) {
   return {
@@ -121,8 +122,7 @@ export function AvatarAppearanceSelect({ locale, disabled = false }: { locale: L
     <label className="label" htmlFor="avatar-appearance">{it ? "Aspetto dell’avatar" : "Avatar appearance"}</label>
     <select id="avatar-appearance" className="input" value={draft.appearance} disabled={disabled || saving}
       onChange={event => update({ appearance: event.target.value as Settings["appearance"] })}>
-      <option value="business_clay">{it ? "Maschile" : "Male"}</option>
-      <option value="business_clay_female">{it ? "Femminile" : "Female"}</option>
+      {AVATAR_APPEARANCES.map(avatar => <option key={avatar.id} value={avatar.id}>{avatar.labels[it ? 'it' : 'en']}</option>)}
     </select>
     <p className="mt-2 text-xs leading-5 text-slate-500">{it
       ? "Le voci si adattano all’aspetto. Il nome non cambia."

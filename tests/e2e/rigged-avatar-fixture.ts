@@ -1,9 +1,12 @@
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 /** Real mesh/skin/morph/animation bytes. Only texture decoding is omitted in Node. */
 export async function loadGeometryOnlyAvatar(female: boolean) {
-  const original = await readFile(`public/avatars/rigged-v1/${female ? "female" : "male"}.glb`);
+  const kitRoot = dirname(createRequire(`${process.cwd()}/package.json`).resolve("@conclavia/avatar-kit/package.json"));
+  const original = await readFile(join(kitRoot, "assets/rigged-v1", `${female ? "female" : "male"}.glb`));
   const jsonSize = original.readUInt32LE(12);
   const json = JSON.parse(original.toString("utf8", 20, 20 + jsonSize));
   json.images = []; json.textures = []; json.materials = [];

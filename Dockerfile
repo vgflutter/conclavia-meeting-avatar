@@ -1,17 +1,23 @@
+# syntax=docker/dockerfile:1.4
+# Build with: docker build --build-context avatar-kit=../conclavia-avatar-kit -t conclavia .
 FROM node:22-alpine AS dependencies
-WORKDIR /app
+WORKDIR /workspace/conclavia-avatar-kit
+COPY --from=avatar-kit package.json package-lock.json ./
+RUN npm ci
+WORKDIR /workspace/conclavia-meeting-avatar
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:22-alpine AS builder
-WORKDIR /app
+FROM dependencies AS builder
+WORKDIR /workspace/conclavia-meeting-avatar
 ENV NEXT_TELEMETRY_DISABLED=1
-COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=avatar-kit src /workspace/conclavia-avatar-kit/src
+COPY --from=avatar-kit assets /workspace/conclavia-avatar-kit/assets
 COPY . .
 RUN npm run build
 
 FROM node:22-alpine AS runner
-WORKDIR /app
+WORKDIR /app/conclavia-meeting-avatar
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
@@ -20,9 +26,9 @@ ENV PORT=3000
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /workspace/conclavia-meeting-avatar/.next/standalone /app/
+COPY --from=builder /workspace/conclavia-meeting-avatar/public ./public
+COPY --from=builder --chown=nextjs:nodejs /workspace/conclavia-meeting-avatar/.next/static ./.next/static
 
 USER nextjs
 EXPOSE 3000

@@ -1,13 +1,13 @@
 import { deleteModel, type HydratedDocument, type Model, Schema, model, models } from "mongoose";
 
-import { ASSISTANT_VISUAL_STYLES, type AssistantProfileRecord } from "@/types/assistant-profile";
+import { ASSISTANT_APPEARANCES, ASSISTANT_VISUAL_STYLES, type AssistantProfileRecord } from "@/types/assistant-profile";
 
 const assistantProfileSchema = new Schema<AssistantProfileRecord>(
   {
     key: { type: String, enum: ["default"], required: true, unique: true },
     displayName: { type: String, required: true, trim: true, maxlength: 80 },
     role: { type: String, required: true, trim: true, maxlength: 120 },
-    appearance: { type: String, enum: ["business_clay", "business_clay_female"], required: true },
+    appearance: { type: String, enum: [...ASSISTANT_APPEARANCES], required: true },
     visualStyle: { type: String, enum: [...ASSISTANT_VISUAL_STYLES], default: "editorial" },
     personality: {
       responseStyle: {
@@ -42,7 +42,7 @@ const assistantProfileSchema = new Schema<AssistantProfileRecord>(
 
 // Legacy metadata remains readable; it never selects a playback engine.
 // HMR must not silently discard new settings through an old cached schema.
-if (models.AssistantProfile && (!models.AssistantProfile.schema.path("visualStyle")?.options.enum.includes("portrait_2_5d") || !models.AssistantProfile.schema.path("appearance").options.enum.includes("business_clay_female") || !models.AssistantProfile.schema.path("voice.inworldVoiceIdIt") ||
+if (models.AssistantProfile && (!ASSISTANT_VISUAL_STYLES.every(style => models.AssistantProfile.schema.path("visualStyle")?.options.enum.includes(style)) || !ASSISTANT_APPEARANCES.every(appearance => models.AssistantProfile.schema.path("appearance").options.enum.includes(appearance)) || !models.AssistantProfile.schema.path("voice.inworldVoiceIdIt") ||
   !models.AssistantProfile.schema.path("voice.inworldVoiceIdEn") ||
   !models.AssistantProfile.schema.path("voice.provider").options.enum.includes("inworld"))) deleteModel("AssistantProfile");
 

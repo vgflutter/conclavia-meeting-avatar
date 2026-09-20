@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { NextConfig } from "next";
 
 function publicDevelopmentHost(): string[] {
@@ -13,12 +14,15 @@ function publicDevelopmentHost(): string[] {
 }
 
 const nextConfig: NextConfig = {
+  transpilePackages: ['@conclavia/avatar-kit'],
+  outputFileTracingRoot: path.resolve(process.cwd(), '..'),
+  outputFileTracingIncludes: { '/avatars/rigged-v1/*': ['./node_modules/@conclavia/avatar-kit/assets/**/*', '../conclavia-avatar-kit/assets/**/*'] },
   distDir: process.env.NEXT_DIST_DIR || ".next",
   output: "standalone",
   allowedDevOrigins: ["127.0.0.1", ...publicDevelopmentHost()],
   devIndicators: false,
   turbopack: {
-    root: process.cwd(),
+    root: path.resolve(process.cwd(), '..'),
   },
   async headers() {
     return [

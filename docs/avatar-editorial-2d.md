@@ -10,7 +10,7 @@ The existing male and female SVG portraits now use one articulated animation rig
 - The resting arm hangs vertically beside the body. Its wrist sits below the bottom of the portrait, so the hand cannot rest on the chest or abdomen. The same forearm rises along the outside of the body; a projected elbow/wrist trajectory keeps the intermediate sleeve readable. Its fill overlaps the upper sleeve without a transverse elbow outline. Fingers relax at rest and open continuously during the raise; there is no opacity swap between arm drawings.
 - The torso stays fixed: there is no whole-body rotation, breathing translation or speech-driven head sinusoid. Independent finite actions provide presence: eyes acquire a point before the head follows, then return to sustained camera contact; a rare small nod and a separate forearm adjustment occur between long quiet intervals. Breathing affects only a sub-pixel collar expansion. Speech and hand raising attenuate these idle actions. Reduced motion suppresses idle movement and snaps explicit gestures while preserving speech articulation. Hidden tabs pause the local animation clock; unmount cancels the animation frame.
 
-Implementation: `BusinessAvatar.tsx`, `BusinessAvatar.module.css`, `useEditorialMotion.ts` and `editorial-motion.ts`. The public component API is unchanged; 2.5D and 3D still use the editorial renderer as their fallback.
+Implementation: `BusinessAvatar.tsx`, `BusinessAvatar.module.css`, `useEditorialMotion.ts` and `editorial-motion.ts` in the shared [`conclavia-avatar-kit`](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/README.md). The Meeting files are compatibility re-exports. The public component API is unchanged; 2.5D and 3D still use the editorial renderer as their fallback.
 
 ## Review and verification
 
@@ -50,3 +50,20 @@ Two completed visual review cycles, followed by a final correction, are preserve
 Both identities have actual browser screenshots for rest, A/E/O/U, close-ups, raised hand and gesture reversals. Final `*-presence-gesture.webm` clips contain 32 seconds of undisturbed waiting followed by raising, lowering, reversal and return. The matching JSON files record actual torso bounds and hand position. These are synthetic browser rendering checks, not provider voice or Teams acceptance.
 
 The final browser regression additionally checks all four vowel contours, lip containment within the face, tooth withdrawal during rounded vowels, coordinated face/clip deformation and exact closure on stop. Existing tests retain arm-at-side and stable-torso regressions.
+
+## Shoulder proportions correction, 20 September 2026
+
+The previous visual review missed an oversized viewer-left shoulder and sleeve. Its separately drawn contour flared beyond the relaxed articulated arm on the opposite side. This was particularly conspicuous with the hand raised; the earlier recordings above retain that defect.
+
+Both relaxed sleeves now use the same upper-arm and forearm proportions, reflected around the torso centre. The shading is reflected back so the jacket lighting remains continuous. The upper sleeve curves into the elbow, and raising the other arm leaves the corrected resting shoulder unchanged. Both male and female illustrations use this correction, including the editorial fallback.
+
+The new browser regression samples the filled jacket silhouette at six heights, accounting for nested SVG transforms. At rest, the two sides must differ by no more than four SVG units; the viewer-left contour must stay fixed during the hand raise. It complements the existing mouth, reverse-gesture, reduced-motion and mobile checks.
+
+Current browser evidence from `/avatar/test`, with non-GET requests blocked:
+
+| Appearance | Previous raised pose | Corrected rest | Corrected raised pose | Complete silent sequence |
+| --- | --- | --- | --- | --- |
+| Male | [Before](images/editorial-shoulder/business_clay-before.png) | [Rest](images/editorial-shoulder/business_clay-rest.png) | [Raised](images/editorial-shoulder/business_clay-raised.png) | [Motion](images/editorial-shoulder/business_clay-motion.webm) |
+| Female | [Before](images/editorial-shoulder/business_clay_female-before.png) | [Rest](images/editorial-shoulder/business_clay_female-rest.png) | [Raised](images/editorial-shoulder/business_clay_female-raised.png) | [Motion](images/editorial-shoulder/business_clay_female-motion.webm) |
+
+These captures supersede the older silhouette evidence. They involve no voice-provider requests or saved preferences. Verification results are recorded in the [20 September report](verification-2026-09-20.md#shoulder-correction-follow-up).

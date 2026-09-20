@@ -1,6 +1,5 @@
 .git
-.next
-.next-e2e
+.next*
 node_modules
 npm-debug.log*
 .env*
@@ -9,3 +8,6 @@ npm-debug.log*
 *.tsbuildinfo
 playwright-report
 test-results
+.conclavia
+.local
+dist

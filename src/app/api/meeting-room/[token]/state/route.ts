@@ -2,6 +2,7 @@ import { after, NextResponse } from "next/server";
 import { processMeetingInterventionQueue } from "@/lib/meeting-intervention-queue";
 import { visibleMeetingIntervention } from "@/lib/meeting-pending-intervention";
 import { isAvatarVisualStyle } from "@/lib/avatar-visual-style";
+import { isAvatarAppearance } from '@conclavia/avatar-kit/lib/avatar-catalog';
 
 import { connectToDatabase } from "@/lib/mongodb";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
@@ -110,7 +111,7 @@ export async function GET(
     return NextResponse.json(
       {
         status: meeting.status,
-        appearance: profile?.appearance === "business_clay_female" ? "business_clay_female" : "business_clay",
+        appearance: isAvatarAppearance(profile?.appearance) ? profile.appearance : "business_clay",
         visualStyle: isAvatarVisualStyle(profile?.visualStyle) ? profile.visualStyle : "editorial",
         voice: publicMeetingTtsConfig(),
         ...(cursor !== null ? { commands, displayName: meeting.assistant.wakeWord } : {}),

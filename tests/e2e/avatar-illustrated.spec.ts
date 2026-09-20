@@ -24,15 +24,18 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
     await expect(svg.locator("filter, radialGradient, image, foreignObject")).toHaveCount(0);
     await expect(svg.locator('g[class*="glasses"]')).toHaveCount(appearance === "business_clay" ? 1 : 0);
     await expect(svg.locator('[class*="cheekTint"], [class*="friendlyBlush"]')).toHaveCount(0);
-    // The new portrait has an adult head/shoulder ratio, not the former large head.
+    if (await svg.getAttribute("data-gesture") !== "rest") await page.getByRole("button", { name: "Raise / lower hand" }).click();
+    await expect(svg).toHaveAttribute("data-hand-progress", "0.0000");
+    // The relaxed sleeve span is about 2.1–2.5 head widths. The former upper
+    // bound rewarded oversized sleeves; local symmetry is checked separately.
     const proportions = await svg.evaluate(node => {
       const head = node.querySelector('[class*="avatarHead"]')!.getBoundingClientRect();
       const left = node.querySelector('[class*="leftArm"]')!.getBoundingClientRect();
       const right = node.querySelector('[class*="rightArm"]')!.getBoundingClientRect();
       return head.width / (right.right - left.left);
     });
-    expect(proportions).toBeGreaterThan(0.32);
-    expect(proportions).toBeLessThan(0.42);
+    expect(proportions).toBeGreaterThan(0.40);
+    expect(proportions).toBeLessThan(0.48);
     await expect(page.locator("[data-avatar-stage]")).toHaveCSS("background-color", "rgb(242, 239, 230)");
     const clip = await svg.locator("[data-avatar-face-clip]").getAttribute("id");
     await expect(svg.locator(`g[clip-path="url(#${clip})"]`)).toHaveAttribute("clip-path", `url(#${clip})`);
@@ -43,9 +46,13 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
       // shoulder profile must slope smoothly outwards, without the old cap's
       // upward notch, and the sleeve must meet the torso without a gap.
       const shoulders = await svg.evaluate(node => {
-        const names = ["suitBack", "leftArm", "rightArm"];
-        const paths = names.map(name => node.querySelector<SVGGeometryElement>(`[class*="${name}"]`)!);
-        const filled = (x: number, y: number) => paths.some(path => path.isPointInFill(new DOMPoint(x, y)));
+        const matrix = (node as SVGSVGElement).getScreenCTM()!;
+        const paths = [...node.querySelectorAll<SVGGeometryElement>('[class*="suitBack"], [class*="leftArm"], [class*="rightArm"]')]
+          .map(path => ({ path, inverse: path.getScreenCTM()!.inverse() }));
+        const filled = (x: number, y: number) => {
+          const point = new DOMPoint(x, y).matrixTransform(matrix);
+          return paths.some(({ path, inverse }) => path.isPointInFill(point.matrixTransform(inverse)));
+        };
         const profile = (from: number, to: number) => {
           const heights: number[] = [];
           for (let x = from; x <= to; x += 2) {
@@ -89,11 +96,12 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
       for (const definition of svg.querySelectorAll("defs [id]")) {
         const old = definition.id, next = `board-${index}-${old}`;
         definition.id = next;
-        for (const element of svg.querySelectorAll("*")) for (const attribute of [...element.attributes]) {
+        for (const element of [svg, ...svg.querySelectorAll("*")]) for (const attribute of [...element.attributes]) {
           if (attribute.value.includes(`url(#${old})`)) element.setAttribute(attribute.name, attribute.value.replaceAll(`url(#${old})`, `url(#${next})`));
+          if (attribute.name === "href" && attribute.value === `#${old}`) element.setAttribute("href", `#${next}`);
         }
       }
-      svg.style.cssText = "height:550px;width:100%;--jaw-open:0";
+      svg.style.height = "550px"; svg.style.width = "100%";
       svg.dataset.mood = "friendly"; svg.dataset.viseme = "rest";
       cell.append(title, wrapper); board.append(cell);
     });

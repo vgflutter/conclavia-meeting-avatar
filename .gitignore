@@ -6,6 +6,7 @@
 /.next-e2e
 /.next-build-verify
 /.next-build-avatar
+/.next-build-shoulder
 /out
 
 # local environment files
@@ -21,3 +22,6 @@ next-env.d.ts
 /test-results
 /dist
 /.conclavia
+
+# Shared avatar package build verification
+/.next-build-onboarding-kit

@@ -42,3 +42,36 @@ env NEXT_DIST_DIR=.next-build-avatar MONGODB_URI=mongodb://127.0.0.1:27018 \
 The actual regression run used a fresh `conclavia_e2e_precommit_*` database; the corrective rerun used the normal per-run test name, and documentation used `conclavia_e2e_docs_*`. The real SSH-connected database, saved preferences and `.env.local` were preserved. The pre-existing `.env.example` removal is retained, and fresh-installation instructions no longer try to copy that missing template.
 
 README, the extended guide, avatar documentation, artwork provenance, asset notices and local test guidance now describe the current controls and evidence. The 14 September full-application totals remain explicitly historical. This check covers the changed regression files, not every test in the repository. Synthetic PCM, browser recordings and connectivity checks do not certify received Teams audio/video or resolve the separate recognition defect.
+
+## Shoulder correction follow-up
+
+The user identified a disproportionate viewer-left shoulder in the editorial avatar that the previous visual review had missed. The correction is in the shared `conclavia-avatar-kit`, now consumed by both applications. It gives both resting sleeves common proportions, preserves the original fully raised silhouette and makes the relaxed elbow contour continuous. The Meeting compatibility re-exports were preserved.
+
+Final verification after the geometry correction:
+
+| Check | Result |
+| --- | --- |
+| Editorial, illustrated and female-motion browser suites | 17 passed in the final run |
+| Shared silent preview suite | All 7 cases passed in the earlier combined run; both editorial sequences were recorded again after the final correction |
+| Rendered silhouette | Six heights checked for sleeve balance in both appearances; resting shoulder stays fixed during raising |
+| Visual review | Male/female rest, raising, raised and lowering frames inspected; complete silent sequences recorded, zero browser errors and zero non-GET requests |
+| Lint and TypeScript | Passed for Meeting and Onboarding; shared changed source also linted and typechecked |
+| Production builds | Both Meeting and Onboarding passed with `NEXT_DIST_DIR=.next-build-shoulder` after the final source change |
+| Onboarding isolated unit tests | 11 passed |
+| App reachability | `http://localhost:3000/avatar/test` returned 200; existing server left running |
+
+The initial 24-case combined run passed 23 cases and exposed a proportion assertion that required excessively wide sleeves. The updated illustration test checks a relaxed sleeve span of roughly 2.1–2.5 head widths, resets the pose before measurement and resolves nested SVG transforms when checking shoulder continuity. The shoulder probe excludes the raised forearm, whose upward outline is intentional. Board captures now preserve and namespace gradient references, including inherited gradients. The final 17-case rerun above includes these corrections; the new silhouette regression separately catches left/right imbalance.
+
+Current evidence: [before/after poses and recordings](avatar-editorial-2d.md#shoulder-proportions-correction-20-september-2026), [capture report](images/editorial-shoulder/review.json). Earlier recordings retain the old shoulder and are historical. The recordings used the existing local app with non-GET requests blocked. Regression writes and both builds used only `mongodb://127.0.0.1:27018` with `conclavia_e2e_*` database names; the real database, saved settings and `.env.local` were preserved. Synthetic PCM checks remain browser-level evidence, not Teams acceptance.
+
+```sh
+env MONGODB_URI=mongodb://127.0.0.1:27018 npm run test:e2e -- \
+  tests/e2e/editorial-animation.spec.ts tests/e2e/avatar-illustrated.spec.ts \
+  tests/e2e/female-avatar-motion.spec.ts
+node scripts/review-avatar-articulation.mjs --url http://127.0.0.1:3000 \
+  --styles editorial --output /tmp/conclavia-shoulder-review
+```
+
+## Coordinated repository alignment
+
+The shared kit, both Conclavia consumers and the AIHat adapter were aligned for publication. A fresh 62-case Meeting avatar/player run passed, together with 11 Onboarding unit cases, 5 AIHat contract cases, 5 Onboarding browser cases and 2 cross-frontend handoff cases. Production builds passed for Meeting, Onboarding and AIHat. The standalone Meeting server returned both GLBs byte-for-byte from the shared kit. See [workspace alignment](https://github.com/vgflutter/conclavia-onboarding-avatar/blob/main/docs/workspace-alignment.md) for the source fingerprint, reproducible sharing check, repository workflow and Docker verification limit.

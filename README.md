@@ -12,6 +12,8 @@ A digital colleague for Microsoft Teams: follows the agenda, responds when calle
 
 Open [Voice & movement](http://localhost:3000/avatar/test) (**Voce e movimenti**) to choose **Editorial comic · 2D**, **3D character** or **Portrait 2.5D**, with male/female appearances. **Play animation / Avvia animazione** runs a nine-second silent sequence with connected lip shapes, a hand gesture and a return to rest. It needs no meeting, tunnel or voice credit. **Listen to voice** is the separate Inworld playback action and can consume credit. Preview changes apply to meetings only after an explicit save.
 
+The [2D shoulder correction](docs/avatar-editorial-2d.md#shoulder-proportions-correction-20-september-2026) removes the oversized left sleeve in both appearances, with new browser captures and a rendered-silhouette regression.
+
 The current renderers use discrete waiting actions with pauses and a stable torso. The 2.5D portrait coordinates both original lips and the jaw, bounds O/U narrowing and closes on silence/stop. The 2D illustration has articulated lip contours and an arm resting at the side. The 3D character has relaxed fingers, an oblique palm and revised skin, hair, clothing and glasses. [Styles and controls](docs/avatar-styles.md) · [Before/after, six final recordings and verification](docs/avatar-refinement-2026-09-19.md).
 
 ![Three avatar styles before and after the visual revision, with both appearances](docs/images/avatar-refinement/gesture-before-after.png)
@@ -105,3 +107,21 @@ Start a temporary MongoDB on port **27018** before these database checks. Tests 
 - [Inworld voice catalog](docs/inworld-voice-catalog-2026-09-13.md)
 
 Stack: Next.js · React · TypeScript · MongoDB · Attendee · Inworld.
+
+## Shared avatar workspace
+
+Renderers, animation, models, portrait artwork, voice catalogs and playback live in [conclavia-avatar-kit](https://github.com/vgflutter/conclavia-avatar-kit). Meeting and [Onboarding](https://github.com/vgflutter/conclavia-onboarding-avatar) both use `@conclavia/avatar-kit` through `file:../conclavia-avatar-kit`. Edit the kit once; the consumer files are compatibility re-exports. The latest 2D shoulder correction is already shared.
+
+Use Node.js **22.21.1+** and clone the kit beside this repository before installing Meeting. The kit repository is private and requires an authorized GitHub account.
+
+```sh
+# From the common parent directory, for a new checkout:
+git clone https://github.com/vgflutter/conclavia-avatar-kit.git
+git clone https://github.com/vgflutter/conclavia-meeting-avatar.git
+npm --prefix conclavia-avatar-kit ci
+npm --prefix conclavia-meeting-avatar ci
+```
+
+With both consumer repositories installed, `npm run check:avatar-kit` verifies the shared directory, compatibility exports and absence of duplicated assets. Follow the [coordinated update instructions](https://github.com/vgflutter/conclavia-avatar-kit#aggiornamento-coordinato); preserve each application's local environment and Mongo data. Settings remain application-specific, and a deployed application needs a rebuild to receive kit changes.
+
+The standalone output includes shared GLBs. Docker builds require `--build-context avatar-kit=../conclavia-avatar-kit`; see [deployment](docs/guide.md#production-deployment). [Workspace alignment and verification](https://github.com/vgflutter/conclavia-onboarding-avatar/blob/main/docs/workspace-alignment.md).
