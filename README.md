@@ -12,7 +12,7 @@ A digital colleague for Microsoft Teams: follows the agenda, responds when calle
 
 Open [Voice & movement](http://localhost:3000/avatar/test) (**Voce e movimenti**) to choose **Editorial comic · 2D**, **3D character** or **Portrait 2.5D**, with male/female appearances. **Play animation / Avvia animazione** runs a nine-second silent sequence with connected lip shapes, a hand gesture and a return to rest. It needs no meeting, tunnel or voice credit. **Listen to voice** is the separate Inworld playback action and can consume credit. Preview changes apply to meetings only after an explicit save.
 
-The [2D shoulder revision](docs/avatar-editorial-2d.md#shoulder-proportions-correction-20-september-2026) reshapes the shoulder line, narrows the jacket and straightens the sleeves in both appearances. The first symmetric correction was insufficient; the current browser comparison and regression check the volume below the shoulders as well.
+The [latest 2D refinement](docs/avatar-editorial-2d.md#arm-wrist-and-tailoring-refinement-20-september-2026) lowers the raised elbow, tapers the sleeve towards the cuff and aligns the palm with the forearm throughout the gesture. Redrawn fingers, softer jacket shading and revised lapels complement the earlier shoulder correction. The comparison and recordings show both appearances through the complete motion.
 
 The current renderers use discrete waiting actions with pauses and a stable torso. The 2.5D portrait coordinates both original lips and the jaw, bounds O/U narrowing and closes on silence/stop. The 2D illustration has articulated lip contours and an arm resting at the side. The 3D character has relaxed fingers, an oblique palm and revised skin, hair, clothing and glasses. [Styles and controls](docs/avatar-styles.md) · [Before/after, six final recordings and verification](docs/avatar-refinement-2026-09-19.md).
 
@@ -110,7 +110,7 @@ Stack: Next.js · React · TypeScript · MongoDB · Attendee · Inworld.
 
 ## Shared avatar workspace
 
-Renderers, animation, models, portrait artwork, voice catalogs and playback live in [conclavia-avatar-kit](https://github.com/vgflutter/conclavia-avatar-kit). Meeting and [Onboarding](https://github.com/vgflutter/conclavia-onboarding-avatar) both use `@conclavia/avatar-kit` through `file:../conclavia-avatar-kit`. Edit the kit once; the consumer files are compatibility re-exports. The latest 2D shoulder correction is already shared.
+Renderers, animation, models, portrait artwork, voice catalogs and playback live in [conclavia-avatar-kit](https://github.com/vgflutter/conclavia-avatar-kit). Meeting and [Onboarding](https://github.com/vgflutter/conclavia-onboarding-avatar) both use `@conclavia/avatar-kit` through `file:../conclavia-avatar-kit`. Edit the kit once; the consumer files are compatibility re-exports. The latest 2D arm, wrist and tailoring changes are shared by both apps.
 
 Use Node.js **22.21.1+** and clone the kit beside this repository before installing Meeting. The kit repository is private and requires an authorized GitHub account.
 

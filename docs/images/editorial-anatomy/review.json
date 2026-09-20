@@ -1,0 +1,21 @@
+{
+  "source": "/avatar/test, actual nine-second silent sequence",
+  "previous_kit_revision": "58f6c32",
+  "captures": [
+    {
+      "style": "editorial",
+      "appearance": "business_clay",
+      "errors": [],
+      "writes": [],
+      "stopped": "idle"
+    },
+    {
+      "style": "editorial",
+      "appearance": "business_clay_female",
+      "errors": [],
+      "writes": [],
+      "stopped": "idle"
+    }
+  ],
+  "current_kit_revision": "19efb1b"
+}

@@ -6,7 +6,7 @@ At `/avatar/test` (**Voce e movimenti / Voice & movement**), choose a style and 
 
 | Style | Current treatment | Implementation and visual evidence |
 | --- | --- | --- |
-| Fumetto editoriale · 2D / Editorial comic · 2D | Refined illustration, filled lip contours, distinct rounded vowels, coordinated upper lip/jaw, arm at the side and discrete waiting actions | [2D details](avatar-editorial-2d.md) |
+| Fumetto editoriale · 2D / Editorial comic · 2D | Refined illustration, articulated lips, tapered sleeve, connected palm/cuff, arm at the side and discrete waiting actions | [2D details](avatar-editorial-2d.md) |
 | Personaggio 3D / 3D character | Skinned male/female meshes, matte surfaces, restrained hair highlights, relaxed articulated fingers and separate glances/shoulder adjustment | [3D details](avatar-rigged-3d.md) |
 | Ritratto 2.5D / Portrait 2.5D | Original upper/lower lips and jaw move together, bounded O/U corners, progressive tooth occlusion, transparent arm and fixed seated base | [2.5D details](avatar-portrait-2-5d.md) |
 
@@ -43,9 +43,9 @@ These are actual browser captures of the standalone production build, with tempo
 
 | Editorial 2D | 3D character | Portrait 2.5D |
 | --- | --- | --- |
-| ![Male editorial](images/editorial-tailoring/business_clay-rest.png) | ![Male 3D](images/avatar-styles/stylized_3d-business_clay-rest.png) | ![Male portrait](images/avatar-styles/portrait_2_5d-business_clay-rest.png) |
-| ![Female editorial](images/editorial-tailoring/business_clay_female-rest.png) | ![Female 3D](images/avatar-styles/stylized_3d-business_clay_female-rest.png) | ![Female portrait](images/avatar-styles/portrait_2_5d-business_clay_female-rest.png) |
-| [Male motion](images/editorial-tailoring/business_clay-motion.webm) · [Female motion](images/editorial-tailoring/business_clay_female-motion.webm) | [Male motion](images/avatar-refinement/stylized_3d-business_clay.webm) · [Female motion](images/avatar-refinement/stylized_3d-business_clay_female.webm) | [Male motion](images/avatar-refinement/portrait_2_5d-business_clay.webm) · [Female motion](images/avatar-refinement/portrait_2_5d-business_clay_female.webm) |
+| ![Male editorial](images/editorial-anatomy/business_clay-rest.png) | ![Male 3D](images/avatar-styles/stylized_3d-business_clay-rest.png) | ![Male portrait](images/avatar-styles/portrait_2_5d-business_clay-rest.png) |
+| ![Female editorial](images/editorial-anatomy/business_clay_female-rest.png) | ![Female 3D](images/avatar-styles/stylized_3d-business_clay_female-rest.png) | ![Female portrait](images/avatar-styles/portrait_2_5d-business_clay_female-rest.png) |
+| [Male motion](images/editorial-anatomy/business_clay-motion.webm) · [Female motion](images/editorial-anatomy/business_clay_female-motion.webm) | [Male motion](images/avatar-refinement/stylized_3d-business_clay.webm) · [Female motion](images/avatar-refinement/stylized_3d-business_clay_female.webm) | [Male motion](images/avatar-refinement/portrait_2_5d-business_clay.webm) · [Female motion](images/avatar-refinement/portrait_2_5d-business_clay_female.webm) |
 | [Mobile](images/avatar-styles/editorial-mobile-it.png) | [Mobile](images/avatar-styles/stylized_3d-mobile-it.png) | [Mobile](images/avatar-styles/portrait_2_5d-mobile-it.png) |
 
 ## Separate dependency follow-up

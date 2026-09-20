@@ -76,10 +76,53 @@ test("editorial presence: stable torso, eyes anticipate finite head actions and 
     const pose = editorialArmPose(r);
     expect(Number.isFinite(pose.angle)).toBe(true);
     expect(pose.wrist.x).toBeGreaterThan(520);
+    // Projected foreshortening must not collapse the forearm into the elbow
+    // as the hand turns towards the camera during the middle of the raise.
+    const dx = pose.wrist.x - pose.elbow.x, dy = pose.wrist.y - pose.elbow.y;
+    const length = Math.hypot(dx, dy);
+    expect(length).toBeGreaterThan(70);
+    // A connected wrist can still look broken if its palm points back towards
+    // the elbow. Keep wrist flex within fifteen degrees of the sleeve axis.
+    const radians = pose.angle * Math.PI / 180;
+    expect((Math.sin(radians) * dx - Math.cos(radians) * dy) / length).toBeGreaterThan(Math.cos(Math.PI / 12));
   }
 });
 
 for (const appearance of ["business_clay", "business_clay_female"]) {
+  test(`editorial ${appearance}: palm stays attached to cuff throughout raising and lowering`, async ({ page }) => {
+    const start = new Date("2026-09-20T12:00:00Z");
+    await page.clock.install({ time: start });
+    await page.clock.pauseAt(new Date(start.getTime() + 50));
+    await page.context().addCookies([{ name: "conclavia_locale", value: "en", url: "http://127.0.0.1:3101" }]);
+    await page.goto("/avatar/test");
+    await page.getByLabel("Avatar style", { exact: true }).selectOption("editorial");
+    await page.getByLabel("Avatar appearance").selectOption(appearance);
+    await page.clock.runFor(32);
+    const avatar = page.locator('svg[data-design="editorial-comic"]');
+    for (const target of ["1.0000", "0.0000"]) {
+      await page.getByRole("button", { name: "Raise / lower hand" }).click();
+      for (let sample = 0; sample < 30; sample++) {
+        await page.clock.runFor(40);
+        const geometry = await avatar.evaluate(svg => {
+          const palm = svg.querySelector<SVGPathElement>('[data-rig="palm"]')!;
+          const cuff = svg.querySelector<SVGPathElement>('[data-rig="cuff"]')!;
+          const palmMatrix = palm.getScreenCTM()!;
+          const cuffInverse = cuff.getScreenCTM()!.inverse();
+          let touching = false;
+          for (let x = -12; x <= 12; x += 2) for (let y = -5; y <= 5; y += 2) {
+            const point = new DOMPoint(x, y);
+            if (palm.isPointInFill(point) && cuff.isPointInFill(point.matrixTransform(palmMatrix).matrixTransform(cuffInverse))) touching = true;
+          }
+          const hand = palm.getBoundingClientRect(), frame = svg.getBoundingClientRect();
+          return { touching, inside: hand.left >= frame.left && hand.right <= frame.right && hand.top >= frame.top };
+        });
+        expect(geometry.touching, `Wrist gap during ${target}, sample ${sample}`).toBe(true);
+        expect(geometry.inside, `Hand outside frame during ${target}, sample ${sample}`).toBe(true);
+      }
+      await expect(avatar).toHaveAttribute("data-hand-progress", target);
+    }
+  });
+
   test(`editorial ${appearance}: one attached arm, one mouth and audio stop with reduced motion`, async ({ page }, info) => {
     const writes: string[] = [];
     page.on("request", request => {

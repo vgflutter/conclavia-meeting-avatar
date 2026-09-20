@@ -93,3 +93,23 @@ The same **17 focused browser tests passed**, including rest, gesture, mouth and
 ## Coordinated repository alignment
 
 The shared kit, both Conclavia consumers and the AIHat adapter were aligned for publication. A fresh 62-case Meeting avatar/player run passed, together with 11 Onboarding unit cases, 5 AIHat contract cases, 5 Onboarding browser cases and 2 cross-frontend handoff cases. Production builds passed for Meeting, Onboarding and AIHat. The standalone Meeting server returned both GLBs byte-for-byte from the shared kit. See [workspace alignment](https://github.com/vgflutter/conclavia-onboarding-avatar/blob/main/docs/workspace-alignment.md) for the source fingerprint, reproducible sharing check, repository workflow and Docker verification limit.
+
+
+## Arm and wrist refinement
+
+The raised 2D arm still resembled a bent tube after the shoulder and seam corrections. The shared rig now lowers the elbow, tapers the forearm and keeps the cuff on the sleeve axis. The palm follows that axis with bounded flex instead of rotating independently; frame review caught the earlier backward wrist at mid-gesture. Redrawn fingers, revised lapels and softly faded jacket shading complete this pass. The previous shoulder symmetry and gap checks remain in place.
+
+Final verification after these changes:
+
+| Check | Result |
+| --- | --- |
+| Editorial, illustrated and female-motion suites | **19 passed** |
+| New geometry coverage | Palm/cuff overlap and framing at 30 steps per direction for both appearances; wrist flex below 15 degrees and projected forearm length above 70 SVG units |
+| Visual review | Both appearances at rest, raising, raised and lowering; complete nine-second sequences recorded, zero browser errors and zero non-GET requests |
+| Lint / TypeScript | Meeting and changed shared source passed |
+| Shared ownership | `npm run check:avatar-kit` passed for both consumers |
+| Production builds | Meeting and Onboarding passed with `NEXT_DIST_DIR=.next-build-avatar` |
+
+[Actual before/after comparison and both recordings](avatar-editorial-2d.md#arm-wrist-and-tailoring-refinement-20-september-2026). The before image is the committed `58f6c32` kit revision; earlier historical reports retain their own test counts and evidence. Passing geometric checks does not replace visual judgement.
+
+Regression fixtures and builds used only `mongodb://127.0.0.1:27018` with temporary `conclavia_e2e_*` databases. Captures used the existing app on port 3000 with writes blocked. No voice-provider requests, real database writes or saved profile changes were made. The app and `.env.local` were preserved; these checks do not establish live Teams acceptance.

@@ -1,6 +1,6 @@
 # Editorial avatar 2D
 
-Latest engineering check: [20 September pre-commit verification](verification-2026-09-20.md). Visual evidence and renderer limits are documented below.
+Latest visual revision: [arm, wrist and tailoring](#arm-wrist-and-tailoring-refinement-20-september-2026). Engineering check: [20 September pre-commit verification](verification-2026-09-20.md). Visual evidence and renderer limits are documented below.
 
 The existing male and female SVG portraits now use one articulated animation rig. Their saved appearance IDs, voice pairing and lightweight fallback role are unchanged. The palette uses muted blue and terracotta tailoring, a restrained hierarchy of contour weights, coherent cloth and hair shading, and a subtle skin gradient; no external raster assets or WebGL are required.
 
@@ -26,9 +26,31 @@ Coverage includes frame-rate independence, gesture reversals, invalid/silent ene
 
 The renderer remains an editorial SVG illustration: hand contour changes are stylized and the phoneme rig approximates speech, rather than simulating facial anatomy.
 
-Current production-browser recordings: [male](images/editorial-motion/male.webm), [female](images/editorial-motion/female.webm). These include the real SVG and product controls, without voice requests or saves. [Combined three-style validation and mobile captures](avatar-styles.md).
+Earlier production-browser recordings (before the arm revision below): [male](images/editorial-motion/male.webm), [female](images/editorial-motion/female.webm). These include the real SVG and product controls, without voice requests or saves. [Combined three-style validation and mobile captures](avatar-styles.md).
 
 Sampled recording frames: [male](images/editorial-motion/male-contact-sheet.png), [female](images/editorial-motion/female-contact-sheet.png).
+
+## Arm, wrist and tailoring refinement, 20 September 2026
+
+Removing the sleeve lines did not correct the raised arm's tube-like shape or the awkward wrist. The latest revision changes the articulated drawing in the shared kit for both appearances:
+
+- A lower raised elbow gives the upper arm a downward diagonal. The sleeve tapers from elbow to wrist, with a small local fold instead of a transverse joint line.
+- The elbow moves outward before the wrist rises. This retains visible forearm length through the middle of the gesture. Palm orientation follows the actual forearm axis with modest wrist flex; an independently interpolated hand angle had pointed backwards during the turn.
+- The cuff follows the sleeve independently of palm flex. The hand has tapered fingertips, a defined thumb and progressive finger extension. At rest it remains below the waist.
+- Revised lapels, shorter cloth folds and softly faded shading add volume to the jacket without bringing back the lengthwise lines through the sleeves. The face and fixed torso retain their existing animation.
+
+![Raised arm before and after the articulation revision](images/editorial-anatomy/comparison.png)
+
+Current captures from the actual `/avatar/test` nine-second sequence, with all non-GET requests blocked:
+
+| Appearance | Rest | Raised | Sampled sequence | Complete motion |
+| --- | --- | --- | --- | --- |
+| Male | [Rest](images/editorial-anatomy/business_clay-rest.png) | [Raised](images/editorial-anatomy/business_clay-raised.png) | [Frames](images/editorial-anatomy/business_clay-sequence.png) | [Video](images/editorial-anatomy/business_clay-motion.webm) |
+| Female | [Rest](images/editorial-anatomy/business_clay_female-rest.png) | [Raised](images/editorial-anatomy/business_clay_female-raised.png) | [Frames](images/editorial-anatomy/business_clay_female-sequence.png) | [Video](images/editorial-anatomy/business_clay_female-motion.webm) |
+
+The before frame comes from the committed sleeve-line correction (`conclavia-avatar-kit` revision `58f6c32`). These captures supersede the shoulder/tailoring recordings retained below as history. Both sequences returned to idle with zero browser errors or write attempts. [Capture report](images/editorial-anatomy/review.json).
+
+The final **19 focused tests passed**. New coverage checks palm/cuff overlap and framing at 30 steps in each direction for both appearances, plus bounded wrist flex and minimum projected forearm length. The existing shoulder silhouette, idle, mouth closure, audio, reversal, reduced-motion and mobile checks also passed. Both consumer production builds, the sharing check, shared source lint/typecheck and Meeting lint/typecheck passed. These checks and sampled visual review do not validate live Teams audio or photorealistic anatomy.
 
 ## Long visual observations
 
@@ -57,11 +79,11 @@ The previous visual review missed an oversized viewer-left shoulder and sleeve. 
 
 The first correction gave both relaxed sleeves the same proportions. The user correctly rejected the result: both shoulders were still excessively rounded. Symmetry and passing regressions did not establish acceptable proportions.
 
-The current revision defines the shoulder cap earlier and lets the upper sleeve descend almost vertically, instead of continuing the shoulder curve to the elbow. Resting elbows/wrists sit closer to the torso; sleeve width at the elbow changes from 70 to 58 SVG units. The jacket body is narrower, its seams and pocket follow the new cut, and the attachment overlaps without thin background slits. The raised arm retains elbow/wrist articulation with a slimmer sleeve and visible space below the upper arm. Male and female illustrations share this geometry, including the editorial fallback.
+That revision defined the shoulder cap earlier and let the upper sleeve descend almost vertically, instead of continuing the shoulder curve to the elbow. Resting elbows/wrists sit closer to the torso; sleeve width at the elbow changes from 70 to 58 SVG units. The jacket body is narrower, its seams and pocket follow the new cut, and the attachment overlaps without thin background slits. The raised arm retains elbow/wrist articulation with a slimmer sleeve and visible space below the upper arm. Male and female illustrations share this geometry, including the editorial fallback.
 
 The browser regression samples the filled jacket silhouette at six heights, accounting for nested SVG transforms. At rest, the two sides must differ by no more than four SVG units and there must be no gaps. Crucially, below the shoulder cap each silhouette edge may widen by at most 18 SVG units between y=540 and y=620; this rejects the previous symmetric but inflated shape. The viewer-left contour must stay fixed during the hand raise. The attachment probe checks the shoulder joint while allowing intentional space beneath the raised upper arm. These checks complement mouth, reverse-gesture, reduced-motion and mobile coverage; visual judgement remains separate.
 
-Current browser evidence from `/avatar/test`, with non-GET requests blocked:
+Historical browser evidence for the shoulder correction, with non-GET requests blocked:
 
 | Appearance | Previous rest pose | Current rest | Current raised pose | Complete silent sequence |
 | --- | --- | --- | --- | --- |
@@ -70,4 +92,4 @@ Current browser evidence from `/avatar/test`, with non-GET requests blocked:
 
 The [side-by-side comparison](images/editorial-tailoring/comparison.png) contains actual browser frames. These captures supersede `editorial-shoulder/`, which retains the rejected first correction. They involve no voice-provider requests or saved preferences. Verification results are recorded in the [20 September report](verification-2026-09-20.md#second-shoulder-revision).
 
-The subsequent sleeve-detail review caught two artificial lengthwise lines: the stroked torso overlap and a parallel decorative seam. The torso now covers both sleeves with fill only, the long decorative seam is removed, and both forearms sit behind that fill while hands stay in front. This preserves the external arm contour and gesture without drawing a line through the resting sleeve. Current rest/raised frames and clips above include this correction; [enlarged before/after detail](images/editorial-tailoring/sleeve-detail.png). The mobile regression continues to check the forearm separately despite the changed layer order.
+The subsequent sleeve-detail review caught two artificial lengthwise lines: the stroked torso overlap and a parallel decorative seam. The torso now covers both sleeves with fill only, the long decorative seam is removed, and both forearms sit behind that fill while hands stay in front. This preserves the external arm contour and gesture without drawing a line through the resting sleeve. The rest/raised frames and clips in that table include the sleeve-line correction; [enlarged before/after detail](images/editorial-tailoring/sleeve-detail.png). The mobile regression continues to check the forearm separately despite the changed layer order.
