@@ -17,7 +17,8 @@ async function jacketSilhouette(avatar: Locator) {
         const point = new DOMPoint(x, y).matrixTransform(matrix);
         if (paths.some(({ path, inverse }) => path.isPointInFill(point.matrixTransform(inverse)))) filled.push(x);
       }
-      return { y, left: filled[0], right: filled[filled.length - 1] };
+      const left = filled[0], right = filled[filled.length - 1];
+      return { y, left, right, gaps: right - left + 1 - filled.length };
     });
   });
 }
@@ -98,7 +99,14 @@ for (const appearance of ["business_clay", "business_clay_female"]) {
       // The torso is centred at x=341. Both relaxed sleeves must have similar
       // bulk at the shoulder, upper arm and cuff, not only the same top edge.
       expect(Math.abs((341 - row.left) - (row.right - 341)), `Uneven sleeves at y=${row.y}`).toBeLessThanOrEqual(4);
+      expect(row.gaps, `Detached resting sleeve at y=${row.y}`).toBe(0);
     }
+    // Symmetry alone allowed two inflated shoulders. Once past the shoulder
+    // cap, a relaxed sleeve should descend rather than keep widening to the elbow.
+    const shoulder = restingSilhouette.find(row => row.y === 540)!;
+    const upperArm = restingSilhouette.find(row => row.y === 620)!;
+    expect(shoulder.left - upperArm.left, "Left sleeve flares below the shoulder").toBeLessThanOrEqual(18);
+    expect(upperArm.right - shoulder.right, "Right sleeve flares below the shoulder").toBeLessThanOrEqual(18);
     const restingFace = await avatar.locator('[data-rig="face-outline"]').getAttribute("d");
     const resting = await avatar.locator('[data-rig="wrist"]').getAttribute("transform");
     await avatar.screenshot({ path: info.outputPath(`${appearance}-rest.png`) });

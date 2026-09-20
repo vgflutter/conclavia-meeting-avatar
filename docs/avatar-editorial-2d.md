@@ -55,15 +55,17 @@ The final browser regression additionally checks all four vowel contours, lip co
 
 The previous visual review missed an oversized viewer-left shoulder and sleeve. Its separately drawn contour flared beyond the relaxed articulated arm on the opposite side. This was particularly conspicuous with the hand raised; the earlier recordings above retain that defect.
 
-Both relaxed sleeves now use the same upper-arm and forearm proportions, reflected around the torso centre. The shading is reflected back so the jacket lighting remains continuous. The upper sleeve curves into the elbow, and raising the other arm leaves the corrected resting shoulder unchanged. Both male and female illustrations use this correction, including the editorial fallback.
+The first correction gave both relaxed sleeves the same proportions. The user correctly rejected the result: both shoulders were still excessively rounded. Symmetry and passing regressions did not establish acceptable proportions.
 
-The new browser regression samples the filled jacket silhouette at six heights, accounting for nested SVG transforms. At rest, the two sides must differ by no more than four SVG units; the viewer-left contour must stay fixed during the hand raise. It complements the existing mouth, reverse-gesture, reduced-motion and mobile checks.
+The current revision defines the shoulder cap earlier and lets the upper sleeve descend almost vertically, instead of continuing the shoulder curve to the elbow. Resting elbows/wrists sit closer to the torso; sleeve width at the elbow changes from 70 to 58 SVG units. The jacket body is narrower, its seams and pocket follow the new cut, and the attachment overlaps without thin background slits. The raised arm retains elbow/wrist articulation with a slimmer sleeve and visible space below the upper arm. Male and female illustrations share this geometry, including the editorial fallback.
+
+The browser regression samples the filled jacket silhouette at six heights, accounting for nested SVG transforms. At rest, the two sides must differ by no more than four SVG units and there must be no gaps. Crucially, below the shoulder cap each silhouette edge may widen by at most 18 SVG units between y=540 and y=620; this rejects the previous symmetric but inflated shape. The viewer-left contour must stay fixed during the hand raise. The attachment probe checks the shoulder joint while allowing intentional space beneath the raised upper arm. These checks complement mouth, reverse-gesture, reduced-motion and mobile coverage; visual judgement remains separate.
 
 Current browser evidence from `/avatar/test`, with non-GET requests blocked:
 
-| Appearance | Previous raised pose | Corrected rest | Corrected raised pose | Complete silent sequence |
+| Appearance | Previous rest pose | Current rest | Current raised pose | Complete silent sequence |
 | --- | --- | --- | --- | --- |
-| Male | [Before](images/editorial-shoulder/business_clay-before.png) | [Rest](images/editorial-shoulder/business_clay-rest.png) | [Raised](images/editorial-shoulder/business_clay-raised.png) | [Motion](images/editorial-shoulder/business_clay-motion.webm) |
-| Female | [Before](images/editorial-shoulder/business_clay_female-before.png) | [Rest](images/editorial-shoulder/business_clay_female-rest.png) | [Raised](images/editorial-shoulder/business_clay_female-raised.png) | [Motion](images/editorial-shoulder/business_clay_female-motion.webm) |
+| Male | [Before, at rest](images/editorial-tailoring/business_clay-before.png) | [Rest](images/editorial-tailoring/business_clay-rest.png) | [Raised](images/editorial-tailoring/business_clay-raised.png) | [Motion](images/editorial-tailoring/business_clay-motion.webm) |
+| Female | [Before, at rest](images/editorial-tailoring/business_clay_female-before.png) | [Rest](images/editorial-tailoring/business_clay_female-rest.png) | [Raised](images/editorial-tailoring/business_clay_female-raised.png) | [Motion](images/editorial-tailoring/business_clay_female-motion.webm) |
 
-These captures supersede the older silhouette evidence. They involve no voice-provider requests or saved preferences. Verification results are recorded in the [20 September report](verification-2026-09-20.md#shoulder-correction-follow-up).
+The [side-by-side comparison](images/editorial-tailoring/comparison.png) contains actual browser frames. These captures supersede `editorial-shoulder/`, which retains the rejected first correction. They involve no voice-provider requests or saved preferences. Verification results are recorded in the [20 September report](verification-2026-09-20.md#second-shoulder-revision).

@@ -45,6 +45,8 @@ README, the extended guide, avatar documentation, artwork provenance, asset noti
 
 ## Shoulder correction follow-up
 
+This first symmetric correction was subsequently rejected by the user because both shoulders remained inflated. Its passing tests were insufficient to assess the shape. See the [second revision](#second-shoulder-revision) for current geometry and evidence.
+
 The user identified a disproportionate viewer-left shoulder in the editorial avatar that the previous visual review had missed. The correction is in the shared `conclavia-avatar-kit`, now consumed by both applications. It gives both resting sleeves common proportions, preserves the original fully raised silhouette and makes the relaxed elbow contour continuous. The Meeting compatibility re-exports were preserved.
 
 Final verification after the geometry correction:
@@ -71,6 +73,16 @@ env MONGODB_URI=mongodb://127.0.0.1:27018 npm run test:e2e -- \
 node scripts/review-avatar-articulation.mjs --url http://127.0.0.1:3000 \
   --styles editorial --output /tmp/conclavia-shoulder-review
 ```
+
+## Second shoulder revision
+
+The second user screenshot showed that equal-width sleeves still produced a rounded, bulky silhouette. The shared renderer now uses a defined shoulder cap, straighter and slimmer upper sleeves, resting joints closer to the body and a narrower jacket. Seams and pocket follow the revised body. Both identities were reviewed at rest, through lifting/lowering and with the hand raised. A first drawing pass exposed thin gaps at the sleeve/body join; the overlap was corrected before the final captures.
+
+The new test checks below-shoulder expansion in addition to symmetry. A browser comparison using the previous kit revision `08c3062` measured **35 SVG units of outward growth** between y=540 and y=620; the current shape measures **13**. The 18-unit limit rejects the previous shape and passes the current one. Resting silhouette samples also reject gaps. This is a geometric regression, not a claim that numerical symmetry proves visual quality. [Measured comparison](images/editorial-tailoring/silhouette-comparison.json), [actual before/after browser frames](images/editorial-tailoring/comparison.png), [both identities and motion](avatar-editorial-2d.md#shoulder-proportions-correction-20-september-2026).
+
+Final verification: **17 browser tests passed** across `editorial-animation`, `avatar-illustrated` and `female-avatar-motion`; Meeting lint/typecheck and shared source lint/typecheck passed; both Meeting and Onboarding production builds passed with `.next-build-shoulder`. The initial run passed 16/17: the old shoulder probe also sampled the space under the lifted arm, which is intentionally visible with the narrower jacket. The corrected probe covers the sleeve attachment; the final complete rerun passed. Both nine-second browser sequences completed with no errors and no non-GET requests. Existing mouth, silence, waiting, gesture and mobile checks passed.
+
+Tests/builds used only temporary MongoDB at `127.0.0.1:27018` with `conclavia_e2e_*` database names; browser captures blocked writes. The app on port 3000, real database, saved settings and `.env.local` were preserved. No paid speech or Teams validation was performed.
 
 ## Coordinated repository alignment
 

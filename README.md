@@ -12,7 +12,7 @@ A digital colleague for Microsoft Teams: follows the agenda, responds when calle
 
 Open [Voice & movement](http://localhost:3000/avatar/test) (**Voce e movimenti**) to choose **Editorial comic · 2D**, **3D character** or **Portrait 2.5D**, with male/female appearances. **Play animation / Avvia animazione** runs a nine-second silent sequence with connected lip shapes, a hand gesture and a return to rest. It needs no meeting, tunnel or voice credit. **Listen to voice** is the separate Inworld playback action and can consume credit. Preview changes apply to meetings only after an explicit save.
 
-The [2D shoulder correction](docs/avatar-editorial-2d.md#shoulder-proportions-correction-20-september-2026) removes the oversized left sleeve in both appearances, with new browser captures and a rendered-silhouette regression.
+The [2D shoulder revision](docs/avatar-editorial-2d.md#shoulder-proportions-correction-20-september-2026) reshapes the shoulder line, narrows the jacket and straightens the sleeves in both appearances. The first symmetric correction was insufficient; the current browser comparison and regression check the volume below the shoulders as well.
 
 The current renderers use discrete waiting actions with pauses and a stable torso. The 2.5D portrait coordinates both original lips and the jaw, bounds O/U narrowing and closes on silence/stop. The 2D illustration has articulated lip contours and an arm resting at the side. The 3D character has relaxed fingers, an oblique palm and revised skin, hair, clothing and glasses. [Styles and controls](docs/avatar-styles.md) · [Before/after, six final recordings and verification](docs/avatar-refinement-2026-09-19.md).
 

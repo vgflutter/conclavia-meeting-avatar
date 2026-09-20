@@ -26,7 +26,7 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
     await expect(svg.locator('[class*="cheekTint"], [class*="friendlyBlush"]')).toHaveCount(0);
     if (await svg.getAttribute("data-gesture") !== "rest") await page.getByRole("button", { name: "Raise / lower hand" }).click();
     await expect(svg).toHaveAttribute("data-hand-progress", "0.0000");
-    // The relaxed sleeve span is about 2.1–2.5 head widths. The former upper
+    // The relaxed sleeve span is about 2–2.5 head widths. The former upper
     // bound rewarded oversized sleeves; local symmetry is checked separately.
     const proportions = await svg.evaluate(node => {
       const head = node.querySelector('[class*="avatarHead"]')!.getBoundingClientRect();
@@ -35,7 +35,7 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
       return head.width / (right.right - left.left);
     });
     expect(proportions).toBeGreaterThan(0.40);
-    expect(proportions).toBeLessThan(0.48);
+    expect(proportions).toBeLessThan(0.50);
     await expect(page.locator("[data-avatar-stage]")).toHaveCSS("background-color", "rgb(242, 239, 230)");
     const clip = await svg.locator("[data-avatar-face-clip]").getAttribute("id");
     await expect(svg.locator(`g[clip-path="url(#${clip})"]`)).toHaveAttribute("clip-path", `url(#${clip})`);
@@ -63,7 +63,9 @@ test("illustrated pair: both previews remain drafts, with lightweight art and sc
           return heights;
         };
         let gap = false;
-        for (const x of [196, 200, 204, 208, 212, 470, 474, 478, 482, 486, 530, 534, 538]) {
+        // Inspect the shoulder attachment. Beyond it, lifting a slimmer arm
+        // exposes the intentional space between the sleeve and the torso.
+        for (const x of [170, 174, 178, 182, 196, 200, 204, 208, 212, 470, 474, 478, 482, 486, 500, 504, 508, 512]) {
           let entered = false;
           for (let y = 448; y <= 570; y++) {
             if (filled(x, y)) entered = true;
