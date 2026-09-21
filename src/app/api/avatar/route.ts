@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { DEFAULT_ASSISTANT_PROFILE, getAssistantProfile } from "@/lib/assistant-profile";
 import { isAvatarVoice } from "@/lib/avatar-voice-catalog";
 import { isAvatarVisualStyle } from "@/lib/avatar-visual-style";
-import { isAvatarAppearance } from '@conclavia/avatar-kit/lib/avatar-catalog';
+import { isAvatarAppearance, isAvatarAppearanceSupported } from '@conclavia/avatar-kit/lib/avatar-catalog';
 import { connectToDatabase } from "@/lib/mongodb";
 import { AssistantProfileModel } from "@/models/AssistantProfile";
 import { MeetingModel } from "@/models/Meeting";
@@ -78,8 +78,20 @@ export async function PATCH(request: Request) {
 
   try {
     await connectToDatabase();
-    await AssistantProfileModel.findOneAndUpdate(
-      { key: "default" },
+    const previous = await AssistantProfileModel.findOne({ key: "default" }).exec();
+    const nextAppearance = isAvatarAppearance(appearance) ? appearance : previous?.appearance ?? DEFAULT_ASSISTANT_PROFILE.appearance;
+    const nextStyle = isAvatarVisualStyle(visualStyle) ? visualStyle : previous?.visualStyle ?? DEFAULT_ASSISTANT_PROFILE.visualStyle;
+    if (!isAvatarAppearanceSupported(nextAppearance, nextStyle)) {
+      return NextResponse.json({ error: "This appearance is not available in the selected visual style" }, { status: 400 });
+    }
+    const updated = await AssistantProfileModel.findOneAndUpdate(
+      // Do not combine an appearance with a style changed concurrently after
+      // the compatibility check. Omitted fields still preserve stored choices.
+      { key: "default", ...(previous ? { appearance: previous.appearance,
+        // Mongoose materializes the editorial default for legacy rows whose
+        // field is absent on disk. Both represent the same stored selection.
+        visualStyle: previous.visualStyle && previous.visualStyle !== "editorial"
+          ? previous.visualStyle : { $in: ["editorial", null] } } : {}) },
       {
         $set: { displayName, role, ...(appearance ? { appearance } : {}), ...(visualStyle !== undefined ? { visualStyle } : {}), personality: { responseStyle, attitude },
           "voice.style": style, ...(speakingRate !== undefined ? { "voice.speakingRate": speakingRate } : {}),
@@ -90,8 +102,9 @@ export async function PATCH(request: Request) {
           "voice.model": DEFAULT_ASSISTANT_PROFILE.voice.model,
           "voice.pronunciationProfile": DEFAULT_ASSISTANT_PROFILE.voice.pronunciationProfile },
       },
-      { upsert: true, runValidators: true, setDefaultsOnInsert: true },
+      { upsert: !previous, new: true, runValidators: true, setDefaultsOnInsert: true },
     ).exec();
+    if (!updated) return NextResponse.json({ error: "Avatar changed; reload before saving" }, { status: 409 });
     await Promise.all([
       MeetingModel.updateMany(
         { status: { $in: ["scheduled", "joining", "waiting_room", "live"] } },

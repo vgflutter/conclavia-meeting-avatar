@@ -1,5 +1,9 @@
 # Editorial avatar 2D
 
+## Shared-kit review, 21 September 2026
+
+True eyelid occlusion, expressive lip corners, F/V contact, progressive fingers and longer attentive holds. Repeated identical SVG writes are skipped; this is not a measured frame-rate claim. [Ten-cycle diary](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/docs/reviews/2026-09-21-editorial.md) · [Integrated results and production assessment](avatar-kit-review-2026-09-21.md).
+
 Latest visual revision: [arm, wrist and tailoring](#arm-wrist-and-tailoring-refinement-20-september-2026). Engineering check: [20 September pre-commit verification](verification-2026-09-20.md). Visual evidence and renderer limits are documented below.
 
 The existing male and female SVG portraits now use one articulated animation rig. Their saved appearance IDs, voice pairing and lightweight fallback role are unchanged. The palette uses muted blue and terracotta tailoring, a restrained hierarchy of contour weights, coherent cloth and hair shading, and a subtle skin gradient; no external raster assets or WebGL are required.

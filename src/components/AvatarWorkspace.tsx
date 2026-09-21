@@ -5,7 +5,7 @@ import { ASSISTANT_VISUAL_STYLES, type AssistantProfileResponse } from "@/types/
 import type { Locale } from "@/i18n/locale";
 import { compatibleAvatarVoice } from "@/lib/avatar-voice-catalog";
 import { avatarVisualStyleLabel } from "@/lib/avatar-visual-style";
-import { AVATAR_APPEARANCES } from '@conclavia/avatar-kit/lib/avatar-catalog';
+import { avatarAppearanceForStyle, avatarAppearancesForStyle, avatarAppearanceGender } from '@conclavia/avatar-kit/lib/avatar-catalog';
 
 function settings(profile: AssistantProfileResponse, voices: { it: string; en: string }) {
   return {
@@ -20,6 +20,7 @@ function settings(profile: AssistantProfileResponse, voices: { it: string; en: s
 type Settings = ReturnType<typeof settings>;
 function compatibleSettings(value: Settings): Settings {
   return { ...value,
+    appearance: avatarAppearanceForStyle(value.appearance, value.visualStyle),
     voiceIt: compatibleAvatarVoice(value.voiceIt, "it", value.appearance),
     voiceEn: compatibleAvatarVoice(value.voiceEn, "en", value.appearance),
   };
@@ -39,6 +40,7 @@ export function AvatarWorkspace({ profile, voices, children }: {
   const [saved, setSaved] = useState(() => settings(profile, voices));
   const [draft, setDraft] = useState(() => compatibleSettings(saved));
   const voiceChoices = useRef<Partial<Record<Settings["appearance"], Pick<Settings, "voiceIt" | "voiceEn">>>>({});
+  const appearanceChoices = useRef<Partial<Record<`${Settings["visualStyle"]}:${"male" | "female"}`, Settings["appearance"]>>>({});
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [status, setStatus] = useState<Workspace["status"]>("idle");
@@ -54,10 +56,19 @@ export function AvatarWorkspace({ profile, voices, children }: {
 
   function update(patch: Partial<Settings>) {
     if (savingRef.current) return;
-    if (patch.appearance && patch.appearance !== draft.appearance) {
+    let next = { ...draft, ...patch };
+    if (patch.visualStyle && patch.visualStyle !== draft.visualStyle) {
+      const gender = avatarAppearanceGender(draft.appearance);
+      appearanceChoices.current[`${draft.visualStyle}:${gender}`] = draft.appearance;
+      next.appearance = avatarAppearanceForStyle(patch.appearance ?? appearanceChoices.current[`${patch.visualStyle}:${gender}`] ?? draft.appearance, patch.visualStyle);
+    }
+    if (next.appearance !== draft.appearance) {
       voiceChoices.current[draft.appearance] = { voiceIt: draft.voiceIt, voiceEn: draft.voiceEn };
-      setDraft(compatibleSettings({ ...draft, ...patch, ...voiceChoices.current[patch.appearance] }));
-    } else setDraft(current => compatibleSettings({ ...current, ...patch }));
+      // A style change keeps both voice choices, including when it needs the
+      // equivalent base identity. Explicit identity choices retain their voices.
+      if (patch.appearance && !patch.visualStyle) next = { ...next, ...voiceChoices.current[next.appearance] };
+    }
+    setDraft(compatibleSettings(next));
     setStatus("idle");
   }
 
@@ -88,7 +99,7 @@ export function AvatarWorkspace({ profile, voices, children }: {
   }
 
   return <Context.Provider value={{ draft, saved, changed, canDiscard, saving, status, update, save,
-    discard: () => { if (!savingRef.current) { setDraft(compatibleSettings(saved)); voiceChoices.current = {}; setStatus("idle"); } },
+    discard: () => { if (!savingRef.current) { setDraft(compatibleSettings(saved)); voiceChoices.current = {}; appearanceChoices.current = {}; setStatus("idle"); } },
   }}>{children}</Context.Provider>;
 }
 
@@ -122,11 +133,14 @@ export function AvatarAppearanceSelect({ locale, disabled = false }: { locale: L
     <label className="label" htmlFor="avatar-appearance">{it ? "Aspetto dell’avatar" : "Avatar appearance"}</label>
     <select id="avatar-appearance" className="input" value={draft.appearance} disabled={disabled || saving}
       onChange={event => update({ appearance: event.target.value as Settings["appearance"] })}>
-      {AVATAR_APPEARANCES.map(avatar => <option key={avatar.id} value={avatar.id}>{avatar.labels[it ? 'it' : 'en']}</option>)}
+      {avatarAppearancesForStyle(draft.visualStyle).map(avatar => <option key={avatar.id} value={avatar.id}>{avatar.labels[it ? 'it' : 'en']}</option>)}
     </select>
     <p className="mt-2 text-xs leading-5 text-slate-500">{it
       ? "Le voci si adattano all’aspetto. Il nome non cambia."
       : "Voice choices match the appearance. The name stays unchanged."}</p>
+    {draft.visualStyle === "portrait_2_5d" && <p className="text-xs leading-5 text-slate-500">{it
+      ? "La serie Studio aggiunge due identità fotografiche, disponibili in questo stile."
+      : "The Studio series adds two photographic identities, available in this style."}</p>}
     </div>
   </div>;
 }

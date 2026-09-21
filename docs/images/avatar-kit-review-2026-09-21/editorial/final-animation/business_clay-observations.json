@@ -1,0 +1,83 @@
+{
+  "scope": "Actual SVG renderer; real-time isolated harness; synthetic React props; no audio or provider",
+  "errors": [],
+  "observations": [
+    {
+      "label": "rest",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "0.0000",
+      "mouth": "0.0000"
+    },
+    {
+      "label": "idle-30s",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "0.0000",
+      "mouth": "0.0000"
+    },
+    {
+      "label": "gesture-mid",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "0.7745",
+      "mouth": "0.0000"
+    },
+    {
+      "label": "raised",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "1.0000",
+      "mouth": "0.0000"
+    },
+    {
+      "label": "a",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "1.0000",
+      "mouth": "0.9199"
+    },
+    {
+      "label": "e",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "1.0000",
+      "mouth": "0.4599"
+    },
+    {
+      "label": "o",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "1.0000",
+      "mouth": "0.7635"
+    },
+    {
+      "label": "u",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "1.0000",
+      "mouth": "0.5059"
+    },
+    {
+      "label": "fv",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "1.0000",
+      "mouth": "0.2024"
+    },
+    {
+      "label": "reversal",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "0.9159",
+      "mouth": "0.0000"
+    },
+    {
+      "label": "return",
+      "body": "translate(0 0)",
+      "head": "translate(0 0) rotate(0 341 405)",
+      "hand": "0.0000",
+      "mouth": "0.0000"
+    }
+  ]
+}

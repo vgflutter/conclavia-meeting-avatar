@@ -1,0 +1,74 @@
+[
+  {
+    "name": "business_clay-a.png",
+    "before": "f32c72482fdef9f5fc90da4d4a15d27149de65ba4d24236e7212468721357f17",
+    "after": "f32c72482fdef9f5fc90da4d4a15d27149de65ba4d24236e7212468721357f17",
+    "identical": true
+  },
+  {
+    "name": "business_clay-e.png",
+    "before": "a09ee79993aba24026a4cb56e01ff66fed05a3841eb9753a138b5a18e8fa130c",
+    "after": "a09ee79993aba24026a4cb56e01ff66fed05a3841eb9753a138b5a18e8fa130c",
+    "identical": true
+  },
+  {
+    "name": "business_clay-fv.png",
+    "before": "76b17923083265aa93ca734b496172096aee489e9cee2cf562c4b168b423626b",
+    "after": "76b17923083265aa93ca734b496172096aee489e9cee2cf562c4b168b423626b",
+    "identical": true
+  },
+  {
+    "name": "business_clay-o.png",
+    "before": "b390c671aab0453eb3066de18b46d4f1149c8427db45dc34a8aaa1fa7e597b6b",
+    "after": "b390c671aab0453eb3066de18b46d4f1149c8427db45dc34a8aaa1fa7e597b6b",
+    "identical": true
+  },
+  {
+    "name": "business_clay-rest.png",
+    "before": "36a2dd7b03c5e524670291eb4c453f9ddfb0befb7a63938c1a047ba02382d159",
+    "after": "36a2dd7b03c5e524670291eb4c453f9ddfb0befb7a63938c1a047ba02382d159",
+    "identical": true
+  },
+  {
+    "name": "business_clay-u.png",
+    "before": "890a31d34cafe361f8f84ac33bd704493de83e5f29fea1f60020ddfc34de1ac6",
+    "after": "890a31d34cafe361f8f84ac33bd704493de83e5f29fea1f60020ddfc34de1ac6",
+    "identical": true
+  },
+  {
+    "name": "business_clay_female-a.png",
+    "before": "67a7e508a3609aacace77b8e4243dea5424b1970329052c374713194c49cb875",
+    "after": "67a7e508a3609aacace77b8e4243dea5424b1970329052c374713194c49cb875",
+    "identical": true
+  },
+  {
+    "name": "business_clay_female-e.png",
+    "before": "12bb0aebabce3f33f4f9562725d703b6a8c6d0ba3d22221c689c9104f54abbf0",
+    "after": "12bb0aebabce3f33f4f9562725d703b6a8c6d0ba3d22221c689c9104f54abbf0",
+    "identical": true
+  },
+  {
+    "name": "business_clay_female-fv.png",
+    "before": "4b0b76c8623fb385ddaabd551aea249f59a67c76b3c8c4f5815041c1425661d3",
+    "after": "4b0b76c8623fb385ddaabd551aea249f59a67c76b3c8c4f5815041c1425661d3",
+    "identical": true
+  },
+  {
+    "name": "business_clay_female-o.png",
+    "before": "d1186aaff156f108e0e88cc34d52df33b5591f0ecb8a8d3d751b45bddfedd7ca",
+    "after": "d1186aaff156f108e0e88cc34d52df33b5591f0ecb8a8d3d751b45bddfedd7ca",
+    "identical": true
+  },
+  {
+    "name": "business_clay_female-rest.png",
+    "before": "70981aa0d9dd5eb1d878c18fbb4b24dd12d273badcf7a7bd84405b2b992ae545",
+    "after": "70981aa0d9dd5eb1d878c18fbb4b24dd12d273badcf7a7bd84405b2b992ae545",
+    "identical": true
+  },
+  {
+    "name": "business_clay_female-u.png",
+    "before": "11fadc42267dbe6d00aa50f08a82fef64bb5eed66683ab25b2034a86e583a2b7",
+    "after": "11fadc42267dbe6d00aa50f08a82fef64bb5eed66683ab25b2034a86e583a2b7",
+    "identical": true
+  }
+]

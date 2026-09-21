@@ -1,0 +1,98 @@
+[
+  {
+    "appearance": "business_clay",
+    "label": "rest",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "a",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.9192",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "e",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.4603",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "o",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.7633",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "u",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.5061",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "fv",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.1750",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "rest",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "a",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.9192",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "e",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.4603",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "o",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.7633",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "u",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.5061",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "fv",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.1750",
+    "hand": "0.0000"
+  }
+]

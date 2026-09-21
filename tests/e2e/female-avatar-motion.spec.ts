@@ -67,8 +67,8 @@ test("female rig: breathing, head, gaze, blink and live reduced-motion changes",
   const avatar = page.locator('svg[data-appearance="business_clay_female"]');
   await page.clock.runFor(32);
   await expect(avatar).toHaveAttribute("data-animation-ready", "true");
-  const parts = ['body', 'head', 'pupils', 'eyes', 'collar'];
-  const transforms = async () => Promise.all(parts.map(part => avatar.locator(`[data-rig="${part}"]`).getAttribute("transform")));
+  const parts = ['body', 'head', 'pupils', 'eye-lids', 'collar'];
+  const transforms = async () => Promise.all(parts.map(part => avatar.locator(`[data-rig="${part}"]`).getAttribute(part === "eye-lids" ? "d" : "transform")));
   const initial = await transforms();
   await page.clock.runFor(4000);
   const idle = await transforms();
@@ -77,7 +77,7 @@ test("female rig: breathing, head, gaze, blink and live reduced-motion changes",
   expect(idle[2]).not.toBe(initial[2]);
   expect(idle[4]).not.toBe(initial[4]);
   const eyeFrames = new Set<string | null>();
-  for (let i = 0; i < 180; i++) { await page.clock.runFor(16); eyeFrames.add(await avatar.locator('[data-rig="eyes"]').getAttribute("transform")); }
+  for (let i = 0; i < 180; i++) { await page.clock.runFor(16); eyeFrames.add(await avatar.locator('[data-rig="eye-lids"]').getAttribute("d")); }
   expect(eyeFrames.size).toBeGreaterThan(2);
   await page.emulateMedia({ reducedMotion: "reduce" }); await page.clock.runFor(50);
   const reduced = await transforms(); await page.clock.runFor(2000);

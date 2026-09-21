@@ -1,0 +1,8 @@
+{
+  "src/lib/rigged-avatar.ts": "59c591caa8fdb6f51ed1fe7b15d857f89c0a31cb19ad7347d8ee2d0d3492e630",
+  "src/lib/rigged-avatar-motion.ts": "4a2657ed22c47b6f307d41c332039e96b10ca30585cd67c275faf4f83a650274",
+  "src/lib/rigged-avatar-materials.ts": "6487b2fdb3e1d79401228788d2424785183223c70ae86fe6ca3690fbd5a509b2",
+  "src/lib/rigged-avatar-stage.ts": "d7bc465dde30a47c8684d5c822c90dd1c984658dec189bc232e1b17c4d503386",
+  "src/components/StylizedAvatar3D.tsx": "6233641c1c25d0f254903b3e64553190a40f7c74bbc1cad7fcc91b73642d061a",
+  "src/components/StylizedAvatar3D.module.css": "27ce1feb2162dcb97b8305cba32b51e7b434e6ccb356ef2f0fa1fae9b2031602"
+}

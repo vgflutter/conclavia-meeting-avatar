@@ -1,0 +1,162 @@
+[
+  {
+    "appearance": "business_clay",
+    "label": "rest",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "eyes-lead",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "head-follow",
+    "body": "translate(0 0)",
+    "head": "translate(0.6306837322583543 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "pause",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "second-look",
+    "body": "translate(0 0)",
+    "head": "translate(-0.3685180716510519 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "settle",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "down-look-lead",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "nod",
+    "body": "translate(0 0)",
+    "head": "translate(0 0.8) rotate(0.4 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "return",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "long-pause",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "rest",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "eyes-lead",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "head-follow",
+    "body": "translate(0 0)",
+    "head": "translate(0.6306837322583543 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "pause",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "second-look",
+    "body": "translate(0 0)",
+    "head": "translate(-0.3685180716510519 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "settle",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "down-look-lead",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "nod",
+    "body": "translate(0 0)",
+    "head": "translate(0 0.8) rotate(0.4 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "return",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "long-pause",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  }
+]

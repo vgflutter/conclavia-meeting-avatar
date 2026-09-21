@@ -1,0 +1,12 @@
+{
+  "cycle": "c02",
+  "source": {
+    "rigged-avatar.ts": "17e0a0db3f0f1ee36b551d34ae4147abd5f024eaa36c4f04b864cbb4058e83b6",
+    "rigged-avatar-materials.ts": "de195b508cdb998a492d3a2a57f31cbcea7aa3d9a23f485f43c7503a42c8de7f",
+    "rigged-avatar-stage.ts": "dfac5a3ba169fc855ed589bce495b9baba570852859af4c920424ac88708f410",
+    "rigged-avatar-motion.ts": "974072929353c388502a9f18b793dd8b0c0c7f3ac84d308b859e63c00b3442c0"
+  },
+  "renderer": "canonical kit",
+  "audio": "none",
+  "database": "none"
+}

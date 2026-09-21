@@ -10,7 +10,9 @@ A digital colleague for Microsoft Teams: follows the agenda, responds when calle
 
 ## Avatar appearance and movement
 
-Open [Voice & movement](http://localhost:3000/avatar/test) (**Voce e movimenti**) to choose **Editorial comic · 2D**, **3D character** or **Portrait 2.5D**, with male/female appearances. **Play animation / Avvia animazione** runs a nine-second silent sequence with connected lip shapes, a hand gesture and a return to rest. It needs no meeting, tunnel or voice credit. **Listen to voice** is the separate Inworld playback action and can consume credit. Preview changes apply to meetings only after an explicit save.
+The [21 September kit review](docs/avatar-kit-review-2026-09-21.md) records **ten review cycles for each of the three avatar families**, new photographic Studio portraits, and the remaining production gates. The shared kit is used by Meeting and Onboarding.
+
+Open [Voice & movement](http://localhost:3000/avatar/test) (**Voce e movimenti**) to choose **Editorial comic · 2D**, **3D character** or **Portrait 2.5D**, with male/female appearances. Portrait 2.5D also offers two photographic **Studio** identities. **Play animation / Avvia animazione** runs a nine-second silent sequence with connected lip shapes, a hand gesture and a return to rest. It needs no meeting, tunnel or voice credit. **Listen to voice** is the separate Inworld playback action and can consume credit. Preview changes apply to meetings only after an explicit save.
 
 The [latest 2D refinement](docs/avatar-editorial-2d.md#arm-wrist-and-tailoring-refinement-20-september-2026) lowers the raised elbow, tapers the sleeve towards the cuff and aligns the palm with the forearm throughout the gesture. Redrawn fingers, softer jacket shading and revised lapels complement the earlier shoulder correction. The comparison and recordings show both appearances through the complete motion.
 
@@ -48,7 +50,7 @@ For GUI-only work, without a tunnel: `npm run dev:system-ca`. Real voice preview
 - **Meetings:** compact overview with five recent meetings, clickable history rows, search/filters and linked series. Full summaries stay in the details.
 - **Memory:** summaries, decisions, actions and open questions first; transcripts remain optional.
 - **Context:** general background + series notes + meeting-specific notes, with explicit saves.
-- **Avatar:** three visual styles, two appearances, shared draft settings, independent invocation name and compatible Italian/English voices. Silent animation and voice playback are separate controls; saving is explicit. [2D illustration](docs/avatar-editorial-2d.md) · [3D rig](docs/avatar-rigged-3d.md) · [2.5D portrait](docs/avatar-portrait-2-5d.md).
+- **Avatar:** three visual styles, four identities (eight supported combinations), shared draft settings, independent invocation name and compatible Italian/English voices. Silent animation and voice playback are separate controls; saving is explicit. [2D illustration](docs/avatar-editorial-2d.md) · [3D rig](docs/avatar-rigged-3d.md) · [2.5D portrait](docs/avatar-portrait-2-5d.md).
 - **Interaction:** answers, memory, agenda and summaries. Spoken turns require the configured name; “Sì, Riccardo” releases a prepared contribution, while “Riccardo, dimmi” can recover the recent point. Freely worded invitations use an OpenAI fallback when AI is enabled; the hand-raised card also has **Give the floor**. [Turn handling and verification](docs/conversation-verification-2026-09-14.md).
 - **Hand raise:** a fixed 2.5-second window batches captions for background checks, separate from named replies and media delivery. New captions stay queued; obsolete results are rechecked before raising the hand. It stays silent until granted the floor. [Limits and verification](docs/hand-raise-diagnostics-2026-09-14.md).
 - **Matching names:** current participant tracking, including initial presence and departures. A detected namesake pauses voice commands with a GUI warning; explicit page controls remain available. [Details and limits](docs/guide.md#participant-presence-and-matching-names).
@@ -64,6 +66,8 @@ For a company pilot, replace the temporary connection with stable HTTPS and an a
 [Local tunnel, recovery and troubleshooting](docs/guide.md#public-connection-for-a-local-teams-test) · [Architecture](docs/guide.md#runtime-architecture) · [Company deployment](docs/guide.md#production-deployment)
 
 ## Status and known limits
+
+The [current production assessment](docs/avatar-kit-review-2026-09-21.md) separates an internal pilot from a public release and from human-video realism. Next is updated to 16.3.5; the catalog, asset delivery and renderer recovery have new regression coverage. The rejected ceramic 3D candidate is not a selectable application style.
 
 The automated checks cover application behavior, including named contextual turns, permission boundaries, lifecycle recovery and isolated audio fixtures. **They do not certify received Teams audio/video.**
 
@@ -98,6 +102,7 @@ Start a temporary MongoDB on port **27018** before these database checks. Tests 
 ## More documentation
 
 - [Extended guide: setup, architecture, voices, screenshots and deployment](docs/guide.md)
+- [21 September kit review, new portraits and production assessment](docs/avatar-kit-review-2026-09-21.md)
 - [Avatar styles, current controls and visual evidence](docs/avatar-styles.md)
 - [Latest avatar refinement and visual evidence](docs/avatar-refinement-2026-09-19.md)
 - [20 September pre-commit verification](docs/verification-2026-09-20.md)

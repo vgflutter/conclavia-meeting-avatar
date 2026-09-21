@@ -10,20 +10,21 @@ const { values } = parseArgs({ options: {
   url: { type: 'string', default: 'http://127.0.0.1:3102' },
   output: { type: 'string', default: '/tmp/conclavia-articulation' },
   styles: { type: 'string', default: 'editorial,stylized_3d,portrait_2_5d' },
-  appearances: { type: 'string', default: 'business_clay,business_clay_female' },
+  appearances: { type: 'string', default: 'business_clay,business_clay_female,portrait_natural_male,portrait_natural_female' },
 } });
 const origin = new URL(values.url);
 assert(['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname), 'Use a local review server');
 const styles = values.styles.split(',');
 const appearances = values.appearances.split(',');
 assert(styles.every(s => ['editorial', 'stylized_3d', 'portrait_2_5d'].includes(s)));
-assert(appearances.every(s => ['business_clay', 'business_clay_female'].includes(s)));
+assert(appearances.every(s => ['business_clay', 'business_clay_female', 'portrait_natural_male', 'portrait_natural_female'].includes(s)));
 const output = resolve(values.output);
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome' });
 const reports = [];
 try {
   for (const style of styles) for (const appearance of appearances) {
+    if (appearance.startsWith('portrait_natural_') && style !== 'portrait_2_5d') continue;
     const folder = resolve(output, `${style}-${appearance}`);
     await mkdir(folder, { recursive: true });
     const context = await browser.newContext({ viewport: { width: 720, height: 720 },

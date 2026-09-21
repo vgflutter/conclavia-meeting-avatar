@@ -73,7 +73,7 @@ See the [dashboard verification report](dashboard-verification-2026-09-09.md) fo
 
 ### Avatar voice and movement
 
-At `/avatar/test`, choose the editorial 2D, 3D character or 2.5D portrait, then male/female appearance. **Play animation / Avvia animazione** runs waiting, a hand gesture, connected mouth shapes and return to rest without audio, credits or saving. **Listen to voice / Ascolta la voce** exercises actual Inworld playback and the audio-driven mouth. Stop closes the mouth immediately. Both pages share the draft; save explicitly to apply it to meetings. Advanced model comparisons affect playback only. This local preview does not require Cloudflare or an Attendee participant.
+At `/avatar/test`, choose the editorial 2D, 3D character or 2.5D portrait, then male/female appearance. The portrait style also includes two photographic Studio identities. See the [21 September kit assessment](avatar-kit-review-2026-09-21.md) for the eight supported combinations, verification and production limits. **Play animation / Avvia animazione** runs waiting, a hand gesture, connected mouth shapes and return to rest without audio, credits or saving. **Listen to voice / Ascolta la voce** exercises actual Inworld playback and the audio-driven mouth. Stop closes the mouth immediately. Both pages share the draft; save explicitly to apply it to meetings. Advanced model comparisons affect playback only. This local preview does not require Cloudflare or an Attendee participant.
 
 Start in [Identity & behaviour](images/avatar-settings-en.png) to choose the name and appearance, then move to the studio below. The provider is explicitly labelled **Inworld**, and optional speed/model controls stay under **Advanced settings**.
 

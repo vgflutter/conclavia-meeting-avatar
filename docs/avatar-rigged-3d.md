@@ -1,5 +1,9 @@
 # Animated 3D characters
 
+## Shared-kit review, 21 September 2026
+
+Eye-level camera, phoneme-specific jaw envelopes, relaxed fingers and local shoulder/elbow settling. The ceramic material candidate is excluded from the application catalog; tooth, gum and hair geometry still limit realism. [Ten-cycle diary](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/docs/reviews/2026-09-21-3d.md) · [Integrated results and production assessment](avatar-kit-review-2026-09-21.md).
+
 Latest engineering check: [20 September pre-commit verification](verification-2026-09-20.md). Visual evidence and renderer limits are documented below.
 
 Latest visual revision: [materials, articulation and integrated review](avatar-refinement-2026-09-19.md). The earlier [stable torso and separate waiting actions](avatar-presence-review-2026-09-19.md) remain in place.

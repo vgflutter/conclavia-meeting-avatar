@@ -1,8 +1,10 @@
 # Avatar styles
 
-Latest revision: [coordinated lips, illustration and 3D surface/gesture review](avatar-refinement-2026-09-19.md). This preserves the [fixed torso, natural arm rest and separate waiting actions](avatar-presence-review-2026-09-19.md) and addresses the subsequent rejection of the lower-lip hinge and artificial appearance.
+Latest assessment: [21 September shared-kit review](avatar-kit-review-2026-09-21.md), including two photographic Studio identities, ten cycles per family, browser checks and production limits.
 
-At `/avatar/test` (**Voce e movimenti / Voice & movement**), choose a style and a male or female appearance. **Avvia animazione / Play animation** runs the same nine-second silent sequence for all three styles: waiting, raising the hand, sample lip movements, lowering the hand and returning to rest. Stop it at any time. It makes no speech-provider calls and consumes no voice credit. **Ascolta la voce / Listen to voice** uses Inworld and takes over from the silent sequence.
+Earlier revision: [coordinated lips, illustration and 3D surface/gesture review](avatar-refinement-2026-09-19.md). This preserves the [fixed torso, natural arm rest and separate waiting actions](avatar-presence-review-2026-09-19.md) and addresses the subsequent rejection of the lower-lip hinge and artificial appearance.
+
+At `/avatar/test` (**Voce e movimenti / Voice & movement**), choose a style and a male or female appearance. The portrait style includes the two original and two photographic Studio identities; the other styles offer their two existing identities. Unavailable pairs cannot be saved. **Avvia animazione / Play animation** runs the same nine-second silent sequence for all three styles: waiting, raising the hand, sample lip movements, lowering the hand and returning to rest. Stop it at any time. It makes no speech-provider calls and consumes no voice credit. **Ascolta la voce / Listen to voice** uses Inworld and takes over from the silent sequence.
 
 | Style | Current treatment | Implementation and visual evidence |
 | --- | --- | --- |
@@ -48,6 +50,6 @@ These are actual browser captures of the standalone production build, with tempo
 | [Male motion](images/editorial-anatomy/business_clay-motion.webm) · [Female motion](images/editorial-anatomy/business_clay_female-motion.webm) | [Male motion](images/avatar-refinement/stylized_3d-business_clay.webm) · [Female motion](images/avatar-refinement/stylized_3d-business_clay_female.webm) | [Male motion](images/avatar-refinement/portrait_2_5d-business_clay.webm) · [Female motion](images/avatar-refinement/portrait_2_5d-business_clay_female.webm) |
 | [Mobile](images/avatar-styles/editorial-mobile-it.png) | [Mobile](images/avatar-styles/stylized_3d-mobile-it.png) | [Mobile](images/avatar-styles/portrait_2_5d-mobile-it.png) |
 
-## Separate dependency follow-up
+## Historical dependency findings
 
-The installation audit on 15 September 2026 reported existing findings in Next.js 16.3.0, sharp 0.35.3 and js-yaml 4.3.1. Those versions were already present before the avatar changes; Three.js and its types were not flagged by that audit. No unrelated framework upgrade is part of this design change.
+The installation audit on 15 September 2026 reported existing findings in Next.js 16.3.0, sharp 0.35.3 and js-yaml 4.3.1. Those versions were already present before the avatar changes; Three.js and its types were not flagged by that audit. The 21 September review subsequently upgraded Next to 16.3.5 and updated js-yaml; see the current review for final audit results.

@@ -2,6 +2,14 @@ import { defineConfig, devices } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 
 // Browser tests and lifecycle checks share an isolated database, never the user's meeting history.
+const testMongo = "mongodb://127.0.0.1:27018";
+if (process.env.MONGODB_URI && process.env.MONGODB_URI !== testMongo) {
+  throw new Error("Avatar regressions require the temporary MongoDB at 127.0.0.1:27018");
+}
+if (process.env.MONGODB_DB_NAME && !process.env.MONGODB_DB_NAME.startsWith("conclavia_e2e_")) {
+  throw new Error("Avatar regressions require a conclavia_e2e_* database");
+}
+process.env.MONGODB_URI = testMongo;
 process.env.MONGODB_DB_NAME ||= `conclavia_e2e_${randomUUID().replaceAll("-", "")}`;
 process.env.MEETING_BOT_PROVIDER = "preview";
 process.env.MEETING_AI_ENABLED = "false";

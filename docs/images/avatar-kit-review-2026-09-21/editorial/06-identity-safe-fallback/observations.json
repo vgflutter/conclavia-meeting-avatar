@@ -1,0 +1,50 @@
+[
+  {
+    "appearance": "portrait_natural_male",
+    "label": "rest",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "portrait_natural_male",
+    "label": "raised",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "1.0000"
+  },
+  {
+    "appearance": "portrait_natural_male",
+    "label": "a",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.9192",
+    "hand": "1.0000"
+  },
+  {
+    "appearance": "portrait_natural_female",
+    "label": "rest",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "portrait_natural_female",
+    "label": "raised",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "1.0000"
+  },
+  {
+    "appearance": "portrait_natural_female",
+    "label": "a",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.9192",
+    "hand": "1.0000"
+  }
+]

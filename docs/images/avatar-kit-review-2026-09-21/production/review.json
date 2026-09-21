@@ -1,0 +1,66 @@
+[
+  {
+    "style": "editorial",
+    "appearance": "business_clay",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "folder": "editorial-business_clay"
+  },
+  {
+    "style": "editorial",
+    "appearance": "business_clay_female",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "folder": "editorial-business_clay_female"
+  },
+  {
+    "style": "stylized_3d",
+    "appearance": "business_clay",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "folder": "stylized_3d-business_clay"
+  },
+  {
+    "style": "stylized_3d",
+    "appearance": "business_clay_female",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "folder": "stylized_3d-business_clay_female"
+  },
+  {
+    "style": "portrait_2_5d",
+    "appearance": "business_clay",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "folder": "portrait_2_5d-business_clay"
+  },
+  {
+    "style": "portrait_2_5d",
+    "appearance": "business_clay_female",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "folder": "portrait_2_5d-business_clay_female"
+  },
+  {
+    "style": "portrait_2_5d",
+    "appearance": "portrait_natural_male",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "folder": "portrait_2_5d-portrait_natural_male"
+  },
+  {
+    "style": "portrait_2_5d",
+    "appearance": "portrait_natural_female",
+    "errors": [],
+    "writes": [],
+    "stopped": "idle",
+    "folder": "portrait_2_5d-portrait_natural_female"
+  }
+]

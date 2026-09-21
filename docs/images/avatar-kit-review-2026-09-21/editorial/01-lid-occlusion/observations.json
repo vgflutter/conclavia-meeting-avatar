@@ -1,0 +1,82 @@
+[
+  {
+    "appearance": "business_clay",
+    "label": "rest",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "blink-start",
+    "body": "translate(0 0)",
+    "head": "translate(0.15155481387327432 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "blink-half",
+    "body": "translate(0 0)",
+    "head": "translate(0.06965047995224732 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "blink-closed",
+    "body": "translate(0 0)",
+    "head": "translate(0.017724250914570094 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay",
+    "label": "blink-opening",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "rest",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "blink-start",
+    "body": "translate(0 0)",
+    "head": "translate(0.15155481387327432 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "blink-half",
+    "body": "translate(0 0)",
+    "head": "translate(0.06965047995224732 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "blink-closed",
+    "body": "translate(0 0)",
+    "head": "translate(0.017724250914570094 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  },
+  {
+    "appearance": "business_clay_female",
+    "label": "blink-opening",
+    "body": "translate(0 0)",
+    "head": "translate(0 0) rotate(0 341 405)",
+    "mouth": "0.0000",
+    "hand": "0.0000"
+  }
+]

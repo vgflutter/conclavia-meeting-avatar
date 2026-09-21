@@ -1,5 +1,9 @@
 # Animated portrait 2.5D
 
+## Shared-kit review, 21 September 2026
+
+Two photographic Studio identities with dedicated face, eyelid and transparent-arm atlases. Broader jaw deformation, F/V contact and identity-triggered recovery after failed assets. Mouth and hand remain a texture rig, not volumetric facial animation. [Ten-cycle diary](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/docs/reviews/2026-09-21-portrait.md) · [Integrated results and production assessment](avatar-kit-review-2026-09-21.md).
+
 Latest engineering check: [20 September pre-commit verification](verification-2026-09-20.md). Visual evidence and renderer limits are documented below.
 
 The `portrait_2_5d` style animates the existing male and female portraits with a texture rig: coordinated lips/jaw, registered eyelids, a separate transparent arm and brief listening adjustments. It retains the original face and clothing throughout a gesture. It does not reconstruct a 3D person or generate talking-head video.
