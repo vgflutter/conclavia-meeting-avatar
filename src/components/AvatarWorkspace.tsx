@@ -120,7 +120,10 @@ export function AvatarAppearanceSelect({ locale, disabled = false }: { locale: L
         onChange={event => update({ visualStyle: event.target.value as Settings["visualStyle"] })}>
         {ASSISTANT_VISUAL_STYLES.map(style => <option key={style} value={style}>{avatarVisualStyleLabel(style, it)}</option>)}
       </select>
-      <p id="avatar-style-help" className="mt-2 text-xs leading-5 text-slate-500">{draft.visualStyle === "portrait_2_5d"
+      <p id="avatar-style-help" className="mt-2 text-xs leading-5 text-slate-500">{draft.visualStyle === "photoreal_host"
+        ? it ? "Il volto della homepage, con movimenti naturali e labiale dinamico sperimentale. Il benvenuto registrato e le risposte libere hanno una resa diversa. La richiesta di parola appare come indicatore."
+          : "The homepage face, with natural movement and experimental dynamic lip sync. The recorded welcome and free responses differ in visual quality. A speaking request appears as an indicator."
+        : draft.visualStyle === "portrait_2_5d"
         ? it ? "Brevi movimenti della testa e assestamenti della spalla, separati da pause. Il labiale segue l’audio."
           : "Brief head adjustments and a shoulder settle, separated by pauses, with simplified audio-driven lip sync."
         : draft.visualStyle === "stylized_3d"

@@ -21,13 +21,13 @@ export function AvatarSettingsForm() {
     <form onSubmit={event => { event.preventDefault(); void save(); }} className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
       <section className="relative h-64 overflow-hidden rounded-2xl bg-[#f2efe6] sm:h-auto sm:aspect-[4/5] sm:max-h-[36rem] lg:sticky lg:top-24" data-avatar-stage={draft.visualStyle}>
         <div className="absolute inset-x-[8%] bottom-0 top-4">
-          <BusinessAvatar appearance={appearance} visualStyle={draft.visualStyle} ariaLabel={isItalian ? "Avatar del collega digitale in abito business" : "Business-style digital colleague avatar"} />
+          <BusinessAvatar appearance={appearance} visualStyle={draft.visualStyle} welcomeLanguage={locale} ariaLabel={isItalian ? "Avatar del collega digitale" : "Digital colleague avatar"} />
         </div>
         <div className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#d3dfd5] px-5 py-4 text-[11px] font-bold uppercase tracking-[0.17em] text-[#526a60]">
           <span>{isItalian ? "Anteprima avatar" : "Avatar preview"}</span>
           <span className="text-[#295c43]">{avatarVisualStyleLabel(draft.visualStyle, isItalian)}</span>
         </div>
-        <div className="absolute bottom-5 left-5 max-w-[calc(100%-2.5rem)] rounded-r-xl border-l-4 border-[#578473] bg-white/95 px-4 py-3">
+        <div className={`absolute left-5 max-w-[calc(100%-2.5rem)] rounded-r-xl border-l-4 border-[#578473] bg-white/95 px-4 py-3 ${draft.visualStyle === 'photoreal_host' ? 'bottom-16' : 'bottom-5'}`}>
           <strong className="block truncate text-sm font-semibold text-[#295c43]">{displayName || "Conclavia"}</strong>
           <span className="mt-1 block truncate text-sm text-[#526a60]">{role || (isItalian ? "Collega digitale" : "Digital colleague")}</span>
         </div>

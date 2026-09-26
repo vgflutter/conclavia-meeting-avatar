@@ -67,6 +67,8 @@ For a company pilot, replace the temporary connection with stable HTTPS and an a
 
 ## Status and known limits
 
+The [25 September Conclavia/Umatt deployment plan](https://github.com/vgflutter/conclavia-onboarding-avatar/blob/main/docs/production.md) covers domains, shared-kit releases, Mongo connectivity, backups and pilot acceptance. A custom domain does **not** inherit the development tunnel's management restrictions: authenticate management pages and APIs at the gateway before publishing Meeting. The workspace remains single-tenant. The subsequent deployment task activated release `20260925194514674-b664d1` at https://meeting.conclavia.me and https://onboarding.conclavia.me with gateway authentication and the existing Mongo reached through a persistent SSH tunnel. AI and real bots remain disabled for this initial smoke test.
+
 The [current production assessment](docs/avatar-kit-review-2026-09-21.md) separates an internal pilot from a public release and from human-video realism. Next is updated to 16.3.5; the catalog, asset delivery and renderer recovery have new regression coverage. The rejected ceramic 3D candidate is not a selectable application style.
 
 The automated checks cover application behavior, including named contextual turns, permission boundaries, lifecycle recovery and isolated audio fixtures. **They do not certify received Teams audio/video.**
@@ -130,3 +132,11 @@ npm --prefix conclavia-meeting-avatar ci
 With both consumer repositories installed, `npm run check:avatar-kit` verifies the shared directory, compatibility exports and absence of duplicated assets. Follow the [coordinated update instructions](https://github.com/vgflutter/conclavia-avatar-kit#aggiornamento-coordinato); preserve each application's local environment and Mongo data. Settings remain application-specific, and a deployed application needs a rebuild to receive kit changes.
 
 The standalone output includes shared GLBs. Docker builds require `--build-context avatar-kit=../conclavia-avatar-kit`; see [deployment](docs/guide.md#production-deployment). [Workspace alignment and verification](https://github.com/vgflutter/conclavia-onboarding-avatar/blob/main/docs/workspace-alignment.md).
+
+The sibling **conclavia-deploy** project automates image builds for both applications, verified SSH transfers, the authenticated HTTPS gateway, health checks and rollback on `64.177.50.65`. See [conclavia-deploy](https://github.com/vgflutter/conclavia-deploy/blob/main/README.md). Its persistent Mongo tunnel reaches the existing Unmatt database without exposing Mongo publicly. The initial deployment configuration uses preview mode; enable real bots only after draining the local Meeting instance and validating the production callbacks.
+
+## Volto fotografico condiviso
+
+Lo stile **Conclavia · Fotorealistico (beta)** usa il personaggio della homepage, con asset e renderer in `conclavia-avatar-kit`. Gli studi lo mostrano come scelta esplicita; nessun profilo reale viene migrato. Il Play nell’anteprima riproduce un benvenuto preregistrato IT/EN. Le risposte arbitrarie usano un labiale dinamico sperimentale: la qualità non è equivalente al video preregistrato e richiede accettazione audiovisiva prima dell’uso operativo. [Modalità, limiti e authoring](https://github.com/vgflutter/conclavia-avatar-kit/blob/main/docs/host/integration.md).
+
+I sei media vengono serviti da `/avatars/host-v1/[asset]`, con allowlist, richieste Range, HEAD ed ETag. Il tracing standalone include gli asset del kit; eseguire `npm run check:avatar-kit` prima delle build coordinate.

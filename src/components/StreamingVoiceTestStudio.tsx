@@ -97,7 +97,7 @@ export function StreamingVoiceTestStudio({ locale, model: initialModel, configur
           </div>
         <div className="mx-auto aspect-square max-h-[280px] sm:max-h-[440px]">
           <div className={`h-full w-full ${busy ? "max-lg:fixed max-lg:right-3 max-lg:top-28 max-lg:z-40 max-lg:h-36 max-lg:w-32 max-lg:rounded-xl max-lg:bg-[#f2efe6] max-lg:shadow-xl" : ""}`} data-testid="speech-preview">
-          <BusinessAvatar appearance={draft.appearance} visualStyle={draft.visualStyle} viseme={previewFrame?.viseme ?? frame.viseme} voiceLevel={previewFrame?.level ?? frame.level} mood={mood} gesture={previewFrame?.gesture ?? gesture}
+          <BusinessAvatar language={locale} appearance={draft.appearance} visualStyle={draft.visualStyle} viseme={previewFrame?.viseme ?? frame.viseme} voiceLevel={previewFrame?.level ?? frame.level} mood={mood} gesture={previewFrame?.gesture ?? gesture}
             ariaLabel={it ? "Avatar del collega digitale" : "Digital colleague avatar"} />
           </div>
         </div>

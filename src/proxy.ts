@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { HOST_ASSET_ROOT, HOST_FILES } from '@conclavia/avatar-kit/lib/photoreal-host';
 
 const PUBLIC_MEETING_PATHS = [
   "/meeting-room/",
@@ -24,6 +25,7 @@ export function proxy(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname;
+  if (HOST_FILES.some(file => pathname === `${HOST_ASSET_ROOT}/${file}`)) return NextResponse.next();
   if (/^\/avatars\/rigged-v1\/(?:male|female)\.glb$/u.test(pathname)) {
     return NextResponse.next();
   }

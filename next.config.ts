@@ -16,7 +16,7 @@ function publicDevelopmentHost(): string[] {
 const nextConfig: NextConfig = {
   transpilePackages: ['@conclavia/avatar-kit'],
   outputFileTracingRoot: path.resolve(process.cwd(), '..'),
-  outputFileTracingIncludes: { '/avatars/rigged-v1/*': ['./node_modules/@conclavia/avatar-kit/assets/**/*', '../conclavia-avatar-kit/assets/**/*'] },
+  outputFileTracingIncludes: { '/avatars/host-v1/*': ['./node_modules/@conclavia/avatar-kit/assets/host-v1/*', '../conclavia-avatar-kit/assets/host-v1/*'], '/avatars/rigged-v1/*': ['./node_modules/@conclavia/avatar-kit/assets/**/*', '../conclavia-avatar-kit/assets/**/*'] },
   distDir: process.env.NEXT_DIST_DIR || ".next",
   output: "standalone",
   allowedDevOrigins: ["127.0.0.1", ...publicDevelopmentHost()],

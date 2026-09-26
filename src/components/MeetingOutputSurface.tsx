@@ -355,6 +355,7 @@ export function MeetingOutputSurface({
       </div>
       <div className={styles.avatarWrap}>
         <BusinessAvatar
+          language={locale}
           appearance={participantAppearance}
           visualStyle={participantVisualStyle}
           viseme={viseme}
