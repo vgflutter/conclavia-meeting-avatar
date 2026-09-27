@@ -43,7 +43,7 @@ test('shared host: preview, motion, audio-clock phonemes, stop and reversible st
   expect(errors).toEqual([]);
 });
 
-test('shared host: timed quiet bilabials close visible teeth while rest restores the same listening smile', async ({ page }) => {
+test('shared host: live articulation preserves listening eyes/forehead and quiet bilabials close visible teeth', async ({ page }) => {
   await page.goto('/avatar/test');
   await page.getByLabel('Avatar style', { exact: true }).selectOption('photoreal_host');
   const avatar = page.getByTestId('avatar-photoreal');
@@ -75,18 +75,58 @@ test('shared host: timed quiet bilabials close visible teeth while rest restores
     }
     return { teeth, pixels: Array.from(pixels) };
   });
+  // Use the SAME paused decoder frame as the canvas base. This catches a live
+  // renderer accidentally retaining an old face/poster or painting outside the
+  // mouth, without claiming that image equality proves natural eye movement.
+  const expectListeningUpperFace = async () => {
+    const result = await canvas.evaluate((node: HTMLCanvasElement) => {
+      const video = node.closest('[data-testid="avatar-photoreal"]')!.querySelector('video')!;
+      const reference = document.createElement('canvas');
+      reference.width = node.width; reference.height = node.height;
+      const referenceContext = reference.getContext('2d', { alpha: false })!;
+      referenceContext.drawImage(video, 0, 0, node.width, node.height);
+      const actual = node.getContext('2d')!;
+      const regions = [
+        { name: 'forehead', x: 215, y: 190, width: 200, height: 75 },
+        { name: 'eyes', x: 185, y: 267, width: 260, height: 85 },
+      ].map(region => {
+        const expected = referenceContext.getImageData(region.x, region.y, region.width, region.height).data;
+        const pixels = actual.getImageData(region.x, region.y, region.width, region.height).data;
+        let changedChannels = 0, maximumError = 0;
+        for (let index = 0; index < pixels.length; index++) {
+          const error = Math.abs(pixels[index]-expected[index]);
+          changedChannels += Number(error !== 0);
+          maximumError = Math.max(maximumError, error);
+        }
+        return { name: region.name, changedChannels, maximumError };
+      });
+      return { paused: video.paused, mediaTime: video.currentTime, poseFrame: node.dataset.poseFrame, regions };
+    });
+    expect(result.paused).toBe(true);
+    expect(result.mediaTime).toBeCloseTo(1.2, 4);
+    expect(result.poseFrame).toBe('30');
+    expect(result.regions, 'Live speech must preserve the decoded listening eyes and forehead exactly').toEqual([
+      { name: 'forehead', changedChannels: 0, maximumError: 0 },
+      { name: 'eyes', changedChannels: 0, maximumError: 0 },
+    ]);
+  };
+  await expectListeningUpperFace();
   const smiling = await mouthPixels();
   expect(smiling.teeth, 'Fixture frame must show the natural listening smile').toBeGreaterThan(50);
   await page.route('**/api/avatar/speech', route => {
-    const pcm = Buffer.alloc(24000*4*2);
-    // An audible onset followed by the actual quiet closure portion of M/B/P.
-    for (let i = 0; i < 24000*.4; i++) pcm.writeInt16LE(Math.round(6500*Math.sin(i/24000*2*Math.PI*190)), i*2);
+    const pcm = Buffer.alloc(24000*6*2);
+    // A sustained vowel permits a real-pixel check before the quiet M/B/P closure.
+    for (let i = 0; i < 24000*2; i++) pcm.writeInt16LE(Math.round(6500*Math.sin(i/24000*2*Math.PI*190)), i*2);
     return route.fulfill({ contentType: 'application/x-ndjson', body: JSON.stringify({ audio: pcm.toString('base64'),
-      phones: [{ start: 0, end: .4, viseme: 'a' }, { start: .4, end: 4, viseme: 'mbp' }] })+'\n'+JSON.stringify({ done: true })+'\n' });
+      phones: [{ start: 0, end: 2, viseme: 'a' }, { start: 2, end: 6, viseme: 'mbp' }] })+'\n'+JSON.stringify({ done: true })+'\n' });
   });
   await page.getByRole('button', { name: 'Listen to voice' }).click();
+  await expect(canvas).toHaveAttribute('data-viseme', 'a');
+  await expectListeningUpperFace();
+  expect((await mouthPixels()).pixels, 'The sustained vowel must actually change the mouth').not.toEqual(smiling.pixels);
   await expect(canvas).toHaveAttribute('data-viseme', 'mbp');
   await expect(canvas).toHaveAttribute('data-mouth-weight', '1');
+  await expectListeningUpperFace();
   const closed = await mouthPixels();
   expect(closed.teeth, 'M/B/P must cover the visible teeth with closed lip pixels').toBeLessThan(smiling.teeth*.35);
   expect(closed.pixels).not.toEqual(smiling.pixels);
@@ -94,6 +134,7 @@ test('shared host: timed quiet bilabials close visible teeth while rest restores
   await expect(canvas).toHaveAttribute('data-viseme', 'rest');
   await expect(canvas).toHaveAttribute('data-pose-frame', '30');
   expect((await mouthPixels()).pixels, 'Silence must restore the unmodified frozen listening smile').toEqual(smiling.pixels);
+  await expectListeningUpperFace();
 });
 
 test('shared host: no automatic welcome, explicit play, pause and reduced motion', async ({ page }) => {
