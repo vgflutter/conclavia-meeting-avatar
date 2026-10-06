@@ -48,6 +48,18 @@ for (const delay of [620, 1100]) test(`streaming browser: jitter ${delay} ms, co
 
 test("streaming browser: parla mentre arrivano ancora dati, senza scaricare il modello locale", async ({ page }) => {
   await page.addInitScript(() => {
+    const observation = { firstSpeakingBeforeProviderFinished: null as boolean | null };
+    Object.assign(window, { streamingStartObservation: observation });
+    // Record the live transition in the browser. Playwright's next poll can
+    // arrive after the provider's short remaining window has already closed.
+    const observer = new MutationObserver(() => {
+      if (observation.firstSpeakingBeforeProviderFinished === null &&
+          document.querySelector('[data-streaming-voice-state="speaking"]')) {
+        observation.firstSpeakingBeforeProviderFinished = document.documentElement.dataset.providerFinished !== "true";
+        observer.disconnect();
+      }
+    });
+    observer.observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-streaming-voice-state"] });
     const originalFetch = window.fetch.bind(window);
     window.fetch = async (...args) => {
       if (String(args[0]) !== "/api/avatar/speech") return originalFetch(...args);
@@ -78,7 +90,9 @@ test("streaming browser: parla mentre arrivano ancora dati, senza scaricare il m
   await page.goto("/avatar/test?voice=inworld");
   await page.getByRole("button", { name: /Ascolta la voce|Listen to voice/ }).click();
   await expect(page.locator('[data-streaming-voice-state="speaking"]')).toBeVisible();
-  expect(await page.locator("html").getAttribute("data-provider-finished")).toBeNull();
+  expect(await page.evaluate(() => (window as unknown as {
+    streamingStartObservation: { firstSpeakingBeforeProviderFinished: boolean | null };
+  }).streamingStartObservation.firstSpeakingBeforeProviderFinished)).toBe(true);
   await expect(page.locator('svg[data-audio-driven="true"]')).toHaveAttribute("data-viseme", "a");
   await expect(page.locator('svg[data-audio-driven="true"]')).toHaveAttribute("data-viseme", "o");
   await expect(page.locator('[data-streaming-voice-state="ready"]')).toBeVisible();
