@@ -13,6 +13,8 @@ process.env.MONGODB_URI = testMongo;
 process.env.MONGODB_DB_NAME ||= `conclavia_e2e_${randomUUID().replaceAll("-", "")}`;
 process.env.MEETING_BOT_PROVIDER = "preview";
 process.env.MEETING_AI_ENABLED = "false";
+process.env.PODCAST_AI_ENABLED = "false";
+process.env.PODCAST_SPEECH_ENABLED = "false";
 // Never spend voice credits or alter the default voice during regression tests.
 process.env.MEETING_TTS_PROVIDER = "inworld";
 process.env.INWORLD_API_KEY = "";
@@ -34,7 +36,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "NEXT_DIST_DIR=.next-e2e MEETING_BOT_PROVIDER=preview MEETING_AI_ENABLED=false ATTENDEE_WEBHOOK_SECRET= npm run dev -- --port 3101",
+      "NEXT_DIST_DIR=.next-e2e MEETING_BOT_PROVIDER=preview MEETING_AI_ENABLED=false PODCAST_AI_ENABLED=false PODCAST_SPEECH_ENABLED=false ATTENDEE_WEBHOOK_SECRET= npm run dev -- --port 3101",
     url: "http://127.0.0.1:3101/api/health",
     reuseExistingServer: false,
     timeout: 120_000,

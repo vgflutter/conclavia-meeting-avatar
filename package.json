@@ -12,6 +12,7 @@
     "tunnel:check": "node scripts/local-tunnel.mjs --check",
     "test:tunnel": "node --test tests/scripts/local-tunnel.test.mjs",
     "test:scripts": "node --test tests/scripts/*.test.mjs",
+    "test:podcast": "node --test tests/scripts/podcast*.test.mjs",
     "diagnose:captions": "node scripts/diagnose-captions.mjs",
     "diagnose:entry": "node scripts/diagnose-entry.mjs",
     "test:diagnostics": "node --test tests/scripts/diagnostics.test.mjs",

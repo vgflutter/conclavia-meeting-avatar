@@ -11,16 +11,19 @@ export function Header() {
   const { locale, setLocale } = useTranslations();
   const pathname = usePathname();
 
-  if (pathname.startsWith("/meeting-room/")) {
+  if (pathname.startsWith("/meeting-room/") || /^\/podcast\/[^/]+\/broadcast\/?$/u.test(pathname)) {
     return null;
   }
 
   const navigation = [
     { href: "/meetings", it: "Meeting", en: "Meetings" },
+    { href: "/podcast", it: "Podcast", en: "Podcasts" },
     { href: "/memory", it: "Memoria", en: "Memory" },
     { href: "/context", it: "Contesto", en: "Context" },
     { href: "/avatar", it: "Avatar", en: "Avatar" },
   ];
+  const isPodcast = pathname === "/podcast" || pathname.startsWith("/podcast/");
+  const createHref = isPodcast ? "/podcast/new" : "/meetings/new";
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#dfe4dc] bg-white/92 backdrop-blur">
@@ -46,7 +49,7 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`hidden rounded-lg px-3 py-2 text-sm font-semibold transition md:inline-flex ${active ? "bg-[#edf4ef] text-[#295c43]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"}`}
+                className={`hidden rounded-lg px-3 py-2 text-sm font-semibold transition lg:inline-flex ${active ? "bg-[#edf4ef] text-[#295c43]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"}`}
               >
                 {locale === "it" ? item.it : item.en}
               </Link>
@@ -64,14 +67,16 @@ export function Header() {
             <option value="en">EN</option>
             <option value="it">IT</option>
           </select>
-          {pathname !== "/meetings/new" && <Link href="/meetings/new" className="button-primary whitespace-nowrap">
-            {locale === "it" ? "Nuovo meeting" : "New meeting"}
+          {pathname !== createHref && <Link href={createHref} className="button-primary whitespace-nowrap">
+            {isPodcast
+              ? locale === "it" ? "Nuovo podcast" : "New podcast"
+              : locale === "it" ? "Nuovo meeting" : "New meeting"}
           </Link>}
         </nav>
       </div>
       <nav
         aria-label={locale === "it" ? "Navigazione mobile" : "Mobile navigation"}
-        className="container-page grid grid-cols-4 border-t border-[#edf0eb] py-1.5 md:hidden"
+        className="container-page grid grid-cols-5 border-t border-[#edf0eb] py-1.5 lg:hidden"
       >
         {navigation.map((item) => {
           const active = pathname.startsWith(item.href);
@@ -80,7 +85,7 @@ export function Header() {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`rounded-lg px-2 py-2 text-center text-xs font-semibold transition ${active ? "bg-[#edf4ef] text-[#295c43]" : "text-slate-500 hover:bg-slate-50"}`}
+              className={`rounded-lg px-1 py-2 text-center text-[11px] font-semibold transition sm:px-2 sm:text-xs ${active ? "bg-[#edf4ef] text-[#295c43]" : "text-slate-500 hover:bg-slate-50"}`}
             >
               {locale === "it" ? item.it : item.en}
             </Link>

@@ -8,6 +8,18 @@ A digital colleague for Microsoft Teams: follows the agenda, responds when calle
 
 **Start here.** Architecture, configuration, all screenshots and detailed checks are in the [extended guide](docs/guide.md).
 
+## Podcast studio
+
+The **Podcast** section at `/podcast` restores the editorial engine recovered from [vgflutter/conclavia, 22 August 2026](https://github.com/vgflutter/conclavia/tree/5d4746f900a106defe1377131bce7ebbc5b69ca3), adapted to the current application. The original was removed in the [5 September Meeting refocus](https://github.com/vgflutter/conclavia/commit/a0281daac4f5435131d2c3cfeaf1cb666e976652); this restoration does not reset Meeting history or replace the current app.
+
+Prepare the topic and central question, characterise the AI hosts, assign a human guest, and open the studio. The recovered director plans speaking turns, questions, replies and conclusions. The new illustrated stage lives in the canonical avatar kit. Pages, APIs and persistence are namespaced: `/podcast/*`, `/api/podcast/*`, `podcast_talks` and `podcast_runs`. The interface supports Italian and English.
+
+AI generation requires `PODCAST_AI_ENABLED=true` and a configured provider. Voice playback separately requires `PODCAST_SPEECH_ENABLED=true` and the existing Inworld configuration. Both features default to **off**; opening the studio or saving an episode does not generate speech or call an AI provider. Generation and stored-turn playback require explicit operator actions. Voice uses the shared PCM player and compatible voice catalogue, without changing the saved Meeting avatar profile.
+
+This is an operator-controlled studio preview. Human contributions currently enter as text, and the camera preview is local. **Record visual test** captures a silent video of the scene for up to 60 seconds; it does not record the guest microphone or synthesize voices. Remote guest audio/video, automatic microphone transcription, full programme audio mixing and direct YouTube streaming are not implemented by this restoration. The broadcast view is a clean visual output, not a streaming service. Podcast management and broadcast routes remain blocked on the public Meeting tunnel; custom-domain publication requires authenticated gateway access.
+
+Run `npm run test:podcast` for isolated director, character, disabled-provider, request-boundary and stored-turn voice checks. These use fixtures and do not access MongoDB, create bots or spend provider credits. Database/browser checks require the temporary Mongo at `127.0.0.1:27018` described below.
+
 ## Avatar appearance and movement
 
 The [21 September kit review](docs/avatar-kit-review-2026-09-21.md) records **ten review cycles for each of the three avatar families**, new photographic Studio portraits, and the remaining production gates. The shared kit is used by Meeting and Onboarding.
