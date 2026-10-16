@@ -5,6 +5,7 @@ import type { TalkRunAudienceCue } from "@/types/podcast-audience";
 import type { TalkRunResponse } from "@/types/podcast-run";
 import { normalizeTalkOnAirNames } from "@/lib/podcast/on-air-names";
 import { resolveMessagePerformance } from "@/lib/podcast/performance";
+import { normalizeStudioCast, normalizeStudioGuest, normalizeStudioTheme } from "@/lib/podcast/studio-themes";
 import { normalizeStudioLayout } from "@/lib/podcast/talk-run-compatibility";
 
 function serializeAudienceCue(
@@ -32,6 +33,9 @@ export function serializeTalkRun(run: TalkRunDocument): TalkRunResponse {
   if (talkSnapshot) {
     talkSnapshot.settings = {
       ...talkSnapshot.settings,
+      studioTheme: normalizeStudioTheme(talkSnapshot.settings?.studioTheme),
+      studioCast: normalizeStudioCast(talkSnapshot.settings?.studioCast),
+      studioGuest: normalizeStudioGuest(talkSnapshot.settings?.studioGuest),
       studioLayout: normalizeStudioLayout(talkSnapshot.settings?.studioLayout),
     };
     talkSnapshot.participants = talkSnapshot.participants.map(

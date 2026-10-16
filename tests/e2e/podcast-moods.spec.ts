@@ -37,7 +37,7 @@ async function openSilentLab(page: Page, locale: "it" | "en" = "it") {
     } });
   });
   await page.context().addCookies([{ name: "conclavia_locale", value: locale, url: origin }]);
-  await page.goto("/podcast/styles?style=anime&scenario=lounge");
+  await page.goto("/podcast/styles?style=anime&scenario=lounge&guest=reserve");
   return calls;
 }
 const privacy = (page: Page) => page.evaluate(() => (window as unknown as { podcastMoodPrivacy: { media: number; audio: number } }).podcastMoodPrivacy);
@@ -138,6 +138,35 @@ test("manual moods and strengths are independent, stop the sequence, preserve th
       await page.screenshot({ path: testInfo.outputPath(`podcast-mood-studio-${width}.png`), fullPage: true });
     }
   }
+  expect(await privacy(page)).toEqual({ media: 0, audio: 0 });
+  expect(calls.mutations).toEqual([]);
+  expect(calls.external).toEqual([]);
+});
+
+
+test("the original three directions share sentence acting and visible-stage quick controls", async ({ page }) => {
+  const calls = await openSilentLab(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const stage = stageOf(page);
+  for (const [theme, rendered] of [["original-editorial", "editorial"], ["original-anime", "anime-night"], ["original-comedy", "comedy"]]) {
+    const select = page.getByTestId("style-gallery-theme");
+    await select.scrollIntoViewIfNeeded();
+    await select.selectOption(theme);
+    await expect(stage).toHaveAttribute("data-podcast-style", rendered);
+    await expect(stage).toBeInViewport({ ratio: .85 });
+    await page.getByTestId("style-gallery-cast").selectOption("expressive");
+    await expect(stage).toHaveAttribute("data-podcast-cast", "expressive");
+    await page.getByTestId("mood-demo-option-surprise").click();
+    await expect(stage).toHaveAttribute("data-podcast-moods", "curiosity,surprise");
+    await expect(stage).toHaveAttribute("data-podcast-phase", "delivery");
+    await page.getByTestId("mood-demo-seek").fill("6000");
+    await expect(stage).toHaveAttribute("data-podcast-phase", "settle");
+    await expect(stage).toHaveAttribute("data-podcast-speaking", "false,false");
+    await expect(stage).toHaveAttribute("data-podcast-visemes", "rest,rest");
+  }
+  await page.getByTestId("style-gallery-guest-mode").selectOption("auto");
+  await expect(stage).toHaveAttribute("data-podcast-guest", "false");
+  await expect(page.getByTestId("style-gallery-guest-toggle")).not.toBeChecked();
   expect(await privacy(page)).toEqual({ media: 0, audio: 0 });
   expect(calls.mutations).toEqual([]);
   expect(calls.external).toEqual([]);

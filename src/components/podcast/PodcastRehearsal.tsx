@@ -6,12 +6,13 @@ import { PODCAST_VOICES } from "@conclavia/avatar-kit/lib/podcast-voice-catalog"
 import { runPodcastRehearsal } from "@/lib/podcast/rehearsal-player";
 import type { Participant, TalkInput, TalkResponse } from "@/types/podcast";
 import type { TalkRunMessageResponse, TalkRunResponse } from "@/types/podcast-run";
-import { STUDIO_THEMES, type StudioThemeId } from "@/lib/podcast/studio-themes";
+import { STUDIO_THEMES, studioSelectionQuery, type StudioCast, type StudioGuestMode, type StudioThemeId } from "@/lib/podcast/studio-themes";
 import { defaultPodcast } from "./podcast-defaults";
 import { DEFAULT_DIRECTION, PodcastStageView, resolvePodcastDirection, type PodcastDirection, type PodcastEmotion } from "./PodcastStageView";
 import { Field, podcastRequest, readableError, usePodcastCopy } from "./PodcastUi";
 import styles from "./Podcast.module.css";
 import rehearsal from "./PodcastRehearsal.module.css";
+import { PodcastVisualOptions } from "./PodcastVisualOptions";
 import { PodcastStylePicker } from "./PodcastStylePicker";
 import design from "./PodcastStyles.module.css";
 import { STUDIO_SCENARIOS, type StudioScenarioId } from "@/lib/podcast/studio-scenarios";
@@ -37,7 +38,7 @@ function voiceFor(language: string, sex: Participant["sex"], provider: "kokoro" 
   return PODCAST_VOICES.find((voice) => voice.provider === provider && voice.language === language && voice.gender === sex)?.id;
 }
 
-function rehearsalInput(initialTheme?: StudioThemeId, initialLayout: StudioScenarioId = "studio"): TalkInput {
+function rehearsalInput(initialTheme?: StudioThemeId, initialLayout: StudioScenarioId = "studio", initialCast: StudioCast = "original", initialGuest: StudioGuestMode = "auto"): TalkInput {
   const input = defaultPodcast(false);
   const language = "it";
   return {
@@ -51,13 +52,13 @@ function rehearsalInput(initialTheme?: StudioThemeId, initialLayout: StudioScena
       goals: "Costruire sul contributo dell’altro conduttore, portare esempi concreti e rendere più chiara la domanda centrale.",
       voiceId: voiceFor(language, person.sex, "kokoro"),
     })),
-    settings: { ...input.settings, studioTheme: initialTheme ?? input.settings.studioTheme, studioLayout: initialLayout, voiceProvider: "kokoro", maxTurns: 8, targetDurationMinutes: 2 },
+    settings: { ...input.settings, studioTheme: initialTheme ?? input.settings.studioTheme, studioLayout: initialLayout, studioCast: initialCast, studioGuest: initialGuest, voiceProvider: "kokoro", maxTurns: 8, targetDurationMinutes: 2 },
   };
 }
 
-export function PodcastRehearsal({ initialTheme, initialLayout = "studio" }: { initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId }) {
+export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initialCast = "original", initialGuest = "auto" }: { initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId; initialCast?: StudioCast; initialGuest?: StudioGuestMode }) {
   const copy = usePodcastCopy();
-  const [input, setInput] = useState<TalkInput>(() => rehearsalInput(initialTheme, initialLayout));
+  const [input, setInput] = useState<TalkInput>(() => rehearsalInput(initialTheme, initialLayout, initialCast, initialGuest));
   const [talk, setTalk] = useState<TalkResponse | null>(null);
   const [run, setRun] = useState<TalkRunResponse | null>(null);
   const [speech, setSpeech] = useState<TalkRunMessageResponse | null>(null);
@@ -208,7 +209,7 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio" }: { i
     <Link className={styles.back} href="/podcast">← {copy("Tutti i podcast", "All podcasts")}</Link>
     <header className={styles.topline}>
       <div><div className={styles.eyebrow}>{copy("PRIMA, ASCOLTIAMOLI PARLARE", "FIRST, LET’S HEAR THEM TALK")}</div><h1 className={styles.heading}>{copy("Prova a due voci", "Two-voice rehearsal")}</h1><p className={styles.intro}>{copy("Due conduttori, un argomento concreto e il tempo per ascoltarsi. Prima verifichiamo voci, reazioni e ritmo; poi aggiungeremo l’ospite.", "Two hosts, one concrete topic, and time to listen to each other. First we check voices, reactions, and pacing; then we add a guest.")}</p></div>
-      <Link className={styles.secondary} href="/podcast/preview">{copy("Anteprima grafica senza audio", "Silent visual preview")} ↗</Link>
+      <Link className={styles.secondary} href={`/podcast/preview?${studioSelectionQuery({ ...input.settings, studioLayout: direction.layout })}`}>{copy("Anteprima grafica senza audio", "Silent visual preview")} ↗</Link>
     </header>
     {error && <div className={styles.error} role="alert">{error}</div>}
     <div className={rehearsal.layout}>
@@ -241,7 +242,7 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio" }: { i
               <Field label={copy("Stile grafico", "Visual style")}><select className={styles.input} data-testid="rehearsal-theme" value={input.settings.studioTheme} onChange={(event) => changeInput({ ...input, settings: { ...input.settings, studioTheme: event.target.value as TalkInput["settings"]["studioTheme"] } })}>{STUDIO_THEMES.map((theme) => <option value={theme.id} key={theme.id}>{copy(theme.label.it, theme.label.en)}</option>)}</select></Field>
               <Field label={copy("Scenario", "Scene")}><select className={styles.input} data-testid="rehearsal-layout" value={direction.layout} onChange={(event) => { const layout = event.target.value as StudioScenarioId; setDirection({ ...direction, layout }); changeInput({ ...input, settings: { ...input.settings, studioLayout: layout } }); }}>{STUDIO_SCENARIOS.map(scenario => <option value={scenario.id} key={scenario.id}>{copy(scenario.label.it, scenario.label.en)}</option>)}</select></Field>
             </div>
-            <div className={design.settingsPicker}><PodcastStylePicker direction={{ ...direction, focus: "all" }} talk={input} value={input.settings.studioTheme} disabled={locked} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => changeInput({ ...input, settings: { ...input.settings, studioTheme: theme } })} /><Link className={design.embedLink} href={`/podcast/styles?style=${input.settings.studioTheme}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
+            <PodcastVisualOptions settings={input.settings} disabled={locked} onChange={settings => changeInput({ ...input, settings })} /><div className={design.settingsPicker}><PodcastStylePicker direction={{ ...direction, focus: "all" }} talk={input} value={input.settings.studioTheme} disabled={locked} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => changeInput({ ...input, settings: { ...input.settings, studioTheme: theme } })} /><Link className={design.embedLink} href={`/podcast/styles?${studioSelectionQuery({ ...input.settings, studioLayout: direction.layout })}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
             <Field label={copy("Servizio delle voci", "Voice service")}><select className={styles.input} data-testid="rehearsal-voice-provider" value={voiceProvider} onChange={(event) => { const provider = event.target.value as "kokoro" | "inworld"; changeInput({ ...input, settings: { ...input.settings, voiceProvider: provider }, participants: input.participants.map((person) => ({ ...person, voiceId: voiceFor(input.language, person.sex, provider) })) }); }}><option value="kokoro" disabled={input.language !== "it"}>{copy("Kokoro locale · Nicola e Sara", "Local Kokoro · Nicola and Sara")}</option><option value="inworld">Inworld</option></select></Field>
             <div className={rehearsal.people}>
               {input.participants.map((person, index) => <div className={rehearsal.person} key={index}>

@@ -8,7 +8,7 @@ import {
 } from "@/lib/podcast/llm-models";
 import {
   DEFAULT_STUDIO_THEME,
-  normalizeStudioTheme,
+  normalizeStudioTheme, normalizeStudioCast, normalizeStudioGuest,
 } from "@/lib/podcast/studio-themes";
 import { findStudioVoice } from "@/lib/podcast/voice-catalog";
 import { normalizeTalkOnAirNames } from "@/lib/podcast/on-air-names";
@@ -88,6 +88,8 @@ export function serializeTalk(talk: TalkDocument): TalkResponse {
       studioTheme: normalizeStudioTheme(
         talk.settings.studioTheme ?? DEFAULT_STUDIO_THEME,
       ),
+      studioCast: normalizeStudioCast(talk.settings.studioCast),
+      studioGuest: normalizeStudioGuest(talk.settings.studioGuest),
       studioLayout: normalizeStudioLayout(talk.settings.studioLayout),
       defaultModel: isLlmModelId(talk.settings.defaultModel)
         ? talk.settings.defaultModel

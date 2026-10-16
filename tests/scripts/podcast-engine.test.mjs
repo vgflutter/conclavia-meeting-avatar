@@ -197,6 +197,73 @@ test("Mongoose round trips studio composition and serialized run snapshots keep 
   assert.equal(legacyRun.talkSnapshot.settings.studioLayout, undefined, "read compatibility does not rewrite old database snapshots");
 });
 
+test("seven animated directions, three casts and optional guest staging validate and persist independently", () => {
+  const { TalkModel } = load("@/models/PodcastTalk");
+  const { TalkRunModel } = load("@/models/PodcastRun");
+  const { Types } = nativeRequire("mongoose");
+  const { serializeTalk } = load("@/lib/podcast/serialize-talk");
+  const { serializeTalkRun } = load("@/lib/podcast/serialize-talk-run");
+  const catalog = load("@/lib/podcast/studio-themes");
+  assert.equal(catalog.STUDIO_THEME_IDS.length, 7);
+  for (const studioTheme of catalog.STUDIO_THEME_IDS) {
+    for (const studioCast of catalog.STUDIO_CAST_IDS) {
+      for (const studioGuest of catalog.STUDIO_GUEST_MODES) {
+        const input = fixture(2);
+        Object.assign(input.settings, { studioTheme, studioCast, studioGuest });
+        const validated = validation.validateTalkInput(input);
+        assert.equal(validated.success, true, JSON.stringify(validated));
+        const document = new TalkModel({ ...validated.data, createdAt: new Date(0), updatedAt: new Date(0) });
+        assert.equal(document.validateSync(), undefined);
+        const snapshot = serializeTalk(TalkModel.hydrate(document.toObject()));
+        assert.equal(snapshot.settings.studioTheme, studioTheme);
+        assert.equal(snapshot.settings.studioCast, studioCast);
+        assert.equal(snapshot.settings.studioGuest, studioGuest);
+        const run = new TalkRunModel({ ...runFixture(snapshot, director), talkId: new Types.ObjectId(), talkSnapshot: snapshot, startedAt: new Date(0), createdAt: new Date(0), updatedAt: new Date(0) });
+        const restored = serializeTalkRun(run);
+        assert.equal(restored.talkSnapshot.settings.studioTheme, studioTheme);
+        assert.equal(restored.talkSnapshot.settings.studioCast, studioCast);
+        assert.equal(restored.talkSnapshot.settings.studioGuest, studioGuest);
+        assert.equal(restored.talkSnapshot.participants.length, 2, "reserving a video space never creates a human participant");
+      }
+    }
+  }
+  for (const setting of ["studioCast", "studioGuest"]) {
+    for (const value of ["unknown", null, 0, {}, ["original"]]) {
+      const input = fixture(); input.settings[setting] = value;
+      const result = validation.validateTalkInput(input);
+      assert.equal(result.success, false);
+      assert.ok(result.issues.some(issue => issue.startsWith(`settings.${setting}`)));
+      const document = new TalkModel(input);
+      assert.ok(document.validateSync()?.errors[`settings.${setting}`]);
+    }
+  }
+});
+
+test("legacy visual settings read safely and shared query links preserve every explicit choice", () => {
+  const { TalkModel } = load("@/models/PodcastTalk");
+  const { TalkRunModel } = load("@/models/PodcastRun");
+  const { Types } = nativeRequire("mongoose");
+  const { serializeTalk } = load("@/lib/podcast/serialize-talk");
+  const { serializeTalkRun } = load("@/lib/podcast/serialize-talk-run");
+  const { studioSelectionQuery } = load("@/lib/podcast/studio-themes");
+  const validated = validation.validateTalkInput(fixture());
+  assert.equal(validated.data.settings.studioCast, "original");
+  assert.equal(validated.data.settings.studioGuest, "auto");
+  const document = new TalkModel({ ...fixture(), createdAt: new Date(0), updatedAt: new Date(0) });
+  const raw = document.toObject(); delete raw.settings.studioCast; delete raw.settings.studioGuest;
+  const response = serializeTalk(TalkModel.hydrate(raw));
+  assert.equal(response.settings.studioCast, "original");
+  assert.equal(response.settings.studioGuest, "auto");
+  const legacy = fixture();
+  const run = new TalkRunModel({ ...runFixture(legacy, director), talkId: new Types.ObjectId(), talkSnapshot: legacy, startedAt: new Date(0), createdAt: new Date(0), updatedAt: new Date(0) });
+  assert.equal(serializeTalkRun(run).talkSnapshot.settings.studioCast, "original");
+  assert.equal(serializeTalkRun(run).talkSnapshot.settings.studioGuest, "auto");
+  assert.equal(run.talkSnapshot.settings.studioCast, undefined);
+  assert.equal(run.talkSnapshot.settings.studioGuest, undefined);
+  assert.equal(studioSelectionQuery({ studioTheme: "original-anime", studioLayout: "lounge", studioCast: "expressive", studioGuest: "hidden" }), "style=original-anime&scenario=lounge&cast=expressive&guest=hidden");
+  assert.equal(studioSelectionQuery({ studioTheme: "unknown", studioLayout: "unknown", studioCast: [], studioGuest: {} }), "style=clean-line&scenario=studio&cast=original&guest=auto");
+});
+
 test("obsolete paid-video modes, malformed characters and excessive run budgets are rejected", () => {
   for (const videoMode of ["liveavatar", "unreal", "anything"]) {
     const talk = fixture(); talk.settings.videoMode = videoMode;

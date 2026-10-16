@@ -3,7 +3,7 @@
 import { PodcastStage } from "@conclavia/avatar-kit/components/PodcastStage";
 import type { TalkInput } from "@/types/podcast";
 import type { TalkRunMessageResponse } from "@/types/podcast-run";
-import { getStudioTheme } from "@/lib/podcast/studio-themes";
+import { getStudioTheme, normalizeStudioCast, normalizeStudioGuest } from "@/lib/podcast/studio-themes";
 import { podcastPerformanceFrame, type PodcastPerformance } from "@/lib/podcast/performance-playback";
 export type { PodcastPerformance } from "@/lib/podcast/performance-playback";
 
@@ -42,7 +42,7 @@ export function resolvePodcastDirection(direction: PodcastDirection, talk: Pick<
     emotion2: isGuest ? "curiosity" : focus === "host-2" ? speakingEmotion : message.intent === "challenge" ? "attention" : message.intent === "partial_agreement" ? "empathy" : "doubt" };
 }
 
-export function PodcastStageView({ talk, direction = DEFAULT_DIRECTION, guestStream, speakingIndex, audioLevel = 0, viseme = "rest", onCanvasReady, performance, reserveGuest = true }: {
+export function PodcastStageView({ talk, direction = DEFAULT_DIRECTION, guestStream, speakingIndex, audioLevel = 0, viseme = "rest", onCanvasReady, performance, reserveGuest }: {
   talk: Pick<TalkInput, "title" | "topic" | "participants" | "settings">;
   direction?: PodcastDirection;
   guestStream?: MediaStream | null;
@@ -55,13 +55,16 @@ export function PodcastStageView({ talk, direction = DEFAULT_DIRECTION, guestStr
 }) {
   const ai = talk.participants.map((participant, index) => ({ participant, index })).filter(({ participant }) => participant.kind === "ai");
   const guest = talk.participants.find((participant) => participant.kind === "human");
-  return <PodcastStage title={talk.title} topic={talk.topic} visualStyle={getStudioTheme(talk.settings.studioTheme).visualStyle}
-    layout={direction.layout} focus={direction.focus} onCanvasReady={onCanvasReady}
+  const guestMode = normalizeStudioGuest(talk.settings.studioGuest);
+  const showGuest = Boolean(guestStream) || reserveGuest === true || (reserveGuest !== false && guestMode !== "hidden" && (Boolean(guest) || guestMode === "reserve"));
+  const focus = direction.focus === "guest" && !showGuest ? "all" : direction.focus;
+  return <PodcastStage cast={normalizeStudioCast(talk.settings.studioCast)} title={talk.title} topic={talk.topic} visualStyle={getStudioTheme(talk.settings.studioTheme).visualStyle}
+    layout={direction.layout} focus={focus} onCanvasReady={onCanvasReady}
     speakers={ai.slice(0, 2).map(({ participant, index }, position) => ({ id: String(index), name: participant.name, role: participant.role, appearance: participant.sex,
       emotion: performance ? index === performance.speakerIndex ? performance.mood : performance.listenerMood : position === 1 ? direction.emotion2 ?? direction.emotion : direction.emotion,
       intensity: performance ? index === performance.speakerIndex ? performance.intensity : performance.listenerIntensity : position === 1 ? direction.intensity2 ?? direction.intensity : direction.intensity, speaking: speakingIndex === index,
       performance: performance ? { cueId: performance.cueId, phase: performance.phase, progress: performance.progress,
-        listening: index !== performance.speakerIndex, gaze: direction.focus === "guest" ? "guest" : "partner" } : undefined,
+        listening: index !== performance.speakerIndex, gaze: focus === "guest" ? "guest" : "partner" } : undefined,
       audioLevel: speakingIndex === index ? audioLevel : 0, viseme: speakingIndex === index ? viseme : "rest" }))}
-    guest={guest || reserveGuest ? { name: guest?.name ?? "Ospite", stream: guestStream } : undefined} />;
+    guest={showGuest ? { name: guest?.name ?? "Ospite", stream: guestStream } : undefined} />;
 }

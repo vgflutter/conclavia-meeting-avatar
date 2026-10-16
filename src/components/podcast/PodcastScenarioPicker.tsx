@@ -16,9 +16,9 @@ export function PodcastScenarioPicker({ value, onChange, talk, direction = DEFAU
 }) {
   const copy = usePodcastCopy();
   const group = useId();
-  const signature = JSON.stringify([talk.title, talk.settings.studioTheme, talk.participants.map(person => [person.name, person.kind, person.sex])]);
+  const signature = JSON.stringify([talk.title, talk.settings.studioTheme, talk.settings.studioCast, talk.settings.studioGuest, talk.participants.map(person => [person.name, person.kind, person.sex])]);
   return <fieldset className={`${design.picker} ${design.scenarioPicker}`} data-testid="podcast-scenario-picker">
-    <legend className={design.legend}>{copy("2. Scegli lo spazio della conversazione", "2. Choose a space for the conversation")}</legend>
+    <legend className={design.legend}>{copy("3. Scegli la disposizione", "3. Choose the composition")}</legend>
     <div className={design.cards}>{STUDIO_SCENARIOS.map((scenario, index) => <label key={scenario.id} className={`${design.card} ${value === scenario.id ? design.selected : ""}`}>
       <input className={design.radio} data-testid={`podcast-scenario-option-${scenario.id}`} type="radio" name={group} value={scenario.id} checked={value === scenario.id} onChange={() => onChange(scenario.id)} aria-label={copy(scenario.label.it, scenario.label.en)} />
       <span className={design.thumbnail}><PodcastThumbnail key={`${scenario.id}-${signature}`} talk={talk} direction={{ ...direction, layout: scenario.id, focus: "all" }} /></span>

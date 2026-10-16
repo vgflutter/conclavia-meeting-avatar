@@ -5,24 +5,25 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { Participant, TalkInput, TalkResponse } from "@/types/podcast";
 import { LLM_MODELS } from "@/lib/podcast/llm-models";
-import { STUDIO_THEMES, type StudioThemeId } from "@/lib/podcast/studio-themes";
+import { STUDIO_THEMES, studioSelectionQuery, normalizeStudioCast, normalizeStudioGuest, type StudioCast, type StudioGuestMode, type StudioThemeId } from "@/lib/podcast/studio-themes";
 import { normalizeStudioScenario, STUDIO_SCENARIOS, type StudioScenarioId } from "@/lib/podcast/studio-scenarios";
 import { DEFAULT_DIRECTION, PodcastStageView } from "./PodcastStageView";
+import { PodcastVisualOptions } from "./PodcastVisualOptions";
 import { PodcastStylePicker } from "./PodcastStylePicker";
 import { defaultParticipant, defaultPodcast } from "./podcast-defaults";
 import { Field, PodcastTabs, podcastRequest, readableError, usePodcastCopy } from "./PodcastUi";
 import styles from "./Podcast.module.css";
 import design from "./PodcastStyles.module.css";
 
-export function PodcastEditor({ id, initialTheme, initialLayout = "studio" }: { id?: string; initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId }) {
+export function PodcastEditor({ id, initialTheme, initialLayout = "studio", initialCast = "original", initialGuest = "auto" }: { id?: string; initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId; initialCast?: StudioCast; initialGuest?: StudioGuestMode }) {
   const copy = usePodcastCopy();
   const router = useRouter();
-  const [talk, setTalk] = useState<TalkInput>(() => { const initial = defaultPodcast(copy("it", "en") === "en"); return { ...initial, settings: { ...initial.settings, studioTheme: initialTheme ?? initial.settings.studioTheme, studioLayout: initialLayout } }; });
+  const [talk, setTalk] = useState<TalkInput>(() => { const initial = defaultPodcast(copy("it", "en") === "en"); return { ...initial, settings: { ...initial.settings, studioTheme: initialTheme ?? initial.settings.studioTheme, studioLayout: initialLayout, studioCast: initialCast, studioGuest: initialGuest } }; });
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  useEffect(() => { if (!id) return; let active = true; podcastRequest<{ talk: TalkResponse }>(`/api/podcast/talks/${id}`).then(({ talk: record }) => { if (active) setTalk({ ...record, settings: { ...record.settings, studioLayout: normalizeStudioScenario(record.settings.studioLayout) } }); }).catch((cause) => { if (active) setError(readableError(cause)); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [id]);
+  useEffect(() => { if (!id) return; let active = true; podcastRequest<{ talk: TalkResponse }>(`/api/podcast/talks/${id}`).then(({ talk: record }) => { if (active) setTalk({ ...record, settings: { ...record.settings, studioLayout: normalizeStudioScenario(record.settings.studioLayout), studioCast: normalizeStudioCast(record.settings.studioCast), studioGuest: normalizeStudioGuest(record.settings.studioGuest) } }); }).catch((cause) => { if (active) setError(readableError(cause)); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [id]);
   const direction = { ...DEFAULT_DIRECTION, layout: normalizeStudioScenario(talk.settings.studioLayout) };
   function update<K extends keyof TalkInput>(key: K, value: TalkInput[K]) { setTalk((current) => ({ ...current, [key]: value })); setSaved(false); }
   function participant(index: number, values: Partial<Participant>) { setTalk((current) => ({ ...current, participants: current.participants.map((entry, i) => i === index ? { ...entry, ...values } : entry) })); setSaved(false); }
@@ -76,7 +77,7 @@ export function PodcastEditor({ id, initialTheme, initialLayout = "studio" }: { 
       </div><aside className={`${styles.panel} ${styles.sticky}`}><div className={styles.preview} data-testid="podcast-editor-stage"><PodcastStageView talk={talk} direction={direction} /></div><h2 className={styles.sidebarTitle}>{copy("L’identità dello studio", "Your studio’s identity")}</h2><p className={styles.sidebarText}>{copy("Lo stile cambia la scena e i personaggi. Personalità e storia della conversazione restano indipendenti dalla grafica.", "The style changes the scene and characters. Personalities and conversation history remain independent of the visuals.")}</p>
         <div className={styles.divider} /><Field label={copy("Stile grafico", "Visual style")}><select className={styles.input} value={talk.settings.studioTheme} onChange={(event) => update("settings", { ...talk.settings, studioTheme: event.target.value as TalkInput["settings"]["studioTheme"] })}>{STUDIO_THEMES.map((theme) => <option value={theme.id} key={theme.id}>{copy(theme.label.it, theme.label.en)}</option>)}</select></Field>
         <Field label={copy("Scenario", "Scene")}><select className={styles.input} data-testid="podcast-editor-layout" value={direction.layout} onChange={(event) => update("settings", { ...talk.settings, studioLayout: normalizeStudioScenario(event.target.value) })}>{STUDIO_SCENARIOS.map((scenario) => <option value={scenario.id} key={scenario.id}>{copy(scenario.label.it, scenario.label.en)}</option>)}</select></Field>
-        <div className={design.settingsPicker}><PodcastStylePicker compact talk={talk} direction={direction} value={talk.settings.studioTheme} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => update("settings", { ...talk.settings, studioTheme: theme })} /><Link className={design.embedLink} href={`/podcast/styles?style=${talk.settings.studioTheme}&scenario=${direction.layout}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
+        <PodcastVisualOptions settings={talk.settings} onChange={settings => update("settings", settings)} /><div className={design.settingsPicker}><PodcastStylePicker compact talk={talk} direction={direction} value={talk.settings.studioTheme} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => update("settings", { ...talk.settings, studioTheme: theme })} /><Link className={design.embedLink} href={`/podcast/styles?${studioSelectionQuery(talk.settings)}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
         <Field label={copy("Stato della puntata", "Episode status")}><select className={styles.input} value={talk.status} onChange={(event) => update("status", event.target.value as TalkInput["status"])}><option value="draft">{copy("Bozza", "Draft")}</option><option value="ready">{copy("Pronta per lo studio", "Ready for studio")}</option></select></Field>
         <div className={styles.notice}>{copy("Salvare prepara la puntata. Le chiamate AI partono solo dallo studio con un comando esplicito.", "Saving prepares the episode. AI calls start only from the studio with an explicit action.")}</div>
         <div className={styles.statRow}><span>{copy("Conduttori AI", "AI hosts")}</span><strong>{talk.participants.filter((entry) => entry.kind === "ai").length}</strong></div><div className={styles.statRow}><span>{copy("Durata obiettivo", "Target duration")}</span><strong>{talk.settings.targetDurationMinutes} min</strong></div><div className={styles.statRow}><span>{copy("Ospite", "Guest")}</span><strong>{talk.participants.some((entry) => entry.kind === "human") ? copy("Previsto", "Included") : "—"}</strong></div>

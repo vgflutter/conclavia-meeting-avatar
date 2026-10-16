@@ -21,7 +21,7 @@ import {
 import { isStudioLayout, MAX_RUN_TURNS, normalizeStudioLayout } from "@/lib/podcast/talk-run-compatibility";
 import {
   DEFAULT_STUDIO_THEME,
-  isStudioThemeId,
+  isStudioThemeId, isStudioCast, normalizeStudioCast, isStudioGuest, normalizeStudioGuest,
 } from "@/lib/podcast/studio-themes";
 import { findStudioVoice } from "@/lib/podcast/voice-catalog";
 
@@ -472,6 +472,8 @@ function parseSettings(value: unknown, issues: string[]): TalkSettings {
   if (settings.studioLayout !== undefined && !isStudioLayout(settings.studioLayout)) {
     issues.push("settings.studioLayout must be one of the supported studio layouts");
   }
+  if (settings.studioCast !== undefined && !isStudioCast(settings.studioCast)) issues.push("settings.studioCast must be one of the supported casts");
+  if (settings.studioGuest !== undefined && !isStudioGuest(settings.studioGuest)) issues.push("settings.studioGuest must be auto, reserve, or hidden");
   return {
     voiceProvider: settings.voiceProvider === "kokoro" ? "kokoro" : "inworld",
     maxTurns: Number.isInteger(maxTurns) ? (maxTurns as number) : 1,
@@ -480,6 +482,8 @@ function parseSettings(value: unknown, issues: string[]): TalkSettings {
       : 5,
     videoMode,
     studioTheme,
+    studioCast: normalizeStudioCast(settings.studioCast),
+    studioGuest: normalizeStudioGuest(settings.studioGuest),
     studioLayout: normalizeStudioLayout(settings.studioLayout),
     defaultModel,
     allowInterruptions:

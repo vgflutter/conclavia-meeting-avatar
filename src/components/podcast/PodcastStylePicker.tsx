@@ -21,14 +21,14 @@ export function PodcastStylePicker({ value, onChange, talk, direction = DEFAULT_
   const copy = usePodcastCopy();
   const name = useId();
   const previewTalk = talk ?? defaultPodcast();
-  const signature = JSON.stringify([previewTalk.title, previewTalk.topic, previewTalk.participants.map((person) => [person.name, person.sex, person.kind]), direction]);
+  const signature = JSON.stringify([previewTalk.title, previewTalk.topic, previewTalk.settings.studioCast, previewTalk.settings.studioGuest, previewTalk.participants.map((person) => [person.name, person.sex, person.kind]), direction]);
   return <fieldset disabled={disabled} className={`${design.picker} ${compact ? design.compact : ""} ${disabled ? design.disabled : ""}`} data-testid="podcast-style-picker">
     <legend className={design.legend}>{legend || copy("Scegli lo stile grafico", "Choose a visual style")}</legend>
     <div className={design.cards}>
       {STUDIO_THEMES.map((theme) => <label key={theme.id} className={`${design.card} ${value === theme.id ? design.selected : ""}`}>
         <input className={design.radio} data-testid={`podcast-style-option-${theme.id}`} type="radio" name={name} value={theme.id} checked={value === theme.id} onChange={() => onChange(theme.id)} aria-label={copy(theme.label.it, theme.label.en)} />
         <span className={design.thumbnail}><PodcastThumbnail key={`${theme.id}-${signature}`} talk={{ ...previewTalk, settings: { ...previewTalk.settings, studioTheme: theme.id } }} direction={direction} /></span>
-        <span className={design.cardText}><strong className={design.cardTitle}>{copy(theme.label.it, theme.label.en)}</strong><span className={design.cardDescription}>{copy(theme.description.it, theme.description.en)}</span><span className={design.swatches} aria-hidden="true">{theme.colors.map((color) => <i key={color} style={{ backgroundColor: color }} />)}</span></span>
+        <span className={design.cardText}>{theme.id.startsWith("original-") && <span className={design.cardIndex}>{copy("PROPOSTA INIZIALE · ORA ANIMATA", "INITIAL PROPOSAL · NOW ANIMATED")}</span>}<strong className={design.cardTitle}>{copy(theme.label.it, theme.label.en)}</strong><span className={design.cardDescription}>{copy(theme.description.it, theme.description.en)}</span><span className={design.swatches} aria-hidden="true">{theme.colors.map((color) => <i key={color} style={{ backgroundColor: color }} />)}</span></span>
       </label>)}
     </div>
   </fieldset>;

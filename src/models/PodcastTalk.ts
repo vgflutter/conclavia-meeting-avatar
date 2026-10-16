@@ -17,7 +17,7 @@ import { DEFAULT_LLM_MODEL, LLM_MODEL_IDS } from "@/lib/podcast/llm-models";
 import { DEFAULT_STUDIO_LAYOUT, STUDIO_LAYOUT_IDS } from "@/lib/podcast/talk-run-compatibility";
 import {
   DEFAULT_STUDIO_THEME,
-  STUDIO_THEME_IDS,
+  STUDIO_THEME_IDS, STUDIO_CAST_IDS, STUDIO_GUEST_MODES,
 } from "@/lib/podcast/studio-themes";
 
 const scoreField = {
@@ -147,6 +147,8 @@ const talkSchema = new Schema<TalkRecord>(
         required: true,
         default: DEFAULT_STUDIO_THEME,
       },
+      studioCast: { type: String, enum: STUDIO_CAST_IDS, required: true, default: "original" },
+      studioGuest: { type: String, enum: STUDIO_GUEST_MODES, required: true, default: "auto" },
       studioLayout: {
         type: String,
         enum: STUDIO_LAYOUT_IDS,

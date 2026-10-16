@@ -1,7 +1,7 @@
 // Recovered from vgflutter/conclavia @ 5d4746f900a106defe1377131bce7ebbc5b69ca3.
 // Namespaced podcast feature; existing Meeting records and runtime stay separate.
 import type { LlmModelId } from "@/lib/podcast/llm-models";
-import type { StudioThemeId } from "@/lib/podcast/studio-themes";
+import type { StudioCast, StudioGuestMode, StudioThemeId } from "@/lib/podcast/studio-themes";
 import type { PodcastLayout } from "@conclavia/avatar-kit/types/podcast";
 
 export type TalkStatus = "draft" | "ready";
@@ -54,6 +54,8 @@ export interface TalkSettings {
   videoMode: VideoMode;
   studioTheme: StudioThemeId;
   studioLayout?: PodcastLayout;
+  studioCast?: StudioCast;
+  studioGuest?: StudioGuestMode;
   defaultModel: LlmModelId;
   allowInterruptions: boolean;
   pace: TalkPace;

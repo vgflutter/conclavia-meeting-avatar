@@ -1,30 +1,30 @@
 import type { PodcastLayout } from "@conclavia/avatar-kit/types/podcast";
 
-/** Composition is independent of illustration style; every set reserves a real guest seat. */
+/** Composition is independent of illustration style; each layout adapts to an optional guest. */
 export const STUDIO_SCENARIOS = [
   {
     id: "studio",
     label: { it: "Studio condiviso", en: "Shared studio" },
-    description: { it: "I conduttori ai lati, l’ospite al centro dello studio. La conversazione resta uno spazio comune.", en: "Hosts on either side, the guest at the heart of the studio. A shared space for the conversation." },
-    guest: { it: "Ospite al centro", en: "Guest at the center" },
+    description: { it: "I conduttori condividono il tavolo; l’eventuale ospite entra al centro. La conversazione resta uno spazio comune.", en: "The hosts share a table; an optional guest joins at the center. A shared space for the conversation." },
+    guest: { it: "Tavolo condiviso, ospite opzionale", en: "Shared table, optional guest" },
   },
   {
     id: "speaker",
-    label: { it: "Tre punti di vista", en: "Three points of view" },
-    description: { it: "Tre finestre per seguire ospite e conduttori. Chi parla ha più spazio, mentre le reazioni restano visibili.", en: "Three windows for the guest and hosts. The speaker gets more space while listening reactions remain visible." },
-    guest: { it: "Tre presenze alla pari", en: "Three equal presences" },
+    label: { it: "Finestre del dialogo", en: "Conversation windows" },
+    description: { it: "Finestre distinte per i conduttori e l’eventuale ospite. Chi parla ha più spazio, mentre le reazioni restano visibili.", en: "Separate windows for the hosts and optional guest. The speaker gets more space while listening reactions remain visible." },
+    guest: { it: "Ritratti e reazioni in vista", en: "Portraits and reactions in view" },
   },
   {
     id: "table",
     label: { it: "Il tavolo del confronto", en: "The discussion table" },
-    description: { it: "Due avatar raccolti da un lato e l’ospite su un grande schermo dall’altro. Un confronto più diretto.", en: "Two avatars together on one side and the guest on a large screen opposite. A more direct exchange." },
-    guest: { it: "Ospite di fronte ai conduttori", en: "Guest facing the hosts" },
+    description: { it: "Due avatar raccolti al tavolo, con uno schermo laterale quando serve l’ospite. Un confronto più diretto.", en: "Two avatars together at the table, with a side screen when a guest joins. A more direct exchange." },
+    guest: { it: "Confronto al tavolo, video opzionale", en: "Table discussion, optional video" },
   },
   {
     id: "lounge",
     label: { it: "Salotto delle idee", en: "The ideas lounge" },
-    description: { it: "Un ambiente più rilassato, con sedute e distanze diverse. L’ospite entra nella conversazione come terza presenza.", en: "A more relaxed setting, with different seats and spacing. The guest joins the conversation as a third presence." },
-    guest: { it: "Un posto nel salotto", en: "A seat in the lounge" },
+    description: { it: "Un ambiente più rilassato, con sedute e distanze diverse. Lo spazio video dell’ospite si aggiunge quando serve.", en: "A more relaxed setting, with different seats and spacing. The guest’s video space is added when needed." },
+    guest: { it: "Sedute rilassate, ospite opzionale", en: "Relaxed seating, optional guest" },
   },
 ] as const satisfies ReadonlyArray<{ id: PodcastLayout; label: { it: string; en: string }; description: { it: string; en: string }; guest: { it: string; en: string } }>;
 
