@@ -16,8 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description:
       locale === "it"
-        ? "Un collega digitale con avatar per meeting singoli e ricorrenti."
-        : "A digital colleague with an avatar for single and recurring meetings.",
+        ? "Il tuo spazio per meeting, podcast e onboarding con avatar."
+        : "Your workspace for meetings, podcasts, and onboarding with avatars.",
   };
 }
 

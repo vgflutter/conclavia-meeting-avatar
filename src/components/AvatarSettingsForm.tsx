@@ -19,7 +19,7 @@ export function AvatarSettingsForm() {
 
   return (
     <form onSubmit={event => { event.preventDefault(); void save(); }} className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-      <section className="relative h-64 overflow-hidden rounded-2xl bg-[#f2efe6] sm:h-auto sm:aspect-[4/5] sm:max-h-[36rem] lg:sticky lg:top-24" data-avatar-stage={draft.visualStyle}>
+      <section className="relative h-64 overflow-hidden rounded-2xl bg-[#f2efe6] sm:h-auto sm:aspect-[4/5] sm:max-h-[36rem] lg:sticky lg:top-[calc(var(--workspace-header-height,160px)+24px)]" data-avatar-stage={draft.visualStyle}>
         <div className="absolute inset-x-[8%] bottom-0 top-4">
           <BusinessAvatar appearance={appearance} visualStyle={draft.visualStyle} welcomeLanguage={locale} ariaLabel={isItalian ? "Avatar del collega digitale" : "Digital colleague avatar"} />
         </div>

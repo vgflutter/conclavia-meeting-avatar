@@ -85,7 +85,7 @@ export function StreamingVoiceTestStudio({ locale, model: initialModel, configur
 
   return (
     <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]" data-streaming-voice-state={state}>
-      <div className="card min-w-0 overflow-hidden lg:sticky lg:top-24">
+      <div className="card min-w-0 overflow-hidden lg:sticky lg:top-[calc(var(--workspace-header-height,160px)+24px)]">
         <div className="bg-[#f2efe6] p-5 text-[#263f36]" data-avatar-stage={draft.visualStyle}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2" data-testid="portrait-rehearsal" data-state={rehearsing ? "playing" : "idle"}>
             <p className="text-xs font-semibold uppercase tracking-widest text-[#526a60]">{it ? "Anteprima dal vivo" : "Live preview"}</p>
@@ -96,7 +96,7 @@ export function StreamingVoiceTestStudio({ locale, model: initialModel, configur
             </button>
           </div>
         <div className="mx-auto aspect-square max-h-[280px] sm:max-h-[440px]">
-          <div className={`h-full w-full ${busy ? "max-lg:fixed max-lg:right-3 max-lg:top-28 max-lg:z-40 max-lg:h-36 max-lg:w-32 max-lg:rounded-xl max-lg:bg-[#f2efe6] max-lg:shadow-xl" : ""}`} data-testid="speech-preview">
+          <div className={`h-full w-full ${busy ? "max-lg:fixed max-lg:right-3 max-lg:top-[calc(var(--workspace-header-height,149px)+12px)] max-lg:z-40 max-lg:h-36 max-lg:w-32 max-lg:rounded-xl max-lg:bg-[#f2efe6] max-lg:shadow-xl" : ""}`} data-testid="speech-preview">
           <BusinessAvatar language={locale} appearance={draft.appearance} visualStyle={draft.visualStyle} viseme={previewFrame?.viseme ?? frame.viseme} voiceLevel={previewFrame?.level ?? frame.level} mood={mood} gesture={previewFrame?.gesture ?? gesture}
             ariaLabel={it ? "Avatar del collega digitale" : "Digital colleague avatar"} />
           </div>

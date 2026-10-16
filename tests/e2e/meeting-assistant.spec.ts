@@ -498,7 +498,7 @@ test("interfaccia mobile: navigazione e azioni principali restano utilizzabili",
   await expect(page.getByRole("heading", { name: "Meeting", exact: true })).toBeVisible();
   await expectNoHorizontalOverflow();
 
-  const mobileNavigation = page.getByRole("navigation", { name: "Navigazione mobile" });
+  const mobileNavigation = page.getByRole("navigation", { name: "Navigazione meeting" });
   await mobileNavigation.getByRole("link", { name: "Memoria" }).click();
   await expect(page).toHaveURL(/\/memory$/);
   await expectNoHorizontalOverflow();

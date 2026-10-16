@@ -8,6 +8,12 @@ A digital colleague for Microsoft Teams: follows the agenda, responds when calle
 
 **Start here.** Architecture, configuration, all screenshots and detailed checks are in the [extended guide](docs/guide.md).
 
+## Workspace areas
+
+`/` opens the workspace selector. The primary navigation separates **Meeting**, **Podcast** and **Onboarding**; the second row contains only the selected area's tools. Meeting owns `/meetings`, `/memory`, `/context` and `/avatar`. General assistant context applies to meetings only. Podcast owns episodes, the two-host rehearsal and the style/mood gallery.
+
+`/onboarding` opens the Onboarding area and links to the existing dedicated Studio in a new tab. `/onboarding/studio` redirects to `http://127.0.0.1:3002/studio` on loopback requests, or `https://onboarding.conclavia.me/studio` otherwise. Set `CONCLAVIA_ONBOARDING_STUDIO_URL` to override this public destination address. Credentials and application context are never included in the handoff. Existing Studio authentication still applies. All these management routes remain blocked on the public Meeting tunnel.
+
 ## Podcast studio
 
 The **Podcast** section at `/podcast` restores the editorial engine recovered from [vgflutter/conclavia, 22 August 2026](https://github.com/vgflutter/conclavia/tree/5d4746f900a106defe1377131bce7ebbc5b69ca3), adapted to the current application. The original was removed in the [5 September Meeting refocus](https://github.com/vgflutter/conclavia/commit/a0281daac4f5435131d2c3cfeaf1cb666e976652); this restoration does not reset Meeting history or replace the current app.

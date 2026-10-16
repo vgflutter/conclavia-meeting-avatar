@@ -3,95 +3,62 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-
+import { useEffect, useRef } from "react";
 import { useTranslations } from "@/i18n/I18nProvider";
 import type { Locale } from "@/i18n/locale";
+import styles from "./Header.module.css";
 
 export function Header() {
   const { locale, setLocale } = useTranslations();
   const pathname = usePathname();
-
-  if (pathname.startsWith("/meeting-room/") || /^\/podcast\/[^/]+\/broadcast\/?$/u.test(pathname)) {
-    return null;
-  }
-
-  const navigation = [
-    { href: "/meetings", it: "Meeting", en: "Meetings" },
-    { href: "/podcast", it: "Podcast", en: "Podcasts" },
-    { href: "/memory", it: "Memoria", en: "Memory" },
-    { href: "/context", it: "Contesto", en: "Context" },
-    { href: "/avatar", it: "Avatar", en: "Avatar" },
-  ];
-  const isPodcast = pathname === "/podcast" || pathname.startsWith("/podcast/");
-  const createHref = isPodcast ? "/podcast/new" : "/meetings/new";
-
-  return (
-    <header className="sticky top-0 z-40 border-b border-[#dfe4dc] bg-white/92 backdrop-blur">
-      <div className="container-page flex min-h-16 items-center justify-between gap-3 py-2">
-        <Link href="/meetings" aria-label="Conclavia" className="shrink-0">
-          <Image
-            src="/conclavia-logo.png"
-            alt="Conclavia"
-            width={2079}
-            height={756}
-            priority
-            className="h-8 w-auto sm:h-12"
-          />
-        </Link>
-        <nav
-          aria-label={locale === "it" ? "Navigazione principale" : "Primary navigation"}
-          className="flex items-center gap-1.5 sm:gap-2"
-        >
-          {navigation.map((item) => {
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={`hidden rounded-lg px-3 py-2 text-sm font-semibold transition lg:inline-flex ${active ? "bg-[#edf4ef] text-[#295c43]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"}`}
-              >
-                {locale === "it" ? item.it : item.en}
-              </Link>
-            );
-          })}
-          <label className="sr-only" htmlFor="interface-language">
-            {locale === "it" ? "Lingua dell’interfaccia" : "Interface language"}
-          </label>
-          <select
-            id="interface-language"
-            value={locale}
-            onChange={(event) => setLocale(event.target.value as Locale)}
-            className="min-h-10 rounded-lg border border-[#dfe4dc] bg-white px-2 text-sm font-medium outline-none focus:border-[#295c43] focus:ring-2 focus:ring-[#295c43]/20"
-          >
-            <option value="en">EN</option>
-            <option value="it">IT</option>
-          </select>
-          {pathname !== createHref && <Link href={createHref} className="button-primary whitespace-nowrap">
-            {isPodcast
-              ? locale === "it" ? "Nuovo podcast" : "New podcast"
-              : locale === "it" ? "Nuovo meeting" : "New meeting"}
-          </Link>}
-        </nav>
+  const hidden = pathname.startsWith("/meeting-room/") || /^\/podcast\/[^/]+\/broadcast\/?$/u.test(pathname);
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    const measure = () => root.style.setProperty("--workspace-header-height", `${headerRef.current?.getBoundingClientRect().height ?? 0}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (headerRef.current) observer.observe(headerRef.current);
+    return () => { observer.disconnect(); root.style.removeProperty("--workspace-header-height"); };
+  }, [hidden]);
+  if (hidden) return null;
+  const it = locale === "it";
+  const area = pathname.startsWith("/podcast") ? "podcast" : pathname.startsWith("/onboarding") ? "onboarding" : pathname === "/" ? "home" : "meeting";
+  const sections = area === "meeting" ? [
+    { href: "/meetings", label: it ? "Riunioni" : "Meetings", active: pathname.startsWith("/meetings") },
+    { href: "/memory", label: it ? "Memoria" : "Memory", active: pathname.startsWith("/memory") },
+    { href: "/context", label: it ? "Contesto" : "Context", active: pathname.startsWith("/context") },
+    { href: "/avatar", label: "Avatar", active: pathname.startsWith("/avatar") },
+  ] : area === "podcast" ? [
+    { href: "/podcast", label: it ? "Puntate" : "Episodes", active: !/^\/podcast\/(?:styles|preview|rehearsal)(?:\/|$)/u.test(pathname) },
+    { href: "/podcast/rehearsal", label: it ? "Prova a due" : "Two-host rehearsal", active: pathname.startsWith("/podcast/rehearsal") },
+    { href: "/podcast/styles", label: it ? "Stili e mood" : "Styles & moods", active: /^\/podcast\/(?:styles|preview)(?:\/|$)/u.test(pathname) },
+  ] : [];
+  const createHref = area === "podcast" ? "/podcast/new" : "/meetings/new";
+  const createLabel = area === "podcast" ? it ? "Nuovo podcast" : "New podcast" : it ? "Nuovo meeting" : "New meeting";
+  return <header ref={headerRef} className={styles.header} data-testid="workspace-header" data-area={area}>
+    <div className={styles.topline}>
+      <Link href="/" aria-label={it ? "Conclavia · Tutte le aree" : "Conclavia · All areas"} className={styles.brand}>
+        <Image src="/conclavia-logo.png" alt="Conclavia" width={2079} height={756} priority />
+      </Link>
+      <div className={styles.tools}>
+        <label className="sr-only" htmlFor="interface-language">{it ? "Lingua dell’interfaccia" : "Interface language"}</label>
+        <select id="interface-language" value={locale} onChange={event => setLocale(event.target.value as Locale)}><option value="en">EN</option><option value="it">IT</option></select>
+        {(area === "meeting" || area === "podcast") && pathname !== createHref && <Link href={createHref} className={styles.create}>{createLabel}<span aria-hidden="true">＋</span></Link>}
       </div>
-      <nav
-        aria-label={locale === "it" ? "Navigazione mobile" : "Mobile navigation"}
-        className="container-page grid grid-cols-5 border-t border-[#edf0eb] py-1.5 lg:hidden"
-      >
-        {navigation.map((item) => {
-          const active = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={`rounded-lg px-1 py-2 text-center text-[11px] font-semibold transition sm:px-2 sm:text-xs ${active ? "bg-[#edf4ef] text-[#295c43]" : "text-slate-500 hover:bg-slate-50"}`}
-            >
-              {locale === "it" ? item.it : item.en}
-            </Link>
-          );
-        })}
+    </div>
+    <nav className={styles.areas} aria-label={it ? "Navigazione principale" : "Primary navigation"}>
+      {[
+        ["meeting", "/meetings", it ? "Meeting" : "Meetings"],
+        ["podcast", "/podcast", it ? "Podcast" : "Podcasts"],
+        ["onboarding", "/onboarding", "Onboarding"],
+      ].map(([id, href, label]) => <Link key={id} href={href} data-area={id} aria-current={area === id ? "page" : undefined}><span className={styles.areaDot} aria-hidden="true" />{label}</Link>)}
+    </nav>
+    {sections.length > 0 && <div className={styles.sectionRow}>
+      <span className={styles.areaName}>{area === "meeting" ? it ? "AREA MEETING" : "MEETING AREA" : it ? "AREA PODCAST" : "PODCAST AREA"}</span>
+      <nav className={styles.sections} aria-label={area === "meeting" ? it ? "Navigazione meeting" : "Meeting navigation" : it ? "Navigazione podcast" : "Podcast navigation"}>
+        {sections.map(section => <Link key={section.href} href={section.href} aria-current={section.active ? "page" : undefined}>{section.label}</Link>)}
       </nav>
-    </header>
-  );
+    </div>}
+  </header>;
 }

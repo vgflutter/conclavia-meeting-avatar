@@ -14,7 +14,7 @@
 .captionName{font-size:10px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:#7f8061;margin-bottom:8px}
 .captionText{font-size:16px;line-height:1.8;color:#324a36}
 .captionEmpty{font-size:13px;line-height:1.8;color:#7d8877}
-.sidebar{display:grid;gap:18px;position:sticky;top:90px;min-width:0}
+.sidebar{display:grid;gap:18px;position:sticky;top:calc(var(--workspace-header-height,160px) + 18px);min-width:0}
 .panel{border:1px solid #dce3d7;border-radius:14px;background:#fff;padding:22px}
 .panel h2{font-size:16px;font-weight:650;letter-spacing:-.02em;color:#264833;margin:0 0 6px}
 .panelIntro{font-size:12px;line-height:1.8;color:#76836d;margin-bottom:18px}

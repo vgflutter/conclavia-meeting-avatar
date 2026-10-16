@@ -15,14 +15,14 @@ export default async function ContextPage() {
   return <div className="container-page py-8 sm:py-10">
     <header className="mb-6">
       <h1 className="text-3xl font-bold tracking-tight">{it ? "Contesto dell’assistente" : "Assistant context"}</h1>
-      <p className="mt-2 text-sm text-slate-600">{it ? "Quello che deve sapere prima di ascoltare un meeting." : "What it needs to know before listening to a meeting."}</p>
+      <p className="mt-2 text-sm text-slate-600">{it ? "Il contesto dell’area Meeting: quello che l’assistente deve sapere prima di ascoltare una riunione." : "Context for the Meetings area: what the assistant needs to know before listening to a meeting."}</p>
     </header>
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
       <section className="card min-w-0 p-5 sm:p-7"><AssistantContextEditor scope="global" initial={context} /></section>
       <aside className="space-y-5 text-sm leading-6 text-slate-600">
         <div><h2 className="font-semibold text-slate-900">{it ? "Tre livelli, senza duplicare" : "Three levels, no duplication"}</h2>
           <ol className="mt-2 list-inside list-decimal space-y-2">
-            <li>{it ? "Generale: vale ovunque." : "General: applies everywhere."}</li>
+            <li>{it ? "Generale: vale per tutti i meeting." : "General: applies to all meetings."}</li>
             <li>{it ? "Serie: informazioni del progetto." : "Series: project background."}</li>
             <li>{it ? "Meeting: note per un appuntamento." : "Meeting: notes for one appointment."}</li>
           </ol>
