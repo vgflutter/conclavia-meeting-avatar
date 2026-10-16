@@ -125,6 +125,7 @@ const talkSchema = new Schema<TalkRecord>(
       required: true,
     },
     settings: {
+      voiceProvider: { type: String, enum: ["inworld", "kokoro"], default: "inworld" },
       maxTurns: { type: Number, required: true, min: 1, validate: Number.isInteger },
       targetDurationMinutes: {
         type: Number,

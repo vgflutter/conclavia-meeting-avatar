@@ -1,3 +1,4 @@
+import { localKokoroSpeechResponse, LocalKokoroError } from "@conclavia/avatar-kit/lib/local-kokoro-tts";
 import { Types } from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
 import { inworldSpeechResponse, SpeechServiceError } from "@/lib/inworld-tts";
@@ -26,15 +27,18 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return Response.json({ error: error instanceof PodcastRequestError ? error.message : "Invalid request" },
       { status: error instanceof PodcastRequestError ? error.status : 400 });
   }
-  const config = publicPodcastSpeechConfig();
+  const config = await publicPodcastSpeechConfig();
   if (!config.ready) return Response.json({ error: "Podcast voice is disabled or unavailable" }, { status: 503 });
   try {
     await connectToDatabase();
     const run = await TalkRunModel.findById(id).select("talkSnapshot messages").lean();
     const speech = run && podcastSpeechOptions(run, sequence);
     if (!speech) return Response.json({ error: "Stored AI turn not found or unsupported" }, { status: 404 });
-    return await limitedSpeechResponse(`podcast:${id}`, () => inworldSpeechResponse({ ...speech, model: config.model, signal: request.signal }));
+    if (!config.providers?.[speech.provider]) return Response.json({ error: "Selected podcast voice is unavailable" }, { status: 503 });
+    return await limitedSpeechResponse(`podcast:${id}`, () => speech.provider === "kokoro"
+      ? localKokoroSpeechResponse({ ...speech, signal: request.signal })
+      : inworldSpeechResponse({ ...speech, model: config.model, signal: request.signal }));
   } catch (error) {
-    return Response.json({ error: "Podcast voice unavailable" }, { status: error instanceof SpeechServiceError ? error.status : 503 });
+    return Response.json({ error: "Podcast voice unavailable" }, { status: error instanceof SpeechServiceError || error instanceof LocalKokoroError ? error.status : 503 });
   }
 }

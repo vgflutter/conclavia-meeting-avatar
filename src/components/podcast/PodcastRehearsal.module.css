@@ -1,0 +1,61 @@
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+.main{display:grid;gap:20px;min-width:0}
+.stage{position:relative;aspect-ratio:16/9;overflow:hidden;border:1px solid #284d3e;border-radius:16px;background:#183b32}
+.stageBadge{position:absolute;z-index:2;top:16px;left:16px;background:#17342ce8;border:1px solid #ffffff20;border-radius:6px;padding:7px 10px;color:#d2dfc9;font-size:10px;font-weight:700;letter-spacing:.1em;display:flex;align-items:center;gap:8px}
+.badgeDot{height:6px;width:6px;background:#b3c58c;border-radius:50%}
+.speakingDot{background:#e5b184;box-shadow:0 0 0 4px #e5b18416}
+.status{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;border:1px solid #dce4d5;border-radius:12px;padding:17px 19px;background:#fff}
+.statusLabel{font-size:10px;letter-spacing:.12em;font-weight:750;text-transform:uppercase;color:#77866e;margin-bottom:6px}
+.statusTitle{font-size:14px;font-weight:650;color:#294a36;line-height:1.6}
+.statusHelp{font-size:11px;line-height:1.7;color:#788572;margin-top:4px}
+.statusClock{font-variant-numeric:tabular-nums;font-size:22px;letter-spacing:-.04em;color:#637d53;min-width:55px;text-align:right}
+.caption{min-height:106px;padding:22px 25px;border:1px solid #dedfcf;background:#f9f6ec;border-radius:12px}
+.captionName{font-size:10px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:#7f8061;margin-bottom:8px}
+.captionText{font-size:16px;line-height:1.8;color:#324a36}
+.captionEmpty{font-size:13px;line-height:1.8;color:#7d8877}
+.sidebar{display:grid;gap:18px;position:sticky;top:90px;min-width:0}
+.panel{border:1px solid #dce3d7;border-radius:14px;background:#fff;padding:22px}
+.panel h2{font-size:16px;font-weight:650;letter-spacing:-.02em;color:#264833;margin:0 0 6px}
+.panelIntro{font-size:12px;line-height:1.8;color:#76836d;margin-bottom:18px}
+.readiness{display:grid;gap:10px;margin:18px 0}
+.readinessRow{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:#687d5e}
+.ready,.unavailable{font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:5px;padding:4px 7px;white-space:nowrap}
+.ready{background:#edf4e4;color:#587743}
+.unavailable{background:#f5f0e4;color:#8a7955}
+.controls{display:grid;gap:9px}
+.controls button{width:100%}
+.limit{font-size:11px;color:#819075;line-height:1.8;border-top:1px solid #e3e8da;margin-top:17px;padding-top:14px}
+.step{display:flex;align-items:center;gap:10px;font-size:11px;color:#6e8162;margin-bottom:14px}
+.step span{display:grid;place-items:center;border-radius:50%;height:23px;width:23px;background:#edf2e3;font-weight:700}
+.editNote{font-size:11px;line-height:1.7;color:#7f8d74;margin-top:10px}
+.settings{display:grid;gap:20px}
+.fieldset{padding:0;margin:0;border:0;min-width:0}
+.fieldset:disabled{opacity:.65}
+.people{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+.person{background:#f7faf2;border:1px solid #e0e6d7;border-radius:12px;padding:19px;min-width:0}
+.personHeader{display:flex;align-items:center;gap:11px;margin-bottom:19px}
+.initial{height:35px;width:35px;border-radius:50%;display:grid;place-items:center;font-family:Georgia,serif;font-size:20px;color:#597548;background:#e2e9d6}
+.personHeader strong{font-size:13px;font-weight:650;color:#2f513b}
+.personHeader small{display:block;font-size:10px;letter-spacing:.08em;color:#8b977d;margin-top:3px;text-transform:uppercase}
+.voiceCaption{display:flex;align-items:center;gap:6px;font-size:10px;color:#89957f;margin-top:6px}
+.voiceCaption i{height:5px;width:5px;border-radius:50%;background:#9db383}
+.expressionRow{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.manualNote{font-size:11px;line-height:1.8;color:#7d8b72;margin-top:11px}
+.transcript{display:grid;gap:12px;max-height:440px;overflow:auto;padding-right:3px}
+.turn{padding:15px 18px;border:1px solid #e0e7d7;border-radius:10px;background:#f8faf3}
+.turnSpeaking{border-color:#aabf90;background:#f2f6e6}
+.turnHeader{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;font-weight:700;color:#597648}
+.turnHeader small{font-size:9px;font-weight:500;color:#94a184;letter-spacing:.08em;text-transform:uppercase}
+.turn p{font-size:13px;color:#4d6247;line-height:1.85;margin-top:8px;white-space:pre-wrap}
+.transcriptEmpty{font-size:13px;line-height:1.9;color:#849175;padding:7px 0}
+.progress{height:5px;background:#edf1e4;border-radius:4px;margin:17px 0 11px;overflow:hidden}
+.progress i{display:block;height:100%;background:#7f9d60;transition:width .25s}
+.stats{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#839173}
+.stats strong{color:#587246;font-weight:650}
+.invitation{max-width:1400px;margin:22px auto 0;padding:0 32px}
+.invitationInner{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 20px;background:#eef3e4;border:1px solid #dbe5cd;border-radius:12px}
+.invitationInner p{font-size:12px;color:#718360;line-height:1.7}
+.invitationInner strong{display:block;font-size:14px;color:#395c3b;margin-bottom:2px}
+@media(max-width:1050px){.layout{grid-template-columns:minmax(0,1fr) 290px}.people{grid-template-columns:1fr}.panel{padding:19px}}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.sidebar{position:static;grid-row:1}.sidebar>.panel:last-child{display:none}.people{grid-template-columns:1fr 1fr}.invitation{padding:0 18px}.status{padding:15px 17px}.caption{padding:18px 20px}.stageBadge{top:11px;left:11px;padding:5px 8px;font-size:8px}}
+@media(max-width:540px){.people,.expressionRow{grid-template-columns:1fr}.captionText{font-size:14px}.statusClock{font-size:20px}.invitationInner{display:block}.invitationInner a{margin-top:12px}.panel{padding:18px}}

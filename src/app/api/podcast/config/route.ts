@@ -12,6 +12,6 @@ export async function GET() {
   };
   return Response.json({
     ai: { enabled, ready: providers.openai, providers },
-    speech: publicPodcastSpeechConfig(),
+    speech: await publicPodcastSpeechConfig(),
   }, { headers: { "Cache-Control": "no-store" } });
 }

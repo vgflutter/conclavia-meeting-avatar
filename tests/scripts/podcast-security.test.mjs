@@ -21,7 +21,15 @@ function load(file, dependencies = {}, env = {}) {
 }
 
 const guard = load("lib/podcast/request-guard");
+const podcastCatalog = {
+  podcastVoiceProvider: value => value === "kokoro" ? "kokoro" : "inworld",
+  KOKORO_PODCAST_SPEED: 1.03,
+  findPodcastVoice: (id, provider, language, sex) => provider === "kokoro" && language === "it" &&
+    ((id === "im_nicola" && sex === "male") || (id === "if_sara" && sex === "female")) ? { id } : undefined,
+};
 const speech = load("lib/podcast/speech", {
+  "@conclavia/avatar-kit/lib/podcast-voice-catalog": podcastCatalog,
+  "@conclavia/avatar-kit/lib/local-kokoro-tts": { localKokoroHealth: async () => true },
   "@/lib/avatar-voice-catalog": { isAvatarVoice: (id, language) => (language === "it" ? ["Gianni", "Orietta"] : ["Dennis", "Olivia"]).includes(id) },
   "@/lib/meeting-tts-config": { meetingTtsConfig: () => ({ ready: true, model: "inworld-tts-2-flash" }) },
 });
@@ -88,9 +96,10 @@ function voiceRoute({ ready = false, run = fixture() } = {}) {
   const route = load("app/api/podcast/runs/[id]/speech/route", {
     mongoose: { Types: { ObjectId: { isValid: id => /^[a-f0-9]{24}$/u.test(id) } } },
     "@/lib/mongodb": { connectToDatabase: async () => { calls.database++; } },
+    "@conclavia/avatar-kit/lib/local-kokoro-tts": { LocalKokoroError: class LocalKokoroError extends Error {}, localKokoroSpeechResponse: async input => { calls.provider++; calls.input = input; return new Response('{"done":true}\n'); } },
     "@/lib/inworld-tts": { SpeechServiceError, inworldSpeechResponse: async input => { calls.provider++; calls.input = input; return new Response('{"done":true}\n'); } },
     "@/lib/speech-request-limit": { limitedSpeechResponse: async (key, create) => create() },
-    "@/lib/podcast/speech": { ...speech, publicPodcastSpeechConfig: () => ({ enabled: ready, ready, model: "inworld-tts-2-flash" }) },
+    "@/lib/podcast/speech": { ...speech, publicPodcastSpeechConfig: () => ({ enabled: ready, ready, model: "inworld-tts-2-flash", providers: { inworld: ready, kokoro: ready } }) },
     "@/lib/podcast/request-guard": guard,
     "@/models/PodcastRun": { TalkRunModel: { findById: () => ({ select: () => ({ lean: async () => run }) }) } },
   });
@@ -143,4 +152,14 @@ test("public meeting tunnel does not expose podcast management or broadcast page
       assert.equal(proxy(request).status, 404, pathname);
     }
   }
+});
+
+test("Kokoro podcast snapshots select the approved Nicola/Sara pair at their original speed", () => {
+  const run = fixture(); run.talkSnapshot.settings = { voiceProvider: "kokoro" };
+  const male = speech.podcastSpeechOptions(run, 1), female = speech.podcastSpeechOptions(run, 2);
+  assert.equal(male.provider, "kokoro"); assert.equal(male.voiceId, "im_nicola"); assert.equal(male.speakingRate, 1.03);
+  assert.equal(female.provider, "kokoro"); assert.equal(female.voiceId, "if_sara"); assert.equal(female.speakingRate, 1.03);
+  assert.equal(speech.podcastSpeechOptions(run, 3), undefined);
+  run.talkSnapshot.language = "en";
+  assert.equal(speech.podcastSpeechOptions(run, 1), undefined);
 });

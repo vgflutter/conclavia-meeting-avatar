@@ -49,7 +49,7 @@ export function serializeTalk(talk: TalkDocument): TalkResponse {
       modelOverride: isLlmModelId(participant.modelOverride)
         ? participant.modelOverride
         : undefined,
-      voiceId: findStudioVoice(participant.voiceId ?? "")?.id,
+      voiceId: findStudioVoice(participant.voiceId ?? "", talk.settings.voiceProvider === "kokoro" ? "kokoro" : "inworld", talk.language)?.id,
       voiceDelivery: voiceDelivery(participant.voiceDelivery),
       assertiveness: participant.assertiveness,
       patience: participant.patience,
@@ -72,7 +72,7 @@ export function serializeTalk(talk: TalkDocument): TalkResponse {
       modelOverride: isLlmModelId(talk.moderator?.modelOverride)
         ? talk.moderator.modelOverride
         : undefined,
-      voiceId: findStudioVoice(talk.moderator?.voiceId ?? "")?.id,
+      voiceId: findStudioVoice(talk.moderator?.voiceId ?? "", talk.settings.voiceProvider === "kokoro" ? "kokoro" : "inworld", talk.language)?.id,
       voiceDelivery: voiceDelivery(talk.moderator?.voiceDelivery),
       canInterrupt: talk.moderator?.canInterrupt ?? true,
       manageTime: talk.moderator?.manageTime ?? true,
@@ -80,6 +80,7 @@ export function serializeTalk(talk: TalkDocument): TalkResponse {
     },
     status: talk.status,
     settings: {
+      voiceProvider: talk.settings.voiceProvider === "kokoro" ? "kokoro" : "inworld",
       maxTurns: talk.settings.maxTurns,
       targetDurationMinutes: talk.settings.targetDurationMinutes ?? 30,
       videoMode: "cartoon",

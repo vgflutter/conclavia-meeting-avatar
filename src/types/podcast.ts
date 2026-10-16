@@ -47,6 +47,7 @@ export interface ModeratorConfiguration {
 }
 
 export interface TalkSettings {
+  voiceProvider?: "inworld" | "kokoro";
   maxTurns: number;
   targetDurationMinutes: number;
   videoMode: VideoMode;

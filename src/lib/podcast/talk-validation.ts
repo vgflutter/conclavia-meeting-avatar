@@ -91,10 +91,12 @@ function optionalVoiceId(
   sex: ParticipantSex,
   field: string,
   issues: string[],
+  provider: "inworld" | "kokoro" = "inworld",
+  language?: string,
 ): string | undefined {
   const voiceId = optionalString(value, field, issues);
   if (!voiceId) return undefined;
-  const voice = findStudioVoice(voiceId);
+  const voice = findStudioVoice(voiceId, provider, language);
   if (!voice || voice.sex !== sex) {
     issues.push(`${field} must be a supported voice matching the participant sex`);
     return undefined;
@@ -197,6 +199,8 @@ function parseParticipant(
   value: unknown,
   index: number,
   issues: string[],
+  provider: "inworld" | "kokoro",
+  language: string,
 ): Participant {
   const field = `participants[${index}]`;
   const participant = isRecord(value) ? value : {};
@@ -272,7 +276,7 @@ function parseParticipant(
           : undefined,
     voiceId:
       kind === "ai"
-        ? optionalVoiceId(participant.voiceId, sex, `${field}.voiceId`, issues)
+        ? optionalVoiceId(participant.voiceId, sex, `${field}.voiceId`, issues, provider, language)
         : undefined,
     voiceDelivery:
       kind === "ai"
@@ -304,6 +308,8 @@ function parseParticipant(
 function parseModerator(
   value: unknown,
   issues: string[],
+  provider: "inworld" | "kokoro",
+  language: string,
 ): ModeratorConfiguration {
   if (value === undefined) {
     return {
@@ -381,7 +387,7 @@ function parseModerator(
           : undefined,
     voiceId:
       kind === "ai"
-        ? optionalVoiceId(moderator.voiceId, "male", "moderator.voiceId", issues)
+        ? optionalVoiceId(moderator.voiceId, "male", "moderator.voiceId", issues, provider, language)
         : undefined,
     voiceDelivery:
       kind === "ai"
@@ -462,7 +468,9 @@ function parseSettings(value: unknown, issues: string[]): TalkSettings {
     issues.push("settings.studioTheme must be one of the supported themes");
   }
 
+  if (settings.voiceProvider !== undefined && settings.voiceProvider !== "inworld" && settings.voiceProvider !== "kokoro") issues.push("settings.voiceProvider must be inworld or kokoro");
   return {
+    voiceProvider: settings.voiceProvider === "kokoro" ? "kokoro" : "inworld",
     maxTurns: Number.isInteger(maxTurns) ? (maxTurns as number) : 1,
     targetDurationMinutes: Number.isInteger(targetDurationMinutes)
       ? (targetDurationMinutes as number)
@@ -485,12 +493,15 @@ export function validateTalkInput(value: unknown): ValidationResult {
     return { success: false, issues: ["Request body must be an object"] };
   }
 
+  const provider = isRecord(value.settings) && value.settings.voiceProvider === "kokoro" ? "kokoro" : "inworld";
+  const language = typeof value.language === "string" ? value.language.trim() : "";
+  if (provider === "kokoro" && language !== "it") issues.push("Kokoro podcast voices currently support Italian only");
   let participants: Participant[] = [];
   if (!Array.isArray(value.participants) || value.participants.length < 2 || value.participants.length > 5) {
     issues.push("participants must contain between two and five items");
   } else {
     participants = value.participants.map((participant, index) =>
-      parseParticipant(participant, index, issues),
+      parseParticipant(participant, index, issues, provider, language),
     );
   }
 
@@ -516,7 +527,7 @@ export function validateTalkInput(value: unknown): ValidationResult {
     description: optionalString(value.description, "description", issues),
     language: requiredString(value.language, "language", issues),
     participants,
-    moderator: parseModerator(value.moderator, issues),
+    moderator: parseModerator(value.moderator, issues, provider, language),
     status,
     settings: parseSettings(value.settings, issues),
   };

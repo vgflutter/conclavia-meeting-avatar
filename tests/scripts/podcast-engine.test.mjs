@@ -267,3 +267,17 @@ test("cancellation from an obsolete worker cannot release a newer worker's gener
   assert.equal(context.document.activeTurn.speakerName, "New worker");
   assert.equal(context.document.messages.length, 0);
 });
+
+test("new Kokoro settings preserve approved voice IDs while missing provider stays Inworld-compatible", () => {
+  const legacy = validation.validateTalkInput(fixture());
+  assert.equal(legacy.success, true); assert.equal(legacy.data.settings.voiceProvider, "inworld");
+  const talk = fixture(); talk.settings.voiceProvider = "kokoro";
+  talk.participants[0].voiceId = "im_nicola"; talk.participants[1].voiceId = "if_sara";
+  const result = validation.validateTalkInput(talk);
+  assert.equal(result.success, true, JSON.stringify(result));
+  assert.equal(result.data.participants[0].voiceId, "im_nicola"); assert.equal(result.data.settings.voiceProvider, "kokoro");
+  talk.participants[0].voiceId = "Gianni";
+  assert.equal(validation.validateTalkInput(talk).success, false);
+  talk.participants[0].voiceId = "im_nicola"; talk.language = "en";
+  assert.equal(validation.validateTalkInput(talk).success, false);
+});
