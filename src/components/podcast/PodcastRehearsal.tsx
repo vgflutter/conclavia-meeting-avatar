@@ -14,6 +14,11 @@ import styles from "./Podcast.module.css";
 import rehearsal from "./PodcastRehearsal.module.css";
 import { PodcastStylePicker } from "./PodcastStylePicker";
 import design from "./PodcastStyles.module.css";
+import { STUDIO_SCENARIOS, type StudioScenarioId } from "@/lib/podcast/studio-scenarios";
+import { podcastPerformanceFrame } from "@/lib/podcast/performance-playback";
+import type { SpeechPlaybackProgress } from "@conclavia/avatar-kit/lib/streaming-voice-player";
+import { PodcastPerformanceText } from "./PodcastPerformanceText";
+import { PodcastMoodReadout } from "./PodcastMoodReadout";
 
 type RehearsalPhase = "idle" | "preparing" | "ready" | "generating" | "buffering" | "speaking" | "pause" | "complete" | "stopped" | "error";
 interface Capability {
@@ -32,7 +37,7 @@ function voiceFor(language: string, sex: Participant["sex"], provider: "kokoro" 
   return PODCAST_VOICES.find((voice) => voice.provider === provider && voice.language === language && voice.gender === sex)?.id;
 }
 
-function rehearsalInput(initialTheme?: StudioThemeId): TalkInput {
+function rehearsalInput(initialTheme?: StudioThemeId, initialLayout: StudioScenarioId = "studio"): TalkInput {
   const input = defaultPodcast(false);
   const language = "it";
   return {
@@ -46,16 +51,17 @@ function rehearsalInput(initialTheme?: StudioThemeId): TalkInput {
       goals: "Costruire sul contributo dell’altro conduttore, portare esempi concreti e rendere più chiara la domanda centrale.",
       voiceId: voiceFor(language, person.sex, "kokoro"),
     })),
-    settings: { ...input.settings, studioTheme: initialTheme ?? input.settings.studioTheme, voiceProvider: "kokoro", maxTurns: 8, targetDurationMinutes: 2 },
+    settings: { ...input.settings, studioTheme: initialTheme ?? input.settings.studioTheme, studioLayout: initialLayout, voiceProvider: "kokoro", maxTurns: 8, targetDurationMinutes: 2 },
   };
 }
 
-export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeId }) {
+export function PodcastRehearsal({ initialTheme, initialLayout = "studio" }: { initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId }) {
   const copy = usePodcastCopy();
-  const [input, setInput] = useState<TalkInput>(() => rehearsalInput(initialTheme));
+  const [input, setInput] = useState<TalkInput>(() => rehearsalInput(initialTheme, initialLayout));
   const [talk, setTalk] = useState<TalkResponse | null>(null);
   const [run, setRun] = useState<TalkRunResponse | null>(null);
   const [speech, setSpeech] = useState<TalkRunMessageResponse | null>(null);
+  const [lastSpeech, setLastSpeech] = useState<TalkRunMessageResponse | null>(null);
   const [phase, setPhase] = useState<RehearsalPhase>("idle");
   const [active, setActive] = useState(false);
   const [capability, setCapability] = useState<Capability>(NO_CAPABILITY);
@@ -64,7 +70,8 @@ export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeI
   const [phaseSeconds, setPhaseSeconds] = useState(0);
   const [viseme, setViseme] = useState("rest");
   const [audioLevel, setAudioLevel] = useState(0);
-  const [direction, setDirection] = useState<PodcastDirection>({ ...DEFAULT_DIRECTION, layout: "studio" });
+  const [speechProgress, setSpeechProgress] = useState<SpeechPlaybackProgress>();
+  const [direction, setDirection] = useState<PodcastDirection>({ ...DEFAULT_DIRECTION, layout: initialLayout });
   const controllerRef = useRef<AbortController | null>(null);
   const prepareRef = useRef<AbortController | null>(null);
   const readinessRef = useRef<AbortController | null>(null);
@@ -108,12 +115,14 @@ export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeI
   const voiceReady = capability.speech.enabled && (capability.speech.providers?.[voiceProvider] ?? capability.speech.ready);
   const readyToStart = Boolean(talk && run && aiReady && voiceReady && !locked && phase !== "complete");
   const stageTalk = run?.talkSnapshot ?? talk ?? input;
-  const emotionalDirection = resolvePodcastDirection(direction, stageTalk, speech ?? run?.messages.at(-1));
+  const performanceFrame = (speech ?? lastSpeech) && direction.automatic ? podcastPerformanceFrame((speech ?? lastSpeech)!, speechProgress) : undefined;
+  const actingCue = performanceFrame ? { ...performanceFrame.cue, ...(!speech ? { phase: "settle" as const, progress: 1 } : {}) } : undefined;
+  const emotionalDirection = resolvePodcastDirection(direction, stageTalk, speech ?? lastSpeech ?? undefined, actingCue);
   const effectiveDirection = { ...emotionalDirection, focus: phase === "speaking" ? emotionalDirection.focus : "all" as const };
 
   function changeInput(next: TalkInput) {
     if (locked) return;
-    setInput(next); setTalk(null); setRun(null); setSpeech(null); setError(""); setPhase("idle"); lastPlayedSequenceRef.current = 0; speechSequenceRef.current = 0;
+    setInput(next); setTalk(null); setRun(null); setSpeech(null); setLastSpeech(null); setSpeechProgress(undefined); setError(""); setPhase("idle"); lastPlayedSequenceRef.current = 0; speechSequenceRef.current = 0;
   }
   function changePerson(index: number, values: Partial<Participant>) {
     changeInput({ ...input, participants: input.participants.map((person, position) => position === index ? { ...person, ...values } : person) });
@@ -156,7 +165,8 @@ export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeI
       const result = await runPodcastRehearsal({
         runId: run.id, maxTurns: 8, afterSequence: lastPlayedSequenceRef.current, signal: controller.signal, audioContext: audioContextRef.current, pauseMs: 550,
         onRun: (updated) => { if (mountedRef.current) setRun(updated); },
-        onSpeech: (message) => { if (mountedRef.current) { setSpeech(message); if (message) speechSequenceRef.current = message.sequence; if (!message) { setViseme("rest"); setAudioLevel(0); } } },
+        onSpeech: (message) => { if (mountedRef.current) { setSpeech(message); if (message) { setLastSpeech(message); setSpeechProgress(undefined); speechSequenceRef.current = message.sequence; } if (!message) { setViseme("rest"); setAudioLevel(0); } } },
+        onProgress: (progress) => { if (mountedRef.current && !controller.signal.aborted) setSpeechProgress(progress); },
         onFrame: (shape, level) => { if (mountedRef.current && !controller.signal.aborted) { setViseme(shape); setAudioLevel(level); } },
         onPhase: (next) => { if (!controller.signal.aborted) { if (next === "pause" || next === "complete") lastPlayedSequenceRef.current = Math.max(lastPlayedSequenceRef.current, speechSequenceRef.current); updatePhase(next); } },
       });
@@ -205,7 +215,7 @@ export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeI
       <div className={rehearsal.main}>
         <div className={rehearsal.stage} data-testid="rehearsal-stage">
           <div className={rehearsal.stageBadge}><i className={`${rehearsal.badgeDot} ${phase === "speaking" ? rehearsal.speakingDot : ""}`} />{copy("PROVA · DUE AI", "REHEARSAL · TWO AI HOSTS")}</div>
-          <PodcastStageView talk={stageTalk} direction={effectiveDirection} speakingIndex={phase === "speaking" ? speech?.participantIndex : undefined} audioLevel={audioLevel} viseme={viseme} />
+          <PodcastStageView talk={stageTalk} direction={effectiveDirection} performance={actingCue} speakingIndex={phase === "speaking" ? speech?.participantIndex : undefined} audioLevel={audioLevel} viseme={viseme} />
         </div>
         <div className={rehearsal.status} data-testid="rehearsal-phase" data-phase={phase} role="status" aria-live="polite">
           <div><div className={rehearsal.statusLabel}>{(phase === "generating" || phase === "buffering") ? copy("ATTESA TECNICA", "TECHNICAL WAIT") : phase === "pause" ? copy("RITMO DEL DIALOGO", "DIALOGUE PACING") : copy("STATO DELLA PROVA", "REHEARSAL STATUS")}</div><div className={rehearsal.statusTitle}>{phaseTitle[phase]}</div><p className={rehearsal.statusHelp}>{phaseHelp}</p></div>
@@ -213,12 +223,13 @@ export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeI
           {phase === "pause" && <div className={rehearsal.statusClock} aria-hidden="true">550<span style={{ fontSize: 11, marginLeft: 3 }}>ms</span></div>}
         </div>
         <div className={rehearsal.caption} data-testid="rehearsal-caption">
-          {phase === "speaking" && speech ? <><div className={rehearsal.captionName}>{speech.speakerName}</div><p className={rehearsal.captionText}>{speech.content}</p></> : <p className={rehearsal.captionEmpty}>{copy("Qui comparirà il testo dell’intervento che stai ascoltando. La trascrizione completa rimane sotto.", "The turn you are listening to will appear here. The full transcript stays below.")}</p>}
+          {phase === "speaking" && speech ? <><div className={rehearsal.captionName}>{speech.speakerName}</div><p className={rehearsal.captionText}>{performanceFrame?.sentence.text ?? speech.content}</p></> : <p className={rehearsal.captionEmpty}>{copy("Qui comparirà il testo dell’intervento che stai ascoltando. La trascrizione completa rimane sotto.", "The turn you are listening to will appear here. The full transcript stays below.")}</p>}
         </div>
+        {speech && performanceFrame && <PodcastMoodReadout message={speech} frame={performanceFrame} />}
         <section className={rehearsal.panel}>
           <h2>{copy("La prova, parola per parola", "The rehearsal, word for word")}</h2><p className={rehearsal.panelIntro}>{copy("Solo gli interventi effettivamente generati, nell’ordine della conversazione.", "Only the turns actually generated, in conversation order.")}</p>
           <div className={rehearsal.transcript} ref={transcriptRef} data-testid="rehearsal-transcript" aria-live="polite" aria-relevant="additions">
-            {run?.messages.length ? run.messages.map((message) => <article className={`${rehearsal.turn} ${phase === "speaking" && speech?.sequence === message.sequence ? rehearsal.turnSpeaking : ""}`} key={message.sequence}><div className={rehearsal.turnHeader}>{message.speakerName}<small>AI · {message.sequence}</small></div><p>{message.content}</p></article>) : <p className={rehearsal.transcriptEmpty}>{copy("La preparazione salva la configurazione e crea una sessione vuota. Gli interventi arriveranno dopo Avvia prova.", "Preparation saves the configuration and creates an empty session. Turns appear after you press Start rehearsal.")}</p>}
+            {run?.messages.length ? run.messages.map((message) => <article className={`${rehearsal.turn} ${phase === "speaking" && speech?.sequence === message.sequence ? rehearsal.turnSpeaking : ""}`} key={message.sequence}><div className={rehearsal.turnHeader}>{message.speakerName}<small>AI · {message.sequence}</small></div><PodcastPerformanceText message={message} /></article>) : <p className={rehearsal.transcriptEmpty}>{copy("La preparazione salva la configurazione e crea una sessione vuota. Gli interventi arriveranno dopo Avvia prova.", "Preparation saves the configuration and creates an empty session. Turns appear after you press Start rehearsal.")}</p>}
           </div>
         </section>
         <fieldset className={rehearsal.fieldset} disabled={locked}>
@@ -228,8 +239,9 @@ export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeI
             <div className={styles.row}>
               <Field label={copy("Lingua delle voci", "Voice language")}><select className={styles.input} value={input.language} onChange={(event) => changeLanguage(event.target.value)}><option value="it">Italiano</option><option value="en">English</option></select></Field>
               <Field label={copy("Stile grafico", "Visual style")}><select className={styles.input} data-testid="rehearsal-theme" value={input.settings.studioTheme} onChange={(event) => changeInput({ ...input, settings: { ...input.settings, studioTheme: event.target.value as TalkInput["settings"]["studioTheme"] } })}>{STUDIO_THEMES.map((theme) => <option value={theme.id} key={theme.id}>{copy(theme.label.it, theme.label.en)}</option>)}</select></Field>
+              <Field label={copy("Scenario", "Scene")}><select className={styles.input} data-testid="rehearsal-layout" value={direction.layout} onChange={(event) => { const layout = event.target.value as StudioScenarioId; setDirection({ ...direction, layout }); changeInput({ ...input, settings: { ...input.settings, studioLayout: layout } }); }}>{STUDIO_SCENARIOS.map(scenario => <option value={scenario.id} key={scenario.id}>{copy(scenario.label.it, scenario.label.en)}</option>)}</select></Field>
             </div>
-            <div className={design.settingsPicker}><PodcastStylePicker talk={input} value={input.settings.studioTheme} disabled={locked} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => changeInput({ ...input, settings: { ...input.settings, studioTheme: theme } })} /><Link className={design.embedLink} href={`/podcast/styles?style=${input.settings.studioTheme}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
+            <div className={design.settingsPicker}><PodcastStylePicker direction={{ ...direction, focus: "all" }} talk={input} value={input.settings.studioTheme} disabled={locked} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => changeInput({ ...input, settings: { ...input.settings, studioTheme: theme } })} /><Link className={design.embedLink} href={`/podcast/styles?style=${input.settings.studioTheme}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
             <Field label={copy("Servizio delle voci", "Voice service")}><select className={styles.input} data-testid="rehearsal-voice-provider" value={voiceProvider} onChange={(event) => { const provider = event.target.value as "kokoro" | "inworld"; changeInput({ ...input, settings: { ...input.settings, voiceProvider: provider }, participants: input.participants.map((person) => ({ ...person, voiceId: voiceFor(input.language, person.sex, provider) })) }); }}><option value="kokoro" disabled={input.language !== "it"}>{copy("Kokoro locale · Nicola e Sara", "Local Kokoro · Nicola and Sara")}</option><option value="inworld">Inworld</option></select></Field>
             <div className={rehearsal.people}>
               {input.participants.map((person, index) => <div className={rehearsal.person} key={index}>
@@ -261,7 +273,7 @@ export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeI
         </section>
         <fieldset className={rehearsal.fieldset} disabled={locked}>
           <section className={rehearsal.panel}>
-            <h2>{copy("Le reazioni dei conduttori", "The hosts’ reactions")}</h2><label className={styles.switch}><input type="checkbox" checked={direction.automatic} onChange={(event) => setDirection({ ...direction, automatic: event.target.checked })} />{copy("Segui l’intento della conversazione", "Follow the conversation’s intent")}</label>
+            <h2>{copy("Le reazioni dei conduttori", "The hosts’ reactions")}</h2><label className={styles.switch}><input type="checkbox" checked={direction.automatic} onChange={(event) => setDirection({ ...direction, automatic: event.target.checked })} />{copy("Segui il mood di ogni frase", "Follow each sentence’s mood")}</label>
             {!direction.automatic && <div className={rehearsal.expressionRow}>{input.participants.map((person, index) => <Field label={person.name} key={index}><select className={styles.input} value={index === 0 ? direction.emotion : direction.emotion2} onChange={(event) => setDirection({ ...direction, ...(index === 0 ? { emotion: event.target.value as PodcastEmotion } : { emotion2: event.target.value as PodcastEmotion }) })}>{expressionOptions.map(([emotion, it, en]) => <option key={emotion} value={emotion}>{copy(it, en)}</option>)}</select></Field>)}</div>}
             <p className={rehearsal.manualNote}>{copy("Espressioni distinte, ascolto e sguardo verso chi parla. Le reazioni sono scelte dalla regia, non dedotte dalle emozioni di una persona reale.", "Different expressions, listening, and gaze toward the speaker. Reactions are chosen by direction, not inferred from a real person’s emotions.")}</p>
           </section>

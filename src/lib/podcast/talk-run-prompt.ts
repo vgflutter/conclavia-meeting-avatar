@@ -1,6 +1,7 @@
 // Recovered from vgflutter/conclavia @ 5d4746f900a106defe1377131bce7ebbc5b69ca3.
 // Namespaced podcast feature; existing Meeting records and runtime stay separate.
 import type { TalkResponse } from "@/types/podcast";
+import { MAX_PERFORMANCE_SENTENCES, MAX_PERFORMANCE_TEXT_LENGTH, PODCAST_MOODS } from "@/lib/podcast/performance";
 import type {
   TalkRunDiscussionState,
   TalkRunMessageResponse,
@@ -283,7 +284,9 @@ export function buildTurnPrompt(
     referenceInstruction(plan),
     `Write between ${plan.minWords} and ${plan.maxWords} words. The range is deliberate: do not pad a short intervention and do not turn every response into a mini-editorial.`,
     "Write for the ear, not for the page: use short, naturally punctuated sentences and a varied spoken cadence. Avoid long subordinate chains, parenthetical asides, slash constructions, markdown, and typographic emphasis because the text will be performed live by a voice avatar.",
-    "Output only the spoken intervention. Do not prefix it with a name, role, label, stage direction, or quotation marks.",
+    "Return the structured sentences object required by the schema. Each text field contains only one spoken sentence, without a name, role, label, stage direction, markdown, or surrounding quotation marks. Every spoken sentence must have its acting directions; do not return a separate transcript or additional dialogue.",
+    `Use at most ${MAX_PERFORMANCE_SENTENCES} sentences and ${MAX_PERFORMANCE_TEXT_LENGTH} characters of spoken text in total. For each sentence choose mood and listenerMood from: ${PODCAST_MOODS.join(", ")}. Both intensities are numbers from 0 to 1. Mood is the delivery of your own sentence; listenerMood directs only the other fictional AI avatars' listening animation. Never infer or prescribe the real human guest's emotions.`,
+    "Choose acting that follows the meaning and character: curiosity for a sincere question, doubt for a considered objection, disagreement for a clear challenge, empathy for care, amusement for a light moment, surprise only for a real change, agreement for an accepted point, attention for neutral explanation. Vary moods when the meaning changes, not mechanically on every sentence. Keep intensity restrained by default (0.3–0.65); reserve strong reactions for justified moments. Listener reactions should be subtle and must not imply agreement merely because someone is listening.",
     "Vary sentence openings and conversational entry points. Never repeatedly use the same template to agree, disagree, name another guest, or take the floor.",
     "Stay in character. Never speak for another guest. Do not invent sources, quotations, statistics, or facts absent from the provided context.",
   ].filter(Boolean).join("\n");

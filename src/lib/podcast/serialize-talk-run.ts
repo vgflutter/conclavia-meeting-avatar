@@ -4,6 +4,8 @@ import type { TalkRunDocument } from "@/models/PodcastRun";
 import type { TalkRunAudienceCue } from "@/types/podcast-audience";
 import type { TalkRunResponse } from "@/types/podcast-run";
 import { normalizeTalkOnAirNames } from "@/lib/podcast/on-air-names";
+import { resolveMessagePerformance } from "@/lib/podcast/performance";
+import { normalizeStudioLayout } from "@/lib/podcast/talk-run-compatibility";
 
 function serializeAudienceCue(
   cue: TalkRunAudienceCue,
@@ -28,6 +30,10 @@ export function serializeTalkRun(run: TalkRunDocument): TalkRunResponse {
     ? normalizeTalkOnAirNames(rawTalkSnapshot)
     : undefined;
   if (talkSnapshot) {
+    talkSnapshot.settings = {
+      ...talkSnapshot.settings,
+      studioLayout: normalizeStudioLayout(talkSnapshot.settings?.studioLayout),
+    };
     talkSnapshot.participants = talkSnapshot.participants.map(
       (participant, index) => ({
         ...participant,
@@ -192,6 +198,12 @@ export function serializeTalkRun(run: TalkRunDocument): TalkRunResponse {
       provider: message.provider,
       model: message.model,
       content: message.content,
+      performance: resolveMessagePerformance({
+        origin: message.origin, provider: message.provider, content: message.content,
+        performance: message.performance
+          ? JSON.parse(JSON.stringify(message.performance)) as unknown
+          : undefined,
+      }),
       inputTokens: message.inputTokens,
       outputTokens: message.outputTokens,
       audienceCue: message.audienceCue

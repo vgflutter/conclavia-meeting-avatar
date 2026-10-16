@@ -346,6 +346,13 @@ async function generateOpenAiJson(
     );
   }
 
+  if (isRecord(payload) && typeof payload.status === "string" && payload.status !== "completed") {
+    throw new ProviderError("openai", "OpenAI did not complete the structured response");
+  }
+  const refused = isRecord(payload) && Array.isArray(payload.output) && payload.output.some((item) =>
+    isRecord(item) && Array.isArray(item.content) && item.content.some((part) =>
+      isRecord(part) && part.type === "refusal"));
+  if (refused) throw new ProviderError("openai", "OpenAI declined the structured response");
   const content = extractOpenAiText(payload);
   if (!content) throw new ProviderError("openai", "OpenAI returned no JSON output");
   const usage = isRecord(payload) && isRecord(payload.usage) ? payload.usage : undefined;
@@ -401,6 +408,12 @@ async function generateGeminiJson(
     );
   }
 
+  const candidate = isRecord(payload) && Array.isArray(payload.candidates)
+    ? payload.candidates.find(isRecord) : undefined;
+  if ((candidate && typeof candidate.finishReason === "string" && candidate.finishReason !== "STOP") ||
+    (isRecord(payload) && isRecord(payload.promptFeedback) && payload.promptFeedback.blockReason)) {
+    throw new ProviderError("gemini", "Gemini did not complete the structured response");
+  }
   const content = extractGeminiText(payload).trim();
   if (!content) throw new ProviderError("gemini", "Gemini returned no JSON output");
   const usage = isRecord(payload) && isRecord(payload.usageMetadata)

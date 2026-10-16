@@ -62,6 +62,75 @@ const load = loader();
 const validation = load("@/lib/podcast/talk-validation");
 const director = load("@/lib/podcast/talk-director");
 const prompt = load("@/lib/podcast/talk-run-prompt");
+const performance = load("@/lib/podcast/performance");
+
+function acting(text, changes = {}) {
+  return { text, mood: "curiosity", intensity: 0.55, listenerMood: "attention", listenerIntensity: 0.3, ...changes };
+}
+
+test("structured spoken sentences preserve accents, punctuation and acting with complete sentence coverage", () => {
+  const result = performance.parseGeneratedPerformance({ sentences: [
+    acting("È una scelta interessante.\nQuale prova ti convincerebbe?"),
+    acting("Capisco il dubbio.", { mood: "empathy", listenerMood: "doubt", intensity: 0.4 }),
+  ] });
+  assert.equal(result.content, "È una scelta interessante. Quale prova ti convincerebbe? Capisco il dubbio.");
+  assert.equal(result.performance.version, 1);
+  assert.equal(result.performance.source, "ai");
+  assert.equal(result.performance.sentences.length, 3);
+  assert.equal(result.performance.sentences[1].mood, "curiosity");
+  assert.equal(result.performance.sentences[2].listenerMood, "doubt");
+  assert.equal(result.content, result.performance.sentences.map(sentence => sentence.text).join(" "));
+});
+
+test("malformed or excessive performance never reaches spoken text", () => {
+  const invalid = [
+    null, [], {}, { sentences: [] }, { sentences: [acting(" ")] },
+    { sentences: [acting("Ok.", { mood: "angry" })] },
+    { sentences: [acting("Ok.", { intensity: "0.5" })] },
+    { sentences: [acting("Ok.", { intensity: NaN })] },
+    { sentences: [acting("Ok.", { listenerIntensity: Infinity })] },
+    { sentences: [acting("Ok.", { intensity: -0.01 })] },
+    { sentences: [acting("Ok.", { listenerIntensity: 1.01 })] },
+    { sentences: [acting("Ok.", { listenerMood: null })] },
+    { sentences: [acting("Ok.", { extra: "not allowed" })] },
+    { sentences: [acting("Ok.")], content: "Unannotated speech must not leak." },
+    { sentences: [acting("a".repeat(1601))] },
+    { sentences: [acting("a".repeat(1100)), acting("b".repeat(1100))] },
+    { sentences: Array.from({ length: 25 }, () => acting("Ok.")) },
+    { sentences: [acting(Array.from({ length: 25 }, () => "Ok.").join(" "))] },
+    { sentences: [acting("Bad\u0000text")] },
+  ];
+  for (const value of invalid) assert.throws(() => performance.parseGeneratedPerformance(value), /Invalid podcast performance/u);
+});
+
+test("legacy AI gets explicitly neutral sentence directions while humans never get inferred moods", () => {
+  const legacy = performance.resolveMessagePerformance({ origin: "ai", content: "Non sono sicuro. Cosa proponi?" });
+  assert.equal(legacy.source, "legacy");
+  assert.equal(legacy.sentences.length, 2);
+  assert.ok(legacy.sentences.every(sentence => sentence.mood === "attention" && sentence.listenerMood === "attention"));
+  const annotated = performance.parseGeneratedPerformance({ sentences: [acting("Sono d'accordo.", { mood: "agreement" })] });
+  assert.equal(performance.resolveMessagePerformance({ origin: "ai", ...annotated }).source, "ai");
+  const mismatched = performance.resolveMessagePerformance({ origin: "ai", content: "Altro testo.", performance: annotated.performance });
+  assert.equal(mismatched.source, "legacy");
+  assert.equal(mismatched.sentences[0].text, "Altro testo.");
+  assert.equal(performance.resolveMessagePerformance({ origin: "human", ...annotated }), undefined);
+  assert.equal(performance.resolveMessagePerformance({ content: "La mia opinione." }), undefined);
+  const exact = "La prima frase.\n\nLa  seconda frase.";
+  const unmodified = performance.resolveMessagePerformance({ origin: "ai", content: exact });
+  assert.equal(unmodified.source, "legacy");
+  assert.equal(unmodified.sentences.map(sentence => sentence.text).join(" "), exact);
+});
+
+test("performance schema and prompt keep all eight emotions bounded to fictional avatars", () => {
+  const schema = performance.TURN_PERFORMANCE_SCHEMA;
+  assert.equal(schema.additionalProperties, false);
+  assert.equal(schema.properties.sentences.items.additionalProperties, false);
+  assert.equal(schema.properties.sentences.items.properties.mood.enum.length, 8);
+  const talk = fixture(), run = runFixture(talk, director);
+  const built = prompt.buildTurnPrompt(talk, run, director.chooseNextTurn(talk, run));
+  assert.match(built.instructions, /Every spoken sentence must have its acting directions/u);
+  assert.match(built.instructions, /Never infer or prescribe the real human guest's emotions/u);
+});
 
 test("podcast accepts 2–5 participants, preserves human identity and central question", () => {
   for (const count of [2, 3, 4, 5]) {
@@ -72,6 +141,60 @@ test("podcast accepts 2–5 participants, preserves human identity and central q
     if (count >= 3) assert.equal(result.data.participants[2].kind, "human");
   }
   for (const count of [0, 1, 6]) assert.equal(validation.validateTalkInput(fixture(count)).success, false);
+});
+
+test("podcast settings accept four canonical compositions and default legacy records to the shared studio", () => {
+  const legacy = validation.validateTalkInput(fixture());
+  assert.equal(legacy.success, true);
+  assert.equal(legacy.data.settings.studioLayout, "studio");
+  for (const studioLayout of ["studio", "speaker", "table", "lounge"]) {
+    const talk = fixture(); talk.settings.studioLayout = studioLayout;
+    const result = validation.validateTalkInput(talk);
+    assert.equal(result.success, true, JSON.stringify(result));
+    assert.equal(result.data.settings.studioLayout, studioLayout);
+    assert.equal(result.data.settings.studioTheme, "clean-line", "composition is independent of the art style");
+    assert.equal(result.data.participants[2].kind, "human");
+  }
+  for (const studioLayout of ["unknown", "", null, 0, {}, ["studio"]]) {
+    const talk = fixture(); talk.settings.studioLayout = studioLayout;
+    const result = validation.validateTalkInput(talk);
+    assert.equal(result.success, false);
+    assert.ok(result.issues.some(issue => issue.startsWith("settings.studioLayout")));
+  }
+});
+
+test("Mongoose round trips studio composition and serialized run snapshots keep their original staging", () => {
+  const { Types } = nativeRequire("mongoose");
+  const { TalkModel } = load("@/models/PodcastTalk");
+  const { TalkRunModel } = load("@/models/PodcastRun");
+  const { serializeTalk } = load("@/lib/podcast/serialize-talk");
+  const { serializeTalkRun } = load("@/lib/podcast/serialize-talk-run");
+  for (const studioLayout of ["studio", "speaker", "table", "lounge"]) {
+    const input = fixture(); input.settings.studioLayout = studioLayout;
+    const document = new TalkModel({ ...input, createdAt: new Date(0), updatedAt: new Date(0) });
+    assert.equal(document.validateSync(), undefined);
+    const reloaded = TalkModel.hydrate(document.toObject());
+    const snapshot = serializeTalk(reloaded);
+    assert.equal(snapshot.settings.studioLayout, studioLayout);
+    const run = new TalkRunModel({ ...runFixture(snapshot, director), talkId: new Types.ObjectId(),
+      talkSnapshot: snapshot, startedAt: new Date(0), createdAt: new Date(0), updatedAt: new Date(0) });
+    reloaded.settings.studioLayout = studioLayout === "studio" ? "lounge" : "studio";
+    const response = serializeTalkRun(run);
+    assert.equal(response.talkSnapshot.settings.studioLayout, studioLayout, "later episode edits do not alter the run's snapshot");
+    response.talkSnapshot.settings.studioLayout = "table";
+    assert.equal(run.talkSnapshot.settings.studioLayout, studioLayout, "serialized snapshots never mutate stored staging");
+  }
+  const legacy = fixture();
+  const document = new TalkModel({ ...legacy, createdAt: new Date(0), updatedAt: new Date(0) });
+  assert.equal(document.settings.studioLayout, "studio");
+  const raw = document.toObject(); delete raw.settings.studioLayout;
+  assert.equal(serializeTalk(TalkModel.hydrate(raw)).settings.studioLayout, "studio");
+  document.settings.studioLayout = "unknown";
+  assert.ok(document.validateSync()?.errors["settings.studioLayout"]);
+  const legacyRun = new TalkRunModel({ ...runFixture(legacy, director), talkId: new Types.ObjectId(),
+    talkSnapshot: legacy, startedAt: new Date(0), createdAt: new Date(0), updatedAt: new Date(0) });
+  assert.equal(serializeTalkRun(legacyRun).talkSnapshot.settings.studioLayout, "studio");
+  assert.equal(legacyRun.talkSnapshot.settings.studioLayout, undefined, "read compatibility does not rewrite old database snapshots");
 });
 
 test("obsolete paid-video modes, malformed characters and excessive run budgets are rejected", () => {
@@ -146,6 +269,49 @@ test("text and editorial generation refuse before any network when podcast AI op
   assert.equal(network, 0);
 });
 
+test("structured provider responses reject truncation and refusals even when a valid JSON object is present", async () => {
+  const request = { model: "openai-default", instructions: "Offline mock only", input: "Offline mock only", schemaName: "podcast_test", schema: {} };
+  const data = { sentences: [acting("Una risposta completa.")] };
+  const output = [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(data) }] }];
+  for (const payload of [
+    { status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output },
+    { status: "failed", output },
+    { status: "completed", output: [...output, { type: "message", content: [{ type: "refusal", refusal: "Refusal should stay private" }] }] },
+    { status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: '{"sentences":[' }] }] },
+  ]) {
+    let calls = 0;
+    const provider = loader({ env: { PODCAST_AI_ENABLED: "true", OPENAI_API_KEY: "offline-test-placeholder" },
+      fetcher: async () => { calls++; return Response.json(payload); } })("@/lib/podcast/llm-provider");
+    await assert.rejects(provider.generateLlmJson(request), error => error.name === "ProviderError" && !error.message.includes("private"));
+    assert.equal(calls, 1, "invalid output never triggers an automatic paid retry");
+  }
+  const provider = loader({ env: { PODCAST_AI_ENABLED: "true", OPENAI_API_KEY: "offline-test-placeholder" },
+    fetcher: async () => Response.json({ status: "completed", output, usage: { input_tokens: 10, output_tokens: 12 } }) })("@/lib/podcast/llm-provider");
+  const result = await provider.generateLlmJson(request);
+  assert.equal(result.data.sentences[0].text, data.sentences[0].text);
+  assert.equal(result.generation.inputTokens, 10);
+  assert.equal(result.generation.outputTokens, 12);
+});
+
+test("Gemini structured responses reject token limits and blocked content without inspecting their text as speech", async () => {
+  const request = { model: "gemini-default", instructions: "Offline mock only", input: "Offline mock only", schemaName: "podcast_test", schema: {} };
+  const content = { parts: [{ text: JSON.stringify({ sentences: [acting("Una frase completa.")] }) }] };
+  for (const payload of [
+    { candidates: [{ finishReason: "MAX_TOKENS", content }] },
+    { candidates: [{ finishReason: "SAFETY", content }] },
+    { candidates: [{ finishReason: "STOP", content }], promptFeedback: { blockReason: "SAFETY" } },
+  ]) {
+    let calls = 0;
+    const provider = loader({ env: { PODCAST_AI_ENABLED: "true", GEMINI_API_KEY: "offline-test-placeholder", PODCAST_GEMINI_MODEL: "offline-model" },
+      fetcher: async () => { calls++; return Response.json(payload); } })("@/lib/podcast/llm-provider");
+    await assert.rejects(provider.generateLlmJson(request), /did not complete/u);
+    assert.equal(calls, 1);
+  }
+  const provider = loader({ env: { PODCAST_AI_ENABLED: "true", GEMINI_API_KEY: "offline-test-placeholder", PODCAST_GEMINI_MODEL: "offline-model" },
+    fetcher: async () => Response.json({ candidates: [{ finishReason: "STOP", content }] }) })("@/lib/podcast/llm-provider");
+  assert.equal((await provider.generateLlmJson(request)).data.sentences[0].text, "Una frase completa.");
+});
+
 /** In-memory persistence boundary exercises orchestration without Mongo or a provider. */
 function orchestrationFixture({ expectHuman = false, aiEnabled = false, generation } = {}) {
   const { Types } = nativeRequire("mongoose");
@@ -185,13 +351,14 @@ function orchestrationFixture({ expectHuman = false, aiEnabled = false, generati
     "@/models/PodcastAudienceRoom": { AudienceRoomModel: {} },
     "@/lib/podcast/llm-provider": {
       isProviderConfigured: () => aiEnabled,
-      generateLlmTextStream: async (request, onDelta) => {
+      generateLlmJson: async (request) => {
         providerCalls++;
         if (!aiEnabled) throw new Error("No paid calls");
-        if (generation) return generation(request, onDelta);
+        if (generation) return generation(request);
         const content = "La verifica umana deve seguire criteri chiari, altrimenti rischiamo di approvare ogni suggerimento senza comprenderlo.";
-        await onDelta?.(content);
-        return { content, model: "openai-default", provider: "openai", inputTokens: 10, outputTokens: 10 };
+        const data = { sentences: [{ text: content, mood: "doubt", intensity: 0.55,
+          listenerMood: "curiosity", listenerIntensity: 0.35 }] };
+        return { data, generation: { content: JSON.stringify(data), model: "openai-default", provider: "openai", inputTokens: 10, outputTokens: 10 } };
       },
       ProviderError: class ProviderError extends Error {},
     },
@@ -214,6 +381,7 @@ test("human turn is saved once, attributed to the real guest, and returns the fl
   assert.equal(run.messages[0].origin, "human");
   assert.equal(run.messages[0].participantIndex, 2);
   assert.equal(run.messages[0].provider, undefined);
+  assert.equal(run.messages[0].performance, undefined);
   assert.match(run.messages[0].content, /verifica umana/);
   assert.equal(run.nextParticipantIndex, 0); // modulo actual 3 seats, not historic 5
   assert.equal(context.providerCalls(), 0);
@@ -250,6 +418,107 @@ test("a completed turn never clears a newer generation lease claimed during its 
   assert.equal(context.document.generationToken, "newer-worker-token");
   assert.equal(context.document.activeTurn.speakerName, "Next speaker");
   assert.equal(context.providerCalls(), 1);
+});
+
+test("one structured generation supplies clean deltas and sentence moods before speech and persistence", async () => {
+  const context = orchestrationFixture({ aiEnabled: true });
+  context.document.talkSnapshot.settings.studioLayout = "lounge";
+  const events = [], deltas = [];
+  const result = await context.engine.advanceTalkRun(context.id, {
+    onDelta(delta) { events.push("delta"); deltas.push(delta); },
+    onSpeechReady(message) {
+      events.push("speech");
+      assert.equal(message.performance.source, "ai");
+      assert.equal(message.performance.sentences[0].mood, "doubt");
+      assert.equal(message.content, message.performance.sentences.map(sentence => sentence.text).join(" "));
+    },
+    onTurnSaved(run) { events.push("saved"); assert.equal(run.messages.at(-1).performance.source, "ai"); },
+  });
+  const message = result.messages[0];
+  assert.equal(deltas.join(""), message.content);
+  assert.ok(deltas.every(delta => !/[{}]/u.test(delta)), "JSON annotations are never transcript or TTS text");
+  assert.equal(events.filter(event => event === "speech").length, 1);
+  assert.ok(events.indexOf("speech") < events.indexOf("saved"));
+  assert.equal(message.inputTokens, 10);
+  assert.equal(message.outputTokens, 10);
+  assert.equal(context.providerCalls(), 1);
+  assert.equal(result.talkSnapshot.settings.studioLayout, "lounge");
+});
+
+test("invalid structured acting fails the turn without deltas, speech or persisted dialogue", async () => {
+  let speech = 0, deltas = 0;
+  const context = orchestrationFixture({ aiEnabled: true, generation: async request => {
+    assert.equal(request.schemaName, "podcast_turn_performance");
+    return { data: { sentences: [acting("Questa frase non deve essere pronunciata.", { mood: "invalid" })] },
+      generation: { provider: "openai", model: request.model, content: "raw JSON", inputTokens: 2, outputTokens: 5 } };
+  } });
+  await assert.rejects(context.engine.advanceTalkRun(context.id, {
+    onDelta() { deltas++; }, onSpeechReady() { speech++; },
+  }), error => error.status === 502 && error.run.status === "failed");
+  assert.equal(speech, 0);
+  assert.equal(deltas, 0);
+  assert.equal(context.document.messages.length, 0);
+  assert.equal(context.document.generationToken, undefined);
+  assert.equal(context.providerCalls(), 1);
+});
+
+test("a prepared reply retains sentence moods and is consumed once without a second generation", async () => {
+  for (const legacy of [false, true]) {
+    const context = orchestrationFixture({ aiEnabled: true });
+    const first = await context.engine.advanceTalkRun(context.id, {}, { prepareNext: true });
+    assert.equal(first.hasPreparedTurn, true);
+    assert.equal(context.document.preparedTurn.performance.source, "ai");
+    assert.equal(context.providerCalls(), 2, "one current and one explicitly requested prepared turn");
+    if (legacy) delete context.document.preparedTurn.performance;
+    const preparedContent = context.document.preparedTurn.content;
+    const second = await context.engine.advanceTalkRun(context.id);
+    assert.equal(second.messages.length, 2);
+    assert.equal(second.messages[1].content, preparedContent);
+    assert.equal(second.messages[1].performance.source, legacy ? "legacy" : "ai");
+    assert.equal(second.messages[1].performance.sentences[0].mood, legacy ? "attention" : "doubt");
+    assert.equal(second.hasPreparedTurn, false);
+    assert.equal(context.document.preparedTurn, undefined);
+    assert.equal(context.providerCalls(), 2, "consuming a valid prepared turn never generates it again");
+  }
+});
+
+test("an aborted structured request releases its own lease before speech or storage", async () => {
+  const controller = new AbortController();
+  const context = orchestrationFixture({ aiEnabled: true, generation: async request => {
+    assert.equal(request.signal.aborted, false);
+    controller.abort(new DOMException("Operator stopped", "AbortError"));
+    assert.equal(request.signal.aborted, true);
+    return { data: { sentences: [acting("Non deve partire.")] }, generation: { content: "JSON", model: request.model, provider: "openai" } };
+  } });
+  let spoken = 0;
+  await assert.rejects(context.engine.advanceTalkRun(context.id, { onSpeechReady() { spoken++; } }, { signal: controller.signal }), error => error.status === 499);
+  assert.equal(spoken, 0);
+  assert.equal(context.document.messages.length, 0);
+  assert.equal(context.document.status, "idle");
+  assert.equal(context.document.generationToken, undefined);
+});
+
+test("Mongoose persists and serializes sentence acting for messages and prepared turns without internal fields", () => {
+  const { Types } = nativeRequire("mongoose");
+  const { TalkRunModel } = load("@/models/PodcastRun");
+  const { serializeTalkRun } = load("@/lib/podcast/serialize-talk-run");
+  const talk = fixture(), run = runFixture(talk, director), plan = director.chooseNextTurn(talk, run);
+  const annotated = performance.parseGeneratedPerformance({ sentences: [acting("Quale prova proponi?"), acting("Ti ascolto.", { mood: "empathy" })] });
+  const document = new TalkRunModel({ ...run, _id: new Types.ObjectId(), talkId: new Types.ObjectId(),
+    messages: [{ ...plan, ...annotated, origin: "ai", sequence: 1, provider: "openai", model: "openai-default",
+      wordCount: 5, estimatedAirtimeSeconds: 3, createdAt: new Date(0) }],
+    preparedTurn: { basedOnSequence: 1, plan, ...annotated, provider: "openai", model: "openai-default", createdAt: new Date(0) },
+    talkSnapshot: talk, startedAt: new Date(0), createdAt: new Date(0), updatedAt: new Date(0),
+  });
+  assert.equal(document.validateSync(["messages", "preparedTurn"]), undefined);
+  assert.equal(document.preparedTurn.performance.sentences[1].mood, "empathy");
+  const serialized = serializeTalkRun(document);
+  assert.equal(serialized.messages[0].performance.source, "ai");
+  assert.equal(serialized.messages[0].performance.sentences.length, 2);
+  assert.deepEqual(Object.keys(serialized.messages[0].performance.sentences[0]).sort(),
+    ["intensity", "listenerIntensity", "listenerMood", "mood", "text"]);
+  document.messages[0].performance.sentences[0].intensity = 2;
+  assert.ok(document.validateSync(["messages"])?.errors["messages.0.performance.sentences.0.intensity"]);
 });
 
 test("cancellation from an obsolete worker cannot release a newer worker's generation lease", async () => {

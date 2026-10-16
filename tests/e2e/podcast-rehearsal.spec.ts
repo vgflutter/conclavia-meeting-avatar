@@ -18,7 +18,9 @@ async function installRehearsalFixture(page: Page, options: { completeAt?: numbe
   const calls = { prepare: 0, runs: 0, next: 0, speech: [] as number[], stop: 0 };
   const bytes = Buffer.alloc(Math.floor(24_000 * (options.audioSeconds ?? 0.65)) * 2);
   for (let i = 0; i < bytes.length / 2; i++) bytes.writeInt16LE(Math.round(6000 * Math.sin(i * Math.PI / 30)), i * 2);
-  const audio = JSON.stringify({ audio: bytes.toString("base64"), phones: [{ start: 0, end: options.audioSeconds ?? 0.65, viseme: "a" }] }) + "\n";
+  const duration = options.audioSeconds ?? 0.65;
+  const audio = JSON.stringify({ audio: bytes.toString("base64"), phones: [{ start: 0, end: duration, viseme: "a" }],
+    cues: [{ index: 0, start: 0, end: duration / 2 }, { index: 1, start: duration / 2, end: duration }] }) + "\n";
   const pcm = audio + (options.truncated ? "" : '{"done":true}\n');
   await page.context().addCookies([{ name: "conclavia_locale", value: "it", url: "http://127.0.0.1:3101" }]);
   await page.addInitScript(() => {
@@ -61,10 +63,16 @@ async function installRehearsalFixture(page: Page, options: { completeAt?: numbe
     calls.next++;
     const sequence = calls.next;
     const participantIndex = (sequence - 1) % 2;
+    const sentences = [
+      { text: `Intervento ${sequence}: che cosa cambia quando deleghiamo una scelta?`, mood: participantIndex === 0 ? "curiosity" as const : "amusement" as const,
+        intensity: .78, listenerMood: participantIndex === 0 ? "attention" as const : "curiosity" as const, listenerIntensity: .54 },
+      { text: "Capisco il vantaggio, ma vorrei preservare il giudizio umano.", mood: participantIndex === 0 ? "disagreement" as const : "agreement" as const,
+        intensity: .72, listenerMood: participantIndex === 0 ? "empathy" as const : "doubt" as const, listenerIntensity: .61 },
+    ];
     const message: TalkRunMessageResponse = { sequence, participantIndex, speakerType: "participant", speakerName: talk.participants[participantIndex].name,
       intent: sequence === 1 ? "question" : "reply", threadLabel: "Prova", arcPhase: "positions", preparationMode: "reactive", referenceStyle: "idea_first",
       wordCount: 12, estimatedAirtimeSeconds: 1, origin: "ai", provider: "openai", model: "openai-default",
-      content: `Intervento sintetico ${sequence}: una domanda e una risposta per verificare i tempi.`, createdAt: new Date(sequence * 1000).toISOString() };
+      content: sentences.map(sentence => sentence.text).join(" "), performance: { version: 1, source: "ai", sentences }, createdAt: new Date(sequence * 1000).toISOString() };
     run = { ...run, status: sequence === options.completeAt ? "completed" : "idle", messages: [...run.messages, message],
       participantTurnCount: sequence, nextParticipantIndex: (participantIndex + 1) % 2 };
     return route.fulfill({ json: { run } });
@@ -151,4 +159,42 @@ test("a truncated voice stream stops the rehearsal instead of advancing silently
   await page.waitForTimeout(800);
   expect(calls.next).toBe(1);
   expect(calls.speech).toEqual([1]);
+});
+
+test("sentence PCM cues switch the actual speaker and listener moods during audio, and Stop prevents later cue changes", async ({ page }) => {
+  const calls = await installRehearsalFixture(page, { audioSeconds: 3.6 });
+  await page.goto("/podcast/rehearsal?style=anime&scenario=lounge");
+  const stage = page.getByTestId("rehearsal-stage").locator("canvas[data-podcast-stage]");
+  await page.getByTestId("rehearsal-prepare").click();
+  await expect(page.getByTestId("rehearsal-start")).toBeEnabled();
+  await page.getByTestId("rehearsal-start").click();
+  await expect(stage).toHaveAttribute("data-podcast-cue", "1:0");
+  await expect(stage).toHaveAttribute("data-podcast-moods", "curiosity,attention");
+  await expect(stage).toHaveAttribute("data-podcast-intensities", "0.78,0.54");
+  await expect(stage).toHaveAttribute("data-podcast-speaking", "true,false");
+  await expect(stage).toHaveAttribute("data-podcast-visemes", "a,rest");
+  await expect(page.getByTestId("podcast-mood-readout")).toHaveAttribute("data-sentence-index", "0");
+  await expect(page.getByTestId("podcast-mood-readout")).toContainText("che cosa cambia quando deleghiamo una scelta?");
+  expect((await audioEvents(page)).audio[0]?.endedAt).toBeNull();
+  await expect(stage).toHaveAttribute("data-podcast-cue", "1:1");
+  await expect(stage).toHaveAttribute("data-podcast-moods", "disagreement,empathy");
+  await expect(stage).toHaveAttribute("data-podcast-intensities", "0.72,0.61");
+  await expect(page.getByTestId("podcast-mood-readout")).toHaveAttribute("data-sentence-index", "1");
+  await expect(page.getByTestId("podcast-mood-readout")).toContainText("preservare il giudizio umano.");
+  expect((await audioEvents(page)).audio[0]?.endedAt).toBeNull();
+  await expect(stage).toHaveAttribute("data-podcast-cue", "2:0", { timeout: 7000 });
+  await expect(stage).toHaveAttribute("data-podcast-moods", "curiosity,amusement");
+  await expect(stage).toHaveAttribute("data-podcast-speaking", "false,true");
+  await expect(stage).toHaveAttribute("data-podcast-visemes", "rest,a");
+  await expect(page.getByTestId("podcast-performance-text").first().getByTestId("podcast-performance-sentence")).toHaveCount(2);
+  await page.getByTestId("rehearsal-stop").click();
+  await expect(page.getByTestId("rehearsal-phase")).toHaveAttribute("data-phase", "stopped");
+  await expect(stage).toHaveAttribute("data-podcast-speaking", "false,false");
+  await expect(stage).toHaveAttribute("data-podcast-visemes", "rest,rest");
+  const stopped = { cue: await stage.getAttribute("data-podcast-cue"), moods: await stage.getAttribute("data-podcast-moods"), next: calls.next };
+  await page.waitForTimeout(2100);
+  expect(await stage.getAttribute("data-podcast-cue")).toBe(stopped.cue);
+  expect(await stage.getAttribute("data-podcast-moods")).toBe(stopped.moods);
+  expect(calls.next).toBe(stopped.next);
+  expect((await audioEvents(page)).audio).toHaveLength(2);
 });

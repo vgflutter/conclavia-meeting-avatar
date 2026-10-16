@@ -21,6 +21,7 @@ function load(file, dependencies = {}, env = {}) {
 }
 
 const guard = load("lib/podcast/request-guard");
+const performance = load("lib/podcast/performance");
 const podcastCatalog = {
   podcastVoiceProvider: value => value === "kokoro" ? "kokoro" : "inworld",
   KOKORO_PODCAST_SPEED: 1.03,
@@ -28,6 +29,7 @@ const podcastCatalog = {
     ((id === "im_nicola" && sex === "male") || (id === "if_sara" && sex === "female")) ? { id } : undefined,
 };
 const speech = load("lib/podcast/speech", {
+  "./performance": performance,
   "@conclavia/avatar-kit/lib/podcast-voice-catalog": podcastCatalog,
   "@conclavia/avatar-kit/lib/local-kokoro-tts": { localKokoroHealth: async () => true },
   "@/lib/avatar-voice-catalog": { isAvatarVoice: (id, language) => (language === "it" ? ["Gianni", "Orietta"] : ["Dennis", "Olivia"]).includes(id) },
@@ -162,4 +164,48 @@ test("Kokoro podcast snapshots select the approved Nicola/Sara pair at their ori
   assert.equal(speech.podcastSpeechOptions(run, 3), undefined);
   run.talkSnapshot.language = "en";
   assert.equal(speech.podcastSpeechOptions(run, 1), undefined);
+});
+
+test("Kokoro sentence cues use only stored valid AI directions, while legacy and human speech remain separate", () => {
+  const run = fixture(); run.talkSnapshot.settings = { voiceProvider: "kokoro" };
+  const first = run.messages[0];
+  const generated = performance.parseGeneratedPerformance({ sentences: [
+    { text: "Quale prova vorresti?", mood: "curiosity", intensity: 0.6, listenerMood: "attention", listenerIntensity: 0.3 },
+    { text: "Prendiamoci il tempo per capirlo.", mood: "empathy", intensity: 0.4, listenerMood: "curiosity", listenerIntensity: 0.35 },
+  ] });
+  Object.assign(first, generated);
+  const selected = speech.podcastSpeechOptions(run, 1);
+  assert.equal(selected.provider, "kokoro");
+  assert.equal(selected.segments.join(" "), first.content);
+  assert.deepEqual([...selected.segments], [...generated.performance.sentences.map(sentence => sentence.text)]);
+  assert.equal(speech.podcastSpeechOptions(run, 2).segments, undefined, "old AI text is voiced once without invented measured sentence cues");
+  first.performance.source = "legacy";
+  assert.equal(speech.podcastSpeechOptions(run, 1).segments, undefined);
+  first.performance.source = "ai";
+  first.performance.sentences[0].text = "Injected metadata must not replace the stored content.";
+  assert.equal(speech.podcastSpeechOptions(run, 1).segments, undefined, "mismatched stored annotations cannot become spoken text");
+  Object.assign(run.messages[2], generated);
+  assert.equal(speech.podcastSpeechOptions(run, 3), undefined, "a human message cannot be synthesized even with valid AI annotations");
+});
+
+test("one speech request passes stored AI sentences once and rejects caller-supplied mood, segments or text before work", async () => {
+  const run = fixture(); run.talkSnapshot.settings = { voiceProvider: "kokoro" };
+  Object.assign(run.messages[0], performance.parseGeneratedPerformance({ sentences: [
+    { text: "Una domanda concreta.", mood: "attention", intensity: 0.4, listenerMood: "attention", listenerIntensity: 0.3 },
+    { text: "Qual è la tua esperienza?", mood: "curiosity", intensity: 0.55, listenerMood: "curiosity", listenerIntensity: 0.3 },
+  ] }));
+  const { POST, calls } = voiceRoute({ ready: true, run });
+  for (const extra of [{ text: "Caller injection" }, { mood: "surprise" }, { segments: ["Caller injection"] },
+    { performance: { version: 1 } }]) {
+    assert.equal((await POST(post({ sequence: 1, ...extra }), context)).status, 400);
+  }
+  assert.equal(calls.database, 0);
+  assert.equal(calls.provider, 0);
+  assert.equal((await POST(post({ sequence: 1 }), context)).status, 200);
+  assert.equal(calls.database, 1);
+  assert.equal(calls.provider, 1, "one browser request invokes one canonical synthesis batch");
+  assert.equal(calls.input.text, run.messages[0].content);
+  assert.equal(calls.input.segments.join(" "), run.messages[0].content);
+  assert.equal(calls.input.voiceId, "im_nicola");
+  assert.equal(calls.input.segments.length, 2);
 });

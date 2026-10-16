@@ -1,4 +1,5 @@
 import { playStreamingSpeech, requestStreamingSpeech } from "@conclavia/avatar-kit/lib/streaming-voice-player";
+import type { SpeechPlaybackProgress } from "@conclavia/avatar-kit/lib/streaming-voice-player";
 import type { TalkRunMessageResponse, TalkRunResponse } from "@/types/podcast-run";
 
 export type RehearsalPhase = "generating" | "buffering" | "speaking" | "pause" | "complete";
@@ -13,12 +14,14 @@ export interface RehearsalOptions {
   onSpeech: (message: TalkRunMessageResponse | null) => void;
   onFrame: (viseme: string, level: number) => void;
   onPhase: (phase: RehearsalPhase) => void;
+  onProgress?: (progress: SpeechPlaybackProgress) => void;
 }
 interface PlaybackCallbacks {
   signal: AbortSignal;
   audioContext: AudioContext;
   onFrame: RehearsalOptions["onFrame"];
   onStart: () => void;
+  onProgress?: RehearsalOptions["onProgress"];
 }
 export interface RehearsalPorts {
   loadRun: (id: string, signal: AbortSignal) => Promise<TalkRunResponse>;
@@ -138,7 +141,7 @@ export async function runPodcastRehearsal(options: RehearsalOptions, overrides: 
       options.onPhase("buffering");
       options.onSpeech(message);
       await ports.playSpeech(current, message, prepared.response, {
-        signal, audioContext: options.audioContext, onFrame: options.onFrame,
+        signal, audioContext: options.audioContext, onFrame: options.onFrame, onProgress: options.onProgress,
         onStart() {
           options.onPhase("speaking");
           if (requestedAhead || played + 1 >= options.maxTurns) return;

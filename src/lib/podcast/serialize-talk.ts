@@ -12,6 +12,7 @@ import {
 } from "@/lib/podcast/studio-themes";
 import { findStudioVoice } from "@/lib/podcast/voice-catalog";
 import { normalizeTalkOnAirNames } from "@/lib/podcast/on-air-names";
+import { normalizeStudioLayout } from "@/lib/podcast/talk-run-compatibility";
 
 function voiceDelivery(value: unknown) {
   return value === "energetic" || value === "authoritative"
@@ -87,6 +88,7 @@ export function serializeTalk(talk: TalkDocument): TalkResponse {
       studioTheme: normalizeStudioTheme(
         talk.settings.studioTheme ?? DEFAULT_STUDIO_THEME,
       ),
+      studioLayout: normalizeStudioLayout(talk.settings.studioLayout),
       defaultModel: isLlmModelId(talk.settings.defaultModel)
         ? talk.settings.defaultModel
         : DEFAULT_LLM_MODEL,

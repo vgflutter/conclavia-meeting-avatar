@@ -16,11 +16,13 @@ import {
 import { reviewEditorialArc } from "@/lib/podcast/talk-editorial-review";
 import { getLlmModel } from "@/lib/podcast/llm-models";
 import {
-  generateLlmTextStream,
+  generateLlmJson,
   isProviderConfigured,
   ProviderError,
   type GenerationResult,
+  type GenerationRequest,
 } from "@/lib/podcast/llm-provider";
+import { parseGeneratedPerformance, resolveMessagePerformance, TURN_PERFORMANCE_SCHEMA } from "@/lib/podcast/performance";
 import { connectToDatabase } from "@/lib/mongodb";
 import { serializeTalk } from "@/lib/podcast/serialize-talk";
 import { normalizeTalkOnAirNames } from "@/lib/podcast/on-air-names";
@@ -41,6 +43,7 @@ import type {
   TalkRunPhase,
   TalkRunResponse,
   TalkRunIntent,
+  TalkRunPerformance,
   TalkRunTurnPlan,
 } from "@/types/podcast-run";
 
@@ -82,6 +85,21 @@ interface RunTransition {
   nextParticipantIndex: number;
   estimatedAirtimeSeconds: number;
   completed: boolean;
+}
+
+interface PerformedGeneration extends GenerationResult {
+  performance: TalkRunPerformance;
+}
+
+/** One provider request produces both the spoken text and its sentence-level acting. */
+async function generatePerformedTurn(request: GenerationRequest): Promise<PerformedGeneration> {
+  const { data, generation } = await generateLlmJson<unknown>({
+    ...request,
+    schemaName: "podcast_turn_performance",
+    schema: TURN_PERFORMANCE_SCHEMA,
+  });
+  request.signal?.throwIfAborted();
+  return { ...generation, ...parseGeneratedPerformance(data) };
 }
 
 function leaseFilter(run: TalkRunDocument) {
@@ -251,7 +269,7 @@ function projectedRunAfterTurn(
   run: TalkRunResponse,
   plan: TalkRunTurnPlan,
   content: string,
-  generation: Pick<GenerationResult, "provider" | "model">,
+  generation: Pick<GenerationResult, "provider" | "model"> & { performance?: TalkRunPerformance },
   origin: "ai" | "human" = "ai",
 ): TalkRunResponse {
   const wordCount = content.split(/\s+/u).filter(Boolean).length;
@@ -290,6 +308,7 @@ function projectedRunAfterTurn(
     model: origin === "ai" ? generation.model : undefined,
     audienceCue: plan.audienceCue,
     content,
+    performance: origin === "ai" ? generation.performance : undefined,
     createdAt: now,
   };
 
@@ -339,10 +358,10 @@ async function prepareTurnFromProjectedRun(
   const prompt = buildTurnPrompt(talk, projected, nextPlan, {
     speculative,
   });
-  const generation = await generateLlmTextStream({
+  const generation = await generatePerformedTurn({
     model: nextModel,
     ...prompt,
-    maxOutputTokens: Math.max(800, nextPlan.maxWords * 5),
+    maxOutputTokens: Math.max(1_200, nextPlan.maxWords * 7 + 600),
     signal,
   });
   await hooks.onPrepared?.(nextPlan);
@@ -353,6 +372,7 @@ async function prepareTurnFromProjectedRun(
     provider: generation.provider,
     model: generation.model,
     content: generation.content,
+    performance: generation.performance,
     inputTokens: generation.inputTokens,
     outputTokens: generation.outputTokens,
     createdAt: new Date(),
@@ -389,9 +409,11 @@ async function prepareFollowingTurn(
 async function replayPreparedText(
   content: string,
   onDelta: (delta: string) => Promise<void>,
+  signal?: AbortSignal,
 ): Promise<void> {
   const chunks = content.match(/(?:\S+\s*){1,3}/gu) ?? [content];
   for (const chunk of chunks) {
+    signal?.throwIfAborted();
     await onDelta(chunk);
     await new Promise((resolve) => setTimeout(resolve, 4));
   }
@@ -865,27 +887,35 @@ export async function advanceTalkRun(
       }
     };
 
-    let generation: GenerationResult;
+    let generation: PerformedGeneration;
     if (storedPrepared) {
+      const performance = resolveMessagePerformance({
+        origin: "ai", content: storedPrepared.content,
+        performance: storedPrepared.performance
+          ? JSON.parse(JSON.stringify(storedPrepared.performance)) as unknown
+          : undefined,
+      });
       generation = {
         content: storedPrepared.content,
         provider: storedPrepared.provider,
         model: storedPrepared.model,
         inputTokens: storedPrepared.inputTokens,
         outputTokens: storedPrepared.outputTokens,
+        performance: performance!,
       };
-      await replayPreparedText(generation.content, emitDelta);
+      await replayPreparedText(generation.content, emitDelta, options.signal);
     } else {
       const prompt = buildTurnPrompt(talk, run, plan);
-      generation = await generateLlmTextStream(
+      generation = await generatePerformedTurn(
         {
           model,
           ...prompt,
-          maxOutputTokens: Math.max(800, plan.maxWords * 5),
+          maxOutputTokens: Math.max(1_200, plan.maxWords * 7 + 600),
           signal: options.signal,
         },
-        emitDelta,
       );
+      // Structured JSON stays private: the existing SSE contract receives spoken text only.
+      await replayPreparedText(generation.content, emitDelta, options.signal);
     }
 
     if (!preparationPromise) startPreparation();
@@ -898,9 +928,9 @@ export async function advanceTalkRun(
       generation,
     );
     let discussionState = projected.discussionState;
+    const generatedMessage = projected.messages.at(-1);
+    if (generatedMessage) await hooks.onSpeechReady?.(generatedMessage);
     if (editorialReviewNeeded) {
-      const generatedMessage = projected.messages.at(-1);
-      if (generatedMessage) await hooks.onSpeechReady?.(generatedMessage);
       await hooks.onEditorialReviewStarted?.();
       try {
         const review = await reviewEditorialArc(talk, projected, options.signal);
@@ -942,6 +972,7 @@ export async function advanceTalkRun(
     const wordCount = generation.content.split(/\s+/u).filter(Boolean).length;
     const estimatedAirtime = estimateAirtimeSeconds(wordCount, plan.speakerType);
     const waitingForPreparation = Boolean(preparationPromise);
+    options.signal?.throwIfAborted();
     const savedCurrent = await TalkRunModel.findOneAndUpdate(
       leaseFilter(claimed),
       {
@@ -965,6 +996,7 @@ export async function advanceTalkRun(
             provider: generation.provider,
             model: generation.model,
             content: generation.content,
+            performance: generation.performance,
             inputTokens: generation.inputTokens,
             outputTokens: generation.outputTokens,
             audienceCue: plan.audienceCue,

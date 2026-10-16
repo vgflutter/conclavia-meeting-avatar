@@ -10,11 +10,13 @@ import {
 } from "mongoose";
 
 import { LLM_MODEL_IDS, type LlmModelId, type LlmProvider } from "@/lib/podcast/llm-models";
+import { MAX_PERFORMANCE_SENTENCES, MAX_PERFORMANCE_SENTENCE_LENGTH, MAX_PERFORMANCE_TEXT_LENGTH, PODCAST_MOODS } from "@/lib/podcast/performance";
 import type { TalkRunAudienceCue } from "@/types/podcast-audience";
 import type { TalkResponse } from "@/types/podcast";
 import type {
   TalkRunDiscussionState,
   TalkRunIntent,
+  TalkRunPerformance,
   TalkRunPhase,
   TalkRunPreparationMode,
   TalkRunReferenceStyle,
@@ -42,6 +44,7 @@ export interface TalkRunMessageRecord {
   provider?: LlmProvider;
   model?: LlmModelId;
   content: string;
+  performance?: TalkRunPerformance;
   inputTokens?: number;
   outputTokens?: number;
   audienceCue?: TalkRunAudienceCue;
@@ -78,6 +81,7 @@ export interface TalkRunPreparedTurnRecord {
   provider: LlmProvider;
   model: LlmModelId;
   content: string;
+  performance?: TalkRunPerformance;
   inputTokens?: number;
   outputTokens?: number;
   createdAt: Date;
@@ -104,6 +108,25 @@ const audienceCueSchema = new Schema<TalkRunAudienceCue>(
   },
   { _id: false },
 );
+
+const performanceSentenceSchema = new Schema({
+  text: { type: String, required: true, trim: true, maxlength: MAX_PERFORMANCE_SENTENCE_LENGTH },
+  mood: { type: String, required: true, enum: PODCAST_MOODS },
+  intensity: { type: Number, required: true, min: 0, max: 1, validate: Number.isFinite },
+  listenerMood: { type: String, required: true, enum: PODCAST_MOODS },
+  listenerIntensity: { type: Number, required: true, min: 0, max: 1, validate: Number.isFinite },
+}, { _id: false });
+
+const performanceSchema = new Schema<TalkRunPerformance>({
+  version: { type: Number, enum: [1], required: true },
+  source: { type: String, enum: ["ai", "legacy"], required: true },
+  sentences: {
+    type: [performanceSentenceSchema], required: true,
+    validate: (sentences: Array<{ text?: string }>) => sentences.length > 0 &&
+      sentences.length <= MAX_PERFORMANCE_SENTENCES &&
+      sentences.map((sentence) => sentence.text ?? "").join(" ").length <= MAX_PERFORMANCE_TEXT_LENGTH,
+  },
+}, { _id: false });
 
 const messageSchema = new Schema<TalkRunMessageRecord>(
   {
@@ -171,6 +194,7 @@ const messageSchema = new Schema<TalkRunMessageRecord>(
     provider: { type: String, enum: ["openai", "gemini"] },
     model: { type: String, enum: LLM_MODEL_IDS },
     content: { type: String, required: true, trim: true },
+    performance: { type: performanceSchema },
     inputTokens: { type: Number, min: 0, validate: Number.isInteger },
     outputTokens: { type: Number, min: 0, validate: Number.isInteger },
     audienceCue: { type: audienceCueSchema },
@@ -307,6 +331,7 @@ const preparedTurnSchema = new Schema<TalkRunPreparedTurnRecord>(
     provider: { type: String, enum: ["openai", "gemini"], required: true },
     model: { type: String, enum: LLM_MODEL_IDS, required: true },
     content: { type: String, required: true, trim: true },
+    performance: { type: performanceSchema },
     inputTokens: { type: Number, min: 0, validate: Number.isInteger },
     outputTokens: { type: Number, min: 0, validate: Number.isInteger },
     createdAt: { type: Date, required: true, default: Date.now },

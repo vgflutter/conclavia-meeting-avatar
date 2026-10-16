@@ -3,6 +3,23 @@
 import type { LlmModelId, LlmProvider } from "@/lib/podcast/llm-models";
 import type { TalkRunAudienceCue } from "@/types/podcast-audience";
 import type { TalkResponse } from "@/types/podcast";
+import type { PodcastEmotion } from "@conclavia/avatar-kit/types/podcast";
+
+export interface TalkRunSentencePerformance {
+  text: string;
+  mood: PodcastEmotion;
+  intensity: number;
+  /** An acting direction for the other AI avatars, never a claim about a human. */
+  listenerMood: PodcastEmotion;
+  listenerIntensity: number;
+}
+
+export interface TalkRunPerformance {
+  version: 1;
+  /** Legacy directions are neutral compatibility defaults, not AI annotations. */
+  source: "ai" | "legacy";
+  sentences: TalkRunSentencePerformance[];
+}
 
 export type TalkRunStatus =
   | "idle"
@@ -151,6 +168,7 @@ export interface TalkRunMessageResponse {
   provider?: LlmProvider;
   model?: LlmModelId;
   content: string;
+  performance?: TalkRunPerformance;
   inputTokens?: number;
   outputTokens?: number;
   audienceCue?: TalkRunAudienceCue;

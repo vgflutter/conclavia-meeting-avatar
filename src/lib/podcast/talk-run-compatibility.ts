@@ -2,8 +2,21 @@
 // Namespaced podcast feature; existing Meeting records and runtime stay separate.
 import { getLlmModel, type LlmProvider } from "@/lib/podcast/llm-models";
 import type { TalkInput } from "@/types/podcast";
+import type { PodcastLayout } from "@conclavia/avatar-kit/types/podcast";
+import { STUDIO_SCENARIOS } from "@/lib/podcast/studio-scenarios";
 
 export const MAX_RUN_TURNS = 50;
+export const DEFAULT_STUDIO_LAYOUT: PodcastLayout = "studio";
+export const STUDIO_LAYOUT_IDS = STUDIO_SCENARIOS.map((scenario) => scenario.id);
+
+export function isStudioLayout(value: unknown): value is PodcastLayout {
+  return STUDIO_LAYOUT_IDS.some((layout) => layout === value);
+}
+
+/** Read compatibility only; input validation rejects explicitly unknown layouts. */
+export function normalizeStudioLayout(value: unknown): PodcastLayout {
+  return isStudioLayout(value) ? value : DEFAULT_STUDIO_LAYOUT;
+}
 
 export type TalkRunBlockCode =
   | "unassigned_participants"

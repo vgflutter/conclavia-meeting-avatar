@@ -101,9 +101,26 @@ submission uses a status claim to prevent duplicate concurrent guest turns.
 
 ### Visual comparison in the application
 
-Open **Podcast → Stili e scenari** (`/podcast/styles`) to compare the four current styles: Linea pulita, Volume morbido, Serie animata, and Anime luminoso. Each picture is captured from the canonical renderer. The selected stage remains animated, with three compositions, separate host expressions, and an optional guest placeholder. Four styles and three compositions produce twelve combinations; they are not twelve different art directions.
+Open **Podcast → Stili e scenari** (`/podcast/styles`) to compare the four current styles: Linea pulita, Volume morbido, Serie animata, and Anime luminoso. Each picture is captured from the canonical renderer. Four compositions (`studio`, `speaker`, `table`, `lounge`) vary the guest's position and the hosts' arrangement, with a reserved guest panel even during the two-AI rehearsal. Four styles and four compositions produce sixteen combinations; they are not sixteen different art directions. Artwork and composition are persisted together, and immutable run snapshots preserve the original selection.
 
 The three original proposals (Fumetto realistico, Anime serale, Commedia animata) remain in a separate read-only archive. They are served from the canonical kit assets with their original provenance. Choosing **Usa nella prova a due** or **Usa in nuova puntata** carries the selected style into the corresponding flow; saving the episode persists it. The same picture selector is available in the editor, rehearsal, and visual studio preview. Browsing styles starts no conversation, synthesis, camera, or microphone.
+
+### Sentence-level acting
+
+New AI turns use one structured generation for spoken sentences and acting metadata. Each sentence carries `text`, one of the eight canonical `mood` values, `intensity`, `listenerMood`, and `listenerIntensity`. Spoken content is rebuilt from the validated sentence text; raw JSON never reaches captions or speech. The schema is bounded to 24 sentences and 2,000 total characters. Invalid, incomplete, or refused generation fails without a retry or unannotated speech. The existing [OpenAI structured output contract](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses) is reused through the server adapter. Clean SSE text now follows complete structured validation rather than streaming unvalidated provider tokens.
+
+Messages and prepared turns persist `performance: { version: 1, source: 'ai', sentences }`. Earlier AI messages receive visibly labelled neutral `source: 'legacy'` direction without changing their original content. Human messages never receive inferred moods. Editorial intent remains a compatibility fallback; current annotated speech follows its own sentence moods and a separate listening reaction.
+
+The canonical Kokoro adapter synthesizes annotated sentences sequentially within one browser response and emits exact sentence boundaries measured from PCM samples. The canonical player reports the actual output clock, holding during gaps; Stop cancels audio and further local sentence synthesis. The rehearsal retains the last heard acting cue during pauses and cancellation, even when one later AI turn has already been prepared. Streams without sentence cues use an explicitly estimated text-duration progression. This fallback is not word alignment, and the unchanged Kokoro voices are not emotion-conditioned TTS.
+
+The gallery includes an eight-line, silent visual acting lab with transport, seek, paired mood labels, and independent manual controls. Preview mouths stay at rest. A local camera remains explicit and video-only; remote guest transport, microphone recognition and public streaming still require separate integration.
+
+### Verification on 16 October 2026
+
+- 33 canonical kit tests, 81 Meeting script tests, and 82 Onboarding unit tests passed without paid providers.
+- 35 distinct browser cases passed on temporary MongoDB: all four styles and scenes, mood/phase controls, real canvas differences, PCM-driven sentence and listening reactions, Stop, persistence, IT/EN and mobile widths, plus the existing voice synchronization regressions. Control-room and separate-output tests also cover the final mood after audio ends, manual intensity takeover, captions from the utterance actually played, direct saved-scene restoration, and cleanup when leaving the control room.
+- Both consumer builds, typechecking, lint, and canonical ownership checks passed. Renderer QA inspected 16 guest-inclusive combinations, all eight facial moods, hand continuity, reduced motion, and live guest frames.
+- Actual local synthesis checks used two prepared sentences per voice: Nicola 7.000 seconds (1.165 seconds generation) and Sara 7.725 seconds (0.261 seconds generation), with exact PCM boundaries and no clipping. These checks do not establish perceived prosody quality or a live model-to-human conversation. No OpenAI/Inworld requests were made for verification.
 
 `node --test tests/scripts/podcast-engine.test.mjs` executes the actual recovered
 modules at pure boundaries. The suite covers flexible cast validation, obsolete

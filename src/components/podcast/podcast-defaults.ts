@@ -17,5 +17,5 @@ export function defaultPodcast(english = false): TalkInput {
     description: "", editorialInstructions: english ? "Give the guest room to speak. Alternate questions and follow-ups. Explore a concrete disagreement, then close with a useful takeaway. Avoid two hosts asking the same question." : "Lascia spazio all’ospite. Alterna domande e approfondimenti. Esplora un disaccordo concreto, poi chiudi con un punto utile da portare a casa. Evita che i due conduttori facciano la stessa domanda.",
     language: english ? "en" : "it", status: "ready", participants: [defaultParticipant(0, english), defaultParticipant(1, english), defaultParticipant(2, english)],
     moderator: { kind: "none", style: "facilitating", canInterrupt: false, manageTime: true, summarizeAtEnd: true },
-    settings: { maxTurns: 12, targetDurationMinutes: 5, videoMode: "cartoon", studioTheme: "clean-line", defaultModel: DEFAULT_LLM_MODEL, allowInterruptions: false, pace: "balanced" } };
+    settings: { maxTurns: 12, targetDurationMinutes: 5, videoMode: "cartoon", studioTheme: "clean-line", studioLayout: "studio", defaultModel: DEFAULT_LLM_MODEL, allowInterruptions: false, pace: "balanced" } };
 }

@@ -2,6 +2,7 @@
 // Namespaced podcast feature; existing Meeting records and runtime stay separate.
 import type { LlmModelId } from "@/lib/podcast/llm-models";
 import type { StudioThemeId } from "@/lib/podcast/studio-themes";
+import type { PodcastLayout } from "@conclavia/avatar-kit/types/podcast";
 
 export type TalkStatus = "draft" | "ready";
 export type PerspectiveMode = "custom" | "automatic" | "random";
@@ -52,6 +53,7 @@ export interface TalkSettings {
   targetDurationMinutes: number;
   videoMode: VideoMode;
   studioTheme: StudioThemeId;
+  studioLayout?: PodcastLayout;
   defaultModel: LlmModelId;
   allowInterruptions: boolean;
   pace: TalkPace;

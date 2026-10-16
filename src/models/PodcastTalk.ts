@@ -14,6 +14,7 @@ import type {
   TalkRecord,
 } from "@/types/podcast";
 import { DEFAULT_LLM_MODEL, LLM_MODEL_IDS } from "@/lib/podcast/llm-models";
+import { DEFAULT_STUDIO_LAYOUT, STUDIO_LAYOUT_IDS } from "@/lib/podcast/talk-run-compatibility";
 import {
   DEFAULT_STUDIO_THEME,
   STUDIO_THEME_IDS,
@@ -145,6 +146,12 @@ const talkSchema = new Schema<TalkRecord>(
         enum: STUDIO_THEME_IDS,
         required: true,
         default: DEFAULT_STUDIO_THEME,
+      },
+      studioLayout: {
+        type: String,
+        enum: STUDIO_LAYOUT_IDS,
+        required: true,
+        default: DEFAULT_STUDIO_LAYOUT,
       },
       defaultModel: {
         type: String,

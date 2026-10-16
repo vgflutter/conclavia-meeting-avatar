@@ -3,6 +3,7 @@ import { meetingTtsConfig } from "@/lib/meeting-tts-config";
 import { findPodcastVoice, podcastVoiceProvider, KOKORO_PODCAST_SPEED, type PodcastVoiceProvider } from "@conclavia/avatar-kit/lib/podcast-voice-catalog";
 import { localKokoroHealth } from "@conclavia/avatar-kit/lib/local-kokoro-tts";
 import type { TalkRunRecord } from "@/models/PodcastRun";
+import { resolveMessagePerformance } from "./performance";
 
 /** Flags/loopback health only. Never synthesize speech while loading configuration. */
 export async function publicPodcastSpeechConfig() {
@@ -14,7 +15,7 @@ export async function publicPodcastSpeechConfig() {
 
 /** Only stored AI turns can be voiced; operator text and guest speech stay human. */
 export function podcastSpeechOptions(run: Pick<TalkRunRecord, "talkSnapshot" | "messages">, sequence: number): {
-  text: string; language: "it" | "en"; voiceId: string; speakingRate: number; provider: PodcastVoiceProvider;
+  text: string; language: "it" | "en"; voiceId: string; speakingRate: number; provider: PodcastVoiceProvider; segments?: string[];
 } | undefined {
   const snapshot = run.talkSnapshot;
   const message = run.messages.find((item) => item.sequence === sequence);
@@ -29,7 +30,9 @@ export function podcastSpeechOptions(run: Pick<TalkRunRecord, "talkSnapshot" | "
     if (language !== "it" || message.content.length > 2000) return;
     const fallback = female ? "if_sara" : "im_nicola";
     const voiceId = speaker.voiceId && findPodcastVoice(speaker.voiceId, provider, language, female ? "female" : "male") ? speaker.voiceId : fallback;
-    return { text: message.content, language, voiceId, speakingRate: KOKORO_PODCAST_SPEED, provider };
+    const performance = resolveMessagePerformance(message);
+    return { text: message.content, language, voiceId, speakingRate: KOKORO_PODCAST_SPEED, provider,
+      ...(performance?.source === "ai" ? { segments: performance.sentences.map(sentence => sentence.text) } : {}) };
   }
   const fallback = language === "it" ? female ? "Orietta" : "Gianni" : female ? "Olivia" : "Dennis";
   const voiceId = speaker.voiceId && isAvatarVoice(speaker.voiceId, language) ? speaker.voiceId : fallback;

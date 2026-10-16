@@ -18,7 +18,7 @@ import {
   isLlmModelId,
   type LlmModelId,
 } from "@/lib/podcast/llm-models";
-import { MAX_RUN_TURNS } from "@/lib/podcast/talk-run-compatibility";
+import { isStudioLayout, MAX_RUN_TURNS, normalizeStudioLayout } from "@/lib/podcast/talk-run-compatibility";
 import {
   DEFAULT_STUDIO_THEME,
   isStudioThemeId,
@@ -469,6 +469,9 @@ function parseSettings(value: unknown, issues: string[]): TalkSettings {
   }
 
   if (settings.voiceProvider !== undefined && settings.voiceProvider !== "inworld" && settings.voiceProvider !== "kokoro") issues.push("settings.voiceProvider must be inworld or kokoro");
+  if (settings.studioLayout !== undefined && !isStudioLayout(settings.studioLayout)) {
+    issues.push("settings.studioLayout must be one of the supported studio layouts");
+  }
   return {
     voiceProvider: settings.voiceProvider === "kokoro" ? "kokoro" : "inworld",
     maxTurns: Number.isInteger(maxTurns) ? (maxTurns as number) : 1,
@@ -477,6 +480,7 @@ function parseSettings(value: unknown, issues: string[]): TalkSettings {
       : 5,
     videoMode,
     studioTheme,
+    studioLayout: normalizeStudioLayout(settings.studioLayout),
     defaultModel,
     allowInterruptions:
       typeof settings.allowInterruptions === "boolean"
