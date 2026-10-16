@@ -1,0 +1,18 @@
+.settings{border:0;padding:0;margin:0;min-width:0}
+.step{margin-bottom:23px}
+.stepTitle{font-size:12px;font-weight:650;color:var(--ink,#19362f);margin-bottom:7px}
+.help{font-size:11px;line-height:1.65;color:var(--muted,#68776e);margin-bottom:10px}
+.chooser{border:1px solid #d8e1d5;border-radius:10px;background:#fbfcf8;overflow:hidden}
+.chooser>button{display:flex;align-items:center;gap:11px;min-height:73px;padding:10px;cursor:pointer;width:100%;border:0;background:transparent;text-align:left;font:inherit}
+.chooser>button:disabled{cursor:not-allowed}
+.chooser>button:focus-visible{outline:3px solid #a5bd8d;outline-offset:-3px}
+.thumbnail{display:block;width:88px;flex:0 0 88px;aspect-ratio:16/9;overflow:hidden;border-radius:5px;background:#dbe4d5}
+.choiceName{min-width:0;display:grid;gap:5px}
+.choiceName strong{font-size:12px;line-height:1.4;color:#274e3b}
+.choiceName>span{font-size:10px;color:#6e8262}
+.chevron{margin-left:auto;flex:0 0 auto;color:#6e8262;transition:transform .18s}
+.chooser>button[aria-expanded=true] .chevron{transform:rotate(180deg)}
+.choices{border-top:1px solid #e0e7da;padding:12px;max-height:460px;overflow:auto;overscroll-behavior:contain}
+.galleryLink{display:inline-flex;margin-top:10px;color:#658454;text-decoration:underline;text-underline-offset:3px;font-size:11px}
+.settings:disabled{opacity:.6}
+@media(prefers-reduced-motion:reduce){.chevron{transition:none}}

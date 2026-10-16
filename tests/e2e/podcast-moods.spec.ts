@@ -1,3 +1,4 @@
+import { choosePodcastStyle } from "./podcast-visual-controls";
 import { expect, test, type Page } from "@playwright/test";
 
 const origin = "http://127.0.0.1:3101";
@@ -149,12 +150,10 @@ test("the original three directions share sentence acting and visible-stage quic
   await page.setViewportSize({ width: 1440, height: 1000 });
   const stage = stageOf(page);
   for (const [theme, rendered] of [["original-editorial", "editorial"], ["original-anime", "anime-night"], ["original-comedy", "comedy"]]) {
-    const select = page.getByTestId("style-gallery-theme");
-    await select.scrollIntoViewIfNeeded();
-    await select.selectOption(theme);
+    await choosePodcastStyle(page, theme);
     await expect(stage).toHaveAttribute("data-podcast-style", rendered);
     await expect(stage).toBeInViewport({ ratio: .85 });
-    await page.getByTestId("style-gallery-cast").selectOption("expressive");
+    await page.getByTestId("podcast-cast").selectOption("expressive");
     await expect(stage).toHaveAttribute("data-podcast-cast", "expressive");
     await page.getByTestId("mood-demo-option-surprise").click();
     await expect(stage).toHaveAttribute("data-podcast-moods", "curiosity,surprise");
@@ -164,9 +163,9 @@ test("the original three directions share sentence acting and visible-stage quic
     await expect(stage).toHaveAttribute("data-podcast-speaking", "false,false");
     await expect(stage).toHaveAttribute("data-podcast-visemes", "rest,rest");
   }
-  await page.getByTestId("style-gallery-guest-mode").selectOption("auto");
+  await page.getByTestId("podcast-guest-mode").selectOption("auto");
   await expect(stage).toHaveAttribute("data-podcast-guest", "false");
-  await expect(page.getByTestId("style-gallery-guest-toggle")).not.toBeChecked();
+  await expect(page.getByTestId("podcast-guest-mode")).toHaveValue("auto");
   expect(await privacy(page)).toEqual({ media: 0, audio: 0 });
   expect(calls.mutations).toEqual([]);
   expect(calls.external).toEqual([]);
@@ -179,7 +178,7 @@ test("noir, paper and digital keep eight distinct silent emotions and support al
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   for (const [theme, style] of [["noir-editorial", "noir"], ["paper-theatre", "paper"], ["digital-neon", "digital"]]) {
-    await page.getByTestId("style-gallery-theme").selectOption(theme);
+    await choosePodcastStyle(page, theme);
     await expect(stage).toHaveAttribute("data-podcast-style", style);
     const frames = new Set<string>();
     for (const [mood, pair] of expectedMoods) {
@@ -191,9 +190,9 @@ test("noir, paper and digital keep eight distinct silent emotions and support al
     }
     expect(frames.size, theme).toBe(8);
     for (const guest of ["auto", "reserve"]) {
-      await page.getByTestId("style-gallery-guest-mode").selectOption(guest);
+      await page.getByTestId("podcast-guest-mode").selectOption(guest);
       for (const layout of ["studio", "speaker", "table", "lounge"]) {
-        await page.getByTestId("style-gallery-layout").selectOption(layout);
+        await page.getByTestId("podcast-layout").selectOption(layout);
         await expect(stage).toHaveAttribute("data-podcast-layout", layout);
         await expect(stage).toHaveAttribute("data-podcast-guest", String(guest === "reserve"));
       }

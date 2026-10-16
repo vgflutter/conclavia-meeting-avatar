@@ -6,16 +6,14 @@ import { PODCAST_VOICES } from "@conclavia/avatar-kit/lib/podcast-voice-catalog"
 import { runPodcastRehearsal } from "@/lib/podcast/rehearsal-player";
 import type { Participant, TalkInput, TalkResponse } from "@/types/podcast";
 import type { TalkRunMessageResponse, TalkRunResponse } from "@/types/podcast-run";
-import { STUDIO_THEMES, studioSelectionQuery, type StudioCast, type StudioGuestMode, type StudioThemeId } from "@/lib/podcast/studio-themes";
+import { studioSelectionQuery, type StudioCast, type StudioGuestMode, type StudioThemeId } from "@/lib/podcast/studio-themes";
 import { defaultPodcast } from "./podcast-defaults";
 import { DEFAULT_DIRECTION, PodcastStageView, resolvePodcastDirection, type PodcastDirection, type PodcastEmotion } from "./PodcastStageView";
 import { Field, podcastRequest, readableError, usePodcastCopy } from "./PodcastUi";
 import styles from "./Podcast.module.css";
 import rehearsal from "./PodcastRehearsal.module.css";
-import { PodcastVisualOptions } from "./PodcastVisualOptions";
-import { PodcastStylePicker } from "./PodcastStylePicker";
-import design from "./PodcastStyles.module.css";
-import { STUDIO_SCENARIOS, type StudioScenarioId } from "@/lib/podcast/studio-scenarios";
+import { PodcastVisualSettings } from "./PodcastVisualSettings";
+import { normalizeStudioScenario, type StudioScenarioId } from "@/lib/podcast/studio-scenarios";
 import { podcastPerformanceFrame } from "@/lib/podcast/performance-playback";
 import type { SpeechPlaybackProgress } from "@conclavia/avatar-kit/lib/streaming-voice-player";
 import { PodcastPerformanceText } from "./PodcastPerformanceText";
@@ -237,12 +235,8 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
           <section className={rehearsal.panel}>
             <h2>{copy("Un tema e due personalità", "One topic, two personalities")}</h2><p className={rehearsal.panelIntro}>{copy("La stessa domanda, due modi diversi di affrontarla. Puoi preparare una nuova prova dopo aver modificato queste scelte.", "The same question, two different ways to explore it. Prepare a new rehearsal after changing these choices.")}</p>
             <Field label={copy("Argomento della prova", "Rehearsal topic")}><input className={styles.input} maxLength={2000} required value={input.topic} onChange={(event) => changeInput({ ...input, topic: event.target.value })} /></Field>
-            <div className={styles.row}>
-              <Field label={copy("Lingua delle voci", "Voice language")}><select className={styles.input} value={input.language} onChange={(event) => changeLanguage(event.target.value)}><option value="it">Italiano</option><option value="en">English</option></select></Field>
-              <Field label={copy("Stile grafico", "Visual style")}><select className={styles.input} data-testid="rehearsal-theme" value={input.settings.studioTheme} onChange={(event) => changeInput({ ...input, settings: { ...input.settings, studioTheme: event.target.value as TalkInput["settings"]["studioTheme"] } })}>{STUDIO_THEMES.map((theme) => <option value={theme.id} key={theme.id}>{copy(theme.label.it, theme.label.en)}</option>)}</select></Field>
-              <Field label={copy("Scenario", "Scene")}><select className={styles.input} data-testid="rehearsal-layout" value={direction.layout} onChange={(event) => { const layout = event.target.value as StudioScenarioId; setDirection({ ...direction, layout }); changeInput({ ...input, settings: { ...input.settings, studioLayout: layout } }); }}>{STUDIO_SCENARIOS.map(scenario => <option value={scenario.id} key={scenario.id}>{copy(scenario.label.it, scenario.label.en)}</option>)}</select></Field>
-            </div>
-            <PodcastVisualOptions settings={input.settings} disabled={locked} onChange={settings => changeInput({ ...input, settings })} /><div className={design.settingsPicker}><PodcastStylePicker direction={{ ...direction, focus: "all" }} talk={input} value={input.settings.studioTheme} disabled={locked} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => changeInput({ ...input, settings: { ...input.settings, studioTheme: theme } })} /><Link className={design.embedLink} href={`/podcast/styles?${studioSelectionQuery({ ...input.settings, studioLayout: direction.layout })}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
+            <Field label={copy("Lingua delle voci", "Voice language")}><select className={styles.input} value={input.language} onChange={event => changeLanguage(event.target.value)}><option value="it">Italiano</option><option value="en">English</option></select></Field>
+            <PodcastVisualSettings talk={{ ...input, settings: { ...input.settings, studioLayout: direction.layout } }} direction={direction} disabled={locked} onChange={settings => { setDirection(current => ({ ...current, layout: normalizeStudioScenario(settings.studioLayout) })); changeInput({ ...input, settings }); }} />
             <Field label={copy("Servizio delle voci", "Voice service")}><select className={styles.input} data-testid="rehearsal-voice-provider" value={voiceProvider} onChange={(event) => { const provider = event.target.value as "kokoro" | "inworld"; changeInput({ ...input, settings: { ...input.settings, voiceProvider: provider }, participants: input.participants.map((person) => ({ ...person, voiceId: voiceFor(input.language, person.sex, provider) })) }); }}><option value="kokoro" disabled={input.language !== "it"}>{copy("Kokoro locale · Nicola e Sara", "Local Kokoro · Nicola and Sara")}</option><option value="inworld">Inworld</option></select></Field>
             <div className={rehearsal.people}>
               {input.participants.map((person, index) => <div className={rehearsal.person} key={index}>

@@ -34,9 +34,14 @@
 .compact .swatches{margin-top:7px}
 .compact .cardDescription{display:none}
 .compact .familyLabel,.compact .formatTags{display:none}
+.compact .cardIndex,.compact .swatches{display:none}
 .comparison{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:24px;align-items:start;margin-top:26px;position:relative;scroll-margin-top:88px}
 .compareNavigation{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 24px}
 .compareNavigation>span{font-size:11px;line-height:1.7;color:#78886b}
+.presets{margin:0 0 24px;border:1px solid #dce4d3;border-radius:11px;padding:15px 18px;background:#f5f7ef}
+.presets>summary{font-size:12px;font-weight:650;color:#45653e;cursor:pointer;list-style-position:inside}
+.presets>p{margin-top:13px}
+.presets .formatPicker{margin-bottom:0}
 .stageColumn{position:sticky;top:80px;align-self:start;min-width:0;background:#fbfcf8;z-index:3;border-radius:15px}
 .stageColumn .stage{width:100%;max-width:calc(177.7778svh - 337.7778px);margin-inline:auto}
 .controlColumn{display:grid;gap:17px;min-width:0}

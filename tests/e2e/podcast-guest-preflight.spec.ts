@@ -161,7 +161,7 @@ test("cancelling an unpublished preparation releases camera and late permission 
   await dialog(page).getByRole("button", { name: "Accendi videocamera per la prova", exact: true }).click();
   await expect(dialog(page).getByTestId("podcast-guest-publish")).toBeEnabled();
   await dialog(page).getByTestId("podcast-guest-publish").click();
-  await page.getByRole("link", { name: "Confronta stili e scenari", exact: false }).click();
+  await page.getByRole("link", { name: "Esplora la galleria animata", exact: false }).click();
   await expect(page).toHaveURL(/\/podcast\/styles/u);
   await expect.poll(async () => (await fixtureState(page)).stopped).toBe(3);
 });

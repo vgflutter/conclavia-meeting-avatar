@@ -1,3 +1,4 @@
+import { choosePodcastStyle } from "./podcast-visual-controls";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { loadEnvConfig } from "@next/env";
@@ -79,7 +80,7 @@ for (const locale of ["it", "en"] as const) {
     await page.getByLabel(it ? "La domanda centrale" : "The central question", { exact: false }).fill("Quale scelta deve rimanere umana?");
     await page.getByLabel(it ? "Carattere e punto di vista" : "Personality & point of view", { exact: true }).first().fill("Curioso, cerca esempi concreti e ascolta senza interrompere.");
     await page.getByLabel(it ? "Come deve svolgersi la conversazione" : "How the conversation should develop", { exact: true }).fill("Una domanda aperta per volta, poi una sintesi condivisa.");
-    await page.getByLabel(it ? "Stile grafico" : "Visual style", { exact: true }).selectOption("anime");
+    await choosePodcastStyle(page, "anime");
     await expect(page.getByTestId("podcast-editor-stage").locator("canvas[data-podcast-stage]")).toHaveAttribute("data-podcast-style", "anime");
     const saved = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/podcast/talks"));
     await page.getByRole("button", { name: it ? "Salva e apri studio" : "Save & open studio" }).click();
@@ -107,11 +108,11 @@ test("silent studio preview exposes ten styles, four layouts, expressions and sm
   await expect(page.getByText("STUDIO DIMOSTRATIVO", { exact: true })).toBeVisible();
   const stage = page.getByTestId("podcast-stage").locator("canvas[data-podcast-stage]");
   for (const [theme, rendered] of [["clean-line", "clean"], ["soft-editorial", "soft"], ["animated-series", "comic"], ["anime", "anime"], ["original-editorial", "editorial"], ["original-anime", "anime-night"], ["original-comedy", "comedy"]]) {
-    await page.getByLabel("Stile dei personaggi", { exact: true }).selectOption(theme);
+    await choosePodcastStyle(page, theme);
     await expect(stage).toHaveAttribute("data-podcast-style", rendered);
   }
   for (const layout of ["studio", "speaker", "table", "lounge"]) {
-    await page.getByLabel("Scena", { exact: true }).selectOption(layout);
+    await page.getByTestId("podcast-layout").selectOption(layout);
     await expect(stage).toHaveAttribute("data-podcast-layout", layout);
   }
   await page.getByRole("button", { name: "Ospite", exact: true }).click();
@@ -131,7 +132,7 @@ test("silent studio preview exposes ten styles, four layouts, expressions and sm
   await page.getByRole("button", { name: /^Vista programma/u }).click();
   await expect(page.getByRole("button", { name: /Torna alla regia/u })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByLabel("Scena", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("podcast-layout")).toBeVisible();
   expect(mutations).toEqual([]);
 });
 
