@@ -80,7 +80,7 @@ for (const locale of ["it", "en"] as const) {
     await page.getByLabel(it ? "Carattere e punto di vista" : "Personality & point of view", { exact: true }).first().fill("Curioso, cerca esempi concreti e ascolta senza interrompere.");
     await page.getByLabel(it ? "Come deve svolgersi la conversazione" : "How the conversation should develop", { exact: true }).fill("Una domanda aperta per volta, poi una sintesi condivisa.");
     await page.getByLabel(it ? "Stile grafico" : "Visual style", { exact: true }).selectOption("anime");
-    await expect(page.locator("canvas[data-podcast-stage]")).toHaveAttribute("data-podcast-style", "anime");
+    await expect(page.getByTestId("podcast-editor-stage").locator("canvas[data-podcast-stage]")).toHaveAttribute("data-podcast-style", "anime");
     const saved = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/api/podcast/talks"));
     await page.getByRole("button", { name: it ? "Salva e apri studio" : "Save & open studio" }).click();
     const response = await saved;
@@ -105,7 +105,7 @@ test("silent studio preview exposes four styles, three layouts, expressions and 
   page.on("request", (request) => { if (request.method() !== "GET") mutations.push(request.url()); });
   await page.goto("/podcast/preview");
   await expect(page.getByText("STUDIO DIMOSTRATIVO", { exact: true })).toBeVisible();
-  const stage = page.locator("canvas[data-podcast-stage]");
+  const stage = page.getByTestId("podcast-stage").locator("canvas[data-podcast-stage]");
   for (const [theme, rendered] of [["clean-line", "clean"], ["soft-editorial", "soft"], ["animated-series", "comic"], ["anime", "anime"]]) {
     await page.getByLabel("Stile dei personaggi", { exact: true }).selectOption(theme);
     await expect(stage).toHaveAttribute("data-podcast-style", rendered);
@@ -149,8 +149,10 @@ test("a real human turn is stored as human and appears in a clean broadcast view
   await expect(page.getByLabel("Contributo dell’ospite", { exact: true })).toBeEnabled();
   const content = "Nel mio lavoro delego la prima bozza, ma le scelte e la relazione con le persone rimangono mie.";
   await page.getByLabel("Contributo dell’ospite", { exact: true }).fill(content);
+  const submission = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith(`/api/podcast/runs/${run.id}/human-turn`));
   await page.getByRole("button", { name: /Inserisci nella conversazione/u }).click();
-  await expect(page.getByText(content, { exact: true })).toBeVisible();
+  expect((await submission).status()).toBe(200);
+  await expect(page.locator("p").filter({ hasText: content })).toBeVisible();
   const stored: TalkRunResponse = (await (await request.get(`/api/podcast/runs/${run.id}`)).json()).run;
   expect(stored.messages).toHaveLength(1);
   expect(stored.messages[0]).toMatchObject({ origin: "human", participantIndex: 2, content });

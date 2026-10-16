@@ -6,11 +6,14 @@ import { PODCAST_VOICES } from "@conclavia/avatar-kit/lib/podcast-voice-catalog"
 import { runPodcastRehearsal } from "@/lib/podcast/rehearsal-player";
 import type { Participant, TalkInput, TalkResponse } from "@/types/podcast";
 import type { TalkRunMessageResponse, TalkRunResponse } from "@/types/podcast-run";
+import { STUDIO_THEMES, type StudioThemeId } from "@/lib/podcast/studio-themes";
 import { defaultPodcast } from "./podcast-defaults";
 import { DEFAULT_DIRECTION, PodcastStageView, resolvePodcastDirection, type PodcastDirection, type PodcastEmotion } from "./PodcastStageView";
 import { Field, podcastRequest, readableError, usePodcastCopy } from "./PodcastUi";
 import styles from "./Podcast.module.css";
 import rehearsal from "./PodcastRehearsal.module.css";
+import { PodcastStylePicker } from "./PodcastStylePicker";
+import design from "./PodcastStyles.module.css";
 
 type RehearsalPhase = "idle" | "preparing" | "ready" | "generating" | "buffering" | "speaking" | "pause" | "complete" | "stopped" | "error";
 interface Capability {
@@ -29,7 +32,7 @@ function voiceFor(language: string, sex: Participant["sex"], provider: "kokoro" 
   return PODCAST_VOICES.find((voice) => voice.provider === provider && voice.language === language && voice.gender === sex)?.id;
 }
 
-function rehearsalInput(): TalkInput {
+function rehearsalInput(initialTheme?: StudioThemeId): TalkInput {
   const input = defaultPodcast(false);
   const language = "it";
   return {
@@ -43,13 +46,13 @@ function rehearsalInput(): TalkInput {
       goals: "Costruire sul contributo dell’altro conduttore, portare esempi concreti e rendere più chiara la domanda centrale.",
       voiceId: voiceFor(language, person.sex, "kokoro"),
     })),
-    settings: { ...input.settings, voiceProvider: "kokoro", maxTurns: 8, targetDurationMinutes: 2 },
+    settings: { ...input.settings, studioTheme: initialTheme ?? input.settings.studioTheme, voiceProvider: "kokoro", maxTurns: 8, targetDurationMinutes: 2 },
   };
 }
 
-export function PodcastRehearsal() {
+export function PodcastRehearsal({ initialTheme }: { initialTheme?: StudioThemeId }) {
   const copy = usePodcastCopy();
-  const [input, setInput] = useState<TalkInput>(() => rehearsalInput());
+  const [input, setInput] = useState<TalkInput>(() => rehearsalInput(initialTheme));
   const [talk, setTalk] = useState<TalkResponse | null>(null);
   const [run, setRun] = useState<TalkRunResponse | null>(null);
   const [speech, setSpeech] = useState<TalkRunMessageResponse | null>(null);
@@ -224,8 +227,9 @@ export function PodcastRehearsal() {
             <Field label={copy("Argomento della prova", "Rehearsal topic")}><input className={styles.input} maxLength={2000} required value={input.topic} onChange={(event) => changeInput({ ...input, topic: event.target.value })} /></Field>
             <div className={styles.row}>
               <Field label={copy("Lingua delle voci", "Voice language")}><select className={styles.input} value={input.language} onChange={(event) => changeLanguage(event.target.value)}><option value="it">Italiano</option><option value="en">English</option></select></Field>
-              <Field label={copy("Stile grafico", "Visual style")}><select className={styles.input} data-testid="rehearsal-theme" value={input.settings.studioTheme} onChange={(event) => changeInput({ ...input, settings: { ...input.settings, studioTheme: event.target.value as TalkInput["settings"]["studioTheme"] } })}><option value="clean-line">{copy("Linea pulita", "Clean line")}</option><option value="soft-editorial">{copy("Editoriale morbido", "Soft editorial")}</option><option value="animated-series">{copy("Serie animata", "Animated series")}</option><option value="anime">Anime</option></select></Field>
+              <Field label={copy("Stile grafico", "Visual style")}><select className={styles.input} data-testid="rehearsal-theme" value={input.settings.studioTheme} onChange={(event) => changeInput({ ...input, settings: { ...input.settings, studioTheme: event.target.value as TalkInput["settings"]["studioTheme"] } })}>{STUDIO_THEMES.map((theme) => <option value={theme.id} key={theme.id}>{copy(theme.label.it, theme.label.en)}</option>)}</select></Field>
             </div>
+            <div className={design.settingsPicker}><PodcastStylePicker talk={input} value={input.settings.studioTheme} disabled={locked} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => changeInput({ ...input, settings: { ...input.settings, studioTheme: theme } })} /><Link className={design.embedLink} href={`/podcast/styles?style=${input.settings.studioTheme}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
             <Field label={copy("Servizio delle voci", "Voice service")}><select className={styles.input} data-testid="rehearsal-voice-provider" value={voiceProvider} onChange={(event) => { const provider = event.target.value as "kokoro" | "inworld"; changeInput({ ...input, settings: { ...input.settings, voiceProvider: provider }, participants: input.participants.map((person) => ({ ...person, voiceId: voiceFor(input.language, person.sex, provider) })) }); }}><option value="kokoro" disabled={input.language !== "it"}>{copy("Kokoro locale · Nicola e Sara", "Local Kokoro · Nicola and Sara")}</option><option value="inworld">Inworld</option></select></Field>
             <div className={rehearsal.people}>
               {input.participants.map((person, index) => <div className={rehearsal.person} key={index}>

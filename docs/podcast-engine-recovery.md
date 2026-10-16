@@ -99,6 +99,12 @@ submission uses a status claim to prevent duplicate concurrent guest turns.
 
 ## Verification and remaining acceptance
 
+### Visual comparison in the application
+
+Open **Podcast → Stili e scenari** (`/podcast/styles`) to compare the four current styles: Linea pulita, Volume morbido, Serie animata, and Anime luminoso. Each picture is captured from the canonical renderer. The selected stage remains animated, with three compositions, separate host expressions, and an optional guest placeholder. Four styles and three compositions produce twelve combinations; they are not twelve different art directions.
+
+The three original proposals (Fumetto realistico, Anime serale, Commedia animata) remain in a separate read-only archive. They are served from the canonical kit assets with their original provenance. Choosing **Usa nella prova a due** or **Usa in nuova puntata** carries the selected style into the corresponding flow; saving the episode persists it. The same picture selector is available in the editor, rehearsal, and visual studio preview. Browsing styles starts no conversation, synthesis, camera, or microphone.
+
 `node --test tests/scripts/podcast-engine.test.mjs` executes the actual recovered
 modules at pure boundaries. The suite covers flexible cast validation, obsolete
 video rejection, duration/score/turn limits, fair speaker selection, word ranges,

@@ -3,6 +3,7 @@
 import { PodcastStage } from "@conclavia/avatar-kit/components/PodcastStage";
 import type { TalkInput } from "@/types/podcast";
 import type { TalkRunMessageResponse } from "@/types/podcast-run";
+import { getStudioTheme } from "@/lib/podcast/studio-themes";
 
 export type PodcastEmotion = "attention" | "curiosity" | "doubt" | "agreement" | "amusement" | "empathy" | "disagreement" | "surprise";
 export type PodcastShot = "all" | "guest" | "host-1" | "host-2";
@@ -18,7 +19,6 @@ export interface PodcastDirection {
   automatic: boolean;
 }
 export const DEFAULT_DIRECTION: PodcastDirection = { layout: "studio", focus: "all", emotion: "attention", intensity: 0.65, emotion2: "curiosity", intensity2: 0.55, captions: true, automatic: true };
-const themeMap = { "clean-line": "clean", "soft-editorial": "soft", "animated-series": "comic", anime: "anime" } as const;
 
 /** Editorial intent drives visual reaction; this does not infer a guest's emotions. */
 export function resolvePodcastDirection(direction: PodcastDirection, talk: Pick<TalkInput, "participants">, message?: TalkRunMessageResponse): PodcastDirection {
@@ -44,7 +44,7 @@ export function PodcastStageView({ talk, direction = DEFAULT_DIRECTION, guestStr
 }) {
   const ai = talk.participants.map((participant, index) => ({ participant, index })).filter(({ participant }) => participant.kind === "ai");
   const guest = talk.participants.find((participant) => participant.kind === "human");
-  return <PodcastStage title={talk.title} topic={talk.topic} visualStyle={themeMap[talk.settings.studioTheme] ?? "clean"}
+  return <PodcastStage title={talk.title} topic={talk.topic} visualStyle={getStudioTheme(talk.settings.studioTheme).visualStyle}
     layout={direction.layout} focus={direction.focus} onCanvasReady={onCanvasReady}
     speakers={ai.slice(0, 2).map(({ participant, index }, position) => ({ id: String(index), name: participant.name, role: participant.role, appearance: participant.sex,
       emotion: position === 1 ? direction.emotion2 ?? direction.emotion : direction.emotion, intensity: position === 1 ? direction.intensity2 ?? direction.intensity : direction.intensity, speaking: speakingIndex === index,

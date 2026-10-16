@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { Participant, TalkInput, TalkResponse } from "@/types/podcast";
 import { LLM_MODELS } from "@/lib/podcast/llm-models";
+import { STUDIO_THEMES, type StudioThemeId } from "@/lib/podcast/studio-themes";
 import { PodcastStageView } from "./PodcastStageView";
+import { PodcastStylePicker } from "./PodcastStylePicker";
 import { defaultParticipant, defaultPodcast } from "./podcast-defaults";
 import { Field, PodcastTabs, podcastRequest, readableError, usePodcastCopy } from "./PodcastUi";
 import styles from "./Podcast.module.css";
+import design from "./PodcastStyles.module.css";
 
-export function PodcastEditor({ id }: { id?: string }) {
+export function PodcastEditor({ id, initialTheme }: { id?: string; initialTheme?: StudioThemeId }) {
   const copy = usePodcastCopy();
   const router = useRouter();
-  const [talk, setTalk] = useState<TalkInput>(() => defaultPodcast(copy("it", "en") === "en"));
+  const [talk, setTalk] = useState<TalkInput>(() => { const initial = defaultPodcast(copy("it", "en") === "en"); return { ...initial, settings: { ...initial.settings, studioTheme: initialTheme ?? initial.settings.studioTheme } }; });
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -68,8 +71,9 @@ export function PodcastEditor({ id }: { id?: string }) {
             {talk.moderator.kind !== "none" && <><Field label={copy("Nome del moderatore", "Moderator name")}><input className={styles.input} required value={talk.moderator.name || ""} onChange={(event) => update("moderator", { ...talk.moderator, name: event.target.value })} /></Field><Field label={copy("Istruzioni per il moderatore", "Moderator instructions")}><textarea className={`${styles.input} ${styles.textarea}`} value={talk.moderator.instructions || ""} onChange={(event) => update("moderator", { ...talk.moderator, instructions: event.target.value })} /></Field></>}
             <Field label={copy("Servizio di generazione", "Generation service")}><select className={styles.input} value={talk.settings.defaultModel} onChange={(event) => update("settings", { ...talk.settings, defaultModel: event.target.value as TalkInput["settings"]["defaultModel"] })}>{LLM_MODELS.map((model) => <option key={model.id} value={model.id}>{model.provider === "openai" ? "OpenAI" : "Gemini"} · {copy("modello configurato sul server", "server-configured model")}</option>)}</select></Field></details>
         </section>
-      </div><aside className={`${styles.panel} ${styles.sticky}`}><div className={styles.preview}><PodcastStageView talk={talk} /></div><h2 className={styles.sidebarTitle}>{copy("L’identità dello studio", "Your studio’s identity")}</h2><p className={styles.sidebarText}>{copy("Lo stile cambia la scena e i personaggi. Personalità e storia della conversazione restano indipendenti dalla grafica.", "The style changes the scene and characters. Personalities and conversation history remain independent of the visuals.")}</p>
-        <div className={styles.divider} /><Field label={copy("Stile grafico", "Visual style")}><select className={styles.input} value={talk.settings.studioTheme} onChange={(event) => update("settings", { ...talk.settings, studioTheme: event.target.value as TalkInput["settings"]["studioTheme"] })}><option value="clean-line">{copy("Linea pulita", "Clean line")}</option><option value="soft-editorial">{copy("Editoriale morbido", "Soft editorial")}</option><option value="animated-series">{copy("Serie animata", "Animated series")}</option><option value="anime">{copy("Anime serale", "Evening anime")}</option></select></Field>
+      </div><aside className={`${styles.panel} ${styles.sticky}`}><div className={styles.preview} data-testid="podcast-editor-stage"><PodcastStageView talk={talk} /></div><h2 className={styles.sidebarTitle}>{copy("L’identità dello studio", "Your studio’s identity")}</h2><p className={styles.sidebarText}>{copy("Lo stile cambia la scena e i personaggi. Personalità e storia della conversazione restano indipendenti dalla grafica.", "The style changes the scene and characters. Personalities and conversation history remain independent of the visuals.")}</p>
+        <div className={styles.divider} /><Field label={copy("Stile grafico", "Visual style")}><select className={styles.input} value={talk.settings.studioTheme} onChange={(event) => update("settings", { ...talk.settings, studioTheme: event.target.value as TalkInput["settings"]["studioTheme"] })}>{STUDIO_THEMES.map((theme) => <option value={theme.id} key={theme.id}>{copy(theme.label.it, theme.label.en)}</option>)}</select></Field>
+        <div className={design.settingsPicker}><PodcastStylePicker compact talk={talk} value={talk.settings.studioTheme} legend={copy("Anteprime degli stili", "Style previews")} onChange={(theme) => update("settings", { ...talk.settings, studioTheme: theme })} /><Link className={design.embedLink} href={`/podcast/styles?style=${talk.settings.studioTheme}`}>{copy("Confronta stili e scenari", "Compare styles and scenes")} ↗</Link></div>
         <Field label={copy("Stato della puntata", "Episode status")}><select className={styles.input} value={talk.status} onChange={(event) => update("status", event.target.value as TalkInput["status"])}><option value="draft">{copy("Bozza", "Draft")}</option><option value="ready">{copy("Pronta per lo studio", "Ready for studio")}</option></select></Field>
         <div className={styles.notice}>{copy("Salvare prepara la puntata. Le chiamate AI partono solo dallo studio con un comando esplicito.", "Saving prepares the episode. AI calls start only from the studio with an explicit action.")}</div>
         <div className={styles.statRow}><span>{copy("Conduttori AI", "AI hosts")}</span><strong>{talk.participants.filter((entry) => entry.kind === "ai").length}</strong></div><div className={styles.statRow}><span>{copy("Durata obiettivo", "Target duration")}</span><strong>{talk.settings.targetDurationMinutes} min</strong></div><div className={styles.statRow}><span>{copy("Ospite", "Guest")}</span><strong>{talk.participants.some((entry) => entry.kind === "human") ? copy("Previsto", "Included") : "—"}</strong></div>
