@@ -189,8 +189,12 @@ test("local camera is explicit and video-only; graphical recording downloads a r
   await page.goto("/podcast/preview");
   const cameraState = () => page.evaluate(() => (window as unknown as { podcastCameraFixture: { calls: number; audio: unknown; stopped: boolean } }).podcastCameraFixture);
   expect((await cameraState()).calls).toBe(0);
-  await page.getByRole("button", { name: "Prova videocamera locale", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Spegni videocamera locale", exact: true })).toBeVisible();
+  await page.getByTestId("podcast-open-preflight").click();
+  const preparation = page.getByTestId("podcast-guest-preflight");
+  expect((await cameraState()).calls).toBe(0);
+  await preparation.getByRole("button", { name: "Accendi videocamera per la prova", exact: true }).click();
+  await expect(preparation.getByRole("button", { name: "Spegni videocamera e togli dalla scena", exact: true })).toBeVisible();
+  await preparation.getByTestId("podcast-guest-publish").click();
   expect((await cameraState()).audio).toBe(false);
   await page.getByTestId("podcast-record").click();
   await expect(page.getByTestId("podcast-record")).toContainText("Ferma registrazione");
@@ -204,7 +208,7 @@ test("local camera is explicit and video-only; graphical recording downloads a r
   const videoPath = testInfo.outputPath(download.suggestedFilename());
   await download.saveAs(videoPath);
   expect((await readFile(videoPath)).byteLength).toBeGreaterThan(1000);
-  await page.getByRole("button", { name: "Spegni videocamera locale", exact: true }).click();
+  await page.getByRole("button", { name: "Spegni videocamera", exact: true }).click();
   expect((await cameraState()).stopped).toBe(true);
   expect((await cameraState()).calls).toBe(1);
 });

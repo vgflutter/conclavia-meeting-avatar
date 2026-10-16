@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/avatars/host-v1/*': ['./node_modules/@conclavia/avatar-kit/assets/host-v1/*', '../conclavia-avatar-kit/assets/host-v1/*'],
     '/avatars/rigged-v1/*': ['./node_modules/@conclavia/avatar-kit/assets/**/*', '../conclavia-avatar-kit/assets/**/*'],
+    '/podcast/tracking-assets/*': ['./node_modules/@conclavia/avatar-kit/assets/podcast-face-tracking/**', '../conclavia-avatar-kit/assets/podcast-face-tracking/**'],
     '/podcast/design-assets/*': ['./node_modules/@conclavia/avatar-kit/assets/podcast-designs/**', '../conclavia-avatar-kit/assets/podcast-designs/**'],
   },
   distDir: process.env.NEXT_DIST_DIR || ".next",
