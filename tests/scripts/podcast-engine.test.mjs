@@ -197,14 +197,14 @@ test("Mongoose round trips studio composition and serialized run snapshots keep 
   assert.equal(legacyRun.talkSnapshot.settings.studioLayout, undefined, "read compatibility does not rewrite old database snapshots");
 });
 
-test("seven animated directions, three casts and optional guest staging validate and persist independently", () => {
+test("ten animated directions, three casts and optional guest staging validate and persist independently", () => {
   const { TalkModel } = load("@/models/PodcastTalk");
   const { TalkRunModel } = load("@/models/PodcastRun");
   const { Types } = nativeRequire("mongoose");
   const { serializeTalk } = load("@/lib/podcast/serialize-talk");
   const { serializeTalkRun } = load("@/lib/podcast/serialize-talk-run");
   const catalog = load("@/lib/podcast/studio-themes");
-  assert.equal(catalog.STUDIO_THEME_IDS.length, 7);
+  assert.equal(catalog.STUDIO_THEME_IDS.length, 10);
   for (const studioTheme of catalog.STUDIO_THEME_IDS) {
     for (const studioCast of catalog.STUDIO_CAST_IDS) {
       for (const studioGuest of catalog.STUDIO_GUEST_MODES) {
@@ -616,4 +616,22 @@ test("new Kokoro settings preserve approved voice IDs while missing provider sta
   assert.equal(validation.validateTalkInput(talk).success, false);
   talk.participants[0].voiceId = "im_nicola"; talk.language = "en";
   assert.equal(validation.validateTalkInput(talk).success, false);
+});
+
+test("visual format presets cover six distinct families and preserve editorial content and voices", () => {
+  const formats = load("@/lib/podcast/studio-formats");
+  const catalog = load("@/lib/podcast/studio-themes");
+  assert.equal(formats.STUDIO_FORMATS.length, 8);
+  assert.equal(new Set(Object.values(formats.STUDIO_STYLE_GUIDES).map(guide => guide.family)).size, 6);
+  assert.deepEqual(Object.keys(formats.STUDIO_STYLE_GUIDES).sort(), [...catalog.STUDIO_THEME_IDS].sort());
+  for (const format of formats.STUDIO_FORMATS) {
+    const input = fixture(2);
+    input.settings.voiceProvider = "kokoro";
+    const before = JSON.stringify({ participants: input.participants, topic: input.topic, centralQuestion: input.centralQuestion, voiceProvider: input.settings.voiceProvider });
+    Object.assign(input.settings, format.selection);
+    assert.equal(formats.matchesStudioFormat(input.settings, format), true);
+    assert.equal(validation.validateTalkInput(input).success, true, format.id);
+    assert.equal(JSON.stringify({ participants: input.participants, topic: input.topic, centralQuestion: input.centralQuestion, voiceProvider: input.settings.voiceProvider }), before);
+    assert.ok(formats.getStudioStyleGuide(format.selection.studioTheme).formats.some(item => item.id === format.id));
+  }
 });

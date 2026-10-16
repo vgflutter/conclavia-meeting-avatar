@@ -100,7 +100,7 @@ for (const locale of ["it", "en"] as const) {
   });
 }
 
-test("silent studio preview exposes seven styles, four layouts, expressions and small-screen controls", async ({ page }) => {
+test("silent studio preview exposes ten styles, four layouts, expressions and small-screen controls", async ({ page }) => {
   const mutations: string[] = [];
   page.on("request", (request) => { if (request.method() !== "GET") mutations.push(request.url()); });
   await page.goto("/podcast/preview");

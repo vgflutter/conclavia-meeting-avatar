@@ -12,6 +12,9 @@ const themes = [
   ["original-editorial", "editorial"],
   ["original-anime", "anime-night"],
   ["original-comedy", "comedy"],
+  ["noir-editorial", "noir"],
+  ["paper-theatre", "paper"],
+  ["digital-neon", "digital"],
 ] as const;
 
 test.beforeAll(() => {
@@ -57,15 +60,15 @@ async function chooseStyle(page: Page, theme: string) {
 }
 
 for (const locale of ["it", "en"] as const) {
-  test(`style gallery in ${locale}: seven animated styles, three casts and four optional-guest compositions and no service activation`, async ({ page }, testInfo) => {
+  test(`style gallery in ${locale}: ten animated styles, three casts and four optional-guest compositions and no service activation`, async ({ page }, testInfo) => {
     await page.context().addCookies([{ name: "conclavia_locale", value: locale, url: origin }]);
     const requests = await silentBrowsing(page);
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto("/podcast/styles");
     await expect(page.locator("html")).toHaveAttribute("lang", locale);
     const picker = page.getByTestId("podcast-style-picker");
-    await expect(picker.getByRole("radio")).toHaveCount(7);
-    await expect(picker.locator("img")).toHaveCount(7);
+    await expect(picker.getByRole("radio")).toHaveCount(10);
+    await expect(picker.locator("img")).toHaveCount(10);
     const scenes = page.getByTestId("podcast-scenario-picker");
     await expect(scenes.getByRole("radio")).toHaveCount(4);
     await expect(scenes.locator("img")).toHaveCount(4);
@@ -113,7 +116,7 @@ for (const locale of ["it", "en"] as const) {
     await expect(page.getByTestId("style-gallery-focus").locator('option[value="guest"]')).toHaveCount(0);
     await page.getByTestId("style-gallery-layout").selectOption("studio");
     await chooseStyle(page, "clean-line");
-    await expect(picker.locator("img")).toHaveCount(7);
+    await expect(picker.locator("img")).toHaveCount(10);
     await page.evaluate(async () => { await document.fonts.ready; });
     for (const width of [1440, 768, 320]) {
       await page.setViewportSize({ width, height: 1000 });
@@ -264,4 +267,41 @@ test("guest auto follows invited humans, hidden removes the panel, and reserve w
   expect(await permissionsRequested(page)).toBe(0);
   expect(requests.mutations).toEqual([]);
   expect(requests.external).toEqual([]);
+});
+
+test("episode presets apply genuinely different visual families and carry the choice into rehearsal", async ({ page }) => {
+  await page.context().addCookies([{ name: "conclavia_locale", value: "it", url: origin }]);
+  const requests = await silentBrowsing(page);
+  await page.goto("/podcast/styles");
+  const stage = page.getByTestId("style-gallery-stage").locator("canvas[data-podcast-stage]");
+  const presets = [
+    ["interview", "clean", "contemporary", "speaker", "true"],
+    ["debate", "editorial", "original", "table", "false"],
+    ["explain", "paper", "expressive", "studio", "false"],
+    ["investigation", "noir", "contemporary", "speaker", "false"],
+    ["tech", "digital", "original", "speaker", "false"],
+    ["entertainment", "comedy", "expressive", "lounge", "false"],
+    ["culture", "anime-night", "expressive", "lounge", "false"],
+    ["wellbeing", "soft", "contemporary", "lounge", "true"],
+  ];
+  await expect(page.getByTestId("podcast-format-picker").getByRole("button")).toHaveCount(8);
+  for (const [format, artwork, cast, layout, guest] of presets) {
+    await page.getByTestId(`podcast-format-${format}`).click();
+    await expect(page.getByTestId(`podcast-format-${format}`)).toHaveAttribute("aria-pressed", "true");
+    await expect(stage).toHaveAttribute("data-podcast-style", artwork);
+    await expect(stage).toHaveAttribute("data-podcast-cast", cast);
+    await expect(stage).toHaveAttribute("data-podcast-layout", layout);
+    await expect(stage).toHaveAttribute("data-podcast-guest", guest);
+    await expect(page.getByTestId("style-gallery-format")).toHaveValue(format);
+  }
+  await page.getByTestId("style-gallery-format").selectOption("tech");
+  await expect(page.getByTestId("style-gallery-cast").getByRole("option", { name: "Cupole luminose" })).toHaveCount(1);
+  await page.getByTestId("style-gallery-cast").selectOption("expressive");
+  await expect(page.getByTestId("style-gallery-format")).toHaveValue("custom");
+  await page.getByTestId("style-use-rehearsal").click();
+  await expect(page).toHaveURL(/style=digital-neon&scenario=speaker&cast=expressive&guest=auto$/u);
+  await expect(page.getByTestId("rehearsal-stage").locator("canvas")).toHaveAttribute("data-podcast-style", "digital");
+  expect(requests.mutations).toEqual([]);
+  expect(requests.external).toEqual([]);
+  expect(await permissionsRequested(page)).toBe(0);
 });

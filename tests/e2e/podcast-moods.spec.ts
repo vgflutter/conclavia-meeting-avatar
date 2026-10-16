@@ -171,3 +171,36 @@ test("the original three directions share sentence acting and visible-stage quic
   expect(calls.mutations).toEqual([]);
   expect(calls.external).toEqual([]);
 });
+
+test("noir, paper and digital keep eight distinct silent emotions and support all guest compositions", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const calls = await openSilentLab(page);
+  const stage = stageOf(page);
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  for (const [theme, style] of [["noir-editorial", "noir"], ["paper-theatre", "paper"], ["digital-neon", "digital"]]) {
+    await page.getByTestId("style-gallery-theme").selectOption(theme);
+    await expect(stage).toHaveAttribute("data-podcast-style", style);
+    const frames = new Set<string>();
+    for (const [mood, pair] of expectedMoods) {
+      await page.getByTestId(`mood-demo-option-${mood}`).click();
+      await expect(stage).toHaveAttribute("data-podcast-moods", pair);
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+      frames.add(await stage.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL()));
+      await expect(stage).toHaveAttribute("data-podcast-visemes", "rest,rest");
+    }
+    expect(frames.size, theme).toBe(8);
+    for (const guest of ["auto", "reserve"]) {
+      await page.getByTestId("style-gallery-guest-mode").selectOption(guest);
+      for (const layout of ["studio", "speaker", "table", "lounge"]) {
+        await page.getByTestId("style-gallery-layout").selectOption(layout);
+        await expect(stage).toHaveAttribute("data-podcast-layout", layout);
+        await expect(stage).toHaveAttribute("data-podcast-guest", String(guest === "reserve"));
+      }
+    }
+  }
+  expect(errors).toEqual([]);
+  expect(calls.mutations).toEqual([]);
+  expect(calls.external).toEqual([]);
+  expect(await privacy(page)).toEqual({ media: 0, audio: 0 });
+});

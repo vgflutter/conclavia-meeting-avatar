@@ -1,5 +1,5 @@
 /** Scene styling is rendered by the canonical avatar kit, never a provider. */
-export const STUDIO_THEME_IDS = ["clean-line", "soft-editorial", "animated-series", "anime", "original-editorial", "original-anime", "original-comedy"] as const;
+export const STUDIO_THEME_IDS = ["clean-line", "soft-editorial", "animated-series", "anime", "original-editorial", "original-anime", "original-comedy", "noir-editorial", "paper-theatre", "digital-neon"] as const;
 export type StudioThemeId = (typeof STUDIO_THEME_IDS)[number];
 export const DEFAULT_STUDIO_THEME: StudioThemeId = "clean-line";
 export const STUDIO_THEMES = [
@@ -59,6 +59,30 @@ export const STUDIO_THEMES = [
     treatment: { it: "Volumi rotondi, colori caldi e contorni morbidi.", en: "Rounded volumes, warm colors, and soft outlines." },
     colors: ["#e7d3b7", "#557567", "#bd815b"],
   },
+  {
+    id: "noir-editorial", visualStyle: "noir",
+    label: { it: "Noir d’inchiesta", en: "Investigative noir" },
+    description: { it: "Bianco e nero, volti scolpiti nell’inchiostro e tagli di luce da veneziana. Uno studio da reportage.", en: "Black and white, faces sculpted in ink, and light through blinds. A reportage studio." },
+    character: { it: "Silhouette adulte sfaccettate, sopracciglia e sguardi a forte contrasto.", en: "Faceted adult silhouettes, high-contrast eyebrows and gaze." },
+    treatment: { it: "Graphic novel monocromatica, pieni neri e luce netta.", en: "Monochrome graphic novel, solid blacks and hard light." },
+    colors: ["#16181c", "#93969b", "#f3f1e9"],
+  },
+  {
+    id: "paper-theatre", visualStyle: "paper",
+    label: { it: "Teatro di carta", en: "Paper theatre" },
+    description: { it: "Un collage animato di carte sovrapposte, volti ritagliati e scenografie costruite per raccontare e spiegare.", en: "An animated collage of layered paper, cutout faces, and sets built for stories and explanations." },
+    character: { it: "Testa, capelli e braccia come sagome di carta, con occhi e bocche molto leggibili.", en: "Heads, hair, and arms as paper cutouts, with clearly readable eyes and mouths." },
+    treatment: { it: "Collage a strati, ombre di carta e forme colorate.", en: "Layered collage, paper shadows, and colorful shapes." },
+    colors: ["#f4ead6", "#4b9b8e", "#e9a15e"],
+  },
+  {
+    id: "digital-neon", visualStyle: "digital",
+    label: { it: "Frequenza digitale", en: "Digital frequency" },
+    description: { it: "Due personalità AI non umane: volti-display e gusci luminosi dentro un laboratorio broadcast futuristico.", en: "Two non-human AI personalities: display faces and luminous shells in a futuristic broadcast laboratory." },
+    character: { it: "Cupole, visori e antenne cambiano con il cast; le emozioni passano da occhi, bocca e postura.", en: "Domes, visors, and antennas vary with the cast; eyes, mouths, and posture convey emotion." },
+    treatment: { it: "Gusci geometrici, vetro scuro e accenti ciano e ultravioletto.", en: "Geometric shells, dark glass, and cyan and ultraviolet accents." },
+    colors: ["#101529", "#55d7d2", "#b79bff"],
+  },
 ] as const satisfies ReadonlyArray<{ id: StudioThemeId; visualStyle: string; label: { it: string; en: string }; description: { it: string; en: string }; character: { it: string; en: string }; treatment: { it: string; en: string }; colors: readonly string[] }>;
 export function getStudioTheme(value: unknown) { return STUDIO_THEMES.find((theme) => theme.id === value) ?? STUDIO_THEMES[0]; }
 export function isStudioThemeId(value: unknown): value is StudioThemeId {
@@ -76,6 +100,13 @@ export const STUDIO_CASTS = [
   { id: "contemporary", label: { it: "Duo contemporaneo", en: "Contemporary duo" }, description: { it: "Nuove capigliature, lineamenti e silhouette più contemporanee.", en: "New hairstyles, facial features, and contemporary silhouettes." } },
   { id: "expressive", label: { it: "Duo di carattere", en: "Character duo" }, description: { it: "Altri volti e proporzioni, con un’identità più marcata.", en: "Different faces and proportions, with a stronger visual identity." } },
 ] as const;
+export function getStudioCastOptions(theme: StudioThemeId) {
+  return theme === "digital-neon" ? [
+    { id: "original" as const, label: { it: "Cupole luminose", en: "Luminous domes" }, description: { it: "Due facce-display dentro gusci arrotondati di vetro scuro.", en: "Two display faces inside rounded dark-glass shells." } },
+    { id: "contemporary" as const, label: { it: "Visori geometrici", en: "Geometric visors" }, description: { it: "Scocche squadrate, visori e spalle costruite per il laboratorio.", en: "Angular shells, visors, and shoulders built for the laboratory." } },
+    { id: "expressive" as const, label: { it: "Gusci asimmetrici", en: "Asymmetric shells" }, description: { it: "Antenne e sagome asimmetriche per due personalità artificiali.", en: "Antennas and asymmetric silhouettes for two artificial personalities." } },
+  ] : STUDIO_CASTS;
+}
 export const STUDIO_GUEST_MODES = ["auto", "reserve", "hidden"] as const;
 export type StudioGuestMode = typeof STUDIO_GUEST_MODES[number];
 export function isStudioCast(value: unknown): value is StudioCast { return STUDIO_CAST_IDS.some(id => id === value); }
