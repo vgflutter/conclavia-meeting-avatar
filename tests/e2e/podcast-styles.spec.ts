@@ -107,7 +107,13 @@ for (const locale of ["it", "en"] as const) {
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      if (width !== 768) await page.screenshot({ path: testInfo.outputPath(`podcast-styles-${locale}-${width}.png`), fullPage: true });
+      const picture = await stage.boundingBox(), label = await page.getByTestId("style-gallery-label").boundingBox();
+      expect(picture).not.toBeNull(); expect(label).not.toBeNull();
+      expect(label!.y, "Style caption must leave the full video unobstructed").toBeGreaterThanOrEqual(picture!.y + picture!.height);
+      if (width !== 768) {
+        await page.screenshot({ path: testInfo.outputPath(`podcast-styles-${locale}-${width}.png`), fullPage: true });
+        await page.getByTestId("style-gallery-stage").locator("..").screenshot({ path: testInfo.outputPath(`podcast-styles-frame-${locale}-${width}.png`) });
+      }
     }
     expect(await permissionsRequested(page)).toBe(0);
     expect(requests.mutations).toEqual([]);
@@ -216,6 +222,7 @@ test("unknown style links safely restore a supported gallery and editor selectio
 });
 
 test("picture choices update the actual rehearsal and preview canvases without starting a conversation", async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.context().addCookies([{ name: "conclavia_locale", value: "en", url: origin }]);
   const requests = await silentBrowsing(page);
   for (const [path, wrapper] of [["/podcast/rehearsal", "rehearsal-stage"], ["/podcast/preview", "podcast-stage"]]) {
@@ -231,6 +238,16 @@ test("picture choices update the actual rehearsal and preview canvases without s
       await expect(page.getByTestId("podcast-style-picker")).not.toBeVisible();
       await expect(page.getByTestId("podcast-style-chooser")).toBeFocused();
     }
+    if (wrapper === "rehearsal-stage") for (const width of [320, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      const picture = await stage.boundingBox(), label = await page.getByTestId("rehearsal-stage-label").boundingBox();
+      expect(picture).not.toBeNull(); expect(label).not.toBeNull();
+      expect(label!.y, "Rehearsal caption must leave the full video unobstructed").toBeGreaterThanOrEqual(picture!.y + picture!.height);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
+        message: "Responsive controls must fit after the viewport resize",
+      }).toBeLessThanOrEqual(width);
+    }
+    await stage.screenshot({ path: testInfo.outputPath(`podcast-visual-frame-${wrapper}.png`) });
     await page.screenshot({ path: testInfo.outputPath(`podcast-visual-controls-${wrapper}.png`), fullPage: true });
   }
   expect(requests.mutations).toEqual([]);

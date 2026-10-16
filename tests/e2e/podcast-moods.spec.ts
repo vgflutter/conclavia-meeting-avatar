@@ -184,7 +184,11 @@ test("noir, paper and digital keep eight distinct silent emotions and support al
     for (const [mood, pair] of expectedMoods) {
       await page.getByTestId(`mood-demo-option-${mood}`).click();
       await expect(stage).toHaveAttribute("data-podcast-moods", pair);
-      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+      // React attributes can precede the 30fps paint. A completed cue identifies
+      // the actual frame, including the first mood after changing art direction.
+      const cue = await stage.getAttribute("data-podcast-cue");
+      expect(cue).toMatch(/^mood-demo-/u);
+      await expect(stage).toHaveAttribute("data-podcast-painted-cue", cue!);
       frames.add(await stage.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL()));
       await expect(stage).toHaveAttribute("data-podcast-visemes", "rest,rest");
     }

@@ -1,7 +1,8 @@
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
 .main{display:grid;gap:20px;min-width:0}
+.stageGroup{min-width:0}
 .stage{position:relative;aspect-ratio:16/9;overflow:hidden;border:1px solid #284d3e;border-radius:16px;background:#183b32}
-.stageBadge{position:absolute;z-index:2;top:16px;left:16px;background:#17342ce8;border:1px solid #ffffff20;border-radius:6px;padding:7px 10px;color:#d2dfc9;font-size:10px;font-weight:700;letter-spacing:.1em;display:flex;align-items:center;gap:8px}
+.stageBadge{padding:9px 3px 0;color:#617755;font-size:10px;font-weight:700;letter-spacing:.1em;line-height:1.5;display:flex;align-items:center;gap:8px}
 .badgeDot{height:6px;width:6px;background:#b3c58c;border-radius:50%}
 .speakingDot{background:#e5b184;box-shadow:0 0 0 4px #e5b18416}
 .status{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;border:1px solid #dce4d5;border-radius:12px;padding:17px 19px;background:#fff}
@@ -57,5 +58,5 @@
 .invitationInner p{font-size:12px;color:#718360;line-height:1.7}
 .invitationInner strong{display:block;font-size:14px;color:#395c3b;margin-bottom:2px}
 @media(max-width:1050px){.layout{grid-template-columns:minmax(0,1fr) 290px}.people{grid-template-columns:1fr}.panel{padding:19px}}
-@media(max-width:780px){.layout{grid-template-columns:1fr}.sidebar{position:static;grid-row:1}.sidebar>.panel:last-child{display:none}.people{grid-template-columns:1fr 1fr}.invitation{padding:0 18px}.status{padding:15px 17px}.caption{padding:18px 20px}.stageBadge{top:11px;left:11px;padding:5px 8px;font-size:8px}}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.sidebar{position:static;grid-row:1}.sidebar>.panel:last-child{display:none}.people{grid-template-columns:1fr 1fr}.invitation{padding:0 18px}.status{padding:15px 17px}.caption{padding:18px 20px}.stageBadge{padding-top:7px;font-size:9px}}
 @media(max-width:540px){.people,.expressionRow{grid-template-columns:1fr}.captionText{font-size:14px}.statusClock{font-size:20px}.invitationInner{display:block}.invitationInner a{margin-top:12px}.panel{padding:18px}}

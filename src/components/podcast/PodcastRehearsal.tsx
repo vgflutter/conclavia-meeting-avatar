@@ -212,9 +212,11 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
     {error && <div className={styles.error} role="alert">{error}</div>}
     <div className={rehearsal.layout}>
       <div className={rehearsal.main}>
-        <div className={rehearsal.stage} data-testid="rehearsal-stage">
-          <div className={rehearsal.stageBadge}><i className={`${rehearsal.badgeDot} ${phase === "speaking" ? rehearsal.speakingDot : ""}`} />{copy("PROVA · DUE AI", "REHEARSAL · TWO AI HOSTS")}</div>
-          <PodcastStageView talk={stageTalk} direction={effectiveDirection} performance={actingCue} speakingIndex={phase === "speaking" ? speech?.participantIndex : undefined} audioLevel={audioLevel} viseme={viseme} />
+        <div className={rehearsal.stageGroup}>
+          <div className={rehearsal.stage} data-testid="rehearsal-stage">
+            <PodcastStageView talk={stageTalk} direction={effectiveDirection} performance={actingCue} speakingIndex={phase === "speaking" ? speech?.participantIndex : undefined} audioLevel={audioLevel} viseme={viseme} />
+          </div>
+          <div className={rehearsal.stageBadge} data-testid="rehearsal-stage-label"><i className={`${rehearsal.badgeDot} ${phase === "speaking" ? rehearsal.speakingDot : ""}`} />{copy("PROVA · DUE AI", "REHEARSAL · TWO AI HOSTS")}</div>
         </div>
         <div className={rehearsal.status} data-testid="rehearsal-phase" data-phase={phase} role="status" aria-live="polite">
           <div><div className={rehearsal.statusLabel}>{(phase === "generating" || phase === "buffering") ? copy("ATTESA TECNICA", "TECHNICAL WAIT") : phase === "pause" ? copy("RITMO DEL DIALOGO", "DIALOGUE PACING") : copy("STATO DELLA PROVA", "REHEARSAL STATUS")}</div><div className={rehearsal.statusTitle}>{phaseTitle[phase]}</div><p className={rehearsal.statusHelp}>{phaseHelp}</p></div>
