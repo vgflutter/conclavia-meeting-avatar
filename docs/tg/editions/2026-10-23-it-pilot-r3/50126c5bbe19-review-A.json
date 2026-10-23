@@ -1,0 +1,234 @@
+{
+  "role": "A",
+  "scoreSha256": "50126c5bbe19f7d3deccc77c8ae4c80f6230110e839981e70ab91b8e4adadf35",
+  "checkedAt": "2026-10-23T17:58:23.794Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 18506,
+  "outputTokens": 3852,
+  "issues": [],
+  "checks": {
+    "description": {
+      "status": "pass",
+      "reason": "Copre tutti i cinque temi in ordine, con formulazioni coerenti con le fonti e senza introdurre fatti nuovi.",
+      "sourceUrls": [
+        "https://terremoti.ingv.it/event/47606532",
+        "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html",
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "headline_0": {
+      "status": "pass",
+      "reason": "Titolo aderente al fatto verificato: sisma nel Tirreno con aggiornamento INGV e richiamo corretto alla situazione in Calabria.",
+      "sourceUrls": [
+        "https://terremoti.ingv.it/event/47606532",
+        "https://www.rainews.it/amp/articoli/2026/10/scosse-di-terremoto-a-palermo-e-messina-fino-a-magnitudo-5-efc03588-5545-4a89-acc9-6edecab30f30.html",
+        "https://www.tgcal24.it/province/catanzaro/terremoto-la-protezione-civile-nessuna-allerta-maremoto-in-calabria/"
+      ]
+    },
+    "headline_1": {
+      "status": "pass",
+      "reason": "Formula generica ma corretta: i rifornimenti risultano in ripresa dopo la rimozione dei blocchi.",
+      "sourceUrls": [
+        "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "headline_2": {
+      "status": "pass",
+      "reason": "Titolo compatibile con il bollettino AGENAS sulle liste d’attesa e con il taglio divulgativo del pezzo.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026"
+      ]
+    },
+    "headline_3": {
+      "status": "pass",
+      "reason": "Titolo coerente con il risultato del collocamento MEF e con la spiegazione delle differenze tra i due titoli.",
+      "sourceUrls": [
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/"
+      ]
+    },
+    "headline_4": {
+      "status": "pass",
+      "reason": "Titolo corretto e prudente: riassume il voto umbro senza attribuirgli effetti nazionali inesistenti.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "sentence_0": {
+      "status": "pass",
+      "reason": "Saluto e identificazione del programma corretti; nessun fatto contestabile.",
+      "sourceUrls": []
+    },
+    "sentence_1": {
+      "status": "pass",
+      "reason": "Preview coerente con i temi effettivamente trattati.",
+      "sourceUrls": [
+        "https://terremoti.ingv.it/event/47606532",
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf"
+      ]
+    },
+    "sentence_2": {
+      "status": "pass",
+      "reason": "La data, l’orario, l’area e la magnitudo momento 5,5 con profondità di circa 9 km sono coerenti con INGV e il riscontro giornalistico.",
+      "sourceUrls": [
+        "https://terremoti.ingv.it/event/47606532",
+        "https://www.rainews.it/amp/articoli/2026/10/scosse-di-terremoto-a-palermo-e-messina-fino-a-magnitudo-5-efc03588-5545-4a89-acc9-6edecab30f30.html"
+      ]
+    },
+    "sentence_3": {
+      "status": "pass",
+      "reason": "Evacuazioni precauzionali e assenza di segnalazioni di danni al momento del riscontro risultano supportate dalla fonte Rai.",
+      "sourceUrls": [
+        "https://www.rainews.it/amp/articoli/2026/10/scosse-di-terremoto-a-palermo-e-messina-fino-a-magnitudo-5-efc03588-5545-4a89-acc9-6edecab30f30.html"
+      ]
+    },
+    "sentence_4": {
+      "status": "pass",
+      "reason": "Il rientro dell’allerta maremoto in Calabria è coerente con la nota della Protezione civile regionale; il riferimento alle verifiche successive resta prudente.",
+      "sourceUrls": [
+        "https://www.tgcal24.it/province/catanzaro/terremoto-la-protezione-civile-nessuna-allerta-maremoto-in-calabria/"
+      ]
+    },
+    "sentence_5": {
+      "status": "pass",
+      "reason": "Rimozione dei presidi in Campania, incluso via Argine, e ripresa dei mezzi con scorte di polizia: supportato dalle fonti.",
+      "sourceUrls": [
+        "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "sentence_6": {
+      "status": "pass",
+      "reason": "Code ai distributori e necessità di ricostituire le scorte sono elementi confermati dal resoconto dell’ANSA.",
+      "sourceUrls": [
+        "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html"
+      ]
+    },
+    "sentence_7": {
+      "status": "pass",
+      "reason": "Il collegamento tra protesta, costo del carburante e decreto di aiuti da circa 175 milioni è supportato; la distinzione tra crediti d’imposta e taglio immediato alla pompa è corretta.",
+      "sourceUrls": [
+        "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html",
+        "https://www.ilfattoquotidiano.it/2026/10/22/caro-gasolio-decreto-governo-autotrasporto-notizie/8546627/"
+      ]
+    },
+    "sentence_8": {
+      "status": "pass",
+      "reason": "Riformulazione coerente con la notizia di apertura dei rifornimenti e con il quadro ancora non normalizzato.",
+      "sourceUrls": [
+        "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "sentence_9": {
+      "status": "pass",
+      "reason": "Numeri sulle prenotazioni e confronto con il 2025 corrispondono al bollettino AGENAS e ai riscontri regionali.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026"
+      ]
+    },
+    "sentence_10": {
+      "status": "pass",
+      "reason": "La variazione delle prime visite nei tempi è corretta e la cautela interpretativa è coerente con le fonti.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026"
+      ]
+    },
+    "sentence_11": {
+      "status": "pass",
+      "reason": "Le differenze territoriali e il limite della media nazionale sono ben supportati dal bollettino e dai riscontri giornalistici.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026",
+        "https://finanza.repubblica.it/News/2026/10/23/sanita_migliorano_liste_dattesa_ma_fuori_tempo_4_milioni_visite_ed_esami-37/"
+      ]
+    },
+    "sentence_12": {
+      "status": "pass",
+      "reason": "Sintesi corretta del senso del dato AGENAS aggiornato a settembre, senza attribuire conclusioni non verificate.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026"
+      ]
+    },
+    "sentence_13": {
+      "status": "pass",
+      "reason": "La chiusura della doppia emissione, l’ordine di grandezza della raccolta e l’aumento dei tassi finali sono confermati dal MEF e dal riscontro ANSA.",
+      "sourceUrls": [
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/mef-rivisti-al-rialzo-i-tassi-cedolari-del-btp-valore-e-del-btp_af85601c-5de4-4a2e-b1a8-b9612e193e50.html"
+      ]
+    },
+    "sentence_14": {
+      "status": "pass",
+      "reason": "Spiega correttamente la struttura delle due emissioni, inclusa la cedola unica finale del BTP Valore Insieme.",
+      "sourceUrls": [
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/"
+      ]
+    },
+    "sentence_15": {
+      "status": "pass",
+      "reason": "La precisazione sul 22,70% come pagamento finale e non tasso annuo è corretta e utile; non introduce un’interpretazione impropria.",
+      "sourceUrls": [
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/"
+      ]
+    },
+    "sentence_16": {
+      "status": "pass",
+      "reason": "Il voto umbro del 22 ottobre e il perimetro regionale/istituzionale della proposta sono correttamente riportati.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "sentence_17": {
+      "status": "pass",
+      "reason": "La distinzione tra organizzazione sanitaria regionale e nuova disciplina nazionale è corretta e ben supportata.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "sentence_18": {
+      "status": "pass",
+      "reason": "La facoltà di sospendere o revocare la richiesta e il riferimento alle cure palliative risultano presenti nel comunicato istituzionale.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "sentence_19": {
+      "status": "pass",
+      "reason": "Invito finale coerente con la chiusura approvata; nessun elemento fattuale da verificare.",
+      "sourceUrls": []
+    },
+    "sentence_20": {
+      "status": "pass",
+      "reason": "Call to action non fattuale.",
+      "sourceUrls": []
+    },
+    "sentence_21": {
+      "status": "pass",
+      "reason": "Call to action non fattuale.",
+      "sourceUrls": []
+    },
+    "sentence_22": {
+      "status": "pass",
+      "reason": "Chiusura di firma conforme al formato e non fattuale.",
+      "sourceUrls": []
+    }
+  },
+  "scope": "editorial-pre-take",
+  "mediaTimingNotYetVerified": true,
+  "passed": false
+}

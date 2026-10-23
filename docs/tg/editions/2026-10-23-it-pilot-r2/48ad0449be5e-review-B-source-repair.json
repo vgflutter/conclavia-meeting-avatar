@@ -1,0 +1,113 @@
+{
+  "role": "B",
+  "scoreSha256": "48ad0449be5e869020b319c278c7716b655dff5285b00f6de49c03cf31ac3b5b",
+  "checkedAt": "2026-10-23T15:29:57.267Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 14727,
+  "outputTokens": 2278,
+  "issues": [],
+  "checks": {
+    "selection": {
+      "status": "pass",
+      "reason": "Cinque storie complete e rilevanti per un pubblico italiano generale: rifornimenti/carburanti, Corea, Umbria, Taiwan e consumi UK. Ogni item ha un chiaro sviluppo del 23 ottobre e un motivo concreto per occupare uno slot.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "opening": {
+      "status": "pass",
+      "reason": "Apertura breve, orientativa e con preview di più temi reali. Non usa framing serale né riferimenti al passato recente; la costruzione è adatta a un intro di edizione mattutina.",
+      "sourceUrls": []
+    },
+    "written_rhythm": {
+      "status": "pass",
+      "reason": "Frasi generalmente pulite, con ritmo regolare e comprensibile per non esperti. Alcune ripetizioni sono funzionali alla spiegazione, non un problema editoriale.",
+      "sourceUrls": []
+    },
+    "explanation": {
+      "status": "pass",
+      "reason": "Ogni notizia spiega chi agisce, cosa cambia e perché conta, con i passaggi minimi di contesto necessari. Acronomi e concetti tecnici sono chiariti in modo sufficiente.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "transitions": {
+      "status": "pass",
+      "reason": "Le transizioni sono naturali e non numerate; il passaggio tra temi è fluido e comprensibile.",
+      "sourceUrls": []
+    },
+    "closing": {
+      "status": "pass",
+      "reason": "Il closing fisso è presente e corretto, con invito ai commenti e riferimento alla discesa verso il basso tramite 'commenti'. Non c’è un’aggiunta impropria di free AI opinion.",
+      "sourceUrls": []
+    },
+    "summary": {
+      "status": "pass",
+      "reason": "La descrizione copre tutte e cinque le notizie in ordine di broadcast, senza introdurre nuove affermazioni sostanziali.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "story_carburanti": {
+      "status": "pass",
+      "reason": "Lo sviluppo sui presidi rimossi e sulla ripresa graduale dei rifornimenti è supportato; il decreto sugli aiuti è correttamente distinto come contesto e non confuso con il ripristino immediato.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+        "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html",
+        "https://www.ilfattoquotidiano.it/2026/10/22/caro-gasolio-decreto-governo-autotrasporto-notizie/8546627/"
+      ]
+    },
+    "story_coree": {
+      "status": "pass",
+      "reason": "La proposta sudcoreana di colloqui militari è un sviluppo fresco del 23 ottobre; il testo segnala correttamente che l’accettazione nordcoreana non è confermata.",
+      "sourceUrls": [
+        "https://en.yna.co.kr/view/AEN20261023005751315?section=national%2Fdefense",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.unc.mil/History/1951-1953-Armistice-Negotiations/"
+      ]
+    },
+    "story_umbria": {
+      "status": "pass",
+      "reason": "Il voto regionale è riportato correttamente e il contesto giuridico è spiegato senza trasformarlo in un effetto nazionale automatico. Nessuna sovrainterpretazione del testo regionale.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "story_taiwan": {
+      "status": "pass",
+      "reason": "Il tifone Champi è trattato come emergenza con impatto concreto su chiusure e trasporti; l’aggiornamento al 23 ottobre con chiusure per sabato 24 è correttamente attribuito e non confuso con il bollettino più vecchio.",
+      "sourceUrls": [
+        "https://focustaiwan.tw/society/202610230019",
+        "https://focustaiwan.tw/society/202610230018",
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb"
+      ]
+    },
+    "story_consumi": {
+      "status": "pass",
+      "reason": "Il dato sulle vendite è spiegato con il necessario confronto tra mese e trimestre; il testo evita di trarre conclusioni economiche troppo forti da un singolo mese.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://live.euronext.com/en/financial-news/uk-retail-sales-fall-consumer-confidence-tumbles"
+      ]
+    }
+  },
+  "scope": "editorial-pre-take",
+  "mediaTimingNotYetVerified": true,
+  "passed": true
+}

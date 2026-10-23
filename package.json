@@ -26,16 +26,24 @@
     "docs:screenshots": "playwright test --config playwright.docs.config.ts",
     "test:live": "node scripts/verify-live.mjs",
     "verify": "npm run lint && npm run typecheck && npm run test:scripts && npm run build && npm run test:e2e",
-    "check:avatar-kit": "npm --prefix ../conclavia-avatar-kit run check:consumers"
+    "check:avatar-kit": "npm --prefix ../conclavia-avatar-kit run check:consumers",
+    "tg:worker": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/worker.ts",
+    "test:tg": "node --conditions=react-server --import tsx --test tests/tg/*.test.ts",
+    "tg:preview:hands": "node scripts/tg/build-hand-motion-preview.mjs",
+    "tg:render:hands": "node scripts/tg/build-hand-motion-preview.mjs && node scripts/tg/render-hand-motion-preview.mjs",
+    "daily:agent": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/daily-agent.ts"
   },
   "dependencies": {
     "@conclavia/avatar-kit": "file:../conclavia-avatar-kit",
+    "fast-xml-parser": "5.11.2",
     "mongoose": "8.24.2",
-    "next": "16.3.5",
+    "next": "16.3.8",
     "onnxruntime-web": "^1.23.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "three": "^0.185.1"
+    "server-only": "0.0.1",
+    "three": "^0.185.1",
+    "tsx": "4.20.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
@@ -45,9 +53,10 @@
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.185.4",
     "eslint": "^9.0.0",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "4.3.3",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "esbuild": "0.25.12"
   },
   "repository": {
     "type": "git",

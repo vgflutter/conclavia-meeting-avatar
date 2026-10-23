@@ -25,6 +25,7 @@ export function proxy(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname;
+  if (["GET", "HEAD"].includes(request.method) && /^\/api\/tg-media\/[a-f\d]{64}\/(?:landscape|portrait)\.mp4$/u.test(pathname)) return NextResponse.next();
   if (HOST_FILES.some(file => pathname === `${HOST_ASSET_ROOT}/${file}`)) return NextResponse.next();
   if (/^\/avatars\/rigged-v1\/(?:male|female)\.glb$/u.test(pathname)) {
     return NextResponse.next();

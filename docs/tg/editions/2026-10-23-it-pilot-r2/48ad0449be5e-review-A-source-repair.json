@@ -1,0 +1,235 @@
+{
+  "role": "A",
+  "scoreSha256": "48ad0449be5e869020b319c278c7716b655dff5285b00f6de49c03cf31ac3b5b",
+  "checkedAt": "2026-10-23T15:30:01.279Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 15479,
+  "outputTokens": 3618,
+  "issues": [
+    "La formulazione sui carburanti tende a suggerire una ripresa già in corso e scorte in ricostituzione, mentre le fonti parlano ancora di normalizzazione graduale e di carenze residue; meglio attenuare.",
+    "Alcuni passaggi su Taiwan sono affidati a CNA come aggiornamento successivo: corretto in sé, ma va tenuta chiara la distinzione tra chiusure annunciate per sabato e il quadro di venerdì."
+  ],
+  "checks": {
+    "description": {
+      "status": "pass",
+      "reason": "I cinque temi corrispondono alle fonti e il quadro generale è corretto; per Campania e Taiwan va solo mantenuta la distinzione tra ripresa graduale e chiusure annunciate per il giorno dopo.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "headline_0": {
+      "status": "pass",
+      "reason": "Supported by ANSA/Adnkronos: blockades removed and fuel distribution restarting gradually, though not yet normal.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "headline_1": {
+      "status": "pass",
+      "reason": "Supported: South Korea proposed military talks; North Korea’s acceptance is not confirmed.",
+      "sourceUrls": [
+        "https://en.yna.co.kr/view/AEN20261023005751315?section=national%2Fdefense",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3"
+      ]
+    },
+    "headline_2": {
+      "status": "pass",
+      "reason": "Supported by the Umbrian Assembly vote on the regional end-of-life bill.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "headline_3": {
+      "status": "pass",
+      "reason": "Supported by AP and CNA: Champi disrupted schools, offices, flights and transport, with further closures announced.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://focustaiwan.tw/society/202610230018"
+      ]
+    },
+    "headline_4": {
+      "status": "pass",
+      "reason": "Supported by ONS and Reuters: September retail sales fell month-on-month while the quarter rose.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://live.euronext.com/en/financial-news/uk-retail-sales-fall-consumer-confidence-tumbles"
+      ]
+    },
+    "sentence_0": {
+      "status": "pass",
+      "reason": "Pure intro; no factual claim needing external verification beyond the programme identity.",
+      "sourceUrls": []
+    },
+    "sentence_1": {
+      "status": "pass",
+      "reason": "Correct preview of the five topics in broadcast order.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://en.yna.co.kr/view/AEN20261023005751315?section=national%2Fdefense",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "sentence_2": {
+      "status": "pass",
+      "reason": "Supported by ANSA and Adnkronos: presidi removed in Campania, including via Argine, and escorts used to help deliveries.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "sentence_3": {
+      "status": "pass",
+      "reason": "Supported: reports still describe empty stations, queues and the need to rebuild stock; the story remains only partially resolved.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "sentence_4": {
+      "status": "pass",
+      "reason": "Supported by the 22 October decree coverage: about 175 million total, with transport mainly via diesel tax credits.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html",
+        "https://www.ilfattoquotidiano.it/2026/10/22/caro-gasolio-decreto-governo-autotrasporto-notizie/8546627/"
+      ]
+    },
+    "sentence_5": {
+      "status": "pass",
+      "reason": "Supported: the new development is the removal of the blockades and restart of deliveries; the aid decree is separate.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+        "https://www.ilfattoquotidiano.it/2026/10/22/caro-gasolio-decreto-governo-autotrasporto-notizie/8546627/"
+      ]
+    },
+    "sentence_6": {
+      "status": "pass",
+      "reason": "Supported by AP/Reuters/Yonhap: South Korea proposed new military talks and communication channels to lower accident risk.",
+      "sourceUrls": [
+        "https://en.yna.co.kr/view/AEN20261023005751315?section=national%2Fdefense",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3"
+      ]
+    },
+    "sentence_7": {
+      "status": "pass",
+      "reason": "Historical context is correct and matches the UNC background source.",
+      "sourceUrls": [
+        "https://www.unc.mil/History/1951-1953-Armistice-Negotiations/",
+        "https://en.yna.co.kr/view/AEN20261023005751315?section=national%2Fdefense"
+      ]
+    },
+    "sentence_8": {
+      "status": "pass",
+      "reason": "Accurate: the dialogue offer is the 23 October development, and North Korea’s acceptance is not confirmed in the sources.",
+      "sourceUrls": [
+        "https://en.yna.co.kr/view/AEN20261023005751315?section=national%2Fdefense",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3"
+      ]
+    },
+    "sentence_9": {
+      "status": "pass",
+      "reason": "Supported by the Umbrian Assembly vote totals and the president’s non-participation.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "sentence_10": {
+      "status": "pass",
+      "reason": "Supported: the regional bill concerns health-service organisation and references state law and constitutional jurisprudence.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "sentence_11": {
+      "status": "pass",
+      "reason": "Supported: the text confirms palliative-care information and the ability to suspend or revoke the request; implementation remains a later step.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "sentence_12": {
+      "status": "pass",
+      "reason": "Supported by AP and CNA: Champi disrupted schools, offices, flights, evacuations and power supply.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://focustaiwan.tw/society/202610230018"
+      ]
+    },
+    "sentence_13": {
+      "status": "pass",
+      "reason": "Supported by the latest CNA bulletin: closures for Saturday the 24th, plus flight and sea disruptions and severe weather alerts.",
+      "sourceUrls": [
+        "https://focustaiwan.tw/society/202610230019",
+        "https://focustaiwan.tw/society/202610230018"
+      ]
+    },
+    "sentence_14": {
+      "status": "pass",
+      "reason": "A cautious synthesis of the typhoon update; consistent with the source’s emphasis on ongoing impacts and changing forecasts.",
+      "sourceUrls": [
+        "https://focustaiwan.tw/society/202610230019",
+        "https://focustaiwan.tw/society/202610230018"
+      ]
+    },
+    "sentence_15": {
+      "status": "pass",
+      "reason": "Supported by the ONS release and Reuters: September retail sales fell 0.4% month on month and were published on 23 October.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://live.euronext.com/en/financial-news/uk-retail-sales-fall-consumer-confidence-tumbles"
+      ]
+    },
+    "sentence_16": {
+      "status": "pass",
+      "reason": "Supported by ONS and Reuters: the three-month comparison rose 0.7%, so monthly and quarterly movements can differ.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://live.euronext.com/en/financial-news/uk-retail-sales-fall-consumer-confidence-tumbles"
+      ]
+    },
+    "sentence_17": {
+      "status": "pass",
+      "reason": "Supported: ONS cautions on monthly volatility, and Reuters notes weak clothing sales in a warm autumn.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://live.euronext.com/en/financial-news/uk-retail-sales-fall-consumer-confidence-tumbles"
+      ]
+    },
+    "sentence_18": {
+      "status": "pass",
+      "reason": "Fixed closing line; no factual claim beyond the outlet identity and website.",
+      "sourceUrls": []
+    },
+    "sentence_19": {
+      "status": "pass",
+      "reason": "Audience invitation; no factual claim.",
+      "sourceUrls": []
+    },
+    "sentence_20": {
+      "status": "pass",
+      "reason": "Audience invitation; no factual claim.",
+      "sourceUrls": []
+    },
+    "sentence_21": {
+      "status": "pass",
+      "reason": "Tagline; no factual claim.",
+      "sourceUrls": []
+    }
+  },
+  "scope": "editorial-pre-take",
+  "mediaTimingNotYetVerified": true,
+  "passed": false
+}

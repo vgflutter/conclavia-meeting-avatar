@@ -8,6 +8,7 @@ export async function GET() {
   const enabled = process.env.PODCAST_AI_ENABLED === "true";
   const providers = {
     openai: enabled && Boolean(process.env.OPENAI_API_KEY?.trim()),
+    claude: enabled && Boolean(process.env.ANTHROPIC_API_KEY?.trim() && process.env.PODCAST_CLAUDE_MODEL?.trim()),
     gemini: enabled && Boolean(process.env.GEMINI_API_KEY?.trim() && process.env.PODCAST_GEMINI_MODEL?.trim()),
   };
   return Response.json({

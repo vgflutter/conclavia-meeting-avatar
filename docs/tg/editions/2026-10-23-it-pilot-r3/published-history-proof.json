@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-23T18:27:32.459522+00:00",
+  "scope": "read-only-real-publication-ledger",
+  "edition": "it",
+  "from": "2026-10-16",
+  "through": "2026-10-23",
+  "verified": false,
+  "status": "connection-unavailable",
+  "published": null,
+  "writeOperations": 0,
+  "providerCalls": 0,
+  "consequence": "Cannot certify absence of prior publications. Recorded local pilot remains review-only; a real history comparison is required before publication."
+}

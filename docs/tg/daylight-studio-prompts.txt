@@ -1,0 +1,27 @@
+Conclavia Daily: studio diurno v2, 18 ottobre 2026
+Generated with the built-in image_gen tool. No CLI or project API key was used.
+Landscape final: public/daily-studio/studio-landscape-v2.png
+Portrait final: public/daily-studio/studio-portrait-v2.png
+The portrait uses the generated landscape as an architectural reference.
+No characters, text or logo are baked into these plates. Face, hands, typography,
+desk, microphone and brand remain separate deterministic rendering layers.
+The approved Conclavia logo.svg was copied unchanged from CONCLAVIA-BRAND/web/.
+
+LANDSCAPE PROMPT
+Use case: stylized-concept
+Asset type: production background plate for the Conclavia Daily animated news broadcast, landscape 16:9.
+Primary request: replace the nocturnal purple/gold podcast look with a bright, sophisticated daytime TV newsroom. Adult, contemporary, approachable editorial identity, premium architectural set with realistic materials and gentle illustrated softness.
+Scene: pale warm limestone walls, matte off-white architectural surfaces, restrained pale oak vertical fins on the far left, soft natural daylight, muted sage greenery at the outer edges, a subtle blue-grey frosted glass window. A broad very pale warm-grey smooth blank wall occupies the right half for news headlines added later in code. Left foreground clear for a waist-up animated presenter; central area uncluttered.
+Composition: static straight-on camera, landscape 16:9, room back wall visible from top to bottom, no desk or foreground furniture (these will be drawn as animated layers), no people, no characters. Clear subject area on the left around x=30%, large calm negative space for graphics on the right. Reserve the upper 12% for the masthead.
+Lighting: bright diffuse daytime studio light, neutral whites, soft shadows, subtle depth. No dark corners, no theatrical colored lighting.
+Palette: ivory, pale stone, cool grey, restrained deep teal architectural details and a little pale oak. No purple, plum, maroon, pink, gold or orange ambient light.
+Constraints: no text, no lettering, no logos, no screens containing content, no people, no robot, no desk, no watermark. Mature TV journalism set, not nightclub, not children's illustration, not corporate office stock image. Entire image is the background only.
+
+PORTRAIT PROMPT
+Use case: stylized-concept
+Asset type: production background plate for a vertical 9:16 animated TV news broadcast, no content baked in.
+Input image 1: architectural and lighting reference for the matching landscape daytime news studio.
+Primary request: create the portrait camera of this same bright daytime studio. Maintain the pale limestone, ivory, soft daylight and restrained blue-grey/deep teal details of the reference. Adult, calm contemporary journalism.
+Composition: vertical 9:16, straight-on camera. Central 70% of frame is a calm, pale ivory stone wall, reserved for an animated presenter. Only at the far edges show a little pale oak fin detail, frosted blue-grey daylight window and muted sage foliage. Leave the upper quarter quiet and near-white for a title graphic drawn in code. Lower area clear for an animated desk drawn in code. No foreground furniture.
+Lighting: bright diffuse neutral daytime, soft subtle shadows, no nighttime ambience.
+Constraints: background only. No people, no robot, no desk, no text, no logo, no graphics, no content screens, no watermark. No purple, plum, gold, pink or orange lighting, no nightclub atmosphere. Do not include a character or the headlines.

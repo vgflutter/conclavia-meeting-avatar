@@ -1,0 +1,109 @@
+{
+  "role": "B",
+  "scoreSha256": "50126c5bbe19f7d3deccc77c8ae4c80f6230110e839981e70ab91b8e4adadf35",
+  "checkedAt": "2026-10-23T17:58:15.211Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 17759,
+  "outputTokens": 2566,
+  "issues": [],
+  "checks": {
+    "selection": {
+      "status": "pass",
+      "reason": "Cinque temi concreti, tutti con impatto pubblico per l’Italia e con sviluppo fresco del 23 ottobre o del 22 ottobre come contesto immediato. Nessun riempitivo meteo o story-list artificiale.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://terremoti.ingv.it/event/47606532",
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html"
+      ]
+    },
+    "opening": {
+      "status": "pass",
+      "reason": "Apertura breve, accogliente e con preview di più temi reali; non è un framing serale né prolissa.",
+      "sourceUrls": []
+    },
+    "written_rhythm": {
+      "status": "pass",
+      "reason": "Frasi generalmente pulite e scorrevoli, con ritmo da lettura orale e senza elenchi numerati o transizioni forzate.",
+      "sourceUrls": []
+    },
+    "explanation": {
+      "status": "pass",
+      "reason": "I passaggi spiegano bene cosa è successo, chi agisce e perché conta, con alcuni chiarimenti utili su liste d’attesa, BTP e fine vita.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "transitions": {
+      "status": "pass",
+      "reason": "I passaggi tra sicurezza, servizi, sanità, risparmio e diritti sono naturali e non meccanici.",
+      "sourceUrls": []
+    },
+    "closing": {
+      "status": "pass",
+      "reason": "La chiusura include l’invito fisso, il richiamo ai commenti e la formula di firma prevista.",
+      "sourceUrls": []
+    },
+    "summary": {
+      "status": "pass",
+      "reason": "La description copre tutti gli item in ordine di scaletta, senza introdurre nuove informazioni rispetto allo script parlato.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://terremoti.ingv.it/event/47606532",
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "story_sisma": {
+      "status": "pass",
+      "reason": "La scossa, la stima Mw 5,5, le evacuazioni precauzionali e il rientro dell’allerta maremoto in Calabria sono supportati dai ledger forniti.",
+      "sourceUrls": [
+        "https://terremoti.ingv.it/event/47606532",
+        "https://www.rainews.it/amp/articoli/2026/10/scosse-di-terremoto-a-palermo-e-messina-fino-a-magnitudo-5-efc03588-5545-4a89-acc9-6edecab30f93.html",
+        "https://www.tgcal24.it/province/catanzaro/terremoto-la-protezione-civile-nessuna-allerta-maremoto-in-calabria/"
+      ]
+    },
+    "story_carburanti": {
+      "status": "pass",
+      "reason": "La ripresa dei rifornimenti in Campania e il legame con la rimozione dei presidi risultano coerenti con le fonti; il decreto aiuti è usato solo come contesto e non come prova del blocco.",
+      "sourceUrls": [
+        "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+        "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html"
+      ]
+    },
+    "story_sanita": {
+      "status": "pass",
+      "reason": "I numeri AGENAS, il confronto tra periodi e il richiamo alle differenze territoriali sono correttamente spiegati senza promettere una soluzione del problema.",
+      "sourceUrls": [
+        "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+        "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026",
+        "https://www.adnkronos.com/salute/sanita-fism-risultati-su-liste-dattesa-in-miglioramento-ora-consolidare-i-progressi_15cQjUq2bBtQdHDIBgDg5V"
+      ]
+    },
+    "story_risparmio": {
+      "status": "pass",
+      "reason": "La chiusura della doppia emissione, la raccolta complessiva e la distinzione tra cedole periodiche e pagamento finale sono trattate correttamente.",
+      "sourceUrls": [
+        "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+        "https://www.ansa.it/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-insieme-totalizza-100-milioni-di-controvalore-in-avvio-di-seduta_187f8787-e2ba-42c3-a9de-a7805063949a.html",
+        "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/"
+      ]
+    },
+    "story_umbria": {
+      "status": "pass",
+      "reason": "Il voto regionale, il perimetro sanitario-organizzativo e la distinzione tra livello regionale e disciplina nazionale sono spiegati in modo corretto e prudente.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    }
+  },
+  "scope": "editorial-pre-take",
+  "mediaTimingNotYetVerified": true,
+  "passed": false
+}

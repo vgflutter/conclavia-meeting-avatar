@@ -16,9 +16,15 @@ A digital colleague for Microsoft Teams: follows the agenda, responds when calle
 
 ## Podcast studio
 
+Il nuovo studio quotidiano **Conclavia TG** è in `/podcast/tg`: edizioni Italia e World in inglese (300 s come impostazione delle nuove edizioni; i piloti precedenti conservano le proprie durate), identità grafica esclusiva, fonti tracciabili, verifica indipendente per frase e revisione editoriale obbligatoria. La GUI dedicata `/podcast/tg/redazione` gestisce coda, controlli, approvazioni, orari, canali, pausa e ricevute di pubblicazione. La preparazione giornaliera e la pubblicazione sono disabilitate finché non vengono configurate. Il worker separato si avvia con `npm run tg:worker`; le connessioni reali ai canali e l'host video Spotify richiedono ancora collaudo. Vedi [studio editoriale](docs/tg/editorial-study-2026-10-18.md) e [operazioni e cancelli di lancio](docs/tg/operations.md).
+
+Per ogni edizione **CDaily**, seguire la [linea editoriale comune](docs/tg/cdaily-editorial-line.md) e conservare un dossier Markdown datato per scelte, verifiche e riferimenti grafici. Per i prossimi video partire dalla [guida video riutilizzabile](docs/tg/cdaily-video-guide.md): identità chiara approvata, Bricolage, voce Alex 2, avatar ibrido adulto, esempi reali 9:16/16:9 e procedura completa. `dailyVideoIdentity` centralizza le impostazioni; `node scripts/tg/check-video-identity.mjs` verifica che marchi, font, fondali, palette e sorgenti del volto coincidano con il riferimento salvato. I vecchi studi/piloti documentati più avanti sono prove precedenti.
+
 The **Podcast** section at `/podcast` restores the editorial engine recovered from [vgflutter/conclavia, 22 August 2026](https://github.com/vgflutter/conclavia/tree/5d4746f900a106defe1377131bce7ebbc5b69ca3), adapted to the current application. The original was removed in the [5 September Meeting refocus](https://github.com/vgflutter/conclavia/commit/a0281daac4f5435131d2c3cfeaf1cb666e976652); this restoration does not reset Meeting history or replace the current app.
 
 Prepare the topic and central question, characterise the AI hosts, assign a human guest, and open the studio. The recovered director plans speaking turns, questions, replies and conclusions. The new illustrated stage lives in the canonical avatar kit. Pages, APIs and persistence are namespaced: `/podcast/*`, `/api/podcast/*`, `podcast_talks` and `podcast_runs`. The interface supports Italian and English.
+
+The shared visual controls include **On-screen topic**: use the episode topic, follow the topic of the currently played turn, write a short headline (80 characters), or hide it. The headline is drawn directly into the recorded canvas, stays within the central vertical crop, and fades between topics. Dynamic mode uses the existing turn metadata without extra AI requests. Choices persist with each episode and its immutable run snapshot.
 
 AI generation requires `PODCAST_AI_ENABLED=true` and a configured provider. Voice playback separately requires `PODCAST_SPEECH_ENABLED=true` and the existing Inworld configuration. Both features default to **off**; opening the studio or saving an episode does not generate speech or call an AI provider. Generation and stored-turn playback require explicit operator actions. Voice uses the shared PCM player and compatible voice catalogue, without changing the saved Meeting avatar profile.
 
@@ -166,8 +172,27 @@ Rifinitura finale degli occhi: l'ombra aggiunta durante i semibattiti passa da i
 
 ## Prova podcast a due voci
 
-`/podcast/rehearsal` prepara una nuova puntata con due AI, le voci locali Nicola/Sara dei cartoon approvati, otto interventi massimi e due minuti di parlato stimato. **Prepara prova** salva soltanto configurazione e sessione; **Avvia prova** è il gesto esplicito che attiva generazione e audio. Durante il parlato prepara al massimo una replica in anticipo; la voce seguente attende la fine effettiva della precedente e 550 ms di pausa editoriale. Stop cancella richieste e sorgenti audio. Le attese tecniche sono mostrate separatamente.
+`/podcast/rehearsal` prepara una nuova puntata con due AI, le voci locali Nicola/Sara dei cartoon approvati, otto interventi massimi e due minuti di parlato stimato. **Prepara prova** salva soltanto configurazione e sessione; **Avvia prova** è il gesto esplicito che attiva generazione e audio. Durante il parlato prepara al massimo una replica in anticipo; il ritmo predefinito Vivace usa pause editoriali adattive (60–340 ms secondo ritmo e intenzione) e consente brevi sovrapposizioni quando regia e mood giustificano una replica. Stop cancella richieste e sorgenti audio. Le attese tecniche sono mostrate separatamente.
+
+Prova ed editor condividono una scheda semplice per il carattere: **Personalità** offre quattro punti di partenza (curioso, analitico, ironico, empatico), con descrizione modificabile e punto di vista della puntata facoltativo. Il profilo compila istruzioni e comportamento, mantenendo nome, voce e posizione nella puntata. Modo di parlare, obiettivi e sfumature sono nelle opzioni avanzate, chiuse inizialmente. I personaggi già salvati mantengono le istruzioni esistenti e sono mostrati come personalizzati.
+
+`personalityPrompt` conserva il carattere separatamente da `perspectivePrompt`; entrambi entrano nello snapshot della sessione. I nuovi conduttori partono con un'opinione da formare durante il confronto. La generazione riceve solo il carattere privato di chi parla e può farne evolvere opinioni e mood in risposta agli argomenti. Configurare i profili non avvia chiamate AI né sintesi vocale.
 
 Kokoro richiede il servizio locale del [kit condiviso](../conclavia-avatar-kit/tools/kokoro/README.md) e `PODCAST_SPEECH_ENABLED=true`. Le configurazioni senza `settings.voiceProvider` conservano Inworld; quelle con `voiceProvider: "kokoro"` usano i due timbri originali a velocità 1,03. `PODCAST_AI_ENABLED=true` abilita il servizio di generazione già configurato, senza far partire chiamate al caricamento. Le chiavi rimangono nel normale ambiente server e non vengono esposte dalla pagina.
 
 Verifica del 16 ottobre: 18 test kit, 66 test script Meeting, tutte le 27 prove browser rilevanti superate dopo il fix di Stop (23 casi già verdi, quattro della prova a due ripetuti); lint e build di entrambi i consumer. Sintesi locale reale: Nicola 8,28 secondi di audio in 1,60 secondi; Sara 6,33 secondi in 0,22 secondi su questo Mac. Le prove browser usano PCM e API simulati, senza provider a pagamento; questi tempi locali non misurano la latenza del modello conversazionale. L’accettazione all’ascolto della puntata AI completa resta una prova interattiva da svolgere.
+
+### Daily: studio illustrato nel video delle puntate
+
+Il robot dal volto digitale e l’ambiente prugna/ocra sono ora usati dalla preview `/podcast/tg` e dal renderer del worker, con composizioni distinte 16:9/9:16, titoli, microfoni, tavolo e mood per frase. I due piloti locali di 90 s sono stati rigenerati nei quattro MP4 mantenendo identici audio, copione e fonti; la GUI di redazione sulla porta 3105 mostra i nuovi video in attesa di revisione. Nessun invio ai social o deploy remoto. [Implementazione, asset, prompt, comandi e verifica](docs/tg/daily-studio.md).
+
+## Conclavia Daily: riprendere produzione e scheduler
+
+Il riferimento operativo persistente è [CDaily agent runbook](docs/tg/cdaily-agent-runbook.md). La feature applicativa è in `src/lib/tg` e `scripts/tg`; renderer, anatomia, recitazione e trasporto vocale riutilizzabili appartengono a `../conclavia-avatar-kit`.
+
+- `npm run daily:agent -- status`: piano effettivo, timer, ultima esecuzione e prerequisiti.
+- `npm run daily:agent -- plan`: anteprima del piano versionato, senza chiamate AI.
+- GUI locale: `/podcast/tg/redazione`, con orario di creazione separato dall’uscita, controlli A/B e testi social.
+- [Task Work di pubblicazione](docs/tg/cdaily-work-publication-task.md): prompt da salvare nella UI desktop; il CLI non crea una task Work.
+
+Il timer locale di creazione e il publisher Work hanno responsabilità distinte. Il profilo `cdaily-v1` non sostituisce Alex 2 con la voce del worker legacy: conserva il pacchetto editoriale e segnala il blocco prima della sintesi. Consultare i limiti e la pipeline di rilascio nel runbook prima di abilitare invii reali.

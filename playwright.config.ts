@@ -14,6 +14,11 @@ process.env.MONGODB_DB_NAME ||= `conclavia_e2e_${randomUUID().replaceAll("-", ""
 process.env.MEETING_BOT_PROVIDER = "preview";
 process.env.MEETING_AI_ENABLED = "false";
 process.env.PODCAST_AI_ENABLED = "false";
+process.env.TG_AI_ENABLED = "false";
+process.env.TG_WORKER_ENABLED = "false";
+process.env.TG_PUBLISH_ENABLED = "false";
+process.env.TG_IT_YOUTUBE_CHANNEL_ID = "tg-fixture-channel";
+process.env.TG_ARTIFACT_DIR = process.cwd() + "/.tg-test-artifacts";
 process.env.PODCAST_SPEECH_ENABLED = "false";
 // Never spend voice credits or alter the default voice during regression tests.
 process.env.MEETING_TTS_PROVIDER = "inworld";

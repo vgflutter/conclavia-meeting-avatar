@@ -1,10 +1,13 @@
 "use client";
 
+import type { VideoTopicSettings } from "@/lib/podcast/video-topic";
+
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TalkResponse } from "@/types/podcast";
 import type { TalkRunMessageResponse, TalkRunResponse } from "@/types/podcast-run";
 import { studioSelectionQuery, type StudioCast, type StudioGuestMode, type StudioThemeId } from "@/lib/podcast/studio-themes";
+import { getLlmModel } from "@/lib/podcast/llm-models";
 import { playStreamingSpeech } from "@/lib/streaming-voice-player";
 import { PodcastStageView, DEFAULT_DIRECTION, resolvePodcastDirection, type PodcastDirection, type PodcastEmotion, type PodcastShot } from "./PodcastStageView";
 import { defaultPodcast } from "./podcast-defaults";
@@ -19,15 +22,15 @@ import { PodcastMoodReadout } from "./PodcastMoodReadout";
 import { PodcastGuestPreflight } from "./PodcastGuestPreflight";
 import { usePodcastGuestPreflight } from "./usePodcastGuestPreflight";
 
-interface Capability { ai: { enabled: boolean; ready: boolean; providers?: { openai: boolean; gemini: boolean } }; speech: { enabled: boolean; ready: boolean; model?: string; providers?: { inworld: boolean; kokoro: boolean } } }
+interface Capability { ai: { enabled: boolean; ready: boolean; providers?: { openai: boolean; gemini: boolean; claude?: boolean } }; speech: { enabled: boolean; ready: boolean; model?: string; providers?: { inworld: boolean; kokoro: boolean } } }
 const NO_CAPABILITY: Capability = { ai: { enabled: false, ready: false }, speech: { enabled: false, ready: false } };
 const emotions: Array<[PodcastEmotion, string, string]> = [["attention", "Attenzione", "Attention"], ["curiosity", "Curiosità", "Curiosity"], ["doubt", "Dubbio", "Doubt"], ["agreement", "Accordo", "Agreement"], ["amusement", "Ironia", "Amusement"], ["empathy", "Empatia", "Empathy"], ["disagreement", "Disaccordo", "Disagreement"], ["surprise", "Sorpresa", "Surprise"]];
 const phaseLabels: Record<string, [string, string]> = { positions: ["Punti di vista", "Positions"], conflict: ["Confronto", "Debate"], examination: ["Approfondimento", "Examination"], synthesis: ["Sintesi", "Synthesis"], conclusion: ["Conclusione", "Conclusion"] };
 
 
-export function PodcastStudio({ id, preview = false, initialTheme, initialLayout = "studio", initialCast = "original", initialGuest = "auto" }: { id: string; preview?: boolean; initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId; initialCast?: StudioCast; initialGuest?: StudioGuestMode }) {
+export function PodcastStudio({ id, preview = false, initialTheme, initialLayout = "studio", initialCast = "original", initialGuest = "auto", initialTopic = {} }: { id: string; preview?: boolean; initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId; initialCast?: StudioCast; initialGuest?: StudioGuestMode; initialTopic?: VideoTopicSettings }) {
   const copy = usePodcastCopy();
-  const [talk, setTalk] = useState<TalkResponse | null>(() => { if (!preview) return null; const initial = defaultPodcast(copy("it", "en") === "en"); return { ...initial, settings: { ...initial.settings, studioTheme: initialTheme ?? initial.settings.studioTheme, studioLayout: initialLayout, studioCast: initialCast, studioGuest: initialGuest }, id: "preview", createdAt: "", updatedAt: "" }; });
+  const [talk, setTalk] = useState<TalkResponse | null>(() => { if (!preview) return null; const initial = defaultPodcast(copy("it", "en") === "en"); return { ...initial, settings: { ...initial.settings, studioTheme: initialTheme ?? initial.settings.studioTheme, studioLayout: initialLayout, studioCast: initialCast, studioGuest: initialGuest, ...initialTopic }, id: "preview", createdAt: "", updatedAt: "" }; });
   const [run, setRun] = useState<TalkRunResponse | null>(null);
   const [runs, setRuns] = useState<TalkRunResponse[]>([]);
   const [capability, setCapability] = useState<Capability>(NO_CAPABILITY);
@@ -108,8 +111,10 @@ export function PodcastStudio({ id, preview = false, initialTheme, initialLayout
     emotion: demoIndex >= 0 ? ["attention", "curiosity", "empathy", "agreement", "doubt"][demoIndex] as PodcastEmotion : "attention",
     emotion2: demoIndex >= 0 ? ["curiosity", "attention", "curiosity", "amusement", "attention"][demoIndex] as PodcastEmotion : "curiosity" }
     : viewTalk ? resolvePodcastDirection(direction, viewTalk, spokenMessage ?? latestMessage, actingCue) : direction;
-  const provider = viewTalk?.settings.defaultModel.startsWith("gemini") ? "gemini" : "openai";
-  const aiReady = capability.ai.enabled && (capability.ai.providers ? capability.ai.providers[provider] : capability.ai.ready);
+  const aiReady = capability.ai.enabled && Boolean(viewTalk) && [...(viewTalk?.participants.filter(person => person.kind === "ai").map(person => person.modelOverride ?? viewTalk.settings.defaultModel) ?? []), ...(viewTalk?.moderator.kind === "ai" ? [viewTalk.moderator.modelOverride ?? viewTalk.settings.defaultModel] : [])].every(model => {
+    const provider = getLlmModel(model).provider;
+    return capability.ai.providers?.[provider] ?? (provider === "openai" && capability.ai.ready);
+  });
   const voiceProvider = viewTalk?.settings.voiceProvider ?? "inworld";
   const speechReady = capability.speech.enabled && (capability.speech.providers?.[voiceProvider] ?? capability.speech.ready);
   const canAdvance = Boolean(run && !["generating", "waiting_for_human", "completed", "failed"].includes(run.status) && aiReady && !pending && !playing);
@@ -159,7 +164,7 @@ export function PodcastStudio({ id, preview = false, initialTheme, initialLayout
   if (loading) return <div className={styles.workspace}><div className={styles.loading}>{copy("Preparazione dello studio…", "Preparing the studio…")}</div></div>;
   if (!talk || !viewTalk) return <div className={styles.workspace}><Link className={styles.back} href="/podcast">← Podcast</Link><div className={styles.error} role="alert">{error || copy("Puntata non disponibile.", "Episode unavailable.")}</div><Link className={styles.primary} href="/podcast/preview">{copy("Esplora lo studio dimostrativo", "Explore the demo studio")} →</Link></div>;
   const caption = preview ? demoIndex >= 0 ? demoTexts[demoIndex] : "" : performanceFrame?.sentence.text ?? latestMessage?.content ?? "";
-  const stage = <PodcastStageView talk={viewTalk} direction={effectiveDirection} performance={direction.automatic ? actingCue : undefined} guestStream={guestPreparation.publishedStream} guestPresentation={guestPreparation.published?.presentation} guestAvatar={guestPreparation.publishedAvatar} speakingIndex={speakingIndex} audioLevel={audioLevel} viseme={viseme} onCanvasReady={onCanvasReady} />;
+  const stage = <PodcastStageView spokenTopic={spokenMessage?.threadLabel} talk={viewTalk} direction={effectiveDirection} performance={direction.automatic ? actingCue : undefined} guestStream={guestPreparation.publishedStream} guestPresentation={guestPreparation.published?.presentation} guestAvatar={guestPreparation.publishedAvatar} speakingIndex={speakingIndex} audioLevel={audioLevel} viseme={viseme} onCanvasReady={onCanvasReady} />;
   if (programOnly) return <div className={styles.output}><button className={styles.outputExit} onClick={() => setProgramOnly(false)}>← {copy("Torna alla regia", "Back to control room")} · Esc</button><div className={styles.outputStage}>{stage}{preview && <div className={styles.outputBadge}>{copy("ANTEPRIMA GRAFICA · TESTI DIMOSTRATIVI", "VISUAL PREVIEW · SAMPLE SCRIPT")}</div>}{direction.captions && caption && <div className={styles.outputCaption}>{caption.length > 260 ? caption.slice(0, 260).trimEnd() + "…" : caption}</div>}</div></div>;
 
   return <div className={styles.workspace}>

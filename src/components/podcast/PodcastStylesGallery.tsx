@@ -1,5 +1,7 @@
 "use client";
 
+import type { VideoTopicSettings } from "@/lib/podcast/video-topic";
+
 import Link from "next/link";
 import { useState } from "react";
 import { getStudioTheme, STUDIO_THEMES, studioSelectionQuery, type StudioCast, type StudioGuestMode, type StudioThemeId } from "@/lib/podcast/studio-themes";
@@ -15,8 +17,9 @@ import { Field, usePodcastCopy } from "./PodcastUi";
 import styles from "./Podcast.module.css";
 import design from "./PodcastStyles.module.css";
 
-export function PodcastStylesGallery({ initialTheme, initialScenario = "studio", initialCast = "original", initialGuest = "auto" }: { initialTheme: StudioThemeId; initialScenario?: StudioScenarioId; initialCast?: StudioCast; initialGuest?: StudioGuestMode }) {
+export function PodcastStylesGallery({ initialTheme, initialScenario = "studio", initialCast = "original", initialGuest = "auto", initialTopic = {} }: { initialTheme: StudioThemeId; initialScenario?: StudioScenarioId; initialCast?: StudioCast; initialGuest?: StudioGuestMode; initialTopic?: VideoTopicSettings }) {
   const copy = usePodcastCopy();
+  const [topicSettings, setTopicSettings] = useState<VideoTopicSettings>(initialTopic);
   const [cast, setCast] = useState(initialCast);
   const [guest, setGuest] = useState(initialGuest);
   const [theme, setTheme] = useState(initialTheme);
@@ -27,7 +30,7 @@ export function PodcastStylesGallery({ initialTheme, initialScenario = "studio",
   const scenario = getStudioScenario(direction.layout);
   const base = defaultPodcast(copy("it", "en") === "en");
   const talk = { ...base, title: copy("Voci a confronto", "Voices in conversation"), topic: copy("Idee, domande e punti di vista", "Ideas, questions, and perspectives"),
-    participants: base.participants.slice(0, 2), settings: { ...base.settings, studioTheme: theme, studioLayout: direction.layout, studioCast: cast, studioGuest: guest } };
+    participants: base.participants.slice(0, 2), settings: { ...base.settings, studioTheme: theme, studioLayout: direction.layout, studioCast: cast, studioGuest: guest, ...topicSettings } };
   const effectiveDirection = manual ? direction : { ...direction,
     emotion: demo.sentence.speakerIndex === 0 ? demo.sentence.mood : demo.sentence.listenerMood,
     intensity: demo.sentence.speakerIndex === 0 ? demo.sentence.intensity : demo.sentence.listenerIntensity,
@@ -61,8 +64,8 @@ export function PodcastStylesGallery({ initialTheme, initialScenario = "studio",
       </div>
       <div className={design.controlColumn}>
       <aside className={design.panel} data-testid="style-gallery-quick-controls">
-        <h2>{copy("Le tre scelte della scena", "Three scene choices")}</h2>
-        <PodcastVisualSettings talk={talk} expanded galleryLink={false} direction={direction} onChange={settings => { setTheme(settings.studioTheme); setCast(settings.studioCast ?? "original"); setGuest(settings.studioGuest ?? "auto"); setDirection(current => ({ ...current, layout: normalizeStudioScenario(settings.studioLayout), focus: settings.studioLayout !== current.layout || settings.studioGuest !== guest ? "all" : current.focus })); }} />
+        <h2>{copy("Aspetto e argomento in video", "Appearance and on-screen topic")}</h2>
+        <PodcastVisualSettings talk={talk} expanded galleryLink={false} direction={direction} onChange={settings => { setTopicSettings({ videoTopicMode: settings.videoTopicMode, videoTopicText: settings.videoTopicText }); setTheme(settings.studioTheme); setCast(settings.studioCast ?? "original"); setGuest(settings.studioGuest ?? "auto"); setDirection(current => ({ ...current, layout: normalizeStudioScenario(settings.studioLayout), focus: settings.studioLayout !== current.layout || settings.studioGuest !== guest ? "all" : current.focus })); }} />
       </aside>
       <PodcastMoodRehearsalLab demo={demo} hostNames={talk.participants.slice(0, 2).map(person => person.name)} manual={manual} onActivate={() => setManual(false)} />
       <aside className={design.panel}>

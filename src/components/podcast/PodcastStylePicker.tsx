@@ -22,7 +22,7 @@ export function PodcastStylePicker({ value, onChange, talk, direction = DEFAULT_
   const copy = usePodcastCopy();
   const name = useId();
   const previewTalk = talk ?? defaultPodcast();
-  const signature = JSON.stringify([previewTalk.title, previewTalk.topic, previewTalk.settings.studioCast, previewTalk.settings.studioGuest, previewTalk.participants.map((person) => [person.name, person.sex, person.kind]), direction]);
+  const signature = JSON.stringify([previewTalk.title, previewTalk.topic, previewTalk.settings.videoTopicMode, previewTalk.settings.videoTopicText, previewTalk.settings.studioCast, previewTalk.settings.studioGuest, previewTalk.participants.map((person) => [person.name, person.sex, person.kind]), direction]);
   return <fieldset disabled={disabled} className={`${design.picker} ${compact ? design.compact : ""} ${disabled ? design.disabled : ""}`} data-testid="podcast-style-picker">
     <legend className={design.legend}>{legend || copy("Scegli lo stile grafico", "Choose a visual style")}</legend>
     <div className={design.cards}>

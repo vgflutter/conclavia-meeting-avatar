@@ -16,3 +16,5 @@
 .galleryLink{display:inline-flex;margin-top:10px;color:#658454;text-decoration:underline;text-underline-offset:3px;font-size:11px}
 .settings:disabled{opacity:.6}
 @media(prefers-reduced-motion:reduce){.chevron{transition:none}}
+
+.topic{border-top:1px solid #dce4d6;margin-top:8px;padding-top:18px}

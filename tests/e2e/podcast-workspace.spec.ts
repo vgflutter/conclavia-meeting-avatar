@@ -78,7 +78,10 @@ for (const locale of ["it", "en"] as const) {
     await page.getByLabel(it ? "Titolo del podcast" : "Podcast title", { exact: true }).fill(title);
     await page.getByLabel(it ? "Argomento" : "Topic", { exact: true }).fill("Il ruolo umano nei processi automatizzati");
     await page.getByLabel(it ? "La domanda centrale" : "The central question", { exact: false }).fill("Quale scelta deve rimanere umana?");
-    await page.getByLabel(it ? "Carattere e punto di vista" : "Personality & point of view", { exact: true }).first().fill("Curioso, cerca esempi concreti e ascolta senza interrompere.");
+    await page.getByLabel(it ? "Descrizione del carattere" : "Personality description", { exact: true }).first().fill("Curioso, cerca esempi concreti e ascolta senza interrompere.");
+    await page.getByTestId("personality-advanced-0").locator("summary").click();
+    await page.getByTestId("personality-model-0").selectOption("claude-default");
+    await page.getByTestId("personality-advanced-0").locator("summary").click();
     await page.getByLabel(it ? "Come deve svolgersi la conversazione" : "How the conversation should develop", { exact: true }).fill("Una domanda aperta per volta, poi una sintesi condivisa.");
     await choosePodcastStyle(page, "anime");
     await expect(page.getByTestId("podcast-editor-stage").locator("canvas[data-podcast-stage]")).toHaveAttribute("data-podcast-style", "anime");
@@ -91,13 +94,21 @@ for (const locale of ["it", "en"] as const) {
     expect(talk.participants).toHaveLength(3);
     expect(talk.participants.filter((person) => person.kind === "ai")).toHaveLength(2);
     expect(talk.centralQuestion).toBe("Quale scelta deve rimanere umana?");
-    expect(talk.participants[0].perspectivePrompt).toContain("ascolta senza interrompere");
+    expect(talk.participants[0].personalityPrompt).toContain("ascolta senza interrompere");
+    expect(talk.participants[0].modelOverride).toBe("claude-default");
+    expect(talk.participants[0].perspectivePrompt).toBe("");
+    expect(talk.participants[0].perspectiveMode).toBe("automatic");
     expect(talk.editorialInstructions).toContain("sintesi condivisa");
     await expect(page).toHaveURL(new RegExp(`/podcast/${talk.id}/studio$`, "u"));
     await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: it ? "Crea sessione" : "Create session", exact: true })).toBeEnabled();
     await expect(page.getByRole("button", { name: it ? /Ascolta ultimo intervento AI/u : /Play latest AI turn/u })).toBeDisabled();
     expect(paidEndpoints).toBe(0);
+    await page.goto(`/podcast/${talk.id}`);
+    await expect(page.getByLabel(it ? "Descrizione del carattere" : "Personality description", { exact: true }).first()).toHaveValue(talk.participants[0].personalityPrompt!);
+    await expect(page.getByTestId("personality-profile-0")).toHaveValue("custom");
+    await expect(page.getByTestId("personality-model-0")).toHaveValue("claude-default");
+    await expect(page.getByTestId("personality-advanced-0")).not.toHaveAttribute("open");
   });
 }
 

@@ -211,15 +211,19 @@ function participantInstructions(
   )?.statements;
   const perspectiveInstruction =
     participant.perspectiveMode === "custom"
-      ? `Your stable position: ${participant.perspectivePrompt}`
+      ? `Your starting position for this episode: ${participant.perspectivePrompt}`
       : participant.perspectiveMode === "random"
-        ? `Adopt a plausible, surprising position compatible with this private guidance: ${participant.perspectivePrompt || "none"}. Once chosen, keep it consistent with your remembered statements.`
-        : `Choose a coherent position compatible with your role and this private guidance: ${participant.perspectivePrompt || "none"}. Once chosen, keep it consistent with your remembered statements.`;
+        ? `Adopt a plausible, surprising position compatible with this private guidance: ${participant.perspectivePrompt || "none"}. Develop it coherently from your remembered statements.`
+        : `Form your own position from the episode context, your role, and the conversation. Private starting guidance: ${participant.perspectivePrompt || "none"}. Develop it coherently from your remembered statements.`;
 
   return [
     `You are ${participant.name}, on air as ${participant.role}.`,
     `Your sex is ${participantSex}. Keep names, self-references, and pronouns consistent with this identity; do not bring it up unless it is relevant to the discussion.`,
+    participant.personalityPrompt
+      ? `Your stable personality and way of relating to others: ${participant.personalityPrompt}`
+      : undefined,
     perspectiveInstruction,
+    "Keep your personality recognizable while allowing your opinion and sentence moods to evolve. Do not manufacture agreement or opposition to fill a character role. When a concrete argument changes your view, acknowledge what changed and why; do not contradict your remembered statements without explanation.",
     participant.goals ? `Your private objectives: ${participant.goals}` : undefined,
     participant.nonNegotiables
       ? `Your private non-negotiable points: ${participant.nonNegotiables}`

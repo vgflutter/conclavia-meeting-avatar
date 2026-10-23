@@ -1,3 +1,5 @@
+import { normalizeVideoTopicMode, normalizeVideoTopicText } from "./video-topic";
+
 /** Scene styling is rendered by the canonical avatar kit, never a provider. */
 export const STUDIO_THEME_IDS = ["clean-line", "soft-editorial", "animated-series", "anime", "original-editorial", "original-anime", "original-comedy", "noir-editorial", "paper-theatre", "digital-neon"] as const;
 export type StudioThemeId = (typeof STUDIO_THEME_IDS)[number];
@@ -113,7 +115,7 @@ export function isStudioCast(value: unknown): value is StudioCast { return STUDI
 export function normalizeStudioCast(value: unknown): StudioCast { return isStudioCast(value) ? value : "original"; }
 export function isStudioGuest(value: unknown): value is StudioGuestMode { return STUDIO_GUEST_MODES.some(id => id === value); }
 export function normalizeStudioGuest(value: unknown): StudioGuestMode { return isStudioGuest(value) ? value : "auto"; }
-export function studioSelectionQuery(settings: { studioTheme?: unknown; studioLayout?: unknown; studioCast?: unknown; studioGuest?: unknown }) {
+export function studioSelectionQuery(settings: { studioTheme?: unknown; studioLayout?: unknown; studioCast?: unknown; studioGuest?: unknown; videoTopicMode?: unknown; videoTopicText?: unknown }) {
   const layout = ["studio", "speaker", "table", "lounge"].includes(String(settings.studioLayout)) ? String(settings.studioLayout) : "studio";
-  return `style=${normalizeStudioTheme(settings.studioTheme)}&scenario=${layout}&cast=${normalizeStudioCast(settings.studioCast)}&guest=${normalizeStudioGuest(settings.studioGuest)}`;
+  return `style=${normalizeStudioTheme(settings.studioTheme)}&scenario=${layout}&cast=${normalizeStudioCast(settings.studioCast)}&guest=${normalizeStudioGuest(settings.studioGuest)}${normalizeVideoTopicMode(settings.videoTopicMode) === "episode" ? "" : `&topicMode=${normalizeVideoTopicMode(settings.videoTopicMode)}`}${settings.videoTopicMode === "custom" ? `&topicText=${encodeURIComponent(normalizeVideoTopicText(settings.videoTopicText))}` : ""}`;
 }

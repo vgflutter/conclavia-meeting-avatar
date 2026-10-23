@@ -1,0 +1,19 @@
+# Conduzione adulta e confronto vocale — 18 ottobre 2026
+
+La richiesta successiva mantiene lo stile e l’idea dello studio TG, ma rifiuta la voce Nicola della prova e l’aspetto infantile del volto. Il rig canonico ora usa occhi allungati, iridi e pupille più piccoli, sopracciglia più sottili, palpebre definite, labbra con interno scuro e un profilo della scocca più essenziale. Non aggiunge un naso o un mento sovrapposti; espressioni, otto mood e animazione del corpo restano gli stessi canali del motore condiviso.
+
+La pagina `/podcast/tg/performance` usa ora `TgStudioRenderer`, fondali, logo, palette e impaginazione delle puntate. La prova non è più un personaggio isolato su fondo astratto. Il clock di riproduzione e i livelli PCM di ogni campione guidano il labiale e la recitazione; i controlli supportano cambio voce, pausa, seek e orientamento.
+
+Tre campioni reali sono stati generati esplicitamente sulle stesse sei frasi originali: Gianni, Orietta e Ingegnere, già presenti nel catalogo Inworld integrato. Modello `inworld-tts-2`, velocità 0,98, PCM mono 24 kHz, normalizzazione uniforme. Durate 36 s, 36,175 s e 36 s. Non sono tre etichette sullo stesso file: audio, timeline e visemi sono distinti per ogni voce. Il testo è dimostrativo e non contiene notizie reali.
+
+`scripts/tg/build-voice-auditions.ts --confirm` è un’operazione creativa separata dai test. Il limite è tre voci e sei frasi per voce; legge la configurazione privata a runtime senza stamparla, non viene richiamato dall’app e riusa i campioni già presenti. I test non effettuano chiamate a pagamento. Gli asset sono in `public/daily-performance/voices`, con catalogo e riferimento precedente. La root `sequence.json` è la prova Gianni; la vecchia traccia `nicola.wav` resta disponibile come riferimento storico.
+
+La scelta nella GUI riguarda la sola prova. Non modifica il provider o le voci dei piloti già prodotti, né avvia ricerche, sintesi o pubblicazioni. La selezione finale del timbro e il trasferimento alla produzione restano da valutare all’ascolto. Nessuna clonazione o imitazione di una persona reale.
+
+Il confronto delle tracce conferma tre checksum audio distinti e sei cue temporizzate per ciascuna voce, con durata del WAV coerente. La GUI ufficiale ha riprodotto tutti e tre i campioni, verificato pausa, cambio voce, seek, due orientamenti e viewport a 390 px, senza errori JavaScript o richieste di modifica (`acting/adult-voice-gui-report.json`). Le immagini della prova sono `adult-audition-landscape.png` e `adult-audition-portrait.png` nella stessa cartella.
+
+Superati 82 test del kit e 82 test Onboarding, lint, TypeScript, confini delle feature, collegamento dei consumer e le due build isolate. La selezione completa di 66 regressioni browser è passata, seguita da 15 controlli mirati dopo la correzione di un titolo invisibile al seek: il titolo si mostra interamente quando il clock salta o resta in pausa, mentre la normale riproduzione conserva la transizione. I test verificano i pixel del volto e della bocca, escludendo titoli e barra di avanzamento dal confronto delle espressioni.
+
+Il solo lavoro grafico viene applicato anche ai quattro MP4 dei piloti esistenti tramite refresh locale con master precedenti archiviati. La nuova voce Gianni appartiene alla prova di conduzione; le tracce dei due piloti restano quelle precedenti. Il runtime locale usa `.next-daily-adult` sulla porta 3105. Nessuna pubblicazione o distribuzione social.
+
+I due MP4 della prova sono stati rigenerati: 36 s, 900 fotogrammi, 1280×720 e 720×1280. Il confronto tra l’audio decodificato e la nuova traccia Gianni dà correlazione 0,99982, confermando che il video usa il nuovo campione e non Nicola (`acting/adult-movie-verification.json`). La sintesi locale storica, se eseguita esplicitamente, aggiorna soltanto il riferimento Nicola quando il catalogo di confronto è presente e non sostituisce la prova principale.

@@ -1,0 +1,496 @@
+{
+  "version": 1,
+  "id": "2026-10-23-it-pilot-r2",
+  "kind": "daily-pilot",
+  "status": "corrected-awaiting-final-two-ai-reviews",
+  "editionDate": "2026-10-23",
+  "language": "it",
+  "voice": "Alex 2 - daily",
+  "title": "CDaily · 23 ottobre 2026 · Cinque notizie, il contesto che serve",
+  "description": "• In Campania ripartono i rifornimenti dopo la rimozione dei presidi dei tir, mentre distributori e negozi ricostituiscono le scorte.\n• Seul propone nuovi colloqui militari al Nord sul confine e sui canali di comunicazione, senza un’accettazione confermata.\n• L’Umbria approva la proposta sul fine vita: le procedure regionali richiamano il quadro statale e costituzionale.\n• A Taiwan il tifone Champi interrompe attività e trasporti; sono annunciate chiusure anche per sabato 24 ottobre.\n• In Gran Bretagna le vendite di settembre calano dello 0,4% sul mese, ma il trimestre cresce dello 0,7%: confronti diversi, da leggere insieme.",
+  "researchCutoff": "2026-10-23T15:15:00Z",
+  "targetSeconds": 300,
+  "speechModel": "eleven_v4_turbo",
+  "openingPauseSeconds": 2,
+  "music": {
+    "mode": "none"
+  },
+  "styleReference": "avatar-refined-presence-20261023",
+  "sources": [
+    {
+      "id": "ansa-rifornimenti",
+      "publisher": "ANSA",
+      "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+      "date": "2026-10-23",
+      "note": "Resoconto delle 08:16 consultato tramite indice; sviluppo del 23, successivo agli annunci del 21.",
+      "evidence": "Rimossi i presidi autostradali in Campania; rifornimenti e scorte ripartono lentamente, con distributori ancora esauriti e file.",
+      "independentGroup": "ansa",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "adnkronos-rifornimenti",
+      "publisher": "Adnkronos",
+      "url": "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+      "date": "2026-10-23",
+      "note": "Resoconto delle 09:15 consultato tramite indice; il corpo non si è riaperto.",
+      "evidence": "Rimossi i presidi in Campania, compresa via Argine; mezzi scortati per favorire la ripresa della distribuzione di carburanti.",
+      "independentGroup": "adnkronos",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "ansa-aiuti",
+      "publisher": "ANSA",
+      "url": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html",
+      "date": "2026-10-22",
+      "note": "Articolo/estratto datato 16:09: approvazione del decreto, totale e ripartizione. Non usare il titolo come prova che ogni blocco sia tuttora in corso.",
+      "evidence": "Decreto approvato il 22 ottobre: circa 175 milioni complessivi, di cui circa 105 per autotrasporto, 60 per agricoltura e 10 per pesca. Il testo è contesto dello sviluppo sui rifornimenti del 23.",
+      "independentGroup": "ansa",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "fatto-aiuti",
+      "publisher": "Il Fatto Quotidiano",
+      "url": "https://www.ilfattoquotidiano.it/2026/10/22/caro-gasolio-decreto-governo-autotrasporto-notizie/8546627/",
+      "date": "2026-10-22",
+      "note": "Pagina consultata, riscontro indipendente dell'approvazione e confronto con gli annunci. Esclusi giudizi politici della testata.",
+      "evidence": "Nuove risorse 105,2 milioni autotrasporto, 60 agricoltura, 10 pesca. Credit tax riferiti a periodi di acquisto del carburante distinti; risorse precedenti e nuove non vanno sommate o confuse con pagamenti già ricevuti.",
+      "independentGroup": "ilfatto",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "yonhap-coree",
+      "publisher": "Yonhap",
+      "url": "https://en.yna.co.kr/view/AEN20261023005751315?section=national%2Fdefense",
+      "date": "2026-10-23",
+      "note": "Briefing aggiornato alle 15:50 KST, consultato nell’indice con resoconto completo; distinguere nuova proposta del 23 dal precedente tentativo del 2025.",
+      "evidence": "Seul ripropone colloqui su linea terrestre, canali militari e rischio incidenti; possibile coinvolgimento UNC. La mina di settembre resta contesto, con responsabilità contestate da Pyongyang.",
+      "independentGroup": "yonhap",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "reuters-coree",
+      "publisher": "Reuters via MarketScreener",
+      "url": "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+      "date": "2026-10-23",
+      "note": "Resoconto Reuters delle 05:54 UTC consultato; le copie Reuters contano come una sola origine.",
+      "evidence": "Proposta del ministero della Difesa sudcoreano del 23 per chiarire il confine terrestre e ridurre scontri accidentali; offerta precedente senza risposta.",
+      "independentGroup": "reuters",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "ap-coree",
+      "publisher": "Associated Press",
+      "url": "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+      "date": "2026-10-23",
+      "note": "Resoconto indicizzato 07:04 UTC; il collegamento diretto non è recuperabile.",
+      "evidence": "Nuova proposta sudcoreana di colloqui militari; non risulta un’accettazione del Nord nel materiale consultato.",
+      "independentGroup": "ap",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "unc",
+      "publisher": "United Nations Command",
+      "url": "https://www.unc.mil/History/1951-1953-Armistice-Negotiations/",
+      "date": "1953-07-27",
+      "note": "Solo contesto storico: armistizio, linea di demarcazione e zona cuscinetto; non è una notizia fresca del 2026.",
+      "evidence": "L’armistizio del 1953 sospese i combattimenti e definì linea militare e zona demilitarizzata; contesto storico, non sviluppo fresco.",
+      "independentGroup": "unc",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "umbria-assemblea",
+      "publisher": "Assemblea legislativa dell’Umbria",
+      "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+      "date": "2026-10-22",
+      "note": "Comunicato primario delle 19:27, corpo letto. Si racconta il voto, non un’entrata in vigore già dimostrata.",
+      "evidence": "Approvata la proposta sul fine vita con 11 sì, 6 no e 3 astensioni. Attuazione affidata alle Asl; accesso verificato secondo disciplina statale e giurisprudenza costituzionale, cure palliative e facoltà di sospendere o revocare la richiesta.",
+      "independentGroup": "umbria",
+      "retrievalKind": "full-body",
+      "pertinentExcerpt": "possibilità della persona di sospendere o revocare la propria richiesta",
+      "excerptContext": "Corpo del comunicato, paragrafo relativo agli emendamenti approvati; letto il 23 ottobre, ore 15 UTC. Conferma esplicita della facoltà, senza descrivere modalità operative."
+    },
+    {
+      "id": "umbria-rai",
+      "publisher": "Rai TGR Umbria",
+      "url": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html",
+      "date": "2026-10-22",
+      "note": "Articolo letto: riscontro giornalistico distinto dal comunicato consiliare.",
+      "evidence": "Consiglio regionale approva proposta di iniziativa popolare; otto articoli e risultato del voto confermati. Dibattito con posizioni differenti; presidente non partecipa.",
+      "independentGroup": "rai",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "cna-chiusure",
+      "publisher": "CNA · Focus Taiwan",
+      "url": "https://focustaiwan.tw/society/202610230019",
+      "date": "2026-10-23",
+      "note": "Corpo letto, aggiornamento 21:29 ora di Taiwan (13:29 UTC). Supera il vecchio bollettino mattutino.",
+      "evidence": "Le autorità annunciano scuole e uffici chiusi sabato 24 in tredici città e contee. CWA segnala mareggiate, piogge e venti; circa 2.600 evacuati nel bilancio del pomeriggio.",
+      "independentGroup": "cna",
+      "retrievalKind": "full-body",
+      "pertinentExcerpt": "schools in 13 cities and counties across Taiwan will be closed due to Typhoon Champi on Saturday",
+      "excerptContext": "Primo paragrafo del corpo letto: Taipei, Oct. 23 (CNA), aggiornamento 21:29 ora locale = 13:29 UTC. Saturday è 24 ottobre. Questa fonte è successiva ai resoconti mattutini AP e ANSA."
+    },
+    {
+      "id": "cna-trasporti",
+      "publisher": "CNA · Focus Taiwan",
+      "url": "https://focustaiwan.tw/society/202610230018",
+      "date": "2026-10-23",
+      "note": "Corpo letto, 21:08 ora locale. È la stessa origine del precedente articolo, non un secondo riscontro indipendente.",
+      "evidence": "Compagnie annunciano cancellazioni e modifiche di voli anche per sabato; sospensioni di collegamenti marittimi. Invito a controllare le informazioni della propria compagnia.",
+      "independentGroup": "cna",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "ap-taiwan",
+      "publisher": "Associated Press",
+      "url": "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+      "date": "2026-10-23",
+      "note": "Resoconto AP delle 04:50 UTC: scuole e uffici, evacuazioni, voli, treni veloci operativi. Bilanci evolutivi non riportati nel copione.",
+      "evidence": "Scuole e uffici chiusi venerdì, centinaia di voli cancellati, evacuazioni e piogge/vento. Il quadro successivo del sabato è aggiornato con CNA, senza copiare vecchie previsioni.",
+      "independentGroup": "ap",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "ons-settembre",
+      "publisher": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+      "date": "2026-10-23",
+      "note": "Il corpo recuperato identifica espressamente settembre 2026 e data di rilascio 23 ottobre; non è più il bollettino di agosto.",
+      "evidence": "Volumi vendite settembre -0,4% sul mese; trimestre luglio-settembre +0,7% sul precedente e settembre +0,8% annuo. Vendite mensili volatili; leggere anche confronti trimestrali.",
+      "independentGroup": "ons",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "reuters-consumi",
+      "publisher": "Reuters via Euronext",
+      "url": "https://live.euronext.com/en/financial-news/uk-retail-sales-fall-consumer-confidence-tumbles",
+      "date": "2026-10-23",
+      "note": "Resoconto delle 09:28 consultato tramite indice; il corpo non si è riaperto.",
+      "evidence": "Vendite britanniche in volume -0,4% in settembre; trimestre +0,7%. Abbigliamento debole con autunno caldo, secondo negozi e rilevazione statistica.",
+      "independentGroup": "reuters",
+      "retrievalKind": "indexed-excerpt"
+    }
+  ],
+  "lines": [
+    {
+      "scene": "apertura",
+      "thought": "intro",
+      "mood": "agreement",
+      "intensity": 0.6,
+      "intent": "invite",
+      "sourceIds": [],
+      "text": "Ciao, questo è Conclavia Daily. Cinque minuti per orientarsi fra le notizie, con il contesto che serve."
+    },
+    {
+      "scene": "apertura",
+      "thought": "intro",
+      "mood": "curiosity",
+      "intensity": 0.64,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-rifornimenti",
+        "yonhap-coree",
+        "umbria-assemblea"
+      ],
+      "text": "Apriamo dai rifornimenti che ripartono dopo i blocchi dei tir. Poi il dialogo proposto fra le Coree, la decisione umbra sul fine vita, il tifone a Taiwan e i consumi britannici. Cominciamo dall’Italia."
+    },
+    {
+      "scene": "carburanti",
+      "thought": "trasporti-novita",
+      "mood": "attention",
+      "intensity": 0.68,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-rifornimenti",
+        "adnkronos-rifornimenti"
+      ],
+      "text": "In Campania sono stati rimossi i presidi degli autotrasportatori sulla rete autostradale, nel Casertano e nel Salernitano. A Napoli è stato sciolto anche il presidio di via Argine, vicino ai depositi di carburante. Le forze dell’ordine hanno scortato i mezzi per favorire le consegne ai distributori."
+    },
+    {
+      "scene": "carburanti",
+      "thought": "trasporti-novita",
+      "mood": "curiosity",
+      "intensity": 0.6,
+      "intent": "contrast",
+      "sourceIds": [
+        "ansa-rifornimenti",
+        "adnkronos-rifornimenti"
+      ],
+      "text": "La strada libera, però, è soltanto il primo passaggio. I resoconti del ventitré ottobre descrivono ancora distributori senza carburante, code davanti a quelli aperti e supermercati che devono ricostituire le scorte. Riavviare le consegne richiede tempo: togliere un blocco e ritrovare tutti i prodotti sugli scaffali sono due momenti diversi."
+    },
+    {
+      "scene": "carburanti",
+      "thought": "trasporti-aiuti",
+      "mood": "attention",
+      "intensity": 0.63,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-aiuti",
+        "fatto-aiuti"
+      ],
+      "text": "Sul tavolo c’è anche il decreto approvato il ventidue ottobre: circa centosettantacinque milioni per autotrasporto, agricoltura e pesca. Per i camion la parte principale passa da crediti d’imposta sul gasolio, cioè agevolazioni fiscali legate ai costi sostenuti dalle imprese. Il costo del carburante pesa sul trasporto delle merci."
+    },
+    {
+      "scene": "carburanti",
+      "thought": "trasporti-aiuti",
+      "mood": "attention",
+      "intensity": 0.65,
+      "intent": "emphasize",
+      "sourceIds": [
+        "ansa-rifornimenti",
+        "adnkronos-rifornimenti",
+        "fatto-aiuti"
+      ],
+      "text": "Il fatto nuovo rispetto ai giorni scorsi è dunque la rimozione dei presidi e il riavvio dei rifornimenti. Gli aiuti approvati restano un passaggio distinto dai soldi effettivamente utilizzabili dalle singole aziende. Per chi fa la spesa o deve fare benzina, conta soprattutto quando la distribuzione tornerà regolare nella propria zona.",
+      "gestureWord": "rifornimenti"
+    },
+    {
+      "scene": "coree",
+      "thought": "coree-proposta",
+      "mood": "attention",
+      "intensity": 0.65,
+      "intent": "explain",
+      "sourceIds": [
+        "yonhap-coree",
+        "reuters-coree",
+        "ap-coree"
+      ],
+      "text": "Passiamo alla penisola coreana. La Corea del Sud propone al Nord nuovi colloqui militari per chiarire dove passa sul terreno la linea di demarcazione e ridurre il rischio di scontri accidentali. Seul chiede anche di ripristinare i canali di comunicazione fra gli eserciti: poter parlare rapidamente conta quando un incidente può far salire la tensione."
+    },
+    {
+      "scene": "coree",
+      "thought": "coree-contesto",
+      "mood": "curiosity",
+      "intensity": 0.58,
+      "intent": "explain",
+      "sourceIds": [
+        "unc",
+        "yonhap-coree"
+      ],
+      "text": "La guerra di Corea si fermò con un armistizio nel millenovecentocinquantatré: un accordo che definì una linea militare e una zona cuscinetto, senza diventare un trattato di pace. Oggi restano interpretazioni diverse di quella linea e attività militari lungo il confine."
+    },
+    {
+      "scene": "coree",
+      "thought": "coree-contesto",
+      "mood": "doubt",
+      "intensity": 0.35,
+      "intent": "explain",
+      "sourceIds": [
+        "yonhap-coree",
+        "reuters-coree",
+        "ap-coree"
+      ],
+      "text": "La novità è l’offerta di dialogo annunciata il ventitré ottobre. Potrebbe essere coinvolto anche il Comando delle Nazioni Unite che vigila sull’armistizio. Nei riscontri disponibili non c’è ancora una conferma dell’accettazione nordcoreana: il prossimo passaggio da seguire è proprio la risposta di Pyongyang."
+    },
+    {
+      "scene": "umbria",
+      "thought": "umbria-voto",
+      "mood": "empathy",
+      "intensity": 0.42,
+      "intent": "explain",
+      "sourceIds": [
+        "umbria-assemblea",
+        "umbria-rai"
+      ],
+      "text": "Torniamo in Italia, su un tema delicato. L’Assemblea legislativa dell’Umbria ha approvato una proposta di legge di iniziativa popolare sul suicidio medicalmente assistito. Il voto del ventidue ottobre si è chiuso con undici favorevoli, sei contrari e tre astensioni. La presidente della Regione non ha partecipato alla votazione."
+    },
+    {
+      "scene": "umbria",
+      "thought": "umbria-significato",
+      "mood": "attention",
+      "intensity": 0.5,
+      "intent": "explain",
+      "sourceIds": [
+        "umbria-assemblea"
+      ],
+      "text": "La decisione riguarda l’organizzazione dell’assistenza sanitaria regionale, con modalità di attuazione affidate alle aziende sanitarie locali. Il testo richiama la verifica delle condizioni previste dalla disciplina statale e dalla giurisprudenza costituzionale. Il voto regionale va quindi letto dentro quel quadro nazionale, senza presentarlo come un accesso automatico."
+    },
+    {
+      "scene": "umbria",
+      "thought": "umbria-significato",
+      "mood": "empathy",
+      "intensity": 0.44,
+      "intent": "explain",
+      "sourceIds": [
+        "umbria-assemblea",
+        "umbria-rai"
+      ],
+      "text": "Fra gli aspetti confermati ci sono l’informazione sulle cure palliative e la possibilità di sospendere o revocare la richiesta. Raccontiamo il provvedimento approvato e i suoi contenuti: l’effettiva attuazione nelle strutture sanitarie resta un passaggio successivo da verificare."
+    },
+    {
+      "scene": "taiwan",
+      "thought": "taiwan-impatto",
+      "mood": "attention",
+      "intensity": 0.65,
+      "intent": "explain",
+      "sourceIds": [
+        "ap-taiwan",
+        "cna-chiusure",
+        "cna-trasporti"
+      ],
+      "text": "A Taiwan il tifone Champi ha fermato scuole, uffici e centinaia di voli. Sono state evacuate persone dalle aree esposte e si sono registrati danni e interruzioni di corrente. Qui parliamo di un’emergenza che incide sulla vita quotidiana e sui collegamenti, con misure diverse secondo le zone."
+    },
+    {
+      "scene": "taiwan",
+      "thought": "taiwan-sviluppo",
+      "mood": "empathy",
+      "intensity": 0.47,
+      "intent": "explain",
+      "sourceIds": [
+        "cna-chiusure",
+        "cna-trasporti"
+      ],
+      "text": "L’aggiornamento del ventitré ottobre estende lo sguardo al giorno dopo: tredici città e contee hanno annunciato scuole e uffici chiusi anche sabato ventiquattro. Le compagnie hanno comunicato nuove cancellazioni e modifiche dei voli, mentre alcuni collegamenti marittimi restano sospesi. Le autorità seguono soprattutto piogge intense, vento e mareggiate."
+    },
+    {
+      "scene": "taiwan",
+      "thought": "taiwan-sviluppo",
+      "mood": "attention",
+      "intensity": 0.58,
+      "intent": "explain",
+      "sourceIds": [
+        "cna-chiusure",
+        "cna-trasporti"
+      ],
+      "text": "L’indebolimento del ciclone rispetto al picco non cancella gli effetti già in corso. Per chi viaggia contano gli avvisi della propria compagnia e delle autorità locali. La traiettoria successiva rimane una previsione da aggiornare."
+    },
+    {
+      "scene": "consumi",
+      "thought": "consumi-dato",
+      "mood": "curiosity",
+      "intensity": 0.59,
+      "intent": "explain",
+      "sourceIds": [
+        "ons-settembre",
+        "reuters-consumi"
+      ],
+      "text": "Chiudiamo le notizie con una domanda: in Gran Bretagna si compra meno? A settembre i volumi delle vendite al dettaglio sono scesi dello zero virgola quattro per cento rispetto ad agosto. Il dato è stato pubblicato il ventitré ottobre dall’istituto nazionale di statistica e riguarda la quantità di beni comprati, distinta dalla somma spesa."
+    },
+    {
+      "scene": "consumi",
+      "thought": "consumi-confronto",
+      "mood": "attention",
+      "intensity": 0.58,
+      "intent": "contrast",
+      "sourceIds": [
+        "ons-settembre",
+        "reuters-consumi"
+      ],
+      "text": "Allargando lo sguardo, però, il trimestre da luglio a settembre cresce dello zero virgola sette per cento rispetto ai tre mesi precedenti. Un mese in calo e un trimestre in crescita possono convivere: cambiano i periodi che stiamo confrontando. Un solo numero racconta soltanto una parte della situazione."
+    },
+    {
+      "scene": "consumi",
+      "thought": "consumi-confronto",
+      "mood": "curiosity",
+      "intensity": 0.52,
+      "intent": "explain",
+      "sourceIds": [
+        "ons-settembre"
+      ],
+      "text": "L’istituto invita a leggere con cautela le oscillazioni mensili e ad affiancarle ai confronti più lunghi. Fra i settori deboli a settembre c’è l’abbigliamento: i rivenditori segnalano un avvio d’autunno caldo, poco favorevole alle nuove collezioni. Un dato sui consumi, da leggere senza previsioni certe sull’intera economia."
+    },
+    {
+      "scene": "chiusura",
+      "thought": "sito",
+      "mood": "agreement",
+      "intensity": 0.53,
+      "intent": "invite",
+      "sourceIds": [],
+      "text": "Segui Conclavia Daily. Fonti e approfondimenti su daily.conclavia.me."
+    },
+    {
+      "scene": "chiusura",
+      "thought": "commenti",
+      "mood": "curiosity",
+      "intensity": 0.64,
+      "intent": "point-down",
+      "sourceIds": [],
+      "text": "Scrivici nei commenti cosa vuoi approfondire:",
+      "gestureWord": "commenti"
+    },
+    {
+      "scene": "chiusura",
+      "thought": "commenti",
+      "mood": "agreement",
+      "intensity": 0.55,
+      "intent": "invite",
+      "sourceIds": [],
+      "text": "partiamo dalle tue domande."
+    },
+    {
+      "scene": "chiusura",
+      "thought": "firma",
+      "mood": "agreement",
+      "intensity": 0.55,
+      "intent": "invite",
+      "sourceIds": [],
+      "text": "Meno rumore, più contesto."
+    }
+  ],
+  "scenes": [
+    {
+      "id": "apertura",
+      "kind": "host",
+      "kicker": "23 OTTOBRE 2026 · ITALIA",
+      "lines": [
+        "Cinque notizie.",
+        "Il contesto che serve."
+      ]
+    },
+    {
+      "id": "carburanti",
+      "kind": "host",
+      "kicker": "ITALIA · RIFORNIMENTI",
+      "lines": [
+        "Rifornimenti",
+        "in ripresa graduale."
+      ]
+    },
+    {
+      "id": "coree",
+      "kind": "host",
+      "kicker": "MONDO · COREE",
+      "lines": [
+        "Un’offerta di dialogo."
+      ]
+    },
+    {
+      "id": "umbria",
+      "kind": "host",
+      "kicker": "ITALIA · DIRITTI E SANITÀ",
+      "lines": [
+        "Fine vita:",
+        "il voto in Umbria."
+      ]
+    },
+    {
+      "id": "taiwan",
+      "kind": "host",
+      "kicker": "MONDO · TAIWAN",
+      "lines": [
+        "Champi ferma",
+        "attività e trasporti."
+      ]
+    },
+    {
+      "id": "consumi",
+      "kind": "host",
+      "kicker": "ECONOMIA · GRAN BRETAGNA",
+      "lines": [
+        "Consumi:",
+        "conta il confronto."
+      ]
+    },
+    {
+      "id": "chiusura",
+      "kind": "host",
+      "kicker": "DOMANDE E APPROFONDIMENTI",
+      "lines": [
+        "Cosa vuoi approfondire?"
+      ]
+    }
+  ],
+  "reviewRound": 2,
+  "reviewNormalizationNote": "After factual source repair A passed. Applied B’s small readability cuts and exact app-owned closing segmentation; no new factual claims or story substitution. Actual duration and gesture remain a separate measured media gate."
+}

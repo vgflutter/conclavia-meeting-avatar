@@ -1,0 +1,65 @@
+{
+  "checkedAt": "2026-10-23T21:51:31.204Z",
+  "providerCalls": 0,
+  "publicationCalls": 0,
+  "feedsInCatalog": 14,
+  "sources": [
+    {
+      "id": "agi",
+      "publisher": "AGI",
+      "edition": "it",
+      "group": "agi",
+      "url": "https://www.agi.it/cronaca/rss.xml",
+      "status": 200,
+      "contentType": "application/xml",
+      "bytes": 116581,
+      "acceptedLastSevenDays": 20
+    },
+    {
+      "id": "sole24ore-it",
+      "publisher": "Il Sole 24 Ore",
+      "edition": "it",
+      "group": "ilsole24ore.com",
+      "url": "https://www.ilsole24ore.com/rss/italia.xml",
+      "status": 200,
+      "contentType": "text/xml",
+      "bytes": 13172,
+      "acceptedLastSevenDays": 12
+    },
+    {
+      "id": "istat",
+      "publisher": "Istat",
+      "edition": "it",
+      "group": "istat.it",
+      "url": "https://www.istat.it/feed/",
+      "status": 200,
+      "contentType": "application/rss+xml; charset=UTF-8",
+      "bytes": 111465,
+      "acceptedLastSevenDays": 10
+    },
+    {
+      "id": "ecb",
+      "publisher": "European Central Bank",
+      "edition": "world",
+      "group": "eu",
+      "url": "https://www.ecb.europa.eu/rss/press.html",
+      "status": 200,
+      "contentType": "application/rss+xml",
+      "bytes": 5705,
+      "acceptedLastSevenDays": 6,
+      "headlineOnlyItems": 6,
+      "parserRecheckedAt": "2026-10-23T21:56:51.949Z"
+    },
+    {
+      "id": "nasa",
+      "publisher": "NASA",
+      "edition": "world",
+      "group": "nasa.gov",
+      "url": "https://www.nasa.gov/news-release/feed/",
+      "status": 200,
+      "contentType": "application/rss+xml; charset=UTF-8",
+      "bytes": 262624,
+      "acceptedLastSevenDays": 10
+    }
+  ]
+}

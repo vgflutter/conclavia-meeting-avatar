@@ -1,0 +1,490 @@
+{
+  "version": 1,
+  "id": "2026-10-23-it-pilot-r3",
+  "kind": "daily-pilot",
+  "status": "awaiting-independent-pre-take-reviews",
+  "editionDate": "2026-10-23",
+  "editionScope": "italy-evening-development-pilot",
+  "language": "it",
+  "voice": "Alex 2 - daily",
+  "title": "CDaily Italia · 23 ottobre 2026 · Fatti, con contesto",
+  "description": "Il punto sull’Italia del 23 ottobre, tra sicurezza, servizi, salute e diritti.\n• Sisma nel Tirreno: l’INGV aggiorna la stima a magnitudo momento 5,5; in Calabria la Protezione civile comunica il rientro dell’allerta maremoto.\n• In Campania ripartono i rifornimenti dopo i blocchi dei tir, con scorte ancora da ricostituire.\n• Liste d’attesa: il bollettino AGENAS segnala più prenotazioni e un miglioramento complessivo dei tempi, con differenze territoriali.\n• BTP Valore: conclusa la doppia emissione; cedole periodiche e pagamento finale sono da distinguere.\n• Fine vita: il voto umbro del 22 ottobre riguarda l’organizzazione sanitaria regionale nel quadro statale e costituzionale.",
+  "researchCutoff": "2026-10-23T17:50:00Z",
+  "durationMode": "natural-pilot",
+  "speechModel": "eleven_v4_turbo",
+  "openingPauseSeconds": 2,
+  "music": {
+    "mode": "none"
+  },
+  "styleReference": "avatar-refined-presence-20261023",
+  "sources": [
+    {
+      "id": "ansa-rifornimenti",
+      "publisher": "ANSA",
+      "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+      "date": "2026-10-23",
+      "note": "Resoconto delle 08:16 consultato tramite indice; sviluppo del 23, successivo agli annunci del 21.",
+      "evidence": "Rimossi i presidi autostradali in Campania; rifornimenti e scorte ripartono lentamente, con distributori ancora esauriti e file.",
+      "independentGroup": "ansa",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "adnkronos-rifornimenti",
+      "publisher": "Adnkronos",
+      "url": "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+      "date": "2026-10-23",
+      "note": "Resoconto delle 09:15 consultato tramite indice; il corpo non si è riaperto.",
+      "evidence": "Rimossi i presidi in Campania, compresa via Argine; mezzi scortati per favorire la ripresa della distribuzione di carburanti.",
+      "independentGroup": "adnkronos",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "ansa-aiuti",
+      "publisher": "ANSA",
+      "url": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html",
+      "date": "2026-10-22",
+      "note": "Articolo/estratto datato 16:09: approvazione del decreto, totale e ripartizione. Non usare il titolo come prova che ogni blocco sia tuttora in corso.",
+      "evidence": "Decreto approvato il 22 ottobre: circa 175 milioni complessivi, di cui circa 105 per autotrasporto, 60 per agricoltura e 10 per pesca. Il testo è contesto dello sviluppo sui rifornimenti del 23.",
+      "independentGroup": "ansa",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "fatto-aiuti",
+      "publisher": "Il Fatto Quotidiano",
+      "url": "https://www.ilfattoquotidiano.it/2026/10/22/caro-gasolio-decreto-governo-autotrasporto-notizie/8546627/",
+      "date": "2026-10-22",
+      "note": "Pagina consultata, riscontro indipendente dell'approvazione e confronto con gli annunci. Esclusi giudizi politici della testata.",
+      "evidence": "Nuove risorse 105,2 milioni autotrasporto, 60 agricoltura, 10 pesca. Credit tax riferiti a periodi di acquisto del carburante distinti; risorse precedenti e nuove non vanno sommate o confuse con pagamenti già ricevuti.",
+      "independentGroup": "ilfatto",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "umbria-assemblea",
+      "publisher": "Assemblea legislativa dell’Umbria",
+      "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+      "date": "2026-10-22",
+      "note": "Comunicato primario delle 19:27, corpo letto. Si racconta il voto, non un’entrata in vigore già dimostrata.",
+      "evidence": "Approvata la proposta sul fine vita con 11 sì, 6 no e 3 astensioni. Attuazione affidata alle Asl; accesso verificato secondo disciplina statale e giurisprudenza costituzionale, cure palliative e facoltà di sospendere o revocare la richiesta.",
+      "independentGroup": "umbria",
+      "retrievalKind": "full-body",
+      "pertinentExcerpt": "possibilità della persona di sospendere o revocare la propria richiesta",
+      "excerptContext": "Corpo del comunicato, paragrafo relativo agli emendamenti approvati; letto il 23 ottobre, ore 15 UTC. Conferma esplicita della facoltà, senza descrivere modalità operative."
+    },
+    {
+      "id": "umbria-rai",
+      "publisher": "Rai TGR Umbria",
+      "url": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html",
+      "date": "2026-10-22",
+      "note": "Articolo letto: riscontro giornalistico distinto dal comunicato consiliare.",
+      "evidence": "Consiglio regionale approva proposta di iniziativa popolare; otto articoli e risultato del voto confermati. Dibattito con posizioni differenti; presidente non partecipa.",
+      "independentGroup": "rai",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "ingv-sisma",
+      "publisher": "INGV · Sala sismica",
+      "url": "https://terremoti.ingv.it/event/47606532",
+      "date": "2026-10-23",
+      "note": "Corpo pubblico recuperato via HTTPS alle 19:47 Europe/Zurich. Stima preferita aggiornata Mw 5.5; conservato snapshot. Non confondere la precedente ML 5.0 con la magnitudo momento.",
+      "evidence": "Scossa del 23 ottobre alle 12:19:15 ora italiana nel Tirreno meridionale, Mw 5.5, profondità 9 km. I parametri sono la migliore stima disponibile e possono essere aggiornati.",
+      "independentGroup": "ingv",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "rai-sisma",
+      "publisher": "Rai News",
+      "url": "https://www.rainews.it/amp/articoli/2026/10/scosse-di-terremoto-a-palermo-e-messina-fino-a-magnitudo-5-efc03588-5545-4a89-acc9-6edecab30f93.html",
+      "date": "2026-10-23",
+      "note": "Resoconto indicizzato aggiornato alla magnitudo 5.5; cita la Prefettura di Palermo. Nessun bilancio definitivo esteso ad altre regioni.",
+      "evidence": "Scossa delle 12:19 rivista a 5.5. La Prefettura di Palermo riferisce assenza di segnalazioni di danni a persone o cose al momento del suo riscontro. Evacuazioni precauzionali di scuole e uffici.",
+      "independentGroup": "rai",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "calabria-nota",
+      "publisher": "Protezione civile Calabria · nota riportata da TGCAL24",
+      "url": "https://www.tgcal24.it/province/catanzaro/terremoto-la-protezione-civile-nessuna-allerta-maremoto-in-calabria/",
+      "date": "2026-10-23",
+      "note": "Nota della Protezione civile regionale riportata nel corpo indicizzato. La stessa nota su altre testate non è un altro riscontro indipendente. Ambito esclusivamente Calabria.",
+      "evidence": "La Protezione civile regionale chiarisce che l’allerta maremoto è rientrata per le coste calabresi. Il primo avviso è precauzionale, seguito da conferma o revoca dopo verifiche INGV/ISPRA; sequenza sismica monitorata. Non dimostra revoca di ogni allerta in Sicilia.",
+      "independentGroup": "protezionecivile-calabria",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "agenas-bollettino",
+      "publisher": "AGENAS",
+      "url": "https://www.agenas.gov.it/images/2026/Comunicato_stampa_Liste_di_attesa_22_ottobre.pdf",
+      "date": "2026-10-22",
+      "note": "PDF primario di nove pagine recuperato e letto nella ricerca della scaletta. Nuova apertura in questa sessione 403, non spacciata per nuova lettura. Pubblicazione del bollettino il 22, nuovo riscontro Puglia del 23.",
+      "evidence": "Bollettino gennaio–settembre 2026 confrontato con gennaio–settembre 2025: prenotazioni da 19,7 a 21,8 milioni. Rispetto tempi prime visite da 76,9% a 78,6%, diagnostica da 83,3% a 85%. Differenze territoriali; volumi di prenotazioni non equivalgono alla garanzia individuale di accesso.",
+      "independentGroup": "agenas",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "puglia-bollettino",
+      "publisher": "Regione Puglia · Ufficio statistico",
+      "url": "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026",
+      "date": "2026-10-23",
+      "note": "Scheda statistica del 23: stessa origine dati AGENAS, non secondo campione indipendente.",
+      "evidence": "Rapporto aggiornato al 30 settembre: +oltre 2 milioni di prenotazioni (+oltre10%), prime visite nei tempi 78,6%, diagnostica 85%. Specificità regionali e uso diverso delle classi di priorità.",
+      "independentGroup": "agenas",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "teleborsa-sanita",
+      "publisher": "Teleborsa via Repubblica",
+      "url": "https://finanza.repubblica.it/News/2026/10/23/sanita_migliorano_liste_dattesa_ma_fuori_tempo_4_milioni_visite_ed_esami-37/",
+      "date": "2026-10-23",
+      "note": "Resoconto indipendente delle 09:20 consultato nell’indice. Il titolo usa visite effettuate: per i volumi il copione mantiene la denominazione primaria prenotazioni. Non usa il totale ritardi contestato.",
+      "evidence": "Nuovo bollettino AGENAS al 30 settembre: 21,8 milioni, miglioramento generale insieme a ritardi e differenze territoriali. Non dimostra risoluzione delle liste o situazione del singolo paziente.",
+      "independentGroup": "teleborsa",
+      "retrievalKind": "indexed-excerpt"
+    },
+    {
+      "id": "mef-risultati",
+      "publisher": "MEF · comunicato ospitato da Banco BPM",
+      "url": "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+      "date": "2026-10-23",
+      "note": "PDF originale MEF di due pagine scaricato dal collegamento pubblico, testo e pagina verificati visivamente. Banco BPM è l’host, non autore né secondo riscontro.",
+      "evidence": "Comunicato Roma 23 ottobre: conclusa doppia emissione, raccolta 16.622,518 milioni, 560.029 contratti. Tassi definitivi BTP Valore 3,75% primi due anni,4,20% terzo e quarto,4,75% quinto. BTP Valore Insieme unica cedola finale 22,70% dopo cinque anni con rimborso capitale; non tasso annuo. Scadenza 27 ottobre2031.",
+      "independentGroup": "mef",
+      "retrievalKind": "full-body"
+    },
+    {
+      "id": "ansa-btp",
+      "publisher": "ANSA",
+      "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/mef-rivisti-al-rialzo-i-tassi-cedolari-del-btp-valore-e-del-btp_af85601c-5de4-4a2e-b1a8-b9612e193e50.html",
+      "date": "2026-10-23",
+      "note": "Resoconto indicizzato delle 14:08. Non corpo riaperto; dettagli numerici verificati sul PDF primario.",
+      "evidence": "MEF alza tassi definitivi delle emissioni BTP Valore; Insieme22,70% unica cedola finale.",
+      "independentGroup": "ansa",
+      "retrievalKind": "indexed-excerpt"
+    }
+  ],
+  "lines": [
+    {
+      "scene": "apertura",
+      "thought": "intro",
+      "mood": "agreement",
+      "intensity": 0.58,
+      "intent": "invite",
+      "sourceIds": [],
+      "text": "Ciao, questo è Conclavia Daily. Il punto sull’Italia, con il contesto che serve."
+    },
+    {
+      "scene": "apertura",
+      "thought": "intro",
+      "mood": "curiosity",
+      "intensity": 0.61,
+      "intent": "explain",
+      "sourceIds": [
+        "ingv-sisma",
+        "agenas-bollettino",
+        "mef-risultati"
+      ],
+      "text": "Il terremoto nel Tirreno, i rifornimenti che ripartono, le attese per una visita. E poi risparmio e fine vita: vediamo cosa cambia, senza dare nulla per scontato."
+    },
+    {
+      "scene": "sisma",
+      "thought": "sisma-fatto",
+      "mood": "attention",
+      "intensity": 0.69,
+      "intent": "explain",
+      "sourceIds": [
+        "ingv-sisma",
+        "rai-sisma"
+      ],
+      "text": "Partiamo dal Tirreno meridionale. Il ventitré ottobre una scossa alle dodici e diciannove è stata avvertita in Sicilia, tra Palermo e Messina. La stima aggiornata dell’Istituto nazionale di geofisica e vulcanologia è di magnitudo momento cinque virgola cinque, con il terremoto a circa nove chilometri di profondità."
+    },
+    {
+      "scene": "sisma",
+      "thought": "sisma-riscontri",
+      "mood": "empathy",
+      "intensity": 0.55,
+      "intent": "explain",
+      "sourceIds": [
+        "rai-sisma"
+      ],
+      "text": "A Palermo scuole e uffici sono stati evacuati per precauzione. La Prefettura ha riferito che, al momento del suo riscontro, non erano arrivate segnalazioni di danni a persone o cose. È un primo quadro, da distinguere da un bilancio definitivo."
+    },
+    {
+      "scene": "sisma",
+      "thought": "sisma-avvisi",
+      "mood": "attention",
+      "intensity": 0.61,
+      "intent": "contrast",
+      "sourceIds": [
+        "calabria-nota"
+      ],
+      "text": "Sulle coste calabresi, la Protezione civile regionale ha poi comunicato il rientro dell’allerta maremoto. Il primo avviso aveva attivato le precauzioni; le verifiche successive hanno aggiornato la situazione. Per seguire gli sviluppi contano i bollettini delle autorità, con il loro orario e il territorio a cui si riferiscono."
+    },
+    {
+      "scene": "carburanti",
+      "thought": "trasporti-novita",
+      "mood": "attention",
+      "intensity": 0.65,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-rifornimenti",
+        "adnkronos-rifornimenti"
+      ],
+      "text": "Dalla sicurezza ai servizi di ogni giorno. In Campania sono stati rimossi i presidi dei tir sulla rete autostradale, nel Casertano e nel Salernitano. A Napoli è stato sciolto anche quello di via Argine, vicino ai depositi di carburante. I mezzi hanno ripreso a muoversi, anche con le scorte delle forze dell’ordine."
+    },
+    {
+      "scene": "carburanti",
+      "thought": "trasporti-novita",
+      "mood": "curiosity",
+      "intensity": 0.59,
+      "intent": "contrast",
+      "sourceIds": [
+        "ansa-rifornimenti",
+        "adnkronos-rifornimenti"
+      ],
+      "text": "Basta questo a ritrovare subito benzina e scaffali pieni? I resoconti del ventitré ottobre descrivono ancora code ai distributori aperti e negozi che devono ricostituire le scorte. Dopo giorni di blocchi, rimettere in moto le consegne e rifornire tutti i punti vendita sono due passaggi diversi."
+    },
+    {
+      "scene": "carburanti",
+      "thought": "trasporti-aiuti",
+      "mood": "attention",
+      "intensity": 0.6,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-aiuti",
+        "fatto-aiuti"
+      ],
+      "text": "La protesta riguarda il costo del carburante. Il decreto approvato il ventidue ottobre stanzia circa centosettantacinque milioni per autotrasporto, agricoltura e pesca. Per i camion la misura principale passa dai crediti d’imposta sul gasolio: agevolazioni fiscali legate ai costi delle imprese, non una riduzione immediata del prezzo alla pompa."
+    },
+    {
+      "scene": "carburanti",
+      "thought": "trasporti-aiuti",
+      "mood": "curiosity",
+      "intensity": 0.58,
+      "intent": "emphasize",
+      "sourceIds": [
+        "ansa-rifornimenti",
+        "adnkronos-rifornimenti"
+      ],
+      "text": "Il fatto nuovo è la ripartenza dei rifornimenti. Per chi deve fare benzina o la spesa, il punto da seguire è il ritorno della distribuzione regolare nella propria zona.",
+      "gestureWord": "rifornimenti"
+    },
+    {
+      "scene": "sanita",
+      "thought": "sanita-dato",
+      "mood": "curiosity",
+      "intensity": 0.62,
+      "intent": "explain",
+      "sourceIds": [
+        "agenas-bollettino",
+        "puglia-bollettino"
+      ],
+      "text": "Quanto si aspetta per una visita medica? Un nuovo bollettino dell’Agenzia nazionale per i servizi sanitari regionali confronta i primi nove mesi del duemilaventisei con lo stesso periodo del duemilaventicinque. Le prenotazioni monitorate salgono da diciannove virgola sette a ventuno virgola otto milioni: oltre due milioni in più."
+    },
+    {
+      "scene": "sanita",
+      "thought": "sanita-dato",
+      "mood": "attention",
+      "intensity": 0.59,
+      "intent": "explain",
+      "sourceIds": [
+        "agenas-bollettino",
+        "puglia-bollettino"
+      ],
+      "text": "Migliora anche la quota di prime visite entro i tempi previsti: dal settantasei virgola nove al settantotto virgola sei per cento. In parole semplici, il rapporto segnala più prenotazioni e una percentuale un po’ maggiore di accessi nei tempi. Non sta dicendo che il problema delle liste d’attesa sia risolto."
+    },
+    {
+      "scene": "sanita",
+      "thought": "sanita-limiti",
+      "mood": "empathy",
+      "intensity": 0.57,
+      "intent": "contrast",
+      "sourceIds": [
+        "agenas-bollettino",
+        "puglia-bollettino",
+        "teleborsa-sanita"
+      ],
+      "text": "Dietro la media nazionale restano differenze tra territori e prestazioni. E un miglioramento complessivo non racconta quanto aspetterà la singola persona per la visita che le serve. Anche il modo in cui vengono assegnate le priorità alle richieste può cambiare la lettura dei risultati."
+    },
+    {
+      "scene": "sanita",
+      "thought": "sanita-limiti",
+      "mood": "attention",
+      "intensity": 0.55,
+      "intent": "explain",
+      "sourceIds": [
+        "agenas-bollettino",
+        "puglia-bollettino"
+      ],
+      "text": "Questo è il senso della notizia: abbiamo una fotografia più aggiornata del sistema, riferita a settembre. Per capire se l’accesso alle cure sta migliorando, vanno letti insieme i volumi, il rispetto dei tempi e le differenze locali. Un numero nazionale, da solo, non basta."
+    },
+    {
+      "scene": "risparmio",
+      "thought": "btp-risultato",
+      "mood": "curiosity",
+      "intensity": 0.6,
+      "intent": "explain",
+      "sourceIds": [
+        "mef-risultati",
+        "ansa-btp"
+      ],
+      "text": "Passiamo al risparmio. Si è chiusa la doppia emissione dei BTP Valore, i titoli con cui lo Stato raccoglie denaro dai risparmiatori. Il Tesoro comunica una raccolta complessiva di circa sedici virgola sei miliardi di euro e ha rivisto al rialzo i tassi definitivi rispetto a quelli inizialmente annunciati."
+    },
+    {
+      "scene": "risparmio",
+      "thought": "btp-differenza",
+      "mood": "attention",
+      "intensity": 0.58,
+      "intent": "contrast",
+      "sourceIds": [
+        "mef-risultati"
+      ],
+      "text": "Le due versioni pagano gli interessi in modo diverso. Il BTP Valore prevede cedole trimestrali, con tassi che crescono nel tempo. Il BTP Valore Insieme concentra invece gli interessi in un unico pagamento finale, dopo cinque anni, insieme al rimborso del capitale."
+    },
+    {
+      "scene": "risparmio",
+      "thought": "btp-differenza",
+      "mood": "curiosity",
+      "intensity": 0.58,
+      "intent": "emphasize",
+      "sourceIds": [
+        "mef-risultati"
+      ],
+      "text": "Qui c’è un dettaglio da capire: quel ventidue virgola sette per cento indicato per la cedola finale non è un tasso annuo. È il pagamento previsto alla fine dei cinque anni. Metterlo accanto a una percentuale annuale, senza spiegare la differenza, può trarre in inganno. Il collocamento è concluso: stiamo raccontando i risultati, non un’offerta a cui aderire."
+    },
+    {
+      "scene": "umbria",
+      "thought": "umbria-voto",
+      "mood": "attention",
+      "intensity": 0.59,
+      "intent": "explain",
+      "sourceIds": [
+        "umbria-assemblea",
+        "umbria-rai"
+      ],
+      "text": "Chiudiamo con una decisione delicata, sul fine vita. Il ventidue ottobre il Consiglio regionale dell’Umbria ha approvato la proposta che organizza l’assistenza sanitaria alla morte volontaria medicalmente assistita. Il testo riguarda le procedure del servizio sanitario regionale e richiama le condizioni previste dal quadro statale e dalle decisioni della Corte costituzionale."
+    },
+    {
+      "scene": "umbria",
+      "thought": "umbria-spiegazione",
+      "mood": "empathy",
+      "intensity": 0.56,
+      "intent": "explain",
+      "sourceIds": [
+        "umbria-assemblea",
+        "umbria-rai"
+      ],
+      "text": "Che cosa significa, concretamente? Si tratta di stabilire come il servizio sanitario esamina una richiesta, verifica i requisiti e accompagna il percorso. Il voto regionale non equivale a una nuova disciplina nazionale, né dimostra che ogni passaggio sia già operativo. Sono livelli diversi: regole generali, organizzazione sanitaria e attuazione."
+    },
+    {
+      "scene": "umbria",
+      "thought": "umbria-persona",
+      "mood": "empathy",
+      "intensity": 0.54,
+      "intent": "explain",
+      "sourceIds": [
+        "umbria-assemblea"
+      ],
+      "text": "Il testo prevede che la persona riceva informazioni sulle cure palliative e possa sospendere o revocare la richiesta. Le cure palliative servono a trattare il dolore e la sofferenza e restano parte dell’assistenza. Il confronto pubblico su questo tema continua; qui abbiamo distinto la decisione approvata dalle sue successive applicazioni."
+    },
+    {
+      "scene": "chiusura",
+      "thought": "sito",
+      "mood": "agreement",
+      "intensity": 0.55,
+      "intent": "invite",
+      "sourceIds": [],
+      "text": "Segui Conclavia Daily. Fonti e approfondimenti su daily.conclavia.me."
+    },
+    {
+      "scene": "chiusura",
+      "thought": "commenti",
+      "mood": "curiosity",
+      "intensity": 0.64,
+      "intent": "point-down",
+      "sourceIds": [],
+      "text": "Scrivici nei commenti cosa vuoi approfondire:",
+      "gestureWord": "commenti"
+    },
+    {
+      "scene": "chiusura",
+      "thought": "commenti",
+      "mood": "agreement",
+      "intensity": 0.55,
+      "intent": "invite",
+      "sourceIds": [],
+      "text": "partiamo dalle tue domande."
+    },
+    {
+      "scene": "chiusura",
+      "thought": "firma",
+      "mood": "agreement",
+      "intensity": 0.55,
+      "intent": "invite",
+      "sourceIds": [],
+      "text": "Meno rumore, più contesto."
+    }
+  ],
+  "scenes": [
+    {
+      "id": "apertura",
+      "kind": "host",
+      "kicker": "23 OTTOBRE 2026 · ITALIA",
+      "lines": [
+        "L’Italia,",
+        "con il contesto."
+      ]
+    },
+    {
+      "id": "sisma",
+      "kind": "host",
+      "kicker": "CRONACA · TIRRENO",
+      "lines": [
+        "Sisma nel Tirreno.",
+        "Gli aggiornamenti."
+      ]
+    },
+    {
+      "id": "carburanti",
+      "kind": "host",
+      "kicker": "SERVIZI · CAMPANIA",
+      "lines": [
+        "Rifornimenti",
+        "in ripresa."
+      ]
+    },
+    {
+      "id": "sanita",
+      "kind": "host",
+      "kicker": "SANITÀ · LISTE D’ATTESA",
+      "lines": [
+        "Visite mediche.",
+        "Cosa dicono i dati."
+      ]
+    },
+    {
+      "id": "risparmio",
+      "kind": "host",
+      "kicker": "ECONOMIA · RISPARMIO",
+      "lines": [
+        "BTP: risultati",
+        "e differenze."
+      ]
+    },
+    {
+      "id": "umbria",
+      "kind": "host",
+      "kicker": "DIRITTI · UMBRIA",
+      "lines": [
+        "Fine vita.",
+        "Cosa prevede il voto."
+      ]
+    },
+    {
+      "id": "chiusura",
+      "kind": "host",
+      "kicker": "DOMANDE E APPROFONDIMENTI",
+      "lines": [
+        "Cosa vuoi approfondire?"
+      ]
+    }
+  ]
+}

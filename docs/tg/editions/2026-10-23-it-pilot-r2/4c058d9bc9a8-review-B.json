@@ -1,0 +1,122 @@
+{
+  "role": "B",
+  "scoreSha256": "4c058d9bc9a8b72714f95adc0d15d06ee69a987dd38fa79a39fd7bd489e07e79",
+  "checkedAt": "2026-10-23T15:17:04.788Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 36519,
+  "outputTokens": 2468,
+  "issues": [
+    "La notizia su Taiwan contiene un elemento non verificato: le chiusure di sabato 24 ottobre non risultano confermate nel materiale di supporto fornito.",
+    "La summary ripete quel punto non verificato su Taiwan; va allineata alle sole chiusure e interruzioni già confermate.",
+    "La chiusura con l’invito ai commenti è presente, ma il gesto verso il basso non è verificabile nel testo e richiede conferma media successiva se deve essere certificato."
+  ],
+  "checks": {
+    "selection": {
+      "status": "pass",
+      "reason": "Cinque temi con rilevanza pubblica chiara per un pubblico italiano generale: carburanti, tensioni intercoreane, fine vita in Umbria, tifone a Taiwan, consumi britannici. Nessun riempitivo meteo locale o quota artificiale.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "opening": {
+      "status": "pass",
+      "reason": "L’apertura offre un saluto breve, un’orientazione d’ascolto e un’anteprima coerente di più temi reali. La frase è pulita e adatta a un avvio di edizione mattutina.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html"
+      ]
+    },
+    "written_rhythm": {
+      "status": "pass",
+      "reason": "La prosa è scorrevole, con frasi brevi e comprensibili. La scansione interna è leggibile sulla pagina; non emergono blocchi o accumuli eccessivi di gergo.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "explanation": {
+      "status": "pass",
+      "reason": "I fatti principali sono spiegati con sufficiente contesto per un pubblico non esperto: linea di demarcazione intercoreana, voto regionale sul fine vita, differenza tra variazione mensile e trimestrale nei consumi.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "transitions": {
+      "status": "pass",
+      "reason": "Le transizioni sono naturali e non numerate; il passaggio tra temi è chiaro senza formule artificiali di elenco.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html"
+      ]
+    },
+    "closing": {
+      "status": "pass",
+      "reason": "La chiusura contiene l’invito fisso al sito e ai commenti, senza inserire una falsa analisi AI o una coda fuori formato. Il gesto verso il basso è indicato nel testo sorgente tramite il marker di commenti, ma non è verificabile come animazione.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html"
+      ]
+    },
+    "summary": {
+      "status": "revise",
+      "reason": "Copre tutti e cinque i temi, ma include il riferimento non verificato alle chiusure di sabato 24 ottobre a Taiwan. Va riscritta per restare entro i soli fatti confermati.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "story_carburanti": {
+      "status": "pass",
+      "reason": "Il fatto nuovo è correttamente identificato come rimozione dei presidi e riavvio graduale dei rifornimenti. La distinzione tra consegne riprese e normalizzazione completa resta prudente.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html"
+      ]
+    },
+    "story_coree": {
+      "status": "pass",
+      "reason": "La proposta sudcoreana di colloqui militari è resa con il giusto grado di cautela: offerta annunciata, non accettazione confermata del Nord.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html"
+      ]
+    },
+    "story_umbria": {
+      "status": "pass",
+      "reason": "Il voto regionale è presentato come decisione organizzativa dentro il quadro statale e costituzionale, senza farne un accesso automatico. Il contesto è adeguato.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "story_taiwan": {
+      "status": "revise",
+      "reason": "La parte su scuole e uffici chiusi e voli sospesi è supportata, ma l’estensione delle chiusure a sabato 24 ottobre non è confermata dal materiale fornito. Va eliminata o resa esplicitamente come non verificata.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "story_consumi": {
+      "status": "pass",
+      "reason": "Il dato mensile e il dato trimestrale sono correttamente messi in relazione, con spiegazione utile della differenza tra i due confronti.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back"
+      ]
+    }
+  },
+  "scope": "editorial-pre-take",
+  "mediaTimingNotYetVerified": true,
+  "passed": false
+}

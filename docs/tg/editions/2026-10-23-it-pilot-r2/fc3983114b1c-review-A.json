@@ -1,0 +1,232 @@
+{
+  "role": "A",
+  "scoreSha256": "fc3983114b1c630311381be2be9259bfd08c889e53ccd89398b7dd6f0a09feb1",
+  "checkedAt": "2026-10-23T15:13:16.483Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 36854,
+  "outputTokens": 3380,
+  "issues": [
+    "Taiwan: the script states as confirmed that schools and offices are closed on Saturday 24 October, but the retrieved evidence says that specific 24 October closure announcement was not confirmed in the material found.",
+    "Taiwan: the line that the measures announced for Saturday are confirmed is unsupported for the same reason.",
+    "Campania headline is slightly overstated: roads were reopened, but supply was still only gradually normalising and shortages/queues remained.",
+    "Umbria sentence 11 goes beyond the evidence by stating as confirmed the possibility to suspend or revoke the request; the brief says that point was not fully verified in the extracted material."
+  ],
+  "checks": {
+    "description": {
+      "status": "revise",
+      "reason": "Mostly supported, but the Taiwan clause about closures on Saturday 24 October is not confirmed in the evidence retrieved; the brief explicitly flags it as unverified.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "headline_0": {
+      "status": "revise",
+      "reason": "‘Le strade riaprono’ is a bit too complete: evidence supports removal of blockades and a gradual restart, but not a fully normalised situation.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html"
+      ]
+    },
+    "headline_1": {
+      "status": "pass",
+      "reason": "Supported: South Korea did propose dialogue with North Korea on military talks and communication channels, with no confirmed acceptance.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813"
+      ]
+    },
+    "headline_2": {
+      "status": "pass",
+      "reason": "Supported by the Umbria assembly vote on the fine-life / medically assisted suicide proposal.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html"
+      ]
+    },
+    "headline_3": {
+      "status": "pass",
+      "reason": "Supported: Typhoon Champi disrupted activity and transport in Taiwan.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "headline_4": {
+      "status": "pass",
+      "reason": "Supported: the retail data require reading the monthly and quarterly comparisons together.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.marketscreener.com/news/uk-retail-sales-fall-but-underlying-momentum-positive-ce785cded18df22c"
+      ]
+    },
+    "sentence_0": {
+      "status": "pass",
+      "reason": "Greeting/opening line is editorial, not factual.",
+      "sourceUrls": []
+    },
+    "sentence_1": {
+      "status": "pass",
+      "reason": "The topic preview matches the selected stories and is supported by the evidence set.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "sentence_2": {
+      "status": "pass",
+      "reason": "Supported: blockades were removed in Campania and fuel deliveries resumed with police escorts.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "sentence_3": {
+      "status": "pass",
+      "reason": "Supported: reports still described fuel shortages, queues, and supermarket restocking.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html"
+      ]
+    },
+    "sentence_4": {
+      "status": "pass",
+      "reason": "Supported: the decree total and its split were reported on 22 October, with transport aid linked to fuel tax credits.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html"
+      ]
+    },
+    "sentence_5": {
+      "status": "pass",
+      "reason": "Supported as a framing sentence: it correctly distinguishes the restart of deliveries from the aid package.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html"
+      ]
+    },
+    "sentence_6": {
+      "status": "pass",
+      "reason": "Supported: South Korea proposed new military talks to reduce border-risk and restore communication channels.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c"
+      ]
+    },
+    "sentence_7": {
+      "status": "pass",
+      "reason": "Historical context is correct: the 1953 armistice ended fighting without a peace treaty.",
+      "sourceUrls": [
+        "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf",
+        "https://www.unc.mil/History/1951-1953-Armistice-Negotiations/"
+      ]
+    },
+    "sentence_8": {
+      "status": "pass",
+      "reason": "Supported: the offer was announced on 23 October and no North Korean acceptance was confirmed in the consulted material.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c"
+      ]
+    },
+    "sentence_9": {
+      "status": "pass",
+      "reason": "Supported by the regional vote result and the note that the president did not take part.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html"
+      ]
+    },
+    "sentence_10": {
+      "status": "pass",
+      "reason": "Supported: the regional measure concerns local health-system organisation and refers to national constitutional/statutory conditions.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "sentence_11": {
+      "status": "revise",
+      "reason": "The claim that the confirmed aspects include the possibility to suspend or revoke the request is not fully verified in the extracted evidence; the brief says that point remained to be checked in a full text.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html"
+      ]
+    },
+    "sentence_12": {
+      "status": "pass",
+      "reason": "Supported: Champi disrupted schools, offices, flights, evacuations and power supply in Taiwan.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "sentence_13": {
+      "status": "revise",
+      "reason": "The 24 October closures are not confirmed in the retrieved evidence; the Taiwan brief explicitly flags that as unsupported.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "sentence_14": {
+      "status": "revise",
+      "reason": "The sentence says the Saturday measures are confirmed, but the evidence does not confirm that; it specifically marks that claim as unverified.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "sentence_15": {
+      "status": "pass",
+      "reason": "Supported: the ONS published September retail sales down 0.4% month on month on 23 October.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.marketscreener.com/news/uk-retail-sales-fall-but-underlying-momentum-positive-ce785cded18df22c"
+      ]
+    },
+    "sentence_16": {
+      "status": "pass",
+      "reason": "Supported: the three-month period rose 0.7%, so the monthly fall and quarterly rise can coexist.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.marketscreener.com/news/uk-retail-sales-fall-but-underlying-momentum-positive-ce785cded18df22c"
+      ]
+    },
+    "sentence_17": {
+      "status": "pass",
+      "reason": "Supported as cautionary interpretation from the data release, including weakness in clothing.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "sentence_18": {
+      "status": "pass",
+      "reason": "Non-factual site credit line.",
+      "sourceUrls": []
+    },
+    "sentence_19": {
+      "status": "pass",
+      "reason": "Non-factual audience prompt.",
+      "sourceUrls": []
+    },
+    "sentence_20": {
+      "status": "pass",
+      "reason": "Non-factual audience prompt.",
+      "sourceUrls": []
+    },
+    "sentence_21": {
+      "status": "pass",
+      "reason": "Non-factual outro line.",
+      "sourceUrls": []
+    }
+  },
+  "passed": false
+}

@@ -1,0 +1,14 @@
+{
+  "INGV": {
+    "url": "https://terremoti.ingv.it/event/47606532",
+    "sha256": "994c88eb4434e467410199217817a5cce4c747ee57ce00af116a556c55d59e73",
+    "preferredMagnitude": "Mw 5.5",
+    "time": "2026-10-23T10:19:15Z"
+  },
+  "MEF": {
+    "url": "https://www.bancobpm.it/media/2026/10/BTP-Valore-e-BTP-Valore-Insieme-27.10.2031-8-e-9-Risultati-collocamento.pdf",
+    "sha256": "ebf3f7b5487225796aceaa3247edb0240bf2b2d474743ad762a8817917ef71ef",
+    "pages": 2,
+    "visualPageChecked": 1
+  }
+}

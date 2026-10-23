@@ -240,9 +240,12 @@ test("picture choices update the actual rehearsal and preview canvases without s
     }
     if (wrapper === "rehearsal-stage") for (const width of [320, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
-      const picture = await stage.boundingBox(), label = await page.getByTestId("rehearsal-stage-label").boundingBox();
-      expect(picture).not.toBeNull(); expect(label).not.toBeNull();
-      expect(label!.y, "Rehearsal caption must leave the full video unobstructed").toBeGreaterThanOrEqual(picture!.y + picture!.height);
+      // Read both rectangles in one frame: resizing can also scroll the focused picker.
+      await expect.poll(() => stage.evaluate(canvas => {
+        const picture = canvas.getBoundingClientRect();
+        const label = document.querySelector('[data-testid="rehearsal-stage-label"]')!.getBoundingClientRect();
+        return label.top - picture.bottom;
+      }), { message: "Rehearsal caption must leave the full video unobstructed" }).toBeGreaterThanOrEqual(0);
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
         message: "Responsive controls must fit after the viewport resize",
       }).toBeLessThanOrEqual(width);

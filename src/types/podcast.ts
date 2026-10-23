@@ -21,6 +21,7 @@ export interface Participant {
   role: string;
   perspectiveMode: PerspectiveMode;
   perspectivePrompt: string;
+  personalityPrompt?: string;
   goals?: string;
   nonNegotiables?: string;
   speakingStylePrompt?: string;
@@ -56,6 +57,8 @@ export interface TalkSettings {
   studioLayout?: PodcastLayout;
   studioCast?: StudioCast;
   studioGuest?: StudioGuestMode;
+  videoTopicMode?: import("@/lib/podcast/video-topic").VideoTopicMode;
+  videoTopicText?: string;
   defaultModel: LlmModelId;
   allowInterruptions: boolean;
   pace: TalkPace;

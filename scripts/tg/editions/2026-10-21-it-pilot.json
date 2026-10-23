@@ -1,0 +1,43 @@
+{
+  "id": "2026-10-21-it-pilot",
+  "kind": "daily-pilot",
+  "editionDate": "2026-10-21",
+  "language": "it",
+  "researchCutoff": "2026-10-21T00:22:00+02:00",
+  "title": "CDaily · 21 ottobre 2026 · Prima edizione pilota",
+  "voice": "Alex 2 - daily",
+  "description": "Edizione pilota italiana del 21 ottobre 2026, basata sugli aggiornamenti verificati del 20 ottobre sera. Quattro storie: Liguria, autotrasporto, colloqui sull’Ucraina e ricerca sull’acqua. Presentatore e voce AI. Una prova del formato, senza pubblicazione social o attivazione della filiera autonoma quotidiana.",
+  "sources": [
+    {"id":"arpal","publisher":"Arpal Liguria","url":"https://www.arpal.liguria.it/home-page/notizie-tematiche/item/martedi-20-ottobre-allerta-arancione-anche-sul-levante-zone-c-ed-e.html","date":"2026-10-20","note":"Bollettino aggiornato nel corpo del testo; la data iniziale della pagina è 17 ottobre. Arancione in A fino alle 02 del 21, B/C/D/E fino alle 06; successivi orari gialli distinti."},
+    {"id":"ansa-meteo","publisher":"ANSA","url":"https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/20/allerta-arancione-per-temporali-estesa-in-liguria-fino-a-domani_a493b23a-1d67-4043-a3ea-a78c4f96a158.html","date":"2026-10-20","note":"Riscontro del bollettino e delle scadenze per zona, non misura di piogge future."},
+    {"id":"ansa-trasporti","publisher":"ANSA","url":"https://www.ansa.it/sito/notizie/cronaca/2026/10/20/governo-promette-un-miliardo-ai-camionisti-ma-i-blocchi-continuano_3a6127ff-0b4c-4c40-8785-32cfb644514b.html","date":"2026-10-20","note":"Vertice, annunci di sostegno e prosecuzione di blocchi. Evitati importi e rivendicazioni non necessari al riepilogo."},
+    {"id":"pmi-trasporti","publisher":"PMI.it · intervista Confartigianato Trasporti","url":"https://www.pmi.it/economia/mercati/501942/credito-imposta-autotrasporto-pagamenti.html","date":"2026-10-20","note":"Riva riferisce sblocco e calendario atteso dei crediti dopo il vertice. Un annuncio non prova pagamenti già eseguiti."},
+    {"id":"norvegia","publisher":"Governo norvegese","url":"https://www.regjeringen.no/en/whats-new/the-prime-ministers-introduction-at-the-press-conference-with-ukraines-president-volodymyr-zelenskyy-and-the-finnish-president-alexander-stubb/id3179842/","date":"2026-10-20","note":"Dichiarazione del premier dopo l’incontro con Zelensky, Stubb e Witkoff. Kushner da remoto. Lavoro negoziale ancora in corso, senza annuncio di cessate il fuoco."},
+    {"id":"ansa-ucraina","publisher":"ANSA","url":"https://www.ansa.it/sito/notizie/mondo/2026/10/20/in-corso-lincontro-tra-zelensky-e-witkoff-a-oslo.-il-nyt-trump-vuole-imporgli_6d053c09-807c-406e-8549-fd712ebcc9f0.html","date":"2026-10-20","note":"Colloqui diplomatici a Oslo. Evitate ipotesi e indiscrezioni sulle condizioni di un accordo."},
+    {"id":"nasa","publisher":"NASA Earth Observatory","url":"https://science.nasa.gov/earth/earth-observatory/the-human-fingerprint-on-earths-water-cycle/","date":"2026-10-20","note":"Analisi di dati GRACE/GRACE-FO aprile 2002–novembre 2025: associazioni con attività umane in 40 regioni; maggiore dettaglio spaziale, minore dettaglio temporale. Non prevede la singola siccità futura."}
+  ],
+  "lines": [
+    {"scene":"apertura","text":"È il ventuno ottobre. Questo è Conclavia Daily: quattro notizie, con gli aggiornamenti disponibili fino a ieri sera.","mood":"attention","intensity":0.74,"intent":"explain","sourceIds":[]},
+    {"scene":"meteo","text":"Partiamo dalla Liguria. L’allerta arancione per temporali copre anche la notte tra il venti e il ventuno ottobre, con scadenze diverse da zona a zona.","mood":"attention","intensity":0.74,"intent":"explain","sourceIds":["arpal","ansa-meteo"]},
+    {"scene":"meteo","text":"Il bollettino prevede poi il passaggio al giallo, in orari diversi da zona a zona.","mood":"attention","intensity":0.68,"intent":"contrast","sourceIds":["arpal","ansa-meteo"]},
+    {"scene":"meteo","text":"Il punto è questo: non basta un colore per tutta la regione. Contano il comune, l’orario e l’ultimo bollettino ufficiale.","mood":"empathy","intensity":0.66,"intent":"reassure","sourceIds":["arpal"]},
+    {"scene":"trasporti","text":"Poi i trasporti. Dopo il confronto a Milano, il governo ha annunciato lo sblocco di aiuti contro il caro gasolio.","mood":"attention","intensity":0.73,"intent":"explain","sourceIds":["ansa-trasporti","pmi-trasporti"]},
+    {"scene":"trasporti","text":"Intanto, i blocchi sono proseguiti in alcune aree del Sud.","mood":"attention","intensity":0.68,"intent":"contrast","sourceIds":["ansa-trasporti"]},
+    {"scene":"trasporti","text":"Un annuncio sui fondi non significa che le consegne siano già tornate regolari: è questo lo sviluppo da seguire.","mood":"doubt","intensity":0.68,"intent":"reflect","sourceIds":["ansa-trasporti","pmi-trasporti"]},
+    {"scene":"mondo","text":"Sull’Ucraina, a Oslo si sono incontrati Zelensky, l’inviato americano Witkoff e i leader di Norvegia e Finlandia.","mood":"attention","intensity":0.72,"intent":"explain","sourceIds":["norvegia","ansa-ucraina"]},
+    {"scene":"mondo","text":"Il premier norvegese parla di colloqui costruttivi, ma descrive un negoziato ancora aperto.","mood":"attention","intensity":0.66,"intent":"contrast","sourceIds":["norvegia"]},
+    {"scene":"mondo","text":"Un incontro è un fatto. Un accordo di pace è un’altra cosa: non confondiamo i due piani.","mood":"doubt","intensity":0.67,"intent":"reflect","sourceIds":["norvegia"]},
+    {"scene":"scienza","text":"Chiudiamo con la scienza. Uno studio presentato dalla NASA usa oltre vent’anni di dati satellitari per osservare come cambia l’acqua immagazzinata sulla Terra.","mood":"curiosity","intensity":0.77,"intent":"explain","sourceIds":["nasa"]},
+    {"scene":"scienza","text":"In quaranta regioni emergono legami con irrigazione, bacini e cambiamenti nell’uso del suolo.","mood":"attention","intensity":0.71,"intent":"emphasize","sourceIds":["nasa"]},
+    {"scene":"scienza","text":"È una mappa più dettagliata delle tendenze di lungo periodo, non una previsione della prossima siccità.","mood":"doubt","intensity":0.64,"intent":"contrast","sourceIds":["nasa"]},
+    {"scene":"chiusura","text":"Le fonti sono accanto al video. Segui Conclavia Daily per notizie e approfondimenti. Meno rumore, più contesto.","mood":"agreement","intensity":0.76,"intent":"invite","sourceIds":[]}
+  ],
+  "scenes": [
+    {"id":"apertura","kind":"cards","kicker":"21 OTTOBRE 2026 · EDIZIONE PILOTA","lines":["Italia e mondo.","Quattro notizie."],"items":["Italia e mondo. Quattro notizie."]},
+    {"id":"meteo","kind":"cards","kicker":"METEO · ARPAL / ANSA","lines":["Liguria: allerta nella notte."],"items":["Liguria: allerta nella notte.","Orari diversi, zona per zona.","Conta l’ultimo bollettino."]},
+    {"id":"trasporti","kind":"cards","kicker":"TRASPORTI · ANSA / PMI.IT","lines":["Tir: fondi e proteste."],"items":["Tir: fondi e proteste.","Blocchi ancora nel Sud.","Annunci e consegne: due piani."]},
+    {"id":"mondo","kind":"cards","kicker":"UCRAINA · GOVERNO NORVEGESE / ANSA","lines":["A Oslo, nuovi colloqui."],"items":["A Oslo, nuovi colloqui.","Il negoziato resta aperto.","Incontro ≠ accordo."]},
+    {"id":"scienza","kind":"cards","kicker":"SCIENZA · NASA EARTH OBSERVATORY","lines":["L’acqua vista dallo spazio."],"items":["L’acqua vista dallo spazio.","La traccia delle attività umane.","Tendenze, non previsioni."]},
+    {"id":"chiusura","kind":"signature","kicker":"FONTI E CONTESTO","lines":["CDaily"]}
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "scope": "read-only-manifest-inventory",
+  "editionId": "2026-10-23-it-pilot-r3",
+  "mediaVersion": "1876a600e330",
+  "manifestSha256": "11afa49ab8dafda1ed9e8b27c0e16a61f2d54aa7403cc01e427044866533ab74",
+  "duration": 326.64,
+  "cues": 23,
+  "uniquePlans": 15,
+  "moods": {
+    "agreement": 4,
+    "curiosity": 7,
+    "attention": 8,
+    "empathy": 4
+  },
+  "intents": {
+    "invite": 4,
+    "explain": 12,
+    "contrast": 4,
+    "emphasize": 2,
+    "point-down": 1
+  },
+  "plannedStrokes": 91,
+  "gestureKinds": {
+    "offer": 7,
+    "explain": 15,
+    "underline": 1,
+    "precision": 15,
+    "gather": 24,
+    "reflect": 9,
+    "compare": 9,
+    "open": 3,
+    "reassure": 7,
+    "point-down": 1
+  },
+  "threeFrequentFamilies": 54,
+  "shareThreeFamilies": 0.5934065934065934,
+  "interpretation": "Counts planned unique strokes, not perceived motion or proof of naturalness. Does not mutate the approved manifest."
+}

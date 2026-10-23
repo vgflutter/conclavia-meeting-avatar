@@ -1,0 +1,57 @@
+{
+  "checkedAt": "2026-10-23T22:01:14.598629+00:00",
+  "scope": "Source catalog, canonical narration/acting score, independent pre-voice AI A/B gates and newsroom GUI.",
+  "providerCalls": 0,
+  "paidSpeechCalls": 0,
+  "publicationCalls": 0,
+  "liveNetworkChecks": "Five public RSS feeds only; no story or episode generated.",
+  "catalog": {
+    "feeds": 14,
+    "italia": 7,
+    "world": 7,
+    "added": [
+      "AGI",
+      "Il Sole 24 Ore",
+      "Istat",
+      "European Central Bank",
+      "NASA"
+    ],
+    "liveReport": "cdaily-new-source-verification-20261023.json",
+    "ecbEvidence": "Explicit HEADLINE ONLY scope; no invented summary."
+  },
+  "tests": {
+    "kit": {
+      "passed": 236
+    },
+    "tgUnit": {
+      "passed": 94,
+      "integrationSkippedInUnitRun": 15
+    },
+    "outboxIntegration": {
+      "passed": 15,
+      "skipped": 0,
+      "database": "Isolated conclavia_e2e_* on 127.0.0.1:27018; removed by test teardown",
+      "externalDelivery": "Simulated ports only"
+    },
+    "browser": {
+      "avatarAndPlayerPassed": 23,
+      "newsroomPassed": 11,
+      "runs": "Separate runs; initial stale approval fixtures corrected for mandatory B binding."
+    },
+    "typecheck": true,
+    "affectedLint": true,
+    "kitFeatureBoundaries": true,
+    "consumerBoundaries": true,
+    "builds": {
+      "meeting": ".next-build-daily-editorial-pipeline-20261023",
+      "onboarding": ".next-build-daily-editorial-pipeline-20261023"
+    },
+    "visualIdentityFingerprints": 17
+  },
+  "preview": "http://127.0.0.1:3107/podcast/tg/redazione",
+  "remaining": [
+    "Actual complete production with live AI reviewers is not exercised by mocked regression tests.",
+    "Approved Alex 2 voice still needs the automatic API adapter; legacy worker voice remains Inworld.",
+    "No daily production or social publication schedule activated."
+  ]
+}

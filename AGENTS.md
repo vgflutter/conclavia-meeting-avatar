@@ -76,7 +76,22 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   `{{resolve:secretsmanager:secret-id:SecretString:json-key}}` with
   `asm-exec` so the secret resolves at runtime without entering context.
 
+# Daily synthetic voice alignment consent
+
+- On 2026-10-20 the user answered “sempre” to the explicit request to send the updated synthetic Alex recording and public Daily script to OpenAI for word timestamps. This authorizes subsequent revisions of the same synthetic Alex/public Daily copy in this alignment workflow without asking again. Keep calls bounded and cached; this does not authorize unrelated files, personal recordings, account data, or publication.
+
 # Shared avatar ownership
 
+- Structure reusable capabilities as owned features with documented public APIs and tests. Avatar, performance and speech implementations live in the kit's `src/features` and are consumed through its feature entry points; preserve legacy re-exports during migration. Other shared application capabilities need an appropriate owning module/package rather than copies or business logic inside the avatar kit.
 - Renderer, animation, asset, voice-catalog and playback implementations belong to `../conclavia-avatar-kit`, used by both Conclavia applications. Preserve the consumer compatibility re-exports; do not introduce local copies.
 - After shared changes, run `npm run check:avatar-kit` with both consumers installed, then the relevant avatar/player regressions and both consumer builds. Keep the three Git checkouts side by side and publish kit changes before dependent consumer changes.
+
+# CDaily video continuity
+
+- For Daily scheduling, autonomous production or publishing, start with `docs/tg/cdaily-agent-runbook.md`. It is the durable handoff when chat context is missing. Preserve the approved date greeting, A/B text gates, semantic acting, Alex 2 identity, closing pointer, both formats and per-edition social summary/rundown. Do not confuse a loaded local production timer with a saved ChatGPT Work task or an operational end-to-end video pipeline.
+
+- Start every new Daily or pilot with `docs/tg/cdaily-production-standard.md`. The user approved `avatar-refined-presence-20261023` (media `12c91abdf743`) on 23 October as the style to reuse. Preserve the sculpted light hybrid, anatomical hands, connected standing performance, approved studio/brand/font and Alex 2 voice. Use a dated dossier; do not rebuild the look from historical pilots or silently replace the voice when credits are unavailable.
+
+- For subsequent Daily videos or avatar refinements, read `docs/tg/cdaily-video-guide.md`. Reuse `dailyVideoIdentity` and the canonical kit rather than reconstructing the approved look. `node scripts/tg/check-video-identity.mjs` verifies the saved artwork/font/setting fingerprints; examples and the visual lock accompany the guide. Deliberate requested art-direction revisions should update those references coherently.
+- For every Daily edition, also read `docs/tg/cdaily-editorial-line.md` and `docs/tg/editorial-workflow.md`. Keep a dated Markdown dossier for its editorial choices, evidence, nonexpert context, timing, moods and reused visual identity. The common line supersedes historical pilot wording; factual support alone is not editorial approval. A recurring AI-opinion closing remains a proposal, not an enabled format decision.
+- Every Daily also requires a standalone social summary in its edition language, covering each spoken news item. Store it in `TgScript.description`, include it in the dated dossier and fact audit, and reuse the reviewed copy for social publication without generating new claims at posting time.

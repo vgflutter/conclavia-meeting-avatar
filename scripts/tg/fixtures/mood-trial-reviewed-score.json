@@ -1,0 +1,25 @@
+{
+  "title":"Conclavia Daily: quattro storie, dalla cronaca alla natura",
+  "description":"Una rassegna di quattro notizie recenti, pubblicate fra il 15 e il 19 ottobre 2026: il primo bilancio dei cortei, il volo a risparmio energetico, le coperture di Santa Croce e un concorso di fotografia naturalistica. Presentatore e voce sono generati con AI. Prova editoriale da revisionare prima di qualsiasi pubblicazione.",
+  "headlines":[{"storyId":"cortei","title":"Cortei: il primo bilancio degli scontri"},{"storyId":"volo","title":"Il vento fa risparmiare energia agli uccelli"},{"storyId":"croce","title":"Santa Croce, l’ingegneria nascosta nel tetto medievale"},{"storyId":"foto","title":"Fotografia della natura: spazio alle storie positive"}],
+  "cards":[{"storyId":"cortei","context":"Rai News riporta arresti, denunce e feriti nel primo bilancio dei cortei.","change":"Il bilancio citato è quello pubblicato domenica 18 ottobre."},{"storyId":"volo","context":"Le correnti possono ridurre molto il costo energetico del volo.","change":"Il vantaggio dipende dalle condizioni atmosferiche."},{"storyId":"croce","context":"Lo studio documenta una ventilazione medievale che aiuta ad asciugare il legno.","change":"La diagnosi offre nuove basi per la conservazione delle coperture."},{"storyId":"foto","context":"Una nuova categoria premia immagini di cambiamento positivo per la natura.","change":"Le iscrizioni si aprono il 19 ottobre e terminano il 3 dicembre."}],
+  "sentences":[
+    {"storyId":"intro","speaker":0,"text":"Buonasera, questo è Conclavia Daily. Quattro storie di questi giorni, dalla cronaca alla ricerca, fino alla fotografia.","mood":"attention","intensity":0.7,"sourceIds":[]},
+    {"storyId":"cortei","speaker":0,"text":"Cominciamo dalle manifestazioni di sabato. Nel primo bilancio pubblicato domenica, Rai News riferisce arresti, denunce","mood":"attention","intensity":0.72,"sourceIds":["rai-cortei"]},
+    {"storyId":"cortei","speaker":0,"text":"e feriti tra le forze dell’ordine.","mood":"empathy","intensity":0.82,"sourceIds":["rai-cortei"]},
+    {"storyId":"cortei","speaker":0,"text":"È un bilancio pesante, da leggere con attenzione:","mood":"empathy","intensity":0.72,"sourceIds":["rai-cortei"]},
+    {"storyId":"cortei","speaker":0,"text":"quei numeri sono una prima fotografia, non un totale definitivo aggiornato a oggi.","mood":"doubt","intensity":0.68,"sourceIds":["rai-cortei"]},
+    {"storyId":"volo","speaker":0,"text":"Cambiamo argomento. Quanto costa volare, per un uccello? Uno studio raccontato dal CNR mostra che, sfruttando vento e correnti ascensionali,","mood":"curiosity","intensity":0.8,"sourceIds":["cnr-volo"]},
+    {"storyId":"volo","speaker":0,"text":"l’energia necessaria può ridursi moltissimo.","mood":"surprise","intensity":0.84,"sourceIds":["cnr-volo"]},
+    {"storyId":"volo","speaker":0,"text":"Una sorta di volo a basso consumo.","mood":"amusement","intensity":0.48,"sourceIds":["cnr-volo"]},
+    {"storyId":"volo","speaker":0,"text":"Ma il vantaggio ha un limite:","mood":"doubt","intensity":0.75,"sourceIds":["cnr-volo"]},
+    {"storyId":"volo","speaker":0,"text":"dipende dal meteo, che condiziona quando e dove gli animali possono veleggiare.","mood":"attention","intensity":0.65,"sourceIds":["cnr-volo"]},
+    {"storyId":"croce","speaker":0,"text":"A Firenze, invece, i ricercatori hanno guardato dentro le coperture di Santa Croce","mood":"curiosity","intensity":0.75,"sourceIds":["cnr-croce"]},
+    {"storyId":"croce","speaker":0,"text":"e documentato un sistema di ventilazione pensato già dai costruttori medievali.","mood":"surprise","intensity":0.8,"sourceIds":["cnr-croce"]},
+    {"storyId":"croce","speaker":0,"text":"Aiuta il legno ad asciugarsi quando entra acqua. Conoscerlo meglio offre nuove basi per proteggere quel patrimonio.","mood":"agreement","intensity":0.72,"sourceIds":["cnr-croce"]},
+    {"storyId":"foto","speaker":0,"text":"Chiudiamo con la fotografia. Il Museo di storia naturale di Londra apre oggi le iscrizioni al suo concorso internazionale,","mood":"attention","intensity":0.7,"sourceIds":["nhm-foto"]},
+    {"storyId":"foto","speaker":0,"text":"con una nuova categoria dedicata alle azioni positive per la natura:","mood":"curiosity","intensity":0.72,"sourceIds":["nhm-foto"]},
+    {"storyId":"foto","speaker":0,"text":"immagini di conservazione riuscita e cambiamenti che danno speranza. Le candidature restano aperte fino al tre dicembre.","mood":"agreement","intensity":0.8,"sourceIds":["nhm-foto"]},
+    {"storyId":"outro","speaker":0,"text":"Per questa edizione è tutto. Ci ritroviamo con Conclavia Daily.","mood":"agreement","intensity":0.64,"sourceIds":[]}
+  ]
+}

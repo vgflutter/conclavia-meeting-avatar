@@ -1,3 +1,4 @@
+import { normalizeVideoTopicMode, normalizeVideoTopicText } from "./video-topic";
 // Recovered from vgflutter/conclavia @ 5d4746f900a106defe1377131bce7ebbc5b69ca3.
 // Namespaced podcast feature; existing Meeting records and runtime stay separate.
 import type { TalkDocument } from "@/models/PodcastTalk";
@@ -44,6 +45,7 @@ export function serializeTalk(talk: TalkDocument): TalkResponse {
       role: participant.role,
       perspectiveMode: participant.perspectiveMode ?? "custom",
       perspectivePrompt: participant.perspectivePrompt,
+      personalityPrompt: participant.personalityPrompt,
       goals: participant.goals,
       nonNegotiables: participant.nonNegotiables,
       speakingStylePrompt: participant.speakingStylePrompt,
@@ -81,6 +83,8 @@ export function serializeTalk(talk: TalkDocument): TalkResponse {
     },
     status: talk.status,
     settings: {
+      videoTopicMode: normalizeVideoTopicMode(talk.settings.videoTopicMode),
+      videoTopicText: normalizeVideoTopicText(talk.settings.videoTopicText),
       voiceProvider: talk.settings.voiceProvider === "kokoro" ? "kokoro" : "inworld",
       maxTurns: talk.settings.maxTurns,
       targetDurationMinutes: talk.settings.targetDurationMinutes ?? 30,

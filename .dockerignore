@@ -11,3 +11,7 @@ test-results
 .conclavia
 .local
 dist
+.tg-artifacts
+
+.tg-test-artifacts
+.daily-agent

@@ -26,3 +26,52 @@ next-env.d.ts
 
 # Shared avatar package build verification
 /.next-build-onboarding-kit
+/.next-build-performance
+/.next-build-robot
+/.next-daily-performance
+
+# Generated TG media, never source or credentials
+.tg-artifacts/
+
+.tg-test-artifacts/
+
+/.next-daily-studio/
+/.next-daily-acting/
+/.next-daily-natural/
+/.next-daily-adult/
+/.next-daily-light/
+/.next-daily-voices/
+
+/.next-daily-mature/
+/.next-daily-mature-final/
+/.next-daily-mature-gui/
+
+/.next-daily-hybrid/
+/.next-daily-hands/
+/.next-daily-hands-final/
+/.next-daily-hands-release/
+/.next-daily-harmony/
+/.next-daily-human-hands/
+/.next-daily-sleeves/
+/.next-daily-arm-depth/
+/.next-daily-expression-review/
+/.next-daily-expression-review-final/
+/.next-daily-mood-score/
+/.next-daily-mood-score-final/
+
+/.next-daily-body-engine/
+
+/.next-daily-launch-promo/
+
+/.next-daily-scheduler/
+/.next-cdaily-clean/
+/.next-build-cdaily/
+
+# Private Daily scheduler state, logs and launchd receipt
+.daily-agent/
+.next-build-daily-agent-*/
+
+# Generated build variants and Python caches
+/.next*/
+__pycache__/
+*.py[cod]

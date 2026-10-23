@@ -1,9 +1,13 @@
 "use client";
 
+import type { VideoTopicSettings } from "@/lib/podcast/video-topic";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { PODCAST_VOICES } from "@conclavia/avatar-kit/lib/podcast-voice-catalog";
-import { runPodcastRehearsal } from "@/lib/podcast/rehearsal-player";
+import { runPodcastRehearsal, type RehearsalVoice } from "@/lib/podcast/rehearsal-player";
+import { createSpeechAudioMixer } from "@conclavia/avatar-kit/lib/speech-audio-mixer";
+import { getLlmModel } from "@/lib/podcast/llm-models";
 import type { Participant, TalkInput, TalkResponse } from "@/types/podcast";
 import type { TalkRunMessageResponse, TalkRunResponse } from "@/types/podcast-run";
 import { studioSelectionQuery, type StudioCast, type StudioGuestMode, type StudioThemeId } from "@/lib/podcast/studio-themes";
@@ -18,10 +22,11 @@ import { podcastPerformanceFrame } from "@/lib/podcast/performance-playback";
 import type { SpeechPlaybackProgress } from "@conclavia/avatar-kit/lib/streaming-voice-player";
 import { PodcastPerformanceText } from "./PodcastPerformanceText";
 import { PodcastMoodReadout } from "./PodcastMoodReadout";
+import { PodcastPersonalityFields } from "./PodcastPersonalityFields";
 
 type RehearsalPhase = "idle" | "preparing" | "ready" | "generating" | "buffering" | "speaking" | "pause" | "complete" | "stopped" | "error";
 interface Capability {
-  ai: { enabled: boolean; ready: boolean; providers?: { openai: boolean; gemini: boolean } };
+  ai: { enabled: boolean; ready: boolean; providers?: { openai: boolean; gemini: boolean; claude?: boolean } };
   speech: { enabled: boolean; ready: boolean; model?: string; providers?: { kokoro: boolean; inworld: boolean } };
 }
 const NO_CAPABILITY: Capability = { ai: { enabled: false, ready: false }, speech: { enabled: false, ready: false } };
@@ -36,7 +41,7 @@ function voiceFor(language: string, sex: Participant["sex"], provider: "kokoro" 
   return PODCAST_VOICES.find((voice) => voice.provider === provider && voice.language === language && voice.gender === sex)?.id;
 }
 
-function rehearsalInput(initialTheme?: StudioThemeId, initialLayout: StudioScenarioId = "studio", initialCast: StudioCast = "original", initialGuest: StudioGuestMode = "auto"): TalkInput {
+function rehearsalInput(initialTheme?: StudioThemeId, initialLayout: StudioScenarioId = "studio", initialCast: StudioCast = "original", initialGuest: StudioGuestMode = "auto", initialTopic: VideoTopicSettings = {}): TalkInput {
   const input = defaultPodcast(false);
   const language = "it";
   return {
@@ -50,13 +55,13 @@ function rehearsalInput(initialTheme?: StudioThemeId, initialLayout: StudioScena
       goals: "Costruire sul contributo dell’altro conduttore, portare esempi concreti e rendere più chiara la domanda centrale.",
       voiceId: voiceFor(language, person.sex, "kokoro"),
     })),
-    settings: { ...input.settings, studioTheme: initialTheme ?? input.settings.studioTheme, studioLayout: initialLayout, studioCast: initialCast, studioGuest: initialGuest, voiceProvider: "kokoro", maxTurns: 8, targetDurationMinutes: 2 },
+    settings: { ...input.settings, studioTheme: initialTheme ?? input.settings.studioTheme, studioLayout: initialLayout, studioCast: initialCast, studioGuest: initialGuest, ...initialTopic, voiceProvider: "kokoro", pace: "fast", allowInterruptions: true, maxTurns: 8, targetDurationMinutes: 2 },
   };
 }
 
-export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initialCast = "original", initialGuest = "auto" }: { initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId; initialCast?: StudioCast; initialGuest?: StudioGuestMode }) {
+export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initialCast = "original", initialGuest = "auto", initialTopic = {} }: { initialTheme?: StudioThemeId; initialLayout?: StudioScenarioId; initialCast?: StudioCast; initialGuest?: StudioGuestMode; initialTopic?: VideoTopicSettings }) {
   const copy = usePodcastCopy();
-  const [input, setInput] = useState<TalkInput>(() => rehearsalInput(initialTheme, initialLayout, initialCast, initialGuest));
+  const [input, setInput] = useState<TalkInput>(() => rehearsalInput(initialTheme, initialLayout, initialCast, initialGuest, initialTopic));
   const [talk, setTalk] = useState<TalkResponse | null>(null);
   const [run, setRun] = useState<TalkRunResponse | null>(null);
   const [speech, setSpeech] = useState<TalkRunMessageResponse | null>(null);
@@ -70,6 +75,7 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
   const [viseme, setViseme] = useState("rest");
   const [audioLevel, setAudioLevel] = useState(0);
   const [speechProgress, setSpeechProgress] = useState<SpeechPlaybackProgress>();
+  const [voices, setVoices] = useState<RehearsalVoice[]>([]);
   const [direction, setDirection] = useState<PodcastDirection>({ ...DEFAULT_DIRECTION, layout: initialLayout });
   const controllerRef = useRef<AbortController | null>(null);
   const prepareRef = useRef<AbortController | null>(null);
@@ -109,7 +115,10 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
 
   const preparing = phase === "preparing";
   const locked = active || preparing;
-  const aiReady = capability.ai.enabled && (capability.ai.providers?.openai ?? capability.ai.ready);
+  const aiReady = capability.ai.enabled && input.participants.every(person => {
+    const provider = getLlmModel(person.modelOverride ?? input.settings.defaultModel).provider;
+    return capability.ai.providers?.[provider] ?? (provider === "openai" && capability.ai.ready);
+  });
   const voiceProvider = input.settings.voiceProvider ?? "inworld";
   const voiceReady = capability.speech.enabled && (capability.speech.providers?.[voiceProvider] ?? capability.speech.ready);
   const readyToStart = Boolean(talk && run && aiReady && voiceReady && !locked && phase !== "complete");
@@ -117,7 +126,7 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
   const performanceFrame = (speech ?? lastSpeech) && direction.automatic ? podcastPerformanceFrame((speech ?? lastSpeech)!, speechProgress) : undefined;
   const actingCue = performanceFrame ? { ...performanceFrame.cue, ...(!speech ? { phase: "settle" as const, progress: 1 } : {}) } : undefined;
   const emotionalDirection = resolvePodcastDirection(direction, stageTalk, speech ?? lastSpeech ?? undefined, actingCue);
-  const effectiveDirection = { ...emotionalDirection, focus: phase === "speaking" ? emotionalDirection.focus : "all" as const };
+  const effectiveDirection = { ...emotionalDirection, focus: phase === "speaking" && voices.length < 2 ? emotionalDirection.focus : "all" as const };
 
   function changeInput(next: TalkInput) {
     if (locked) return;
@@ -162,12 +171,15 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
       if (!audioContextRef.current || audioContextRef.current.state === "closed") audioContextRef.current = new AudioContext({ latencyHint: "interactive" });
       await audioContextRef.current.resume(); controller.signal.throwIfAborted();
       const result = await runPodcastRehearsal({
-        runId: run.id, maxTurns: 8, afterSequence: lastPlayedSequenceRef.current, signal: controller.signal, audioContext: audioContextRef.current, pauseMs: 550,
+        runId: run.id, maxTurns: 8, afterSequence: lastPlayedSequenceRef.current, signal: controller.signal, audioContext: audioContextRef.current,
+        mixer: createSpeechAudioMixer(audioContextRef.current),
+        onVoices: value => { if (mountedRef.current) { setVoices(value); const heard = value.at(-1); if (heard) setLastSpeech(heard.message); } },
+        onHeard: sequence => { lastPlayedSequenceRef.current = Math.max(lastPlayedSequenceRef.current, sequence); },
         onRun: (updated) => { if (mountedRef.current) setRun(updated); },
-        onSpeech: (message) => { if (mountedRef.current) { setSpeech(message); if (message) { setLastSpeech(message); setSpeechProgress(undefined); speechSequenceRef.current = message.sequence; } if (!message) { setViseme("rest"); setAudioLevel(0); } } },
+        onSpeech: (message) => { if (mountedRef.current) { setSpeech(message); if (message) { setSpeechProgress(undefined); speechSequenceRef.current = message.sequence; } if (!message) { setViseme("rest"); setAudioLevel(0); } } },
         onProgress: (progress) => { if (mountedRef.current && !controller.signal.aborted) setSpeechProgress(progress); },
         onFrame: (shape, level) => { if (mountedRef.current && !controller.signal.aborted) { setViseme(shape); setAudioLevel(level); } },
-        onPhase: (next) => { if (!controller.signal.aborted) { if (next === "pause" || next === "complete") lastPlayedSequenceRef.current = Math.max(lastPlayedSequenceRef.current, speechSequenceRef.current); updatePhase(next); } },
+        onPhase: (next) => { if (!controller.signal.aborted) updatePhase(next); },
       });
       if (mountedRef.current && !controller.signal.aborted) { setRun(result); updatePhase("complete"); }
     } catch (cause) {
@@ -177,13 +189,13 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
       }
     } finally {
       controllerRef.current = null;
-      if (mountedRef.current) { setActive(false); setSpeech(null); setViseme("rest"); setAudioLevel(0); }
+      if (mountedRef.current) { setActive(false); setSpeech(null); setVoices([]); setViseme("rest"); setAudioLevel(0); }
     }
   }
   function stop() {
     controllerRef.current?.abort();
     // Abort stops every scheduled source; keep the clock running for ended cleanup.
-    setSpeech(null); setViseme("rest"); setAudioLevel(0); updatePhase("stopped");
+    setSpeech(null); setVoices([]); setViseme("rest"); setAudioLevel(0); updatePhase("stopped");
   }
 
   const phaseTitle: Record<RehearsalPhase, string> = {
@@ -192,14 +204,14 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
     ready: copy("Prova preparata. La parola passa a te.", "Rehearsal ready. You can start it."),
     generating: copy("Attesa della risposta…", "Waiting for the response…"),
     buffering: copy("Preparazione della voce…", "Preparing the voice…"),
-    speaking: speech ? copy("Sta parlando", "Speaking:") + " " + speech.speakerName : copy("Voce in riproduzione", "Voice playback"),
+    speaking: voices.length > 1 ? copy("Botta e risposta · due voci in scena", "Quick exchange · two voices on air") : speech ? copy("Sta parlando", "Speaking:") + " " + speech.speakerName : copy("Voce in riproduzione", "Voice playback"),
     pause: copy("Pausa editoriale fra le due voci", "Editorial pause between the two voices"),
     complete: copy("Prova conclusa.", "Rehearsal complete."),
     stopped: copy("Prova fermata.", "Rehearsal stopped."),
     error: copy("La prova richiede una verifica.", "The rehearsal needs attention."),
   };
   const phaseHelp = phase === "generating" || phase === "buffering" ? copy("Questo è tempo tecnico di generazione o di avvio della voce; non è una pausa recitata.", "This is technical generation or voice startup time, not an editorial pause.")
-    : phase === "pause" ? copy("550 millisecondi dopo la fine effettiva della voce, prima dell’intervento successivo.", "550 milliseconds after the voice has actually ended, before the next turn.")
+    : phase === "pause" ? copy("Una breve pausa segue il ritmo del dialogo. La replica viene preparata mentre l'altro parla.", "A short pause follows the dialogue’s pace. The reply is prepared while the other host speaks.")
     : phase === "speaking" ? copy("Bocca e movimento seguono l’audio in riproduzione.", "Mouth and movement follow the audio being played.")
     : copy("Avvio e ripresa richiedono un tuo clic. Nessuna generazione parte al caricamento.", "Starting and resuming require your click. Loading the page does not generate anything.");
 
@@ -214,17 +226,16 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
       <div className={rehearsal.main}>
         <div className={rehearsal.stageGroup}>
           <div className={rehearsal.stage} data-testid="rehearsal-stage">
-            <PodcastStageView talk={stageTalk} direction={effectiveDirection} performance={actingCue} speakingIndex={phase === "speaking" ? speech?.participantIndex : undefined} audioLevel={audioLevel} viseme={viseme} />
+            <PodcastStageView spokenTopic={(speech ?? lastSpeech)?.threadLabel} talk={stageTalk} direction={effectiveDirection} performance={actingCue} voices={voices} speakingIndex={phase === "speaking" ? speech?.participantIndex : undefined} audioLevel={audioLevel} viseme={viseme} />
           </div>
           <div className={rehearsal.stageBadge} data-testid="rehearsal-stage-label"><i className={`${rehearsal.badgeDot} ${phase === "speaking" ? rehearsal.speakingDot : ""}`} />{copy("PROVA · DUE AI", "REHEARSAL · TWO AI HOSTS")}</div>
         </div>
         <div className={rehearsal.status} data-testid="rehearsal-phase" data-phase={phase} role="status" aria-live="polite">
           <div><div className={rehearsal.statusLabel}>{(phase === "generating" || phase === "buffering") ? copy("ATTESA TECNICA", "TECHNICAL WAIT") : phase === "pause" ? copy("RITMO DEL DIALOGO", "DIALOGUE PACING") : copy("STATO DELLA PROVA", "REHEARSAL STATUS")}</div><div className={rehearsal.statusTitle}>{phaseTitle[phase]}</div><p className={rehearsal.statusHelp}>{phaseHelp}</p></div>
           {active && phase !== "pause" && <div className={rehearsal.statusClock} aria-hidden="true">{phaseSeconds}s</div>}
-          {phase === "pause" && <div className={rehearsal.statusClock} aria-hidden="true">550<span style={{ fontSize: 11, marginLeft: 3 }}>ms</span></div>}
         </div>
         <div className={rehearsal.caption} data-testid="rehearsal-caption">
-          {phase === "speaking" && speech ? <><div className={rehearsal.captionName}>{speech.speakerName}</div><p className={rehearsal.captionText}>{performanceFrame?.sentence.text ?? speech.content}</p></> : <p className={rehearsal.captionEmpty}>{copy("Qui comparirà il testo dell’intervento che stai ascoltando. La trascrizione completa rimane sotto.", "The turn you are listening to will appear here. The full transcript stays below.")}</p>}
+          {voices.length > 1 ? voices.map(voice => <div key={voice.message.sequence}><div className={rehearsal.captionName}>{voice.message.speakerName}</div><p className={rehearsal.captionText}>{podcastPerformanceFrame(voice.message, voice.progress)?.sentence.text ?? voice.message.content}</p></div>) : phase === "speaking" && speech ? <><div className={rehearsal.captionName}>{speech.speakerName}</div><p className={rehearsal.captionText}>{performanceFrame?.sentence.text ?? speech.content}</p></> : <p className={rehearsal.captionEmpty}>{copy("Qui comparirà il testo dell’intervento che stai ascoltando. La trascrizione completa rimane sotto.", "The turn you are listening to will appear here. The full transcript stays below.")}</p>}
         </div>
         {speech && performanceFrame && <PodcastMoodReadout message={speech} frame={performanceFrame} />}
         <section className={rehearsal.panel}>
@@ -238,16 +249,16 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
             <h2>{copy("Un tema e due personalità", "One topic, two personalities")}</h2><p className={rehearsal.panelIntro}>{copy("La stessa domanda, due modi diversi di affrontarla. Puoi preparare una nuova prova dopo aver modificato queste scelte.", "The same question, two different ways to explore it. Prepare a new rehearsal after changing these choices.")}</p>
             <Field label={copy("Argomento della prova", "Rehearsal topic")}><input className={styles.input} maxLength={2000} required value={input.topic} onChange={(event) => changeInput({ ...input, topic: event.target.value })} /></Field>
             <Field label={copy("Lingua delle voci", "Voice language")}><select className={styles.input} value={input.language} onChange={event => changeLanguage(event.target.value)}><option value="it">Italiano</option><option value="en">English</option></select></Field>
+            <Field label={copy("Ritmo della conversazione", "Conversation pace")}><select className={styles.input} data-testid="rehearsal-pace" value={input.settings.allowInterruptions ? "lively" : input.settings.pace === "deep" ? "reflective" : "natural"} onChange={event => changeInput({ ...input, settings: { ...input.settings, pace: event.target.value === "lively" ? "fast" : event.target.value === "reflective" ? "deep" : "balanced", allowInterruptions: event.target.value === "lively" } })}><option value="natural">{copy("Naturale · repliche rapide", "Natural · quick replies")}</option><option value="lively">{copy("Vivace · anche brevi sovrapposizioni", "Lively · brief overlaps too")}</option><option value="reflective">{copy("Riflessivo · più spazio alle pause", "Thoughtful · more room for pauses")}</option></select></Field>
             <PodcastVisualSettings talk={{ ...input, settings: { ...input.settings, studioLayout: direction.layout } }} direction={direction} disabled={locked} onChange={settings => { setDirection(current => ({ ...current, layout: normalizeStudioScenario(settings.studioLayout) })); changeInput({ ...input, settings }); }} />
             <Field label={copy("Servizio delle voci", "Voice service")}><select className={styles.input} data-testid="rehearsal-voice-provider" value={voiceProvider} onChange={(event) => { const provider = event.target.value as "kokoro" | "inworld"; changeInput({ ...input, settings: { ...input.settings, voiceProvider: provider }, participants: input.participants.map((person) => ({ ...person, voiceId: voiceFor(input.language, person.sex, provider) })) }); }}><option value="kokoro" disabled={input.language !== "it"}>{copy("Kokoro locale · Nicola e Sara", "Local Kokoro · Nicola and Sara")}</option><option value="inworld">Inworld</option></select></Field>
             <div className={rehearsal.people}>
-              {input.participants.map((person, index) => <div className={rehearsal.person} key={index}>
-                <div className={rehearsal.personHeader}><span className={rehearsal.initial}>{person.name.slice(0, 1)}</span><div><strong>{copy("Conduttore", "Host")} {index + 1}</strong><small>{index === 0 ? copy("CURIOSO E CONCRETO", "CURIOUS AND PRACTICAL") : copy("CRITICA E RIFLESSIVA", "CRITICAL AND THOUGHTFUL")}</small></div></div>
+              {input.participants.map((person, index) => <div className={rehearsal.person} data-testid={`personality-card-${index}`} key={index}>
+                <div className={rehearsal.personHeader}><span className={rehearsal.initial}>{person.name.slice(0, 1)}</span><div><strong>{copy("Conduttore", "Host")} {index + 1}</strong><small>{copy("PERSONALITÀ AI", "AI PERSONALITY")}</small></div></div>
                 <Field label={copy("Nome", "Name")}><input className={styles.input} required maxLength={80} value={person.name} onChange={(event) => changePerson(index, { name: event.target.value })} /></Field>
                 <Field label={copy("Voce", "Voice")}><select className={styles.input} data-testid={`rehearsal-voice-${index}`} value={person.voiceId || ""} onChange={(event) => changePerson(index, { voiceId: event.target.value })}>{PODCAST_VOICES.filter((voice) => voice.provider === voiceProvider && voice.language === input.language && voice.gender === person.sex).map((voice) => <option key={voice.id} value={voice.id}>{voice.name}</option>)}</select></Field>
                 <div className={rehearsal.voiceCaption}><i />{voiceProvider === "kokoro" ? "Kokoro" : "Inworld"} · {copy("catalogo condiviso Conclavia", "Conclavia shared catalog")}</div>
-                <div style={{ marginTop: 16 }}><Field label={copy("Carattere e punto di vista", "Personality & point of view")}><textarea className={`${styles.input} ${styles.textarea}`} required maxLength={3000} value={person.perspectivePrompt} onChange={(event) => changePerson(index, { perspectivePrompt: event.target.value })} /></Field></div>
-                <Field label={copy("Modo di parlare", "Speaking style")}><textarea className={`${styles.input} ${styles.textarea}`} maxLength={2000} value={person.speakingStylePrompt || ""} onChange={(event) => changePerson(index, { speakingStylePrompt: event.target.value })} /></Field>
+                <PodcastPersonalityFields person={person} index={index} language={input.language} voiceProvider={input.settings.voiceProvider} defaultModel={input.settings.defaultModel} onChange={values => changePerson(index, values)} />
               </div>)}
             </div>
           </section>
@@ -258,12 +269,12 @@ export function PodcastRehearsal({ initialTheme, initialLayout = "studio", initi
           <h2>{copy("Una prova breve, completa.", "A short, complete rehearsal.")}</h2><p className={rehearsal.panelIntro}>{copy("Prima salviamo la preparazione. Poi, con un tuo clic, i due AI conversano a turno e ascoltiamo ogni voce fino alla fine.", "First we save the setup. Then, with your click, the two AI hosts take turns and we hear each voice through to the end.")}</p>
           <div className={rehearsal.readiness}><div className={rehearsal.readinessRow}><span>{copy("Generazione AI", "AI generation")}</span><b className={aiReady ? rehearsal.ready : rehearsal.unavailable}>{checking ? "…" : aiReady ? copy("Pronta", "Ready") : copy("Non attiva", "Not active")}</b></div><div className={rehearsal.readinessRow}><span>{copy("Sintesi vocale", "Speech synthesis")}</span><b className={voiceReady ? rehearsal.ready : rehearsal.unavailable}>{checking ? "…" : voiceReady ? copy("Pronta", "Ready") : copy("Non attiva", "Not active")}</b></div></div>
           <div className={rehearsal.controls}>
-            <button className={styles.secondary} data-testid="rehearsal-prepare" onClick={() => void prepare()} disabled={locked || Boolean(talk && run && phase !== "complete") || !input.topic.trim() || input.participants.some((person) => !person.name.trim() || !person.perspectivePrompt.trim())}>{preparing ? copy("Preparazione…", "Preparing…") : phase === "complete" ? copy("Prepara nuova prova", "Prepare new rehearsal") : talk && run ? copy("Prova preparata", "Rehearsal prepared") : copy("Prepara prova", "Prepare rehearsal")}</button>
+            <button className={styles.secondary} data-testid="rehearsal-prepare" onClick={() => void prepare()} disabled={locked || Boolean(talk && run && phase !== "complete") || !input.topic.trim() || input.participants.some((person) => !person.name.trim() || !person.role.trim() || (person.perspectiveMode === "custom" && !person.perspectivePrompt.trim()))}>{preparing ? copy("Preparazione…", "Preparing…") : phase === "complete" ? copy("Prepara nuova prova", "Prepare new rehearsal") : talk && run ? copy("Prova preparata", "Rehearsal prepared") : copy("Prepara prova", "Prepare rehearsal")}</button>
             <button className={styles.primary} data-testid="rehearsal-start" onClick={() => void start()} disabled={!readyToStart}>{phase === "stopped" ? copy("Riprendi prova", "Resume rehearsal") : copy("Avvia prova", "Start rehearsal")} ▷</button>
             <button className={styles.danger} data-testid="rehearsal-stop" onClick={stop} disabled={!active}>{copy("Ferma prova", "Stop rehearsal")} ■</button>
           </div>
           <div className={rehearsal.progress}><i style={{ width: `${Math.min(100, (run?.participantTurnCount ?? 0) / 8 * 100)}%` }} /></div><div className={rehearsal.stats}><span><strong>{run?.participantTurnCount ?? 0}/8</strong> {copy("interventi", "turns")}</span><span><strong>{Math.round(run?.estimatedAirtimeSeconds ?? 0)}/120</strong> s</span></div>
-          <p className={rehearsal.limit}>{copy("Massimo 8 interventi e 2 minuti di parlato stimato. Pausa editoriale: 550 ms dopo ogni voce. La generazione può richiedere tempo aggiuntivo.", "Up to 8 turns and 2 minutes of estimated speech. Editorial pause: 550 ms after each voice. Generation may take additional time.")}</p>
+          <p className={rehearsal.limit}>{copy("Massimo 8 interventi e 2 minuti di parlato stimato. La replica si prepara durante l'ascolto; le pause seguono il dialogo. Il ritmo Vivace permette brevi sovrapposizioni tra i due AI.", "Up to 8 turns and 2 minutes of estimated speech. Replies prepare during listening and pauses follow the dialogue. Lively pace permits brief overlaps between the two AI hosts.")}</p>
           {!aiReady || !voiceReady ? <p className={rehearsal.editNote}>{copy("La grafica e la preparazione sono disponibili. Per avviare entrambe le voci servono generazione AI e sintesi vocale attive sul server.", "Visuals and preparation are available. Starting both voices requires AI generation and speech synthesis to be active on the server.")}</p> : <p className={rehearsal.editNote}>{voiceProvider === "kokoro" ? copy("Avvia usa il modello AI configurato e le voci Kokoro locali, senza credito TTS. Prepara non genera risposte e non produce audio.", "Start uses the configured AI model and local Kokoro voices, with no TTS credit. Prepare does not generate responses or audio.") : copy("Avvia usa i servizi AI e Inworld configurati e ne consuma il credito. Prepara non genera risposte e non produce audio.", "Start uses the configured AI and Inworld services and consumes their credit. Prepare does not generate responses or audio.")}</p>}
           <button className={styles.linkButton} style={{ marginTop: 12 }} disabled={locked || checking} onClick={() => void refreshReadiness()}>{copy("Verifica servizi", "Check services")} ↻</button>
           {talk && <p style={{ marginTop: 14 }}><Link className={styles.linkButton} href={`/podcast/${talk.id}/studio`}>{copy("Apri nella regia completa", "Open full control room")} ↗</Link></p>}

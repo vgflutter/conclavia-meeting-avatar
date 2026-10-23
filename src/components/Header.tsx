@@ -11,7 +11,7 @@ import styles from "./Header.module.css";
 export function Header() {
   const { locale, setLocale } = useTranslations();
   const pathname = usePathname();
-  const hidden = pathname.startsWith("/meeting-room/") || /^\/podcast\/[^/]+\/broadcast\/?$/u.test(pathname);
+  const hidden = pathname === "/podcast/tg/render" || pathname.startsWith("/meeting-room/") || /^\/podcast\/[^/]+\/broadcast\/?$/u.test(pathname);
   const headerRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const root = document.documentElement;
@@ -30,7 +30,8 @@ export function Header() {
     { href: "/context", label: it ? "Contesto" : "Context", active: pathname.startsWith("/context") },
     { href: "/avatar", label: "Avatar", active: pathname.startsWith("/avatar") },
   ] : area === "podcast" ? [
-    { href: "/podcast", label: it ? "Puntate" : "Episodes", active: !/^\/podcast\/(?:styles|preview|rehearsal)(?:\/|$)/u.test(pathname) },
+    { href: "/podcast", label: it ? "Puntate" : "Episodes", active: !/^\/podcast\/(?:styles|preview|rehearsal|tg)(?:\/|$)/u.test(pathname) },
+    { href: "/podcast/tg", label: "Conclavia TG", active: pathname.startsWith("/podcast/tg") },
     { href: "/podcast/rehearsal", label: it ? "Prova a due" : "Two-host rehearsal", active: pathname.startsWith("/podcast/rehearsal") },
     { href: "/podcast/styles", label: it ? "Stili e mood" : "Styles & moods", active: /^\/podcast\/(?:styles|preview)(?:\/|$)/u.test(pathname) },
   ] : [];
@@ -39,7 +40,7 @@ export function Header() {
   return <header ref={headerRef} className={styles.header} data-testid="workspace-header" data-area={area}>
     <div className={styles.topline}>
       <Link href="/" aria-label={it ? "Conclavia · Tutte le aree" : "Conclavia · All areas"} className={styles.brand}>
-        <Image src="/conclavia-logo.png" alt="Conclavia" width={2079} height={756} priority />
+        <Image src="/brand/logo.svg" alt="Conclavia" width={1800} height={420} priority />
       </Link>
       <div className={styles.tools}>
         <label className="sr-only" htmlFor="interface-language">{it ? "Lingua dell’interfaccia" : "Interface language"}</label>

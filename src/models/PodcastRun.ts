@@ -191,7 +191,7 @@ const messageSchema = new Schema<TalkRunMessageRecord>(
       required: true,
       default: "ai",
     },
-    provider: { type: String, enum: ["openai", "gemini"] },
+    provider: { type: String, enum: ["openai", "claude", "gemini"] },
     model: { type: String, enum: LLM_MODEL_IDS },
     content: { type: String, required: true, trim: true },
     performance: { type: performanceSchema },
@@ -328,7 +328,7 @@ const preparedTurnSchema = new Schema<TalkRunPreparedTurnRecord>(
   {
     basedOnSequence: { type: Number, required: true, min: 0, validate: Number.isInteger },
     plan: { type: activeTurnSchema, required: true },
-    provider: { type: String, enum: ["openai", "gemini"], required: true },
+    provider: { type: String, enum: ["openai", "claude", "gemini"], required: true },
     model: { type: String, enum: LLM_MODEL_IDS, required: true },
     content: { type: String, required: true, trim: true },
     performance: { type: performanceSchema },

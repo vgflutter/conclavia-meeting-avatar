@@ -1,0 +1,129 @@
+{
+  "role": "B",
+  "scoreSha256": "4c058d9bc9a8b72714f95adc0d15d06ee69a987dd38fa79a39fd7bd489e07e79",
+  "checkedAt": "2026-10-23T15:25:56.637Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 14537,
+  "outputTokens": 2960,
+  "issues": [
+    "L’apertura e la chiusura sono editorialmente corrette, ma il rispetto del budget temporale e della pausa di produzione non è verificabile dal solo testo.",
+    "Il blocco carburanti è un po’ troppo carico: rifornimenti, code, scorte, decreto aiuti e spiegazione fiscale rischiano di appesantire il lead rispetto al ritmo atteso.",
+    "La chiusura sui commenti è presente, ma la formula dell’invito fisso non è esplicitata in modo del tutto standardizzato nel testo fornito."
+  ],
+  "checks": {
+    "selection": {
+      "status": "pass",
+      "reason": "Cinque notizie reali, tutte con rilevanza pubblica per un pubblico italiano generalista: rifornimenti in Campania, contatto militare tra le Coree, voto umbro sul fine vita, tifone a Taiwan, vendite britanniche. La selezione rispetta la breadth richiesta e non inserisce filler.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "opening": {
+      "status": "pass",
+      "reason": "L’incipit saluta, orienta e anticipa chiaramente i temi principali senza framing da notiziario serale. La preview è breve e coerente con l’edizione mattutina.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "written_rhythm": {
+      "status": "revise",
+      "reason": "La pagina è leggibile e in ordine, ma alcuni blocchi sono più verbosi del necessario, soprattutto carburanti e Taiwan, con più frasi spiegative consecutive. Per un cinque minuti serve un taglio un po’ più asciutto e meno ripetitivo.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://focustaiwan.tw/society/202610230018"
+      ]
+    },
+    "explanation": {
+      "status": "pass",
+      "reason": "Ogni notizia spiega chi fa cosa, qual è il minimo contesto necessario e perché il fatto conta. L’armistizio coreano, il quadro statale sul fine vita e la differenza tra dato mensile e trimestrale sui consumi sono chiariti in modo accessibile.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "transitions": {
+      "status": "pass",
+      "reason": "I passaggi fra le notizie sono naturali e non usano la formula vietata delle storie numerate. Le transizioni collegano bene Italia, Asia e dati economici senza stacchi artificiali.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "closing": {
+      "status": "revise",
+      "reason": "La chiusura mantiene il link alle fonti e l’invito ai commenti, ma la formula finale non è ancora del tutto uniforme con il closing fisso richiesto. Da rifinire in forma standard e più compatta.",
+      "sourceUrls": [
+        "https://daily.conclavia.me"
+      ]
+    },
+    "summary": {
+      "status": "pass",
+      "reason": "La descrizione copre tutte e cinque le notizie in ordine di messa in onda, senza introdurre nuove informazioni rispetto al testo parlato e con tono comprensibile anche senza video.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://focustaiwan.tw/society/202610230019",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "story_carburanti": {
+      "status": "pass",
+      "reason": "Il fatto nuovo è ben distinto dal contesto: rimozione dei presidi e ripartenza graduale dei rifornimenti, con chiarimento sul decreto aiuti come misura separata. La spiegazione non inventa numeri né dà per risolta la carenza.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html",
+        "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html"
+      ]
+    },
+    "story_coree": {
+      "status": "pass",
+      "reason": "La notizia è trattata come proposta di dialogo, non come colloquio già avvenuto. È corretta la distinzione tra offerta sudcoreana, contesto dell’armistizio e mancata conferma nordcoreana.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://en.yna.co.kr/view/AEN20261023005751315?section=national%2Fdefense",
+        "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf"
+      ]
+    },
+    "story_umbria": {
+      "status": "pass",
+      "reason": "Il voto regionale è spiegato con il giusto perimetro: proposta approvata dall’Assemblea, quadro statale e costituzionale richiamato, nessuna pretesa di effetto nazionale automatico.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "story_taiwan": {
+      "status": "pass",
+      "reason": "La copertura è aggiornata e chiara: emergenza in corso, chiusure per sabato 24, effetti su scuole, uffici, voli e collegamenti marittimi. La differenza tra situazione attuale e aggiornamento successivo è resa bene.",
+      "sourceUrls": [
+        "https://focustaiwan.tw/society/202610230019",
+        "https://focustaiwan.tw/society/202610230018",
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb"
+      ]
+    },
+    "story_consumi": {
+      "status": "pass",
+      "reason": "Il pezzo distingue correttamente tra dato mensile e trimestrale, evitando conclusioni eccessive. Il confronto è spiegato in modo utile per un pubblico non specialista.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://live.euronext.com/en/financial-news/uk-retail-sales-fall-consumer-confidence-tumbles"
+      ]
+    }
+  },
+  "scope": "editorial-pre-take",
+  "mediaTimingNotYetVerified": true,
+  "passed": false
+}

@@ -1,0 +1,707 @@
+{
+  "sourceScoreSha256": "50126c5bbe19f7d3deccc77c8ae4c80f6230110e839981e70ab91b8e4adadf35",
+  "retrievedAt": "2026-10-23T17:58:00.874Z",
+  "data": [
+    {
+      "storyId": "sisma",
+      "brief": "Here is a concise evidence brief based on fresh keyword searches.\n\n**Confirmed event and date**\n- The event is **a sequence of earthquakes in the southern Tyrrhenian Sea, felt in Sicily on Friday, 23 October 2026**. ANSA’s English report says the strongest quake struck **at 12:19** and was felt across Sicily from Palermo to Catania. ([ansa.it](https://www.ansa.it/english/news/2026/10/23/sicily-rocked-by-series-of-strong-earthquakes_38dd7325-6444-4fae-80bb-2ce085e5d66a.html?utm_source=openai))\n- ANSA’s Italian Sicilia feed also shows an earlier quake in the same sequence at **12:06**. ([ansa.it](https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html?utm_source=openai))\n\n**Latest verified development time**\n- The **latest development time explicitly stated in the reporting I found is 12:19 UTC/local reported time?** More precisely, the article says the strongest shock **occurred at 12:19**; that is the event time, not the publication time. The publication time on the AP/ANSA-style item is later, but the key verified development is the quake time itself. ([ansa.it](https://www.ansa.it/english/news/2026/10/23/sicily-rocked-by-series-of-strong-earthquakes_38dd7325-6444-4fae-80bb-2ce085e5d66a.html?utm_source=openai))\n- INGV’s live earthquake list shows an additional update in the sequence logged at **17:05:35 on 23 October 2026**, with a **magnitude 3.5** in the same area. That is a later recorded development than the 12:19 main shock. ([terremoti.ingv.it](https://terremoti.ingv.it/?utm_source=openai))\n\n**Supported details**\n- INGV’s live page confirms ongoing seismic activity in the **Tirreno Meridionale** on **23 October 2026**. ([terremoti.ingv.it](https://terremoti.ingv.it/?utm_source=openai))\n- ANSA reports the strongest shock as **magnitude 5.0**, located in the southern Tyrrhenian Sea northwest of the Aeolian Islands, and says it was felt across a broad area of Sicily. ([ansa.it](https://www.ansa.it/english/news/2026/10/23/sicily-rocked-by-series-of-strong-earthquakes_38dd7325-6444-4fae-80bb-2ce085e5d66a.html?utm_source=openai))\n- The Sicilian regional government says the president is in contact with civil protection authorities and that an **orange tsunami warning** was issued, with contacts activated with mayors and prefects in Palermo and Messina. ([regione.sicilia.it](https://www.regione.sicilia.it/la-regione-informa/terremoto-nel-tirreno-schifani-contatto-protezione-civile?utm_source=openai))\n- INGV’s tsunami procedures page says an alert can be issued for earthquakes of **magnitude 5.5 or greater** at sea or near the coast, but its initial estimates are not used for warning decisions because they are refined over the first minutes. That helps explain why official tsunami messaging may evolve after the first quake report. ([rischi.protezionecivile.it](https://rischi.protezionecivile.it/en/tsunami/activities/?utm_source=openai))\n\n**Attributed claims and uncertainty**\n- The claim that **schools and offices in Palermo were evacuated** is **not confirmed by the sources I found here**. It may have been reported locally, but I did not find a matching authoritative source in the searched material, so treat it as **unverified** for now. ([regione.sicilia.it](https://www.regione.sicilia.it/la-regione-informa/terremoto-nel-tirreno-schifani-contatto-protezione-civile?utm_source=openai))\n- The claim that the **updated INGV estimate was magnitude 5.5 at about 9 km depth** is also **not confirmed by the sources I found**. The authoritative items I located refer instead to a **5.0** quake and later smaller aftershocks/related tremors. ([terremoti.ingv.it](https://terremoti.ingv.it/?utm_source=openai))\n- The claim that the **tsunami alert was later withdrawn** is plausible, but I did **not** find a source in the searched set that clearly states the exact cancellation time, so I cannot confirm that here. ([regione.sicilia.it](https://www.regione.sicilia.it/la-regione-informa/terremoto-nel-tirreno-schifani-contatto-protezione-civile?utm_source=openai))\n\n**Recycled / expired / misleading material**\n- I found an **older unrelated ANSA earthquake bulletin from 21 October 2026** about Mount Etna evacuations; that is **not the same event** and should not be recycled into this story. ([ansa.it](https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/21/terremoto-di-magnitudo-3.8-sulletna-evacuate-le-scuole_18de675d-84f5-4ac5-9c75-71e37a6f6f55.html?utm_source=openai))\n- The **8 October 2026 Eolie earthquake** is also unrelated and should be excluded. ([ansa.it](https://www.ansa.it/sito/notizie/cronaca/2026/10/08/terremoto-di-magnitudo-4.7-al-largo-delle-isole-eolie_da29634a-27dc-44fd-a3fa-7cc73e0fd755.html?utm_source=openai))\n- Any bulletin that describes the 23 October sequence as already fully resolved without an explicit end-of-event notice should be treated cautiously; the INGV tsunami system itself says warnings remain active until a formal end message is issued. ([cat.ingv.it](https://cat.ingv.it/images/IT_2_Ongoing_Watch_Turkey_06.02.23.pdf?utm_source=openai))\n\nIf you want, I can next turn this into a **broadcast-ready 3–5 sentence script** or a **fact-check table** with “confirmed / unconfirmed / contradicted” columns.",
+      "sources": [
+        {
+          "url": "https://terremoti.ingv.it/",
+          "title": "https://terremoti.ingv.it/"
+        },
+        {
+          "url": "https://www.regione.sicilia.it/la-regione-informa/terremoto-nel-tirreno-schifani-contatto-protezione-civile",
+          "title": "https://www.regione.sicilia.it/la-regione-informa/terremoto-nel-tirreno-schifani-contatto-protezione-civile"
+        },
+        {
+          "url": "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html",
+          "title": "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html"
+        },
+        {
+          "url": "https://www.ansa.it/english/news/2026/10/23/sicily-rocked-by-series-of-strong-earthquakes_38dd7325-6444-4fae-80bb-2ce085e5d66a.html",
+          "title": "https://www.ansa.it/english/news/2026/10/23/sicily-rocked-by-series-of-strong-earthquakes_38dd7325-6444-4fae-80bb-2ce085e5d66a.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/21/terremoto-di-magnitudo-3.8-sulletna-evacuate-le-scuole_18de675d-84f5-4ac5-9c75-71e37a6f6f55.html",
+          "title": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/21/terremoto-di-magnitudo-3.8-sulletna-evacuate-le-scuole_18de675d-84f5-4ac5-9c75-71e37a6f6f55.html"
+        },
+        {
+          "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/08/terremoto-di-magnitudo-4.7-al-largo-delle-isole-eolie_da29634a-27dc-44fd-a3fa-7cc73e0fd755.html",
+          "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/08/terremoto-di-magnitudo-4.7-al-largo-delle-isole-eolie_da29634a-27dc-44fd-a3fa-7cc73e0fd755.html"
+        },
+        {
+          "url": "https://rischi.protezionecivile.it/en/sezione-con-anticipazioni/tsunami-risk/",
+          "title": "https://rischi.protezionecivile.it/en/sezione-con-anticipazioni/tsunami-risk/"
+        },
+        {
+          "url": "https://www.ansa.it/sicilia/",
+          "title": "https://www.ansa.it/sicilia/"
+        },
+        {
+          "url": "https://cat.ingv.it/en/tsunami-alert/alert-messages/the-alert-cycle",
+          "title": "https://cat.ingv.it/en/tsunami-alert/alert-messages/the-alert-cycle"
+        },
+        {
+          "url": "https://iononrischio.protezionecivile.it/en/get-ready/tsunami/what-know/",
+          "title": "https://iononrischio.protezionecivile.it/en/get-ready/tsunami/what-know/"
+        },
+        {
+          "url": "https://rischi.protezionecivile.it/en/tsunami/activities/",
+          "title": "https://rischi.protezionecivile.it/en/tsunami/activities/"
+        },
+        {
+          "url": "https://cat.ingv.it/en/tsunami-alert/alert-procedures/alert-procedures",
+          "title": "https://cat.ingv.it/en/tsunami-alert/alert-procedures/alert-procedures"
+        },
+        {
+          "url": "https://cat.ingv.it/images/IT_2_Ongoing_Watch_Turkey_06.02.23.pdf",
+          "title": "https://cat.ingv.it/images/IT_2_Ongoing_Watch_Turkey_06.02.23.pdf"
+        },
+        {
+          "url": "https://cme.ingv.it/bollettini-e-comunicati/comunicati-attivita-sismica-isole-eolie/2591-comunicato-straordinario-di-attivita-sismica-del-202502071947/file",
+          "title": "https://cme.ingv.it/bollettini-e-comunicati/comunicati-attivita-sismica-isole-eolie/2591-comunicato-straordinario-di-attivita-sismica-del-202502071947/file"
+        },
+        {
+          "url": "https://www2.regione.sicilia.it/deliberegiunta/file/giunta/allegati/N.025_22.01.2026.pdf",
+          "title": "https://www2.regione.sicilia.it/deliberegiunta/file/giunta/allegati/N.025_22.01.2026.pdf"
+        },
+        {
+          "url": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/rischio-sismico/ms_3907/MESSINA/SAN%20PIERO%20PATTI/Relazione%20illustrativa.pdf",
+          "title": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/rischio-sismico/ms_3907/MESSINA/SAN%20PIERO%20PATTI/Relazione%20illustrativa.pdf"
+        },
+        {
+          "url": "https://cat.ingv.it/images/EN__18.04.24_Information.pdf",
+          "title": "https://cat.ingv.it/images/EN__18.04.24_Information.pdf"
+        },
+        {
+          "url": "https://jogvm.rm.ingv.it/index.php/jgsg/article/download/67/37/733",
+          "title": "https://jogvm.rm.ingv.it/index.php/jgsg/article/download/67/37/733"
+        }
+      ]
+    },
+    {
+      "storyId": "carburanti",
+      "brief": "Here is a concise evidence brief from fresh keyword searches. I used multiple outlets and prioritized current reporting from ANSA and RaiNews, with Adnkronos as a secondary check. Reuters/BBC were not used.\n\n**Confirmed event and date**\n- The event is the **removal overnight of the last truck roadblocks in Campania**, with the latest reporting dated **23 October 2026**. ANSA says the remaining presidi in the Caserta and Salerno areas were removed “nella notte,” and Adnkronos likewise reports that the blockade was lifted in Campania on **23 October 2026 at 09:15**. ([ansa.it](https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html?utm_source=openai))\n- The separate but connected fuel-distribution development is that **tankers started moving again toward Naples fuel depots/distributors on 23 October 2026**, with RaiNews reporting the replenishment of fuel deliveries after the camp was cleared. ANSA’s video item timestamps the movement at **Napoli, 23 October 2026, 11:54**. ([rainews.it](https://www.rainews.it/tgr/campania/video/2026/10/via-libera-alle-autocisterne-ricominciano-i-rifornimenti-di-benzina-campania-napoli-caro-carburanti-proteste-autotrasportatori-distributori-a274a9a7-a5d1-4412-b44b-29c5b48ac2cd.html?utm_source=openai))\n\n**Latest development time vs publication time**\n- The **actual latest development** in the coverage is the **overnight removal of the roadblocks**, not the article publication time. The reporting makes clear that this happened **during the night between 22 and 23 October 2026**. ([ansa.it](https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html?utm_source=openai))\n- For the fuel side, the most specific time-stamped evidence found is **23 October 2026, 11:54 in Naples** for tankers refuelling distributors, which is a concrete operational update rather than a headline repeating the broader protest story. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/a-napoli-autocisterne-riforniscono-i-distributori-di-carburante_db9690c3-2e1a-49aa-8cdf-c4fe89b7181a.html?utm_source=openai))\n\n**Supported details**\n- ANSA reports that in Campania, the remaining highway presidi by truck drivers and farmers were removed in the Caserta and Salerno areas; Adnkronos adds that the **via Argine** presidium in Naples East was also dissolved, and that police escorted vehicles toward distributors to restart deliveries. ([ansa.it](https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html?utm_source=openai))\n- ANSA also says there were still **long queues at open petrol stations** and that many pumps remained closed, so the situation was improving but not normalized. ([ansa.it](https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html?utm_source=openai))\n- RaiNews and ANSA both tie the supply restart to the clearing of the depot area in Naples and the movement of tanker trucks back into service. ([rainews.it](https://www.rainews.it/tgr/campania/video/2026/10/via-libera-alle-autocisterne-ricominciano-i-rifornimenti-di-benzina-campania-napoli-caro-carburanti-proteste-autotrasportatori-distributori-a274a9a7-a5d1-4412-b44b-29c5b48ac2cd.html?utm_source=openai))\n\n**Attributed claims and uncertainties**\n- The government package is reported as **175 million euros** overall, but outlet figures differ slightly in presentation: ANSA’s later explainer breaks it down as **105.2 million for truck-related fuel-credit support** and additional sums for agriculture and fishing. The core claim is consistent, but the precise breakdown is best treated as the government’s announced allocation, not a fully audited final spending figure. ([ansa.it](https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html?utm_source=openai))\n- The protest is described as being about the **cost of fuel**; that is an attributed explanation in the reporting, not a independently verified motive for every participant. ([ansa.it](https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html?utm_source=openai))\n\n**Flags on stale or misleading framing**\n- **Recycled older news:** the core protest story was already active on **21–22 October 2026**; the fresh element on **23 October** is the **removal of the remaining roadblocks and the restart of deliveries**, not the existence of the protest itself. ([ansa.it](https://www.ansa.it/campania/notizie/2026/10/21/polizia-identifica-manifestanti-nel-casertano-verso-rimozione-presidi_e2d29ab2-c99d-4b68-aaa0-12ce88e1783e.html?utm_source=openai))\n- **Expired bulletin risk:** any report that treats the blockade as still fully in place on 23 October would be outdated. The latest reporting says the last roadblocks were removed overnight, even though shortages and queues were still present. ([ansa.it](https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html?utm_source=openai))\n- **Future event treated as already happened:** the next formal coordination point cited in reporting is **27 October 2026**; that is a scheduled follow-up, not a completed event. ([rainews.it](https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html?utm_source=openai))\n\nIf you want, I can turn this into a newsroom-ready 3–4 bullet wire note with a one-line nut graf and attribution stripped to broadcast style.",
+      "sources": [
+        {
+          "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html",
+          "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html",
+          "title": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html"
+        },
+        {
+          "url": "https://www.ansa.it/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html",
+          "title": "https://www.ansa.it/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html"
+        },
+        {
+          "url": "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+          "title": "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+        },
+        {
+          "url": "https://www.rainews.it/tgr/campania/video/2026/10/via-libera-alle-autocisterne-ricominciano-i-rifornimenti-di-benzina-campania-napoli-caro-carburanti-proteste-autotrasportatori-distributori-a274a9a7-a5d1-4412-b44b-29c5b48ac2cd.html",
+          "title": "https://www.rainews.it/tgr/campania/video/2026/10/via-libera-alle-autocisterne-ricominciano-i-rifornimenti-di-benzina-campania-napoli-caro-carburanti-proteste-autotrasportatori-distributori-a274a9a7-a5d1-4412-b44b-29c5b48ac2cd.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/a-napoli-autocisterne-riforniscono-i-distributori-di-carburante_db9690c3-2e1a-49aa-8cdf-c4fe89b7181a.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/a-napoli-autocisterne-riforniscono-i-distributori-di-carburante_db9690c3-2e1a-49aa-8cdf-c4fe89b7181a.html"
+        },
+        {
+          "url": "https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html",
+          "title": "https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/campania/notizie/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_edc0484d-1234-4eb2-a95c-2382877ae01f.html",
+          "title": "https://www.ansa.it/amp/campania/notizie/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_edc0484d-1234-4eb2-a95c-2382877ae01f.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/sito/notizie/economia/2026/10/22/dai-tir-alla-pesca-ecco-tutti-gli-aiuti-in-arrivo_b84cb587-ffc8-4a0f-a41f-b4ca360e998a.html",
+          "title": "https://www.ansa.it/amp/sito/notizie/economia/2026/10/22/dai-tir-alla-pesca-ecco-tutti-gli-aiuti-in-arrivo_b84cb587-ffc8-4a0f-a41f-b4ca360e998a.html"
+        },
+        {
+          "url": "https://www.rainews.it/video/2026/10/cappuccio-sul-decreto-tir-6e0958e5-0fa0-4c30-978b-aaa4a2d56aab.html",
+          "title": "https://www.rainews.it/video/2026/10/cappuccio-sul-decreto-tir-6e0958e5-0fa0-4c30-978b-aaa4a2d56aab.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/english/news/2026/10/23/last-remain-truck-roadblocks-in-campania-removed_273d1ad3-d54d-4241-96e7-50262b8d7375.html",
+          "title": "https://videoembed.ansa.it/english/news/2026/10/23/last-remain-truck-roadblocks-in-campania-removed_273d1ad3-d54d-4241-96e7-50262b8d7375.html"
+        },
+        {
+          "url": "https://www.ansa.it/campania/notizie/2026/10/21/polizia-identifica-manifestanti-nel-casertano-verso-rimozione-presidi_e2d29ab2-c99d-4b68-aaa0-12ce88e1783e.html",
+          "title": "https://www.ansa.it/campania/notizie/2026/10/21/polizia-identifica-manifestanti-nel-casertano-verso-rimozione-presidi_e2d29ab2-c99d-4b68-aaa0-12ce88e1783e.html"
+        },
+        {
+          "url": "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf",
+          "title": "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf"
+        },
+        {
+          "url": "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf",
+          "title": "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf"
+        }
+      ]
+    },
+    {
+      "storyId": "sanita",
+      "brief": "Here’s a concise evidence brief based on fresh searches.\n\n**Confirmed event and date**\n- The event is the release/presentation of the latest **AGENAS bulletin on waiting lists**, updated to **30 September 2026** and reported publicly on **22–23 October 2026**. The latest development is the bulletin’s data cutoff: **30 September 2026**; the publication/reporting time is separate and should not be confused with the data date. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n\n**What is verified**\n- Multiple outlets reporting from the bulletin say monitored bookings/appointments increased in the first nine months of 2026 versus the same period of 2025. ANSA reports **more than two million additional visits/exams** and says the bulletin shows a positive trend, though uneven across regions. RaiNews similarly says the latest bulletin covers the first nine months of 2026 and that performance improved, with differences by territory. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n- The specific figure in your claim — **prime visite entro i tempi previsti** rising from **76.9% to 78.6%** — is supported by Adnkronos, which says the AGENAS bulletin updated to **30 September 2026** records that increase for first visits. ([adnkronos.com](https://www.adnkronos.com/salute/sanita-fism-risultati-su-liste-dattesa-in-miglioramento-ora-consolidare-i-progressi_15cQjUq2bBtQdHDIBgDg5V?utm_source=openai))\n- A regional official page from Puglia also confirms the bulletin is the **third quarter 2026** AGENAS waiting-list monitor and gives a concrete example of regional improvement, showing how the national picture still hides local variation. ([transizionedigitale.regione.puglia.it](https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026?utm_source=openai))\n\n**Time of the actual latest development**\n- The **actual data endpoint** in the bulletin is **30 September 2026**; that is the latest verified state of the system reflected in the report. The article publication times are later and should be treated as reporting times, not the event time. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n\n**Supported details**\n- The bulletin is based on the **Piattaforma Nazionale** data and covers the **first nine months of 2026**. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n- The improvement is **not uniform**: ANSA and RaiNews both stress that the national average masks different regional performances. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n\n**Attributed claims / uncertainties**\n- AGENAS director **Angelo Tanese** is cited in RaiNews as presenting the bulletin; that is a reported attribution, not independently verified here. ([rainews.it](https://www.rainews.it/amp/articoli/2026/10/liste-dattesa-nel-2026-oltre-4-milioni-di-prenotazioni-oltre-tempi-previsti-0581d37f-48dd-45dc-8c7a-5370a186a37b.html?utm_source=openai))\n- The claim that the bulletin “does not mean the waiting-list problem is solved” is an **interpretation**, but it is consistent with the reported facts: higher aggregate volumes and better averages coexist with regional disparities and delayed appointments. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n\n**Flagged issues**\n- **Not recycled older news:** this is a fresh bulletin updated to **30 September 2026**, not a recycled 2025 story. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n- **Not an expired bulletin:** the data are current as of the bulletin’s cutoff date. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n- **Not a future event miscast as past:** no scheduled future event is being reported here; this is a newly published update on already measured data. ([ansa.it](https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html?utm_source=openai))\n\nIf you want, I can turn this into a tighter newsroom-style note with only the 3–4 strongest lines.",
+      "sources": [
+        {
+          "url": "https://www.adnkronos.com/salute/sanita-fism-risultati-su-liste-dattesa-in-miglioramento-ora-consolidare-i-progressi_15cQjUq2bBtQdHDIBgDg5V",
+          "title": "https://www.adnkronos.com/salute/sanita-fism-risultati-su-liste-dattesa-in-miglioramento-ora-consolidare-i-progressi_15cQjUq2bBtQdHDIBgDg5V"
+        },
+        {
+          "url": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+          "title": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo._dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+          "title": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo._dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html"
+        },
+        {
+          "url": "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026",
+          "title": "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026"
+        },
+        {
+          "url": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/migliorano-liste-dattesa-ma-4-milioni-di-visite-ed-esami-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+          "title": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/migliorano-liste-dattesa-ma-4-milioni-di-visite-ed-esami-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html"
+        },
+        {
+          "url": "https://www.rainews.it/amp/tgr/vda/video/2026/09/listeattesa-usl-sanita--89534ef8-178a-4e4b-856f-6cc28c251cf2.html",
+          "title": "https://www.rainews.it/amp/tgr/vda/video/2026/09/listeattesa-usl-sanita--89534ef8-178a-4e4b-856f-6cc28c251cf2.html"
+        },
+        {
+          "url": "https://www.ansa.it/piemonte/notizie/2026/10/22/liste-dattesa-in-piemonte-le-prime-visite-nei-tempi-di-garanzia-salgono-al-72_cdf80c39-88e7-4cda-be1a-6609d5cdf619.html",
+          "title": "https://www.ansa.it/piemonte/notizie/2026/10/22/liste-dattesa-in-piemonte-le-prime-visite-nei-tempi-di-garanzia-salgono-al-72_cdf80c39-88e7-4cda-be1a-6609d5cdf619.html"
+        },
+        {
+          "url": "https://www.rainews.it/amp/articoli/2026/10/liste-dattesa-nel-2026-oltre-4-milioni-di-prenotazioni-oltre-tempi-previsti-0581d37f-48dd-45dc-8c7a-5370a186a37b.html",
+          "title": "https://www.rainews.it/amp/articoli/2026/10/liste-dattesa-nel-2026-oltre-4-milioni-di-prenotazioni-oltre-tempi-previsti-0581d37f-48dd-45dc-8c7a-5370a186a37b.html"
+        },
+        {
+          "url": "https://www.ansa.it/valledaosta/notizie/sanita_regionale/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_3a746f6d-6222-4f6a-b2f0-f483f457f7b8.html",
+          "title": "https://www.ansa.it/valledaosta/notizie/sanita_regionale/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_3a746f6d-6222-4f6a-b2f0-f483f457f7b8.html"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/impegno-della-presidente-della-giunta-regionale-riferire-con",
+          "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/impegno-della-presidente-della-giunta-regionale-riferire-con"
+        },
+        {
+          "url": "https://www.ansa.it/amp/valledaosta/notizie/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_768cac62-3096-4039-9d68-2acfe5ad57d6.html",
+          "title": "https://www.ansa.it/amp/valledaosta/notizie/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_768cac62-3096-4039-9d68-2acfe5ad57d6.html"
+        },
+        {
+          "url": "https://www.ansa.it/canale_saluteebenessere/notizie/sanita/2026/05/29/liste-dattesa-online-il-nuovo-cruscotto-2.0-basato-su-65-milioni-di-dati-regionali_eaa6515e-ddeb-4f72-8202-0f88bbeae487.html",
+          "title": "https://www.ansa.it/canale_saluteebenessere/notizie/sanita/2026/05/29/liste-dattesa-online-il-nuovo-cruscotto-2.0-basato-su-65-milioni-di-dati-regionali_eaa6515e-ddeb-4f72-8202-0f88bbeae487.html"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/node/81771/printable/pdf",
+          "title": "https://consiglio.regione.umbria.it/node/81771/printable/pdf"
+        },
+        {
+          "url": "https://burp.regione.puglia.it/documents/20135/2591573/DEL_1877_2024.pdf/6b1decee-8f7b-ee1d-0047-33aa7cb76777?t=1737374754473&version=1.0",
+          "title": "https://burp.regione.puglia.it/documents/20135/2591573/DEL_1877_2024.pdf/6b1decee-8f7b-ee1d-0047-33aa7cb76777?t=1737374754473&version=1.0"
+        }
+      ]
+    },
+    {
+      "storyId": "risparmio",
+      "brief": "Here is a concise evidence brief based on fresh keyword searches.\n\n**Confirmed event and date**\n- The event is the **close of the dual BTP Valore / BTP Valore Insieme placement** on **Friday, 23 October 2026**, with the final Treasury note saying the issue closed with about **€16.6 billion** raised and that the bonds’ **value date is 27 October 2026** and **maturity 27 October 2031**. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/topnews/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_bdcf3993-fac5-436b-80e8-25db2d93a1ed.html?utm_source=openai))\n\n**Latest verified development time**\n- The **actual latest development** is the **close of the placement at 13:00 on 23 October 2026**; ANSA’s same-day item states the market closed “today” with the last-day totals and the Treasury’s final terms. That is distinct from the article publication time. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/topnews/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_bdcf3993-fac5-436b-80e8-25db2d93a1ed.html?utm_source=openai))\n\n**Supported details**\n- The Treasury **raised the final rates** versus the initially announced ones: for **BTP Valore**, the definitive annual step-up coupons are **3.75% / 3.75% / 4.20% / 4.20% / 4.75%**. ([teleborsa.ansa.it](https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/?utm_source=openai))\n- For **BTP Valore Insieme**, the final payout is a **single coupon of 22.70% at maturity**, not an annual yield, paid at the end of the five years with principal repayment. ([teleborsa.ansa.it](https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/?utm_source=openai))\n- ANSA’s same-day item reports total subscriptions of **€16,622.518 million** and **560,029 contracts**. ([teleborsa.ansa.it](https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/?utm_source=openai))\n\n**Attribution and uncertainties**\n- The reports attribute the numbers and final rates to a **MEF note**; the ANSA items say the totals match the valid purchase orders executed on the MOT through the dealer banks. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_e7a59a52-80cd-462d-be02-4b1e96198969.html?utm_source=openai))\n- One point needs careful wording: the **22.70%** figure is **the total five-year payout on the capital**, not a yearly rate. Presenting it as an annual percentage would be misleading. That correction is supported by the official-style wording in the ANSA/Teleborsa summaries. ([teleborsa.ansa.it](https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/?utm_source=openai))\n\n**Recycled / expired / future-event check**\n- This is **not** an old or recycled bulletin: the decisive update is the **final close on 23 October 2026**, after earlier partial take-up reports from 19 October. ([ansa.it](https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-insieme-totalizza-100-milioni-di-controvalore-in-avvio-di-seduta_187f8787-e2ba-42c3-a9de-a7805063949a.html?utm_source=openai))\n- It is also **not a future event**: the placement had already concluded when the final rates were communicated. ([teleborsa.ansa.it](https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/?utm_source=openai))\n- Earlier reports from **16 October 2026** were only the **initial minimum guaranteed coupons**, so they are now superseded by the final closing figures. ([ansa.it](https://www.ansa.it/sito/notizie/topnews/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_f60f2147-cb31-4a86-9213-c2e62401bf0b.html?utm_source=openai))\n\nIf you want, I can turn this into a **broadcast-ready 3–4 sentence news copy** in Italian, with the same source discipline.",
+      "sources": [
+        {
+          "url": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-la-prima-emissione-doppia-si-chiude-a-166-miliardi-di-euro/",
+          "title": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-la-prima-emissione-doppia-si-chiude-a-166-miliardi-di-euro/"
+        },
+        {
+          "url": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-il-mef-cambia-stile-e-formula-con-il-debito-di-nuovo-sotto-i-riflettori/",
+          "title": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-il-mef-cambia-stile-e-formula-con-il-debito-di-nuovo-sotto-i-riflettori/"
+        },
+        {
+          "url": "https://www.ansa.it/sito/notizie/topnews/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_f60f2147-cb31-4a86-9213-c2e62401bf0b.html",
+          "title": "https://www.ansa.it/sito/notizie/topnews/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_f60f2147-cb31-4a86-9213-c2e62401bf0b.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/topnews/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_bdcf3993-fac5-436b-80e8-25db2d93a1ed.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/topnews/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_bdcf3993-fac5-436b-80e8-25db2d93a1ed.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-insieme-totalizza-100-milioni-di-controvalore-in-avvio-di-seduta_187f8787-e2ba-42c3-a9de-a7805063949a.html",
+          "title": "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-insieme-totalizza-100-milioni-di-controvalore-in-avvio-di-seduta_187f8787-e2ba-42c3-a9de-a7805063949a.html"
+        },
+        {
+          "url": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-cedole-minime-dal-370-cedola-unica-al-2225-per-il-valore-insieme/",
+          "title": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-cedole-minime-dal-370-cedola-unica-al-2225-per-il-valore-insieme/"
+        },
+        {
+          "url": "https://www.ansa.it/sito/notizie/economia/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_db99856a-c9db-4378-9c28-ebaf44245e1d.html",
+          "title": "https://www.ansa.it/sito/notizie/economia/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_db99856a-c9db-4378-9c28-ebaf44245e1d.html"
+        },
+        {
+          "url": "https://www.bancaditalia.it/media/comunicati/index.html?Esito+dei+collocamenti+supplementari+di+titoli+di+Stato+dell%2711.02.2011+-+BOT=%2F1000&page=3",
+          "title": "https://www.bancaditalia.it/media/comunicati/index.html?Esito+dei+collocamenti+supplementari+di+titoli+di+Stato+dell%2711.02.2011+-+BOT=%2F1000&page=3"
+        },
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/19/il-btp-valore-insieme-sale-a-274-milioni-dopo-oltre-unora-di-asta_5ce84268-6dab-4421-95a3-da7ae99140e7.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/19/il-btp-valore-insieme-sale-a-274-milioni-dopo-oltre-unora-di-asta_5ce84268-6dab-4421-95a3-da7ae99140e7.html"
+        },
+        {
+          "url": "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/",
+          "title": "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/"
+        },
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_e7a59a52-80cd-462d-be02-4b1e96198969.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_e7a59a52-80cd-462d-be02-4b1e96198969.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-favorito-quasi-15-miliardi-di-controvalore-in-meno-di-3-ore_819a8737-d8eb-4d09-b4e9-681ba93bdb16.html",
+          "title": "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-favorito-quasi-15-miliardi-di-controvalore-in-meno-di-3-ore_819a8737-d8eb-4d09-b4e9-681ba93bdb16.html"
+        },
+        {
+          "url": "https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it/debito_pubblico/comunicazioni_emissioni/btp_valore_comunicazione_emissione/BTP-Valore-05.03.2030-3-Scheda-Informativa.pdf",
+          "title": "https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it/debito_pubblico/comunicazioni_emissioni/btp_valore_comunicazione_emissione/BTP-Valore-05.03.2030-3-Scheda-Informativa.pdf"
+        }
+      ]
+    },
+    {
+      "storyId": "umbria",
+      "brief": "Ecco un breve **evidence brief** con ricerca fresca sul caso Umbria-fine vita, usando fonti di agenzia e istituzionali verificabili. Il punto chiave è che la notizia **non è un annuncio futuro**, ma un voto già avvenuto il **22 ottobre 2026**: l’Assemblea legislativa dell’Umbria ha approvato la proposta di legge regionale sull’assistenza sanitaria alla morte volontaria medicalmente assistita. ([consiglio.regione.umbria.it](https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita?utm_source=openai))\n\n- **Evento confermato e data:** il voto dell’Aula di Palazzo Cesaroni è avvenuto il **22 ottobre 2026**; la comunicazione istituzionale dell’Assemblea lo data a **Perugia, 22 ottobre 2026** e dice che la proposta è stata approvata a maggioranza. ANSA e RaiNews confermano l’approvazione lo stesso giorno. ([consiglio.regione.umbria.it](https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita?utm_source=openai))\n- **Momento dell’ultimo sviluppo effettivo:** il passaggio decisivo verificabile è il voto in Aula del **22 ottobre 2026**; le ore riportate nelle cronache mostrano solo il tempo di pubblicazione/aggiornamento dell’articolo, non un evento diverso. ANSA pubblica alle **16:38** la dichiarazione di Stefania Proietti, ma il contenuto è ancora riferito al voto di quella giornata. ([ansa.it](https://www.ansa.it/umbria/notizie/2026/10/22/la-presidente-umbra-proietti-non-partecipo-al-voto-sul-fine-vita_9b6c7beb-ef09-4578-9d54-8c2dc383c904.html?utm_source=openai))\n- **Dettagli supportati:** il testo riguarda le **procedure del servizio sanitario regionale** per l’accesso al suicidio medicalmente assistito; la versione approvata è stata emendata. La nota istituzionale parla di **11 voti favorevoli, 3 astensioni e 6 contrari**. RaiNews e l’Assemblea indicano anche che la presidente Proietti non ha partecipato al voto. ([consiglio.regione.umbria.it](https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita?utm_source=openai))\n- **Cosa è certo e cosa no:** è certo che la Regione ha approvato una legge/atto regionale sull’organizzazione dell’assistenza sanitaria in questo ambito; **non** è una nuova disciplina nazionale. La stessa documentazione istituzionale sottolinea che si tratta di modalità attuative regionali, non di una riforma del quadro statale. ([consiglio.regione.umbria.it](https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita?utm_source=openai))\n- **Claim attribuiti, non fatti acquisiti:** la lettura politica del voto come “legge di civiltà” o come colmatura di un “vuoto normativo nazionale” è espressa da esponenti e comunicati politici/istituzionali, non va trattata come constatazione neutra. ([consiglio.regione.umbria.it](https://consiglio.regione.umbria.it/informazione/notizie/comunicati/fine-vita-legge-di-civilta-e-di-dignita-lumbria-prende-posizione-e?utm_source=openai))\n- **Scarti e avvertenze editoriali:** non risultano qui “vecchie notizie riciclate” sul voto del 22 ottobre; le previsioni del **20–21 ottobre** erano **pre-voto** e sono ormai superate come notizia di giornata. Il 22 ottobre è la data da usare; eventuali riferimenti a sedute future in quei pezzi vanno letti come cronaca d’attesa, non come fatto già avvenuto prima. ([consiglio.regione.umbria.it](https://consiglio.regione.umbria.it/informazione/notizie/comunicati/audizione-con-la-presidente-proietti-e-voto-sulla-legge-sul?utm_source=openai))\n\nSe vuoi, posso fare anche una versione ancora più breve, in formato “cosa sappiamo / cosa no” pronta per scaletta o verifica di script.",
+      "sources": [
+        {
+          "url": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html",
+          "title": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+          "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/disposizioni-lassistenza-sanitaria-regionale-alla-morte-volontaria",
+          "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/disposizioni-lassistenza-sanitaria-regionale-alla-morte-volontaria"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/audizione-con-la-presidente-proietti-e-voto-sulla-legge-sul",
+          "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/audizione-con-la-presidente-proietti-e-voto-sulla-legge-sul"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/2026/10/22/la-presidente-umbra-proietti-non-partecipo-al-voto-sul-fine-vita_9b6c7beb-ef09-4578-9d54-8c2dc383c904.html",
+          "title": "https://www.ansa.it/umbria/notizie/2026/10/22/la-presidente-umbra-proietti-non-partecipo-al-voto-sul-fine-vita_9b6c7beb-ef09-4578-9d54-8c2dc383c904.html"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/fine-vita-legge-di-civilta-e-di-dignita-lumbria-prende-posizione-e",
+          "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/fine-vita-legge-di-civilta-e-di-dignita-lumbria-prende-posizione-e"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/la-terza-commissione-approva-la-legge-sul-suicidio-medicalmente",
+          "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/la-terza-commissione-approva-la-legge-sul-suicidio-medicalmente"
+        },
+        {
+          "url": "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html",
+          "title": "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/2026/10/22/verini-il-parlamento-abbia-un-sussulto-di-liberta-e-voti-una-legge-sul-fine_2708413e-393b-4a7a-a0c5-515be6c84b85.html",
+          "title": "https://www.ansa.it/umbria/notizie/2026/10/22/verini-il-parlamento-abbia-un-sussulto-di-liberta-e-voti-una-legge-sul-fine_2708413e-393b-4a7a-a0c5-515be6c84b85.html"
+        },
+        {
+          "url": "https://www.rainews.it/amp/tgr/umbria/articoli/2026/10/legge-sul-fine-vita-in-aula-giovedi-3244f3b9-aa69-4286-aad0-f0a2b9ec60a5.html",
+          "title": "https://www.rainews.it/amp/tgr/umbria/articoli/2026/10/legge-sul-fine-vita-in-aula-giovedi-3244f3b9-aa69-4286-aad0-f0a2b9ec60a5.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/2026/10/20/associazione-coscioni-siamo-fiduciosi-per-la-legge-sul-fine-vita-in-umbria_74c4ad2d-5103-4275-b381-9bc7560b27d6.html",
+          "title": "https://www.ansa.it/umbria/notizie/2026/10/20/associazione-coscioni-siamo-fiduciosi-per-la-legge-sul-fine-vita-in-umbria_74c4ad2d-5103-4275-b381-9bc7560b27d6.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/umbria/notizie/2026/10/21/lumbria-vota-sul-fine-vita-lass.-coscioni-ricorda-lappello-di-laura_30399ef1-b13d-4030-bf96-463e7310fc3c.html",
+          "title": "https://www.ansa.it/amp/umbria/notizie/2026/10/21/lumbria-vota-sul-fine-vita-lass.-coscioni-ricorda-lappello-di-laura_30399ef1-b13d-4030-bf96-463e7310fc3c.html"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/node/82437/printable/pdf",
+          "title": "https://consiglio.regione.umbria.it/node/82437/printable/pdf"
+        },
+        {
+          "url": "https://consiglio.regione.umbria.it/sites/default/files/2025-10/Acs_Settembre_2025_0.pdf",
+          "title": "https://consiglio.regione.umbria.it/sites/default/files/2025-10/Acs_Settembre_2025_0.pdf"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://terremoti.ingv.it/",
+      "title": "https://terremoti.ingv.it/"
+    },
+    {
+      "url": "https://www.regione.sicilia.it/la-regione-informa/terremoto-nel-tirreno-schifani-contatto-protezione-civile",
+      "title": "https://www.regione.sicilia.it/la-regione-informa/terremoto-nel-tirreno-schifani-contatto-protezione-civile"
+    },
+    {
+      "url": "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html",
+      "title": "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html"
+    },
+    {
+      "url": "https://www.ansa.it/english/news/2026/10/23/sicily-rocked-by-series-of-strong-earthquakes_38dd7325-6444-4fae-80bb-2ce085e5d66a.html",
+      "title": "https://www.ansa.it/english/news/2026/10/23/sicily-rocked-by-series-of-strong-earthquakes_38dd7325-6444-4fae-80bb-2ce085e5d66a.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/21/terremoto-di-magnitudo-3.8-sulletna-evacuate-le-scuole_18de675d-84f5-4ac5-9c75-71e37a6f6f55.html",
+      "title": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/21/terremoto-di-magnitudo-3.8-sulletna-evacuate-le-scuole_18de675d-84f5-4ac5-9c75-71e37a6f6f55.html"
+    },
+    {
+      "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/08/terremoto-di-magnitudo-4.7-al-largo-delle-isole-eolie_da29634a-27dc-44fd-a3fa-7cc73e0fd755.html",
+      "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/08/terremoto-di-magnitudo-4.7-al-largo-delle-isole-eolie_da29634a-27dc-44fd-a3fa-7cc73e0fd755.html"
+    },
+    {
+      "url": "https://rischi.protezionecivile.it/en/sezione-con-anticipazioni/tsunami-risk/",
+      "title": "https://rischi.protezionecivile.it/en/sezione-con-anticipazioni/tsunami-risk/"
+    },
+    {
+      "url": "https://www.ansa.it/sicilia/",
+      "title": "https://www.ansa.it/sicilia/"
+    },
+    {
+      "url": "https://cat.ingv.it/en/tsunami-alert/alert-messages/the-alert-cycle",
+      "title": "https://cat.ingv.it/en/tsunami-alert/alert-messages/the-alert-cycle"
+    },
+    {
+      "url": "https://iononrischio.protezionecivile.it/en/get-ready/tsunami/what-know/",
+      "title": "https://iononrischio.protezionecivile.it/en/get-ready/tsunami/what-know/"
+    },
+    {
+      "url": "https://rischi.protezionecivile.it/en/tsunami/activities/",
+      "title": "https://rischi.protezionecivile.it/en/tsunami/activities/"
+    },
+    {
+      "url": "https://cat.ingv.it/en/tsunami-alert/alert-procedures/alert-procedures",
+      "title": "https://cat.ingv.it/en/tsunami-alert/alert-procedures/alert-procedures"
+    },
+    {
+      "url": "https://cat.ingv.it/images/IT_2_Ongoing_Watch_Turkey_06.02.23.pdf",
+      "title": "https://cat.ingv.it/images/IT_2_Ongoing_Watch_Turkey_06.02.23.pdf"
+    },
+    {
+      "url": "https://cme.ingv.it/bollettini-e-comunicati/comunicati-attivita-sismica-isole-eolie/2591-comunicato-straordinario-di-attivita-sismica-del-202502071947/file",
+      "title": "https://cme.ingv.it/bollettini-e-comunicati/comunicati-attivita-sismica-isole-eolie/2591-comunicato-straordinario-di-attivita-sismica-del-202502071947/file"
+    },
+    {
+      "url": "https://www2.regione.sicilia.it/deliberegiunta/file/giunta/allegati/N.025_22.01.2026.pdf",
+      "title": "https://www2.regione.sicilia.it/deliberegiunta/file/giunta/allegati/N.025_22.01.2026.pdf"
+    },
+    {
+      "url": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/rischio-sismico/ms_3907/MESSINA/SAN%20PIERO%20PATTI/Relazione%20illustrativa.pdf",
+      "title": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/rischio-sismico/ms_3907/MESSINA/SAN%20PIERO%20PATTI/Relazione%20illustrativa.pdf"
+    },
+    {
+      "url": "https://cat.ingv.it/images/EN__18.04.24_Information.pdf",
+      "title": "https://cat.ingv.it/images/EN__18.04.24_Information.pdf"
+    },
+    {
+      "url": "https://jogvm.rm.ingv.it/index.php/jgsg/article/download/67/37/733",
+      "title": "https://jogvm.rm.ingv.it/index.php/jgsg/article/download/67/37/733"
+    },
+    {
+      "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html",
+      "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html",
+      "title": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html"
+    },
+    {
+      "url": "https://www.ansa.it/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html",
+      "title": "https://www.ansa.it/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html"
+    },
+    {
+      "url": "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+      "title": "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+    },
+    {
+      "url": "https://www.rainews.it/tgr/campania/video/2026/10/via-libera-alle-autocisterne-ricominciano-i-rifornimenti-di-benzina-campania-napoli-caro-carburanti-proteste-autotrasportatori-distributori-a274a9a7-a5d1-4412-b44b-29c5b48ac2cd.html",
+      "title": "https://www.rainews.it/tgr/campania/video/2026/10/via-libera-alle-autocisterne-ricominciano-i-rifornimenti-di-benzina-campania-napoli-caro-carburanti-proteste-autotrasportatori-distributori-a274a9a7-a5d1-4412-b44b-29c5b48ac2cd.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/a-napoli-autocisterne-riforniscono-i-distributori-di-carburante_db9690c3-2e1a-49aa-8cdf-c4fe89b7181a.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/a-napoli-autocisterne-riforniscono-i-distributori-di-carburante_db9690c3-2e1a-49aa-8cdf-c4fe89b7181a.html"
+    },
+    {
+      "url": "https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html",
+      "title": "https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/campania/notizie/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_edc0484d-1234-4eb2-a95c-2382877ae01f.html",
+      "title": "https://www.ansa.it/amp/campania/notizie/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_edc0484d-1234-4eb2-a95c-2382877ae01f.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/sito/notizie/economia/2026/10/22/dai-tir-alla-pesca-ecco-tutti-gli-aiuti-in-arrivo_b84cb587-ffc8-4a0f-a41f-b4ca360e998a.html",
+      "title": "https://www.ansa.it/amp/sito/notizie/economia/2026/10/22/dai-tir-alla-pesca-ecco-tutti-gli-aiuti-in-arrivo_b84cb587-ffc8-4a0f-a41f-b4ca360e998a.html"
+    },
+    {
+      "url": "https://www.rainews.it/video/2026/10/cappuccio-sul-decreto-tir-6e0958e5-0fa0-4c30-978b-aaa4a2d56aab.html",
+      "title": "https://www.rainews.it/video/2026/10/cappuccio-sul-decreto-tir-6e0958e5-0fa0-4c30-978b-aaa4a2d56aab.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/english/news/2026/10/23/last-remain-truck-roadblocks-in-campania-removed_273d1ad3-d54d-4241-96e7-50262b8d7375.html",
+      "title": "https://videoembed.ansa.it/english/news/2026/10/23/last-remain-truck-roadblocks-in-campania-removed_273d1ad3-d54d-4241-96e7-50262b8d7375.html"
+    },
+    {
+      "url": "https://www.ansa.it/campania/notizie/2026/10/21/polizia-identifica-manifestanti-nel-casertano-verso-rimozione-presidi_e2d29ab2-c99d-4b68-aaa0-12ce88e1783e.html",
+      "title": "https://www.ansa.it/campania/notizie/2026/10/21/polizia-identifica-manifestanti-nel-casertano-verso-rimozione-presidi_e2d29ab2-c99d-4b68-aaa0-12ce88e1783e.html"
+    },
+    {
+      "url": "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf",
+      "title": "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf"
+    },
+    {
+      "url": "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf",
+      "title": "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf"
+    },
+    {
+      "url": "https://www.adnkronos.com/salute/sanita-fism-risultati-su-liste-dattesa-in-miglioramento-ora-consolidare-i-progressi_15cQjUq2bBtQdHDIBgDg5V",
+      "title": "https://www.adnkronos.com/salute/sanita-fism-risultati-su-liste-dattesa-in-miglioramento-ora-consolidare-i-progressi_15cQjUq2bBtQdHDIBgDg5V"
+    },
+    {
+      "url": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+      "title": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo._dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+      "title": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo._dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html"
+    },
+    {
+      "url": "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026",
+      "title": "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026"
+    },
+    {
+      "url": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/migliorano-liste-dattesa-ma-4-milioni-di-visite-ed-esami-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+      "title": "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/migliorano-liste-dattesa-ma-4-milioni-di-visite-ed-esami-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html"
+    },
+    {
+      "url": "https://www.rainews.it/amp/tgr/vda/video/2026/09/listeattesa-usl-sanita--89534ef8-178a-4e4b-856f-6cc28c251cf2.html",
+      "title": "https://www.rainews.it/amp/tgr/vda/video/2026/09/listeattesa-usl-sanita--89534ef8-178a-4e4b-856f-6cc28c251cf2.html"
+    },
+    {
+      "url": "https://www.ansa.it/piemonte/notizie/2026/10/22/liste-dattesa-in-piemonte-le-prime-visite-nei-tempi-di-garanzia-salgono-al-72_cdf80c39-88e7-4cda-be1a-6609d5cdf619.html",
+      "title": "https://www.ansa.it/piemonte/notizie/2026/10/22/liste-dattesa-in-piemonte-le-prime-visite-nei-tempi-di-garanzia-salgono-al-72_cdf80c39-88e7-4cda-be1a-6609d5cdf619.html"
+    },
+    {
+      "url": "https://www.rainews.it/amp/articoli/2026/10/liste-dattesa-nel-2026-oltre-4-milioni-di-prenotazioni-oltre-tempi-previsti-0581d37f-48dd-45dc-8c7a-5370a186a37b.html",
+      "title": "https://www.rainews.it/amp/articoli/2026/10/liste-dattesa-nel-2026-oltre-4-milioni-di-prenotazioni-oltre-tempi-previsti-0581d37f-48dd-45dc-8c7a-5370a186a37b.html"
+    },
+    {
+      "url": "https://www.ansa.it/valledaosta/notizie/sanita_regionale/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_3a746f6d-6222-4f6a-b2f0-f483f457f7b8.html",
+      "title": "https://www.ansa.it/valledaosta/notizie/sanita_regionale/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_3a746f6d-6222-4f6a-b2f0-f483f457f7b8.html"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/impegno-della-presidente-della-giunta-regionale-riferire-con",
+      "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/impegno-della-presidente-della-giunta-regionale-riferire-con"
+    },
+    {
+      "url": "https://www.ansa.it/amp/valledaosta/notizie/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_768cac62-3096-4039-9d68-2acfe5ad57d6.html",
+      "title": "https://www.ansa.it/amp/valledaosta/notizie/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_768cac62-3096-4039-9d68-2acfe5ad57d6.html"
+    },
+    {
+      "url": "https://www.ansa.it/canale_saluteebenessere/notizie/sanita/2026/05/29/liste-dattesa-online-il-nuovo-cruscotto-2.0-basato-su-65-milioni-di-dati-regionali_eaa6515e-ddeb-4f72-8202-0f88bbeae487.html",
+      "title": "https://www.ansa.it/canale_saluteebenessere/notizie/sanita/2026/05/29/liste-dattesa-online-il-nuovo-cruscotto-2.0-basato-su-65-milioni-di-dati-regionali_eaa6515e-ddeb-4f72-8202-0f88bbeae487.html"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/node/81771/printable/pdf",
+      "title": "https://consiglio.regione.umbria.it/node/81771/printable/pdf"
+    },
+    {
+      "url": "https://burp.regione.puglia.it/documents/20135/2591573/DEL_1877_2024.pdf/6b1decee-8f7b-ee1d-0047-33aa7cb76777?t=1737374754473&version=1.0",
+      "title": "https://burp.regione.puglia.it/documents/20135/2591573/DEL_1877_2024.pdf/6b1decee-8f7b-ee1d-0047-33aa7cb76777?t=1737374754473&version=1.0"
+    },
+    {
+      "url": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-la-prima-emissione-doppia-si-chiude-a-166-miliardi-di-euro/",
+      "title": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-la-prima-emissione-doppia-si-chiude-a-166-miliardi-di-euro/"
+    },
+    {
+      "url": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-il-mef-cambia-stile-e-formula-con-il-debito-di-nuovo-sotto-i-riflettori/",
+      "title": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-il-mef-cambia-stile-e-formula-con-il-debito-di-nuovo-sotto-i-riflettori/"
+    },
+    {
+      "url": "https://www.ansa.it/sito/notizie/topnews/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_f60f2147-cb31-4a86-9213-c2e62401bf0b.html",
+      "title": "https://www.ansa.it/sito/notizie/topnews/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_f60f2147-cb31-4a86-9213-c2e62401bf0b.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/topnews/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_bdcf3993-fac5-436b-80e8-25db2d93a1ed.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/topnews/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_bdcf3993-fac5-436b-80e8-25db2d93a1ed.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-insieme-totalizza-100-milioni-di-controvalore-in-avvio-di-seduta_187f8787-e2ba-42c3-a9de-a7805063949a.html",
+      "title": "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-insieme-totalizza-100-milioni-di-controvalore-in-avvio-di-seduta_187f8787-e2ba-42c3-a9de-a7805063949a.html"
+    },
+    {
+      "url": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-cedole-minime-dal-370-cedola-unica-al-2225-per-il-valore-insieme/",
+      "title": "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-cedole-minime-dal-370-cedola-unica-al-2225-per-il-valore-insieme/"
+    },
+    {
+      "url": "https://www.ansa.it/sito/notizie/economia/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_db99856a-c9db-4378-9c28-ebaf44245e1d.html",
+      "title": "https://www.ansa.it/sito/notizie/economia/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_db99856a-c9db-4378-9c28-ebaf44245e1d.html"
+    },
+    {
+      "url": "https://www.bancaditalia.it/media/comunicati/index.html?Esito+dei+collocamenti+supplementari+di+titoli+di+Stato+dell%2711.02.2011+-+BOT=%2F1000&page=3",
+      "title": "https://www.bancaditalia.it/media/comunicati/index.html?Esito+dei+collocamenti+supplementari+di+titoli+di+Stato+dell%2711.02.2011+-+BOT=%2F1000&page=3"
+    },
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/19/il-btp-valore-insieme-sale-a-274-milioni-dopo-oltre-unora-di-asta_5ce84268-6dab-4421-95a3-da7ae99140e7.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/19/il-btp-valore-insieme-sale-a-274-milioni-dopo-oltre-unora-di-asta_5ce84268-6dab-4421-95a3-da7ae99140e7.html"
+    },
+    {
+      "url": "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/",
+      "title": "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/"
+    },
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_e7a59a52-80cd-462d-be02-4b1e96198969.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_e7a59a52-80cd-462d-be02-4b1e96198969.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-favorito-quasi-15-miliardi-di-controvalore-in-meno-di-3-ore_819a8737-d8eb-4d09-b4e9-681ba93bdb16.html",
+      "title": "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-favorito-quasi-15-miliardi-di-controvalore-in-meno-di-3-ore_819a8737-d8eb-4d09-b4e9-681ba93bdb16.html"
+    },
+    {
+      "url": "https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it/debito_pubblico/comunicazioni_emissioni/btp_valore_comunicazione_emissione/BTP-Valore-05.03.2030-3-Scheda-Informativa.pdf",
+      "title": "https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it/debito_pubblico/comunicazioni_emissioni/btp_valore_comunicazione_emissione/BTP-Valore-05.03.2030-3-Scheda-Informativa.pdf"
+    },
+    {
+      "url": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html",
+      "title": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+      "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/disposizioni-lassistenza-sanitaria-regionale-alla-morte-volontaria",
+      "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/disposizioni-lassistenza-sanitaria-regionale-alla-morte-volontaria"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/audizione-con-la-presidente-proietti-e-voto-sulla-legge-sul",
+      "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/audizione-con-la-presidente-proietti-e-voto-sulla-legge-sul"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/2026/10/22/la-presidente-umbra-proietti-non-partecipo-al-voto-sul-fine-vita_9b6c7beb-ef09-4578-9d54-8c2dc383c904.html",
+      "title": "https://www.ansa.it/umbria/notizie/2026/10/22/la-presidente-umbra-proietti-non-partecipo-al-voto-sul-fine-vita_9b6c7beb-ef09-4578-9d54-8c2dc383c904.html"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/fine-vita-legge-di-civilta-e-di-dignita-lumbria-prende-posizione-e",
+      "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/fine-vita-legge-di-civilta-e-di-dignita-lumbria-prende-posizione-e"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/la-terza-commissione-approva-la-legge-sul-suicidio-medicalmente",
+      "title": "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/la-terza-commissione-approva-la-legge-sul-suicidio-medicalmente"
+    },
+    {
+      "url": "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html",
+      "title": "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/2026/10/22/verini-il-parlamento-abbia-un-sussulto-di-liberta-e-voti-una-legge-sul-fine_2708413e-393b-4a7a-a0c5-515be6c84b85.html",
+      "title": "https://www.ansa.it/umbria/notizie/2026/10/22/verini-il-parlamento-abbia-un-sussulto-di-liberta-e-voti-una-legge-sul-fine_2708413e-393b-4a7a-a0c5-515be6c84b85.html"
+    },
+    {
+      "url": "https://www.rainews.it/amp/tgr/umbria/articoli/2026/10/legge-sul-fine-vita-in-aula-giovedi-3244f3b9-aa69-4286-aad0-f0a2b9ec60a5.html",
+      "title": "https://www.rainews.it/amp/tgr/umbria/articoli/2026/10/legge-sul-fine-vita-in-aula-giovedi-3244f3b9-aa69-4286-aad0-f0a2b9ec60a5.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/2026/10/20/associazione-coscioni-siamo-fiduciosi-per-la-legge-sul-fine-vita-in-umbria_74c4ad2d-5103-4275-b381-9bc7560b27d6.html",
+      "title": "https://www.ansa.it/umbria/notizie/2026/10/20/associazione-coscioni-siamo-fiduciosi-per-la-legge-sul-fine-vita-in-umbria_74c4ad2d-5103-4275-b381-9bc7560b27d6.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/umbria/notizie/2026/10/21/lumbria-vota-sul-fine-vita-lass.-coscioni-ricorda-lappello-di-laura_30399ef1-b13d-4030-bf96-463e7310fc3c.html",
+      "title": "https://www.ansa.it/amp/umbria/notizie/2026/10/21/lumbria-vota-sul-fine-vita-lass.-coscioni-ricorda-lappello-di-laura_30399ef1-b13d-4030-bf96-463e7310fc3c.html"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/node/82437/printable/pdf",
+      "title": "https://consiglio.regione.umbria.it/node/82437/printable/pdf"
+    },
+    {
+      "url": "https://consiglio.regione.umbria.it/sites/default/files/2025-10/Acs_Settembre_2025_0.pdf",
+      "title": "https://consiglio.regione.umbria.it/sites/default/files/2025-10/Acs_Settembre_2025_0.pdf"
+    }
+  ],
+  "webByStory": {
+    "sisma": [
+      "https://terremoti.ingv.it/",
+      "https://www.regione.sicilia.it/la-regione-informa/terremoto-nel-tirreno-schifani-contatto-protezione-civile",
+      "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html",
+      "https://www.ansa.it/english/news/2026/10/23/sicily-rocked-by-series-of-strong-earthquakes_38dd7325-6444-4fae-80bb-2ce085e5d66a.html",
+      "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/21/terremoto-di-magnitudo-3.8-sulletna-evacuate-le-scuole_18de675d-84f5-4ac5-9c75-71e37a6f6f55.html",
+      "https://www.ansa.it/sito/notizie/cronaca/2026/10/08/terremoto-di-magnitudo-4.7-al-largo-delle-isole-eolie_da29634a-27dc-44fd-a3fa-7cc73e0fd755.html",
+      "https://rischi.protezionecivile.it/en/sezione-con-anticipazioni/tsunami-risk/",
+      "https://www.ansa.it/sicilia/",
+      "https://cat.ingv.it/en/tsunami-alert/alert-messages/the-alert-cycle",
+      "https://iononrischio.protezionecivile.it/en/get-ready/tsunami/what-know/",
+      "https://rischi.protezionecivile.it/en/tsunami/activities/",
+      "https://cat.ingv.it/en/tsunami-alert/alert-procedures/alert-procedures",
+      "https://cat.ingv.it/images/IT_2_Ongoing_Watch_Turkey_06.02.23.pdf",
+      "https://cme.ingv.it/bollettini-e-comunicati/comunicati-attivita-sismica-isole-eolie/2591-comunicato-straordinario-di-attivita-sismica-del-202502071947/file",
+      "https://www2.regione.sicilia.it/deliberegiunta/file/giunta/allegati/N.025_22.01.2026.pdf",
+      "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/rischio-sismico/ms_3907/MESSINA/SAN%20PIERO%20PATTI/Relazione%20illustrativa.pdf",
+      "https://cat.ingv.it/images/EN__18.04.24_Information.pdf",
+      "https://jogvm.rm.ingv.it/index.php/jgsg/article/download/67/37/733"
+    ],
+    "carburanti": [
+      "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/il-cdm-approva-il-decreto-sugli-aiuti-105-milioni-per-i-tir-e-70-per_416e7ef3-b46a-4594-90dd-671b4eb1cc0e.html",
+      "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_fd94eea8-5def-4c2c-a53e-ef58e99b697f.html",
+      "https://www.ansa.it/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html",
+      "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+      "https://www.rainews.it/tgr/campania/video/2026/10/via-libera-alle-autocisterne-ricominciano-i-rifornimenti-di-benzina-campania-napoli-caro-carburanti-proteste-autotrasportatori-distributori-a274a9a7-a5d1-4412-b44b-29c5b48ac2cd.html",
+      "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/a-napoli-autocisterne-riforniscono-i-distributori-di-carburante_db9690c3-2e1a-49aa-8cdf-c4fe89b7181a.html",
+      "https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html",
+      "https://www.ansa.it/amp/campania/notizie/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_edc0484d-1234-4eb2-a95c-2382877ae01f.html",
+      "https://www.ansa.it/amp/sito/notizie/economia/2026/10/22/dai-tir-alla-pesca-ecco-tutti-gli-aiuti-in-arrivo_b84cb587-ffc8-4a0f-a41f-b4ca360e998a.html",
+      "https://www.rainews.it/video/2026/10/cappuccio-sul-decreto-tir-6e0958e5-0fa0-4c30-978b-aaa4a2d56aab.html",
+      "https://videoembed.ansa.it/english/news/2026/10/23/last-remain-truck-roadblocks-in-campania-removed_273d1ad3-d54d-4241-96e7-50262b8d7375.html",
+      "https://www.ansa.it/campania/notizie/2026/10/21/polizia-identifica-manifestanti-nel-casertano-verso-rimozione-presidi_e2d29ab2-c99d-4b68-aaa0-12ce88e1783e.html",
+      "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf",
+      "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf"
+    ],
+    "sanita": [
+      "https://www.adnkronos.com/salute/sanita-fism-risultati-su-liste-dattesa-in-miglioramento-ora-consolidare-i-progressi_15cQjUq2bBtQdHDIBgDg5V",
+      "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+      "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/liste-dattesa-due-milioni-di-visite-in-piu-nel-2026-ma-4-milioni-in-ritardo._dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+      "https://transizionedigitale.regione.puglia.it/it/web/ufficio-statistico/-/agenas.-bollettino-liste-d-attesa.-iii-trimestre-2026",
+      "https://www.ansa.it/amp/canale_saluteebenessere/notizie/sanita/2026/10/22/migliorano-liste-dattesa-ma-4-milioni-di-visite-ed-esami-in-ritardo_dbb3d2bb-632b-4e3a-8663-0246e3bf9bde.html",
+      "https://www.rainews.it/amp/tgr/vda/video/2026/09/listeattesa-usl-sanita--89534ef8-178a-4e4b-856f-6cc28c251cf2.html",
+      "https://www.ansa.it/piemonte/notizie/2026/10/22/liste-dattesa-in-piemonte-le-prime-visite-nei-tempi-di-garanzia-salgono-al-72_cdf80c39-88e7-4cda-be1a-6609d5cdf619.html",
+      "https://www.rainews.it/amp/articoli/2026/10/liste-dattesa-nel-2026-oltre-4-milioni-di-prenotazioni-oltre-tempi-previsti-0581d37f-48dd-45dc-8c7a-5370a186a37b.html",
+      "https://www.ansa.it/valledaosta/notizie/sanita_regionale/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_3a746f6d-6222-4f6a-b2f0-f483f457f7b8.html",
+      "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/impegno-della-presidente-della-giunta-regionale-riferire-con",
+      "https://www.ansa.it/amp/valledaosta/notizie/2026/09/25/marzi-entro-dicembre-nuovo-piano-regionale-su-liste-dattesa_768cac62-3096-4039-9d68-2acfe5ad57d6.html",
+      "https://www.ansa.it/canale_saluteebenessere/notizie/sanita/2026/05/29/liste-dattesa-online-il-nuovo-cruscotto-2.0-basato-su-65-milioni-di-dati-regionali_eaa6515e-ddeb-4f72-8202-0f88bbeae487.html",
+      "https://consiglio.regione.umbria.it/node/81771/printable/pdf",
+      "https://burp.regione.puglia.it/documents/20135/2591573/DEL_1877_2024.pdf/6b1decee-8f7b-ee1d-0047-33aa7cb76777?t=1737374754473&version=1.0"
+    ],
+    "risparmio": [
+      "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-la-prima-emissione-doppia-si-chiude-a-166-miliardi-di-euro/",
+      "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-il-mef-cambia-stile-e-formula-con-il-debito-di-nuovo-sotto-i-riflettori/",
+      "https://www.ansa.it/sito/notizie/topnews/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_f60f2147-cb31-4a86-9213-c2e62401bf0b.html",
+      "https://videoembed.ansa.it/sito/notizie/topnews/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_bdcf3993-fac5-436b-80e8-25db2d93a1ed.html",
+      "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-insieme-totalizza-100-milioni-di-controvalore-in-avvio-di-seduta_187f8787-e2ba-42c3-a9de-a7805063949a.html",
+      "https://teleborsa.ansa.it/notiziario/finanza/btp-valore-cedole-minime-dal-370-cedola-unica-al-2225-per-il-valore-insieme/",
+      "https://www.ansa.it/sito/notizie/economia/2026/10/16/mef-per-il-btp-valore-insieme-cedola-minima-unica-al-2225_db99856a-c9db-4378-9c28-ebaf44245e1d.html",
+      "https://www.bancaditalia.it/media/comunicati/index.html?Esito+dei+collocamenti+supplementari+di+titoli+di+Stato+dell%2711.02.2011+-+BOT=%2F1000&page=3",
+      "https://videoembed.ansa.it/sito/notizie/economia/2026/10/19/il-btp-valore-insieme-sale-a-274-milioni-dopo-oltre-unora-di-asta_5ce84268-6dab-4421-95a3-da7ae99140e7.html",
+      "https://teleborsa.ansa.it/notiziario/finanza/mef-riviste-al-rialzo-le-cedole-fino-al-475-per-btp-valore-al-2270-per-btp-valore-insieme/",
+      "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/il-btp-valore-e-il-btp-valore-insieme-chiudono-a-oltre-166-miliardi_e7a59a52-80cd-462d-be02-4b1e96198969.html",
+      "https://www.ansa.it/amp/sito/notizie/economia/risparmio_Investimenti/2026/10/19/il-btp-valore-favorito-quasi-15-miliardi-di-controvalore-in-meno-di-3-ore_819a8737-d8eb-4d09-b4e9-681ba93bdb16.html",
+      "https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it/debito_pubblico/comunicazioni_emissioni/btp_valore_comunicazione_emissione/BTP-Valore-05.03.2030-3-Scheda-Informativa.pdf"
+    ],
+    "umbria": [
+      "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html",
+      "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+      "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/disposizioni-lassistenza-sanitaria-regionale-alla-morte-volontaria",
+      "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/audizione-con-la-presidente-proietti-e-voto-sulla-legge-sul",
+      "https://www.ansa.it/umbria/notizie/2026/10/22/la-presidente-umbra-proietti-non-partecipo-al-voto-sul-fine-vita_9b6c7beb-ef09-4578-9d54-8c2dc383c904.html",
+      "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/fine-vita-legge-di-civilta-e-di-dignita-lumbria-prende-posizione-e",
+      "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/la-terza-commissione-approva-la-legge-sul-suicidio-medicalmente",
+      "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html",
+      "https://www.ansa.it/umbria/notizie/2026/10/22/verini-il-parlamento-abbia-un-sussulto-di-liberta-e-voti-una-legge-sul-fine_2708413e-393b-4a7a-a0c5-515be6c84b85.html",
+      "https://www.rainews.it/amp/tgr/umbria/articoli/2026/10/legge-sul-fine-vita-in-aula-giovedi-3244f3b9-aa69-4286-aad0-f0a2b9ec60a5.html",
+      "https://www.ansa.it/umbria/notizie/2026/10/20/associazione-coscioni-siamo-fiduciosi-per-la-legge-sul-fine-vita-in-umbria_74c4ad2d-5103-4275-b381-9bc7560b27d6.html",
+      "https://www.ansa.it/amp/umbria/notizie/2026/10/21/lumbria-vota-sul-fine-vita-lass.-coscioni-ricorda-lappello-di-laura_30399ef1-b13d-4030-bf96-463e7310fc3c.html",
+      "https://consiglio.regione.umbria.it/node/82437/printable/pdf",
+      "https://consiglio.regione.umbria.it/sites/default/files/2025-10/Acs_Settembre_2025_0.pdf"
+    ]
+  }
+}

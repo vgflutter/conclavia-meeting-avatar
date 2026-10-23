@@ -1,6 +1,7 @@
 /** Provider-neutral model selectors. Actual model names stay on the server. */
 export const LLM_MODELS = [
   { id: "openai-default", provider: "openai", label: "OpenAI configurato" },
+  { id: "claude-default", provider: "claude", label: "Claude configurato" },
   { id: "gemini-default", provider: "gemini", label: "Gemini configurato" },
 ] as const;
 export type LlmModel = (typeof LLM_MODELS)[number];

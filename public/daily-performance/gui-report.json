@@ -1,0 +1,17 @@
+{
+  "pacing": {
+    "median": 16.699999999999818,
+    "p95": 16.700000000000273,
+    "max": 16.800000000000182
+  },
+  "geometry": {
+    "width": 390,
+    "scroll": 390
+  },
+  "metadata": {
+    "width": 720,
+    "height": 1280,
+    "duration": 36
+  },
+  "errors": []
+}

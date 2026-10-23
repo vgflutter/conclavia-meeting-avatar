@@ -1,0 +1,23 @@
+# Build locally, not on the small public application VPS:
+# docker build --build-context avatar-kit=../conclavia-avatar-kit -f Dockerfile.tg-worker -t conclavia-tg-worker:RELEASE .
+FROM mcr.microsoft.com/playwright:v1.63.0-noble
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace/conclavia-avatar-kit
+COPY --from=avatar-kit package.json package-lock.json ./
+COPY --from=avatar-kit src ./src
+COPY --from=avatar-kit assets ./assets
+WORKDIR /workspace/conclavia-meeting-avatar
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tsconfig.json ./
+COPY src ./src
+COPY scripts/tg ./scripts/tg
+COPY config/tg ./config/tg
+RUN groupadd --gid 1001 conclavia && useradd --uid 1001 --gid 1001 --create-home conclavia && mkdir -p /var/lib/conclavia-tg && chown -R 1001:1001 /var/lib/conclavia-tg
+ENV NODE_ENV=production
+ENV TG_ARTIFACT_DIR=/var/lib/conclavia-tg
+ENV TG_WORKER_ENABLED=true
+USER conclavia
+VOLUME ["/var/lib/conclavia-tg"]
+CMD ["node", "--conditions=react-server", "--import", "tsx", "scripts/tg/worker.ts"]

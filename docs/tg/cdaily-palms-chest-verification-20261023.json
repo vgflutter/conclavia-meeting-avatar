@@ -1,0 +1,294 @@
+{
+  "date": "2026-10-23",
+  "scope": "Joined palms slightly closer, held near the sternum and inclined backward toward the chest; silent local proofs only.",
+  "providerCalls": 0,
+  "databaseWrites": 0,
+  "postureMoodStanceTrajectories": 36,
+  "reference": {
+    "min": 0.3177676552374953,
+    "palm": 2.7544040417243547,
+    "worst": {
+      "t": 2.28,
+      "a": "middle",
+      "b": "middle",
+      "j": 2,
+      "k": 2
+    },
+    "hold": [
+      {
+        "normal": {
+          "x": 0.9991081557439644,
+          "y": 0.04221658745655794,
+          "z": -0.0008080033520820725
+        },
+        "forward": {
+          "x": 0.04174031211748467,
+          "y": -0.990363870296972,
+          "z": -0.13204980406928804
+        },
+        "surface": {
+          "x": 2.8247419809819085,
+          "y": 311.3984855532537,
+          "z": 54.90138849872025
+        },
+        "tips": [
+          {
+            "name": "index",
+            "p": {
+              "x": 0.5059643751481246,
+              "y": 268.5927708500695,
+              "z": 35.6712235461161
+            },
+            "r": 2.3529000000000004
+          },
+          {
+            "name": "middle",
+            "p": {
+              "x": 0.34951878033865613,
+              "y": 259.5743104009458,
+              "z": 44.0236172553492
+            },
+            "r": 2.4893
+          },
+          {
+            "name": "ring",
+            "p": {
+              "x": 0.4900543273245639,
+              "y": 261.6540038146764,
+              "z": 53.72277291340193
+            },
+            "r": 2.3529000000000004
+          },
+          {
+            "name": "little",
+            "p": {
+              "x": 0.8809914858780246,
+              "y": 271.72118644729414,
+              "z": 63.140803714065036
+            },
+            "r": 1.9778000000000002
+          },
+          {
+            "name": "thumb",
+            "p": {
+              "x": -0.9596464866434098,
+              "y": 300.3965269125518,
+              "z": 26.581320258800222
+            },
+            "r": 2.8600000000000003
+          }
+        ]
+      },
+      {
+        "normal": {
+          "x": -0.9990784198987334,
+          "y": 0.04291648693857955,
+          "z": -0.0006971667667813285
+        },
+        "forward": {
+          "x": -0.042319892282837675,
+          "y": -0.9876414111397264,
+          "z": -0.1509088125958814
+        },
+        "surface": {
+          "x": 4.4225253072753645,
+          "y": 311.42136155823556,
+          "z": 54.98393076332611
+        },
+        "tips": [
+          {
+            "name": "index",
+            "p": {
+              "x": 6.725878506111061,
+              "y": 268.9878739930387,
+              "z": 34.94394979425205
+            },
+            "r": 2.3529000000000004
+          },
+          {
+            "name": "middle",
+            "p": {
+              "x": 6.870433445849029,
+              "y": 259.81191522309183,
+              "z": 43.12324478211053
+            },
+            "r": 2.4893
+          },
+          {
+            "name": "ring",
+            "p": {
+              "x": 6.724434275860557,
+              "y": 261.7066870291988,
+              "z": 52.86013482353783
+            },
+            "r": 2.3529000000000004
+          },
+          {
+            "name": "little",
+            "p": {
+              "x": 6.333552900730814,
+              "y": 271.5930427361175,
+              "z": 62.46784114781219
+            },
+            "r": 1.9778000000000002
+          },
+          {
+            "name": "thumb",
+            "p": {
+              "x": 8.219449975875792,
+              "y": 300.95790627799875,
+              "z": 26.46217727973404
+            },
+            "r": 2.8600000000000003
+          }
+        ]
+      }
+    ],
+    "tips": [
+      {
+        "name": "index",
+        "projectedGap": 1.5141141309629358,
+        "gap3D": 1.5689402655637448
+      },
+      {
+        "name": "middle",
+        "projectedGap": 1.5423146655103732,
+        "gap3D": 1.6084672318522157
+      },
+      {
+        "name": "ring",
+        "projectedGap": 1.5285799485359925,
+        "gap3D": 1.5881981997045767
+      },
+      {
+        "name": "little",
+        "projectedGap": 1.4969614148527883,
+        "gap3D": 1.539827682085643
+      },
+      {
+        "name": "thumb",
+        "projectedGap": 3.4590964625192004,
+        "gap3D": 3.477018740311607
+      }
+    ]
+  },
+  "heldDirection": {
+    "closestToVertical": {
+      "fps": 25,
+      "posture": "standing",
+      "stance": 1,
+      "mood": "agreement",
+      "t": 2.36,
+      "side": 0,
+      "z": -0.06158610607025676,
+      "prayer": 0.9999997926174495
+    },
+    "mostInclined": {
+      "fps": 50,
+      "posture": "desk",
+      "stance": 0,
+      "mood": "empathy",
+      "t": 2.28,
+      "side": 0,
+      "z": -0.21806493405545765
+    }
+  },
+  "chin": {
+    "samples": 401,
+    "actual": "e5557c1e7f09e6360042d2122aa579786070c92837af997ee55d0ef61bd66af4",
+    "expected": "e5557c1e7f09e6360042d2122aa579786070c92837af997ee55d0ef61bd66af4",
+    "unchanged": true
+  },
+  "exports": {
+    "hands-editorial-reassure": {
+      "report": {
+        "duration": 8,
+        "frames": 400,
+        "fps": 50,
+        "width": 880,
+        "height": 570,
+        "audio": false,
+        "errors": [],
+        "renderSeconds": 4.73
+      },
+      "sha256": "27b414a3cfb46c0ae8417d34aaca3036fab7ef166c1bd8fce0bcd9953177171d"
+    },
+    "hands-editorial-reassure-detail": {
+      "report": {
+        "duration": 8,
+        "frames": 400,
+        "fps": 50,
+        "width": 880,
+        "height": 570,
+        "audio": false,
+        "errors": [],
+        "renderSeconds": 5.96
+      },
+      "sha256": "78c5cc7fd318207238cfb8ce2cfc138e5b3850dbec85948e6f195f0df3425908"
+    },
+    "hands-palms-joined": {
+      "report": {
+        "duration": 6,
+        "frames": 300,
+        "fps": 50,
+        "width": 880,
+        "height": 570,
+        "audio": false,
+        "errors": [],
+        "renderSeconds": 4.16
+      },
+      "sha256": "6515a140d225386fb34d602ce80322ab6d446265d41ba8707d59b62e06c90e16"
+    },
+    "hands-palms-joined-wide": {
+      "report": {
+        "duration": 6,
+        "frames": 300,
+        "fps": 50,
+        "width": 880,
+        "height": 570,
+        "audio": false,
+        "errors": [],
+        "renderSeconds": 3.33
+      },
+      "sha256": "1992a42dda07fb8e30dcfd704fe69ef2cfb2acc7b5c989f56ac7dfc4726848a3"
+    }
+  },
+  "approvedR3": {
+    "portrait.mp4": {
+      "expected": "7af0e5fbcf3c943d6ae83066dcb2b94a7e864caf4d5ef343b8132204147586f9",
+      "actual": "7af0e5fbcf3c943d6ae83066dcb2b94a7e864caf4d5ef343b8132204147586f9",
+      "unchanged": true
+    },
+    "landscape.mp4": {
+      "expected": "8c58e37de2718a851ac4722244502356d056c1a62277bc45be0ac1cfcda55906",
+      "actual": "8c58e37de2718a851ac4722244502356d056c1a62277bc45be0ac1cfcda55906",
+      "unchanged": true
+    }
+  },
+  "validation": {
+    "kitTests": {
+      "passed": 234,
+      "failed": 0
+    },
+    "tgTests": {
+      "passed": 84,
+      "failed": 0,
+      "skippedMongoIntegrations": 15
+    },
+    "browserRegressions": {
+      "passed": 23,
+      "failed": 0
+    },
+    "typecheck": true,
+    "featureBoundaries": true,
+    "consumerBoundaries": true,
+    "consumerBuilds": {
+      "meeting": true,
+      "onboarding": true
+    },
+    "affectedLint": true,
+    "visualIdentityFingerprints": 17,
+    "uiReport": "cdaily-palms-chest-ui-verification-20261023.json"
+  },
+  "limits": "Capsule and palm volume checks cover the tested current rig trajectories; no general collision simulation, new audio, complete Daily render or public deployment."
+}

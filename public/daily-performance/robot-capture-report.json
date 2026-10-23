@@ -1,0 +1,3448 @@
+{
+  "fps": 25,
+  "duration": 36,
+  "mode": "voice",
+  "errors": [],
+  "diagnostics": [
+    {
+      "format": "landscape",
+      "time": 0,
+      "mood": "attention",
+      "sample": {
+        "seconds": 0,
+        "acting": {
+          "innerBrow": 0.09040000000000001,
+          "rightBrow": 0.03,
+          "leftFrown": 0,
+          "rightFrown": 0,
+          "smile": 0.02,
+          "cheek": 0,
+          "squint": 0,
+          "downcast": 0,
+          "pitch": 0.015109757982234654,
+          "yaw": 0,
+          "tilt": 0.009125425258974454,
+          "lean": 0.01008,
+          "leftHand": 0.03,
+          "rightHand": 0.04,
+          "openness": 0.32599999999999996
+        },
+        "face": {
+          "eyeOpen": 1.0336,
+          "browLeft": 0.1344,
+          "browRight": 0.1344,
+          "browPinch": 0,
+          "lipPress": 0,
+          "asymmetry": 0,
+          "innerBrow": 0,
+          "lowerLidLeft": 0,
+          "lowerLidRight": 0,
+          "cheekLeft": 0,
+          "cheekRight": 0,
+          "cornerLeft": 0.0672,
+          "cornerRight": 0.0672,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": -0.00009,
+          "shift": 0.7844002392341255,
+          "shoulderLeft": -0.5323164734401764,
+          "shoulderRight": -0.4471458376897482,
+          "gazeX": 0,
+          "gazeY": 0.024983065446816565,
+          "left": {
+            "lift": 0.03,
+            "reach": 0,
+            "turn": 0,
+            "spread": 0.029119999999999997,
+            "curl": 0.58,
+            "point": 0,
+            "indexCurl": 0.08,
+            "middleCurl": 0.14,
+            "ringCurl": 0.22,
+            "littleCurl": 0.3,
+            "thumbCurl": 0.22,
+            "opposition": 0.12,
+            "pinch": 0,
+            "sweep": 0,
+            "wristFlex": 0
+          },
+          "right": {
+            "lift": 0.04,
+            "reach": 0,
+            "turn": 0,
+            "spread": 0.08008,
+            "curl": 0.58,
+            "point": 0,
+            "indexCurl": 0.115,
+            "middleCurl": 0.17500000000000002,
+            "ringCurl": 0.255,
+            "littleCurl": 0.33499999999999996,
+            "thumbCurl": 0.22,
+            "opposition": 0.12,
+            "pinch": 0,
+            "sweep": 0,
+            "wristFlex": 0
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": 0.07,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "rest",
+        "breath": 0.7242400999186075,
+        "dynamics": {
+          "acting": {
+            "innerBrow": 0,
+            "rightBrow": 0,
+            "leftFrown": 0,
+            "rightFrown": 0,
+            "smile": 0,
+            "cheek": 0,
+            "squint": 0,
+            "downcast": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "tilt": 0,
+            "lean": 0,
+            "leftHand": 0,
+            "rightHand": 0,
+            "openness": 0
+          },
+          "motion": {
+            "torso": 0,
+            "shift": 0,
+            "shoulderLeft": 0,
+            "shoulderRight": 0,
+            "gazeX": 0,
+            "gazeY": 0
+          },
+          "left": {
+            "lift": 0,
+            "reach": 0,
+            "turn": 0,
+            "spread": 0,
+            "curl": 0,
+            "point": 0,
+            "indexCurl": 0,
+            "middleCurl": 0,
+            "ringCurl": 0,
+            "littleCurl": 0,
+            "thumbCurl": 0,
+            "opposition": 0,
+            "pinch": 0,
+            "sweep": 0,
+            "wristFlex": 0
+          },
+          "right": {
+            "lift": 0,
+            "reach": 0,
+            "turn": 0,
+            "spread": 0,
+            "curl": 0,
+            "point": 0,
+            "indexCurl": 0,
+            "middleCurl": 0,
+            "ringCurl": 0,
+            "littleCurl": 0,
+            "thumbCurl": 0,
+            "opposition": 0,
+            "pinch": 0,
+            "sweep": 0,
+            "wristFlex": 0
+          },
+          "face": {
+            "eyeOpen": 0,
+            "browLeft": 0,
+            "browRight": 0,
+            "browPinch": 0,
+            "lipPress": 0,
+            "asymmetry": 0,
+            "innerBrow": 0,
+            "lowerLidLeft": 0,
+            "lowerLidRight": 0,
+            "cheekLeft": 0,
+            "cheekRight": 0,
+            "cornerLeft": 0,
+            "cornerRight": 0,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 1280,
+          "height": 720,
+          "deskY": 573,
+          "actors": [
+            {
+              "x": 302,
+              "y": 85,
+              "scale": 1.02
+            }
+          ],
+          "headline": {
+            "x": 610,
+            "y": 205,
+            "width": 570,
+            "height": 161
+          },
+          "context": {
+            "x": 610,
+            "y": 413,
+            "width": 562,
+            "height": 69
+          },
+          "caption": {
+            "x": 53,
+            "y": 647,
+            "width": 1174,
+            "height": 61
+          },
+          "microphones": [
+            {
+              "x": 530.48,
+              "y": 421.02,
+              "scale": 0.8772,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "landscape",
+      "time": 5,
+      "mood": "attention",
+      "sample": {
+        "seconds": 5,
+        "acting": {
+          "innerBrow": 0.09040000000000449,
+          "rightBrow": 0.03,
+          "leftFrown": 0,
+          "rightFrown": 0,
+          "smile": 0.02,
+          "cheek": 0,
+          "squint": 6.110256224403501e-14,
+          "downcast": 0,
+          "pitch": 0.01932759780184152,
+          "yaw": 0,
+          "tilt": -0.005543606399517078,
+          "lean": 0.01008000119944392,
+          "leftHand": 0.03000001234486926,
+          "rightHand": 0.04000000329038405,
+          "openness": 0.32599999999999996
+        },
+        "face": {
+          "eyeOpen": 1.0336000000000003,
+          "browLeft": 0.13440000000000013,
+          "browRight": 0.13440000000000007,
+          "browPinch": 0,
+          "lipPress": 0,
+          "asymmetry": 0,
+          "innerBrow": 0,
+          "lowerLidLeft": 1.0003660542006795e-12,
+          "lowerLidRight": 1.0003660542006795e-12,
+          "cheekLeft": 6.209995246523488e-17,
+          "cheekRight": 4.222796767635966e-17,
+          "cornerLeft": 0.06720000000000002,
+          "cornerRight": 0.06720000000000001,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": -0.0000899999999994271,
+          "shift": -1.1080690361822116,
+          "shoulderLeft": -0.425542751742901,
+          "shoulderRight": -0.3574559114640343,
+          "gazeX": 0,
+          "gazeY": -0.017824477133509407,
+          "left": {
+            "lift": 0.03000001234486926,
+            "reach": 0,
+            "turn": -8.03763801241397e-14,
+            "spread": 0.0291200000000003,
+            "curl": 0.5799999999999995,
+            "point": 1.1649486321256955e-15,
+            "indexCurl": 0.08000000000000033,
+            "middleCurl": 0.14000000000000293,
+            "ringCurl": 0.22000000000002454,
+            "littleCurl": 0.30000000000019983,
+            "thumbCurl": 0.21999999999999978,
+            "opposition": 0.12000000000000006,
+            "pinch": 0,
+            "sweep": -1.4204057133335167e-14,
+            "wristFlex": 2.0432317425272197e-11
+          },
+          "right": {
+            "lift": 0.04000000329038405,
+            "reach": 1.2416386939922827e-15,
+            "turn": -1.1011799966437851e-12,
+            "spread": 0.0800800000000009,
+            "curl": 0.5799999999999991,
+            "point": 0,
+            "indexCurl": 0.11500000000000683,
+            "middleCurl": 0.17500000000005148,
+            "ringCurl": 0.25500000000036677,
+            "littleCurl": 0.3350000000025171,
+            "thumbCurl": 0.2200000000000119,
+            "opposition": 0.1200000000000045,
+            "pinch": 4.999723464289095e-15,
+            "sweep": 1.4005571536996881e-14,
+            "wristFlex": 1.626363950730278e-10
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": 0.07,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "rest",
+        "breath": 0.4938179242313727,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -6.088018687390867e-14,
+            "rightBrow": 0,
+            "leftFrown": 0,
+            "rightFrown": 0,
+            "smile": 0,
+            "cheek": 0,
+            "squint": -8.265382501327999e-13,
+            "downcast": 0,
+            "pitch": -0.022015101118737678,
+            "yaw": 0,
+            "tilt": 0.006230942013960384,
+            "lean": -1.583160843129113e-8,
+            "leftHand": -1.055178691233089e-7,
+            "rightHand": -2.8277501628143656e-8,
+            "openness": 0
+          },
+          "motion": {
+            "torso": -8.31240762500254e-15,
+            "shift": 0.20277955479005735,
+            "shoulderLeft": 0.5196611575573052,
+            "shoulderRight": 0.4365153723481002,
+            "gazeX": 0,
+            "gazeY": -0.0073405849784033425
+          },
+          "left": {
+            "lift": -1.2415465043859468e-7,
+            "reach": 0,
+            "turn": 1.1685243981855362e-12,
+            "spread": -4.4382528442005204e-15,
+            "curl": 7.374721974908123e-15,
+            "point": -1.6978728831427012e-14,
+            "indexCurl": -5.7806134743415426e-15,
+            "middleCurl": -4.809129183969368e-14,
+            "ringCurl": -3.813520873626745e-13,
+            "littleCurl": -2.904432061179831e-12,
+            "thumbCurl": 3.160563417600079e-15,
+            "opposition": -9.836144900018465e-16,
+            "pinch": 0,
+            "sweep": 2.0692381772840372e-13,
+            "wristFlex": -2.356603677163172e-10
+          },
+          "right": {
+            "lift": -3.318420016193485e-8,
+            "reach": -1.8097419983240733e-14,
+            "turn": 1.5962899060055835e-11,
+            "spread": -1.3205107561438322e-14,
+            "curl": 1.2649823105733806e-14,
+            "point": 0,
+            "indexCurl": -1.1952700060595184e-13,
+            "middleCurl": -8.483356218088196e-13,
+            "ringCurl": -5.681023107949499e-12,
+            "littleCurl": -3.648131347092341e-11,
+            "thumbCurl": -1.7337526296975716e-13,
+            "opposition": -6.586986691119345e-14,
+            "pinch": -7.295663990039481e-14,
+            "sweep": -2.0211522504696872e-13,
+            "wristFlex": -1.868832309694002e-9
+          },
+          "face": {
+            "eyeOpen": -1.4931334314519492e-15,
+            "browLeft": -2.04605944542161e-15,
+            "browRight": -1.1914774565438578e-15,
+            "browPinch": 0,
+            "lipPress": 0,
+            "asymmetry": 0,
+            "innerBrow": 0,
+            "lowerLidLeft": -1.3206264941917962e-11,
+            "lowerLidRight": -1.3206264941917962e-11,
+            "cheekLeft": -9.671101726533538e-16,
+            "cheekRight": -6.576349174042793e-16,
+            "cornerLeft": -3.380761257418548e-16,
+            "cornerRight": -2.183898606910654e-16,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 1280,
+          "height": 720,
+          "deskY": 573,
+          "actors": [
+            {
+              "x": 302,
+              "y": 85,
+              "scale": 1.02
+            }
+          ],
+          "headline": {
+            "x": 610,
+            "y": 205,
+            "width": 570,
+            "height": 161
+          },
+          "context": {
+            "x": 610,
+            "y": 413,
+            "width": 562,
+            "height": 69
+          },
+          "caption": {
+            "x": 53,
+            "y": 647,
+            "width": 1174,
+            "height": 61
+          },
+          "microphones": [
+            {
+              "x": 530.48,
+              "y": 421.02,
+              "scale": 0.8772,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "landscape",
+      "time": 10,
+      "mood": "curiosity",
+      "sample": {
+        "seconds": 10,
+        "acting": {
+          "innerBrow": 0.21640000002085066,
+          "rightBrow": 0.40799999999999986,
+          "leftFrown": 0,
+          "rightFrown": 0,
+          "smile": 0.03679999999999999,
+          "cheek": 0,
+          "squint": 2.0539719095003477e-10,
+          "downcast": 0,
+          "pitch": 0.010183730195887128,
+          "yaw": 0,
+          "tilt": -0.06373644978465481,
+          "lean": 0.029400014203775977,
+          "leftHand": 0.05000083639284516,
+          "rightHand": 0.04000496236903225,
+          "openness": 0.7879999999999999
+        },
+        "face": {
+          "eyeOpen": 1.0672000000004624,
+          "browLeft": 0.48720000000200986,
+          "browRight": 0.26880000000126625,
+          "browPinch": 0,
+          "lipPress": 0,
+          "asymmetry": 0,
+          "innerBrow": 0.13439999999999996,
+          "lowerLidLeft": 2.5920566637649823e-9,
+          "lowerLidRight": 2.5920566637649823e-9,
+          "cheekLeft": 1.004939256735897e-12,
+          "cheekRight": 6.833586945804124e-13,
+          "cornerLeft": 0.04200000000036178,
+          "cornerRight": 0.04200000000024119,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": 0.005275780116771795,
+          "shift": 1.1681410121274995,
+          "shoulderLeft": -0.20053126454545672,
+          "shoulderRight": -0.1684462627984621,
+          "gazeX": 0,
+          "gazeY": 0.00006011330663548251,
+          "left": {
+            "lift": 0.05000083639284516,
+            "reach": 0.13999999999999999,
+            "turn": -6.984218404912572e-10,
+            "spread": 0.1419600000097322,
+            "curl": 0.5799999999852995,
+            "point": 9.756806249209166e-48,
+            "indexCurl": 0.08000000001801166,
+            "middleCurl": 0.140000000085297,
+            "ringCurl": 0.22000000038520928,
+            "littleCurl": 0.3000000016791732,
+            "thumbCurl": 0.21999999999972789,
+            "opposition": 0.12000000000122225,
+            "pinch": 0,
+            "sweep": -1.2222652072979122e-10,
+            "wristFlex": 2.6230034288045156e-8
+          },
+          "right": {
+            "lift": 0.04000496236903225,
+            "reach": 0.13999999999999999,
+            "turn": -9.136020387381364e-9,
+            "spread": 0.14196000015685892,
+            "curl": 0.5799999997565287,
+            "point": 0,
+            "indexCurl": 0.11500000035388158,
+            "middleCurl": 0.17500000142881142,
+            "ringCurl": 0.25500000546045315,
+            "littleCurl": 0.335000020052341,
+            "thumbCurl": 0.21999999999633166,
+            "opposition": 0.12000000001664683,
+            "pinch": 4.070398810745947e-47,
+            "sweep": 1.0029548113977268e-10,
+            "wristFlex": 1.9962413305919132e-7
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": 0.12879999999999997,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "rest",
+        "breath": 0.1577249790010038,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -2.7994266673313994e-10,
+            "rightBrow": 3.3204894857772805e-16,
+            "leftFrown": 0,
+            "rightFrown": 0,
+            "smile": 4.1506118572216006e-17,
+            "cheek": 0,
+            "squint": -2.7393321535120556e-9,
+            "downcast": 0,
+            "pitch": 0.03346623945990585,
+            "yaw": 0,
+            "tilt": -0.007466780738093213,
+            "lean": -1.8574236528882674e-7,
+            "leftHand": -0.000007072433015739516,
+            "rightHand": -0.000041566225727403865,
+            "openness": 6.640978971554561e-16
+          },
+          "motion": {
+            "torso": -0.0025531854066117394,
+            "shift": 0.06505751744537563,
+            "shoulderLeft": 0.7162938534018718,
+            "shoulderRight": 0.6016868452077404,
+            "gazeX": 0,
+            "gazeY": 0.010433562743602978
+          },
+          "left": {
+            "lift": -0.0000083655511698482,
+            "reach": 1.7565352519920738e-16,
+            "turn": 1.0024970548085029e-8,
+            "spread": -1.4076948572445192e-10,
+            "curl": 2.1254165713087043e-10,
+            "point": -1.4502482738121958e-46,
+            "indexCurl": -3.1227974375795877e-10,
+            "middleCurl": -1.39373005849461e-9,
+            "ringCurl": -5.909886256035081e-9,
+            "littleCurl": -2.4087058872766144e-8,
+            "thumbCurl": 3.936346339730286e-12,
+            "opposition": -1.7725026283416274e-11,
+            "pinch": 0,
+            "sweep": 1.7610463915998325e-9,
+            "wristFlex": -2.974922275809132e-7
+          },
+          "right": {
+            "lift": -0.00004939520421766824,
+            "reach": 1.7565352519920738e-16,
+            "turn": 1.3036401718829013e-7,
+            "spread": -2.258357512677514e-9,
+            "curl": 3.5035997715183775e-9,
+            "point": 0,
+            "indexCurl": -6.1040564134844835e-9,
+            "middleCurl": -2.3220302608563347e-8,
+            "ringCurl": -8.329560408305345e-8,
+            "littleCurl": -2.858974544644341e-7,
+            "thumbCurl": 5.286054772101275e-11,
+            "opposition": -2.4058686046420597e-10,
+            "pinch": -6.0509751280445275e-46,
+            "sweep": -1.4151353102705703e-9,
+            "wristFlex": -0.0000022465058281815043
+          },
+          "face": {
+            "eyeOpen": -7.12836246442961e-12,
+            "browLeft": -3.0988929479512184e-11,
+            "browRight": -1.952306951248933e-11,
+            "browPinch": 0,
+            "lipPress": 0,
+            "asymmetry": 0,
+            "innerBrow": 1.8497925885847046e-16,
+            "lowerLidLeft": -3.301713645728471e-8,
+            "lowerLidRight": -3.301713645728471e-8,
+            "cheekLeft": -1.5494394870424258e-11,
+            "cheekRight": -1.0536188511888532e-11,
+            "cornerLeft": -5.578016077626414e-12,
+            "cornerRight": -3.71866437625917e-12,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 1280,
+          "height": 720,
+          "deskY": 573,
+          "actors": [
+            {
+              "x": 302,
+              "y": 85,
+              "scale": 1.02
+            }
+          ],
+          "headline": {
+            "x": 610,
+            "y": 205,
+            "width": 570,
+            "height": 161
+          },
+          "context": {
+            "x": 610,
+            "y": 413,
+            "width": 562,
+            "height": 69
+          },
+          "caption": {
+            "x": 53,
+            "y": 647,
+            "width": 1174,
+            "height": 61
+          },
+          "microphones": [
+            {
+              "x": 530.48,
+              "y": 421.02,
+              "scale": 0.8772,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "landscape",
+      "time": 15,
+      "mood": "doubt",
+      "sample": {
+        "seconds": 15,
+        "acting": {
+          "innerBrow": 0.04000000000037884,
+          "rightBrow": 0.576,
+          "leftFrown": 0.2352,
+          "rightFrown": 0,
+          "smile": -0.09759999999999996,
+          "cheek": 0,
+          "squint": 0.16800000000124457,
+          "downcast": 0,
+          "pitch": 0.02028127301329377,
+          "yaw": -0.03780000001105185,
+          "tilt": 0.06550862186978136,
+          "lean": 7.037370020575778e-7,
+          "leftHand": 0.04000005047454449,
+          "rightHand": 0.03000013636127723,
+          "openness": 0.4100000000000001
+        },
+        "face": {
+          "eyeOpen": 0.7144000000000046,
+          "browLeft": 0.6300000000000202,
+          "browRight": -0.20159999999998726,
+          "browPinch": 0.18479999999999996,
+          "lipPress": 0.20999999999999996,
+          "asymmetry": 0.5459999999999999,
+          "innerBrow": 1.6973560697410534e-29,
+          "lowerLidLeft": 0.11928000001875062,
+          "lowerLidRight": 0.17178000001875063,
+          "cheekLeft": 1.0088659139804072e-14,
+          "cheekRight": 6.860288215066749e-15,
+          "cornerLeft": -0.04157999999999635,
+          "cornerRight": -0.2272199999999976,
+          "jawDrop": 1.7544722787260218
+        },
+        "motion": {
+          "torso": 0.000089999999991216,
+          "shift": -1.0040984578419612,
+          "shoulderLeft": 0.6553913687151126,
+          "shoulderRight": 0.6446087497202349,
+          "gazeX": 0,
+          "gazeY": 0.017739992320187695,
+          "left": {
+            "lift": 0.04000005047454449,
+            "reach": -0.12999999999999998,
+            "turn": -9.354590112619032e-12,
+            "spread": 0.0964600000000448,
+            "curl": 0.5799999999999177,
+            "point": 4.391126545735562e-80,
+            "indexCurl": 0.0800000000001008,
+            "middleCurl": 0.14000000000064314,
+            "ringCurl": 0.2200000000039129,
+            "littleCurl": 0.300000000022967,
+            "thumbCurl": 0.21999999999997452,
+            "opposition": 0.12000000000000735,
+            "pinch": 0,
+            "sweep": -1.654880511648888e-12,
+            "wristFlex": 8.794328003524739e-10
+          },
+          "right": {
+            "lift": 0.03000013636127723,
+            "reach": -0.24999999999999997,
+            "turn": -1.2506970518128701e-10,
+            "spread": 0.02912000000005971,
+            "curl": 0.5800000000000821,
+            "point": 5.167656133285077e-13,
+            "indexCurl": 0.11500000000207017,
+            "middleCurl": 0.17500000001123348,
+            "ringCurl": 0.25500000005773554,
+            "littleCurl": 0.33500000028579685,
+            "thumbCurl": 0.22000000000139108,
+            "opposition": 0.12000000000053018,
+            "pinch": 1.8218891837972137e-79,
+            "sweep": 1.5725523863568755e-12,
+            "wristFlex": 6.902495286302537e-9
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 13.066829294380293,
+          "opening": 3.1899495976836763,
+          "curve": -0.26488335291502063,
+          "teeth": true
+        },
+        "mouthOpen": true,
+        "mouthAmplitude": 3.1899495976836763,
+        "viseme": "e",
+        "breath": -0.21211911030367722,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -5.118013828017878e-12,
+            "rightBrow": 6.640978971554561e-16,
+            "leftFrown": 1.6602447428886402e-16,
+            "rightFrown": 0,
+            "smile": -8.301223714443201e-17,
+            "cheek": 0,
+            "squint": -1.6760980633379077e-11,
+            "downcast": 0,
+            "pitch": -0.028834161260582036,
+            "yaw": 1.27283350744909e-10,
+            "tilt": 0.005581029020903914,
+            "lean": -0.000008935929871293727,
+            "leftHand": -4.306337208874422e-7,
+            "rightHand": -0.0000011581341733957788,
+            "openness": -3.3204894857772805e-16
+          },
+          "motion": {
+            "torso": 1.2597842829609528e-13,
+            "shift": -0.32041293309236374,
+            "shoulderLeft": 0.7596487529666679,
+            "shoulderRight": 0.6381049524986694,
+            "gazeX": 0,
+            "gazeY": -0.007323016976131388
+          },
+          "left": {
+            "lift": -5.07150869752559e-7,
+            "reach": -1.7565352519920738e-16,
+            "turn": 1.3523838400726628e-10,
+            "spread": -6.516312802017086e-13,
+            "curl": 1.1958933299251165e-12,
+            "point": -6.551137171385299e-79,
+            "indexCurl": -1.7583838205503346e-12,
+            "middleCurl": -1.057848827661791e-11,
+            "ringCurl": -6.045459178629368e-11,
+            "littleCurl": -3.319154815627277e-10,
+            "thumbCurl": 3.705020290081738e-13,
+            "opposition": -1.0712877582395408e-13,
+            "pinch": 0,
+            "sweep": 2.399043149809408e-11,
+            "wristFlex": -1.0069288611473012e-8
+          },
+          "right": {
+            "lift": -0.000001366940274926869,
+            "reach": -1.7565352519920738e-16,
+            "turn": 1.8005593632278214e-9,
+            "spread": -8.672952022152809e-13,
+            "curl": -1.1932865953415736e-12,
+            "point": -7.501813213819293e-12,
+            "indexCurl": -3.5990799576728203e-11,
+            "middleCurl": -1.8408586561869237e-10,
+            "ringCurl": -8.885129717414715e-10,
+            "littleCurl": -4.113161033439407e-9,
+            "thumbCurl": -2.01679475577109e-11,
+            "opposition": -7.703175037417878e-12,
+            "pinch": -2.718202233427401e-78,
+            "sweep": -2.2491189762149614e-11,
+            "wristFlex": -7.86119232839819e-8
+          },
+          "face": {
+            "eyeOpen": -7.148058560212964e-14,
+            "browLeft": -3.129637644467575e-13,
+            "browRight": -1.970365056179817e-13,
+            "browPinch": 1.8497925885847046e-16,
+            "lipPress": 1.8497925885847046e-16,
+            "asymmetry": 7.399170354338818e-16,
+            "innerBrow": -2.6766826403193403e-28,
+            "lowerLidLeft": -2.4489161726668537e-10,
+            "lowerLidRight": -2.44891752930719e-10,
+            "cheekLeft": -1.5641555984547966e-13,
+            "cheekRight": -1.0636258069492589e-13,
+            "cornerLeft": -5.6266632965111235e-14,
+            "cornerRight": -3.750260245325436e-14,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 1280,
+          "height": 720,
+          "deskY": 573,
+          "actors": [
+            {
+              "x": 302,
+              "y": 85,
+              "scale": 1.02
+            }
+          ],
+          "headline": {
+            "x": 610,
+            "y": 205,
+            "width": 570,
+            "height": 161
+          },
+          "context": {
+            "x": 610,
+            "y": 413,
+            "width": 562,
+            "height": 69
+          },
+          "caption": {
+            "x": 53,
+            "y": 647,
+            "width": 1174,
+            "height": 61
+          },
+          "microphones": [
+            {
+              "x": 530.48,
+              "y": 421.02,
+              "scale": 0.8772,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "landscape",
+      "time": 20,
+      "mood": "empathy",
+      "sample": {
+        "seconds": 20,
+        "acting": {
+          "innerBrow": 0.5608000261993121,
+          "rightBrow": 0.030000000000000002,
+          "leftFrown": 0.11760000000000002,
+          "rightFrown": 0.1176,
+          "smile": -0.10599999999999998,
+          "cheek": 0,
+          "squint": 4.664491901132536e-7,
+          "downcast": 0.25199999999999995,
+          "pitch": 0.04113522881614723,
+          "yaw": -1.1318826743153132e-19,
+          "tilt": -0.009876157132491887,
+          "lean": 0.015241378137990006,
+          "leftHand": 0.040068624462944256,
+          "rightHand": 0.030347708475203544,
+          "openness": 0.24200000000000002
+        },
+        "face": {
+          "eyeOpen": 0.8992000016855949,
+          "browLeft": -0.03359999267132693,
+          "browRight": -0.03359999538293596,
+          "browPinch": 2.9697826390400605e-25,
+          "lipPress": 0.16800000000000004,
+          "asymmetry": 8.774357797163867e-25,
+          "innerBrow": 0.6719999999999999,
+          "lowerLidLeft": 0.0000035902436732753974,
+          "lowerLidRight": 0.0000035902436732753974,
+          "cheekLeft": 3.664336535736993e-9,
+          "cheekRight": 2.4917488443011427e-9,
+          "cornerLeft": -0.33599999868083885,
+          "cornerRight": -0.3359999991205592,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": 0.00008997466382301521,
+          "shift": 0.6474138750269199,
+          "shoulderLeft": 1.7488930426836027,
+          "shoulderRight": 1.6975497445688488,
+          "gazeX": 0,
+          "gazeY": -0.024992362477152114,
+          "left": {
+            "lift": 0.040068624462944256,
+            "reach": -1.5080197562708072e-7,
+            "turn": -0.0000013383411838654076,
+            "spread": 0.029120003403372324,
+            "curl": 0.5799999843437287,
+            "point": 1.652386561580363e-112,
+            "indexCurl": 0.080000178755406,
+            "middleCurl": 0.14000049670565332,
+            "ringCurl": 0.22000131643848275,
+            "littleCurl": 0.3000033696022846,
+            "thumbCurl": 0.22000000302964043,
+            "opposition": 0.12000000270649266,
+            "pinch": 0,
+            "sweep": -2.5902959694928415e-7,
+            "wristFlex": 0.000010528257026479378
+          },
+          "right": {
+            "lift": 0.030347708475203544,
+            "reach": -6.171099855658499e-29,
+            "turn": -0.00001692599555216305,
+            "spread": 0.0691600670949844,
+            "curl": 0.579999861179667,
+            "point": 4.7281171308572626e-45,
+            "indexCurl": 0.11500331014750532,
+            "middleCurl": 0.1750078278906996,
+            "ringCurl": 0.25501752794222005,
+            "littleCurl": 0.33503772999878356,
+            "thumbCurl": 0.2200000388411061,
+            "opposition": 0.1200000352261663,
+            "pinch": 6.839809204460088e-112,
+            "sweep": 1.7478145402204455e-7,
+            "wristFlex": 0.00007476443672562492
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": -0.37099999999999994,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "mbp",
+        "breath": -0.5365724016629755,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -3.450773657020124e-7,
+            "rightBrow": -2.075305932440505e-17,
+            "leftFrown": -8.301223714455722e-17,
+            "rightFrown": 8.301223714455722e-17,
+            "smile": -8.301223714443223e-17,
+            "cheek": 0,
+            "squint": -0.000006027310348693599,
+            "downcast": 3.320489485778536e-16,
+            "pitch": -0.026226002251057607,
+            "yaw": 1.328182610215169e-18,
+            "tilt": -0.0013620429260046561,
+            "lean": -0.0013536237121418537,
+            "leftHand": -0.0005649088002479254,
+            "rightHand": -0.002789362688097168,
+            "openness": -1.660244742889414e-16
+          },
+          "motion": {
+            "torso": 3.5260838965514776e-7,
+            "shift": 0.5142952960561864,
+            "shoulderLeft": 0.6404493360366926,
+            "shoulderRight": 0.5379832402820534,
+            "gazeX": 0,
+            "gazeY": -0.00014160316247888234
+          },
+          "left": {
+            "lift": -0.0006771104952245101,
+            "reach": 0.0000021418278889220868,
+            "turn": 0.000018736440828854118,
+            "spread": -4.853303772964155e-8,
+            "curl": 2.2305362156566486e-7,
+            "point": -2.4690565788777044e-111,
+            "indexCurl": -0.0000030342642801746683,
+            "middleCurl": -0.00000793699991814138,
+            "ringCurl": -0.000019726389263159992,
+            "littleCurl": -0.000047143587337240684,
+            "thumbCurl": -4.318099052076482e-8,
+            "opposition": -3.8756463383711416e-8,
+            "pinch": 0,
+            "sweep": 0.0000036608806682492718,
+            "wristFlex": -0.00011563558188470436
+          },
+          "right": {
+            "lift": -0.003386831380082181,
+            "reach": 9.122105455239378e-28,
+            "turn": 0.0002334017705720735,
+            "spread": -9.483802154326514e-7,
+            "curl": 0.00000195895547914005,
+            "point": -7.025297903117817e-44,
+            "indexCurl": -0.00005541270949369775,
+            "middleCurl": -0.00012327193269570433,
+            "ringCurl": -0.00025864152887111763,
+            "littleCurl": -0.0005193564527963461,
+            "thumbCurl": -5.491077199903655e-7,
+            "opposition": -5.011031885521798e-7,
+            "pinch": -1.022052121676168e-110,
+            "sweep": -0.000002329108235931324,
+            "wristFlex": -0.000804067451091972
+          },
+          "face": {
+            "eyeOpen": -2.5544996927450252e-8,
+            "browLeft": -1.110652027996426e-7,
+            "browRight": -6.997107777864958e-8,
+            "browPinch": -4.6722993129373066e-24,
+            "lipPress": -1.8497925885847065e-16,
+            "asymmetry": -1.3804520697314853e-23,
+            "innerBrow": 7.399170354338826e-16,
+            "lowerLidLeft": -0.00004188292961987068,
+            "lowerLidRight": -0.00004188292961987068,
+            "cheekLeft": -5.553260140753783e-8,
+            "cheekRight": -3.776216895712555e-8,
+            "cornerLeft": -1.999173644373695e-8,
+            "cornerRight": -1.3327824381305628e-8,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 1280,
+          "height": 720,
+          "deskY": 573,
+          "actors": [
+            {
+              "x": 302,
+              "y": 85,
+              "scale": 1.02
+            }
+          ],
+          "headline": {
+            "x": 610,
+            "y": 205,
+            "width": 570,
+            "height": 161
+          },
+          "context": {
+            "x": 610,
+            "y": 413,
+            "width": 562,
+            "height": 69
+          },
+          "caption": {
+            "x": 53,
+            "y": 647,
+            "width": 1174,
+            "height": 61
+          },
+          "microphones": [
+            {
+              "x": 530.48,
+              "y": 421.02,
+              "scale": 0.8772,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "landscape",
+      "time": 25,
+      "mood": "amusement",
+      "sample": {
+        "seconds": 25,
+        "acting": {
+          "innerBrow": 0.040000085934491024,
+          "rightBrow": 0.030000000000000002,
+          "leftFrown": 6.294521426038549e-20,
+          "rightFrown": 6.294521426038542e-20,
+          "smile": 0.5240001473162704,
+          "cheek": 0.29399999999999993,
+          "squint": 0.15120037833725683,
+          "downcast": 1.3488260198654156e-19,
+          "pitch": 0.03605389747228448,
+          "yaw": -2.3079645946084052e-45,
+          "tilt": -0.012085667613516721,
+          "lean": 0.004756550148387193,
+          "leftHand": 0.04014039133726726,
+          "rightHand": 0.030475099044935842,
+          "openness": 0.578
+        },
+        "face": {
+          "eyeOpen": 0.9748000066179134,
+          "browLeft": 0.16800002877353648,
+          "browRight": 0.16800001812732795,
+          "browPinch": 1.2521026762120487e-59,
+          "lipPress": 1.4511966595520408e-22,
+          "asymmetry": 0.15119999999999997,
+          "innerBrow": 5.804786638208161e-22,
+          "lowerLidLeft": 0.449717919931613,
+          "lowerLidRight": 0.4969889199316129,
+          "cheekLeft": 0.5523000143867683,
+          "cheekRight": 0.5523000097830025,
+          "cornerLeft": 0.8237040051792365,
+          "cornerRight": 0.7722960034528243,
+          "jawDrop": 4.275430258547593
+        },
+        "motion": {
+          "torso": -0.025721824364444416,
+          "shift": -0.16651923969234494,
+          "shoulderLeft": 0.5057257399534485,
+          "shoulderRight": 0.4247907083467978,
+          "gazeX": 0,
+          "gazeY": 0.017384927544131255,
+          "left": {
+            "lift": 0.04014039133726726,
+            "reach": -2.013827937466519e-39,
+            "turn": -0.000004892382618212748,
+            "spread": 0.11830004764811382,
+            "curl": 0.5799999286598629,
+            "point": 5.701611998491985e-145,
+            "indexCurl": 0.08000082415988236,
+            "middleCurl": 0.14000209286780116,
+            "ringCurl": 0.22000506799676464,
+            "littleCurl": 0.30001184155914934,
+            "thumbCurl": 0.2199999803910067,
+            "opposition": 0.12000000591054383,
+            "pinch": 0,
+            "sweep": -9.243845503630133e-7,
+            "wristFlex": 0.0000282518605499321
+          },
+          "right": {
+            "lift": 0.030475099044935842,
+            "reach": -3.454990670076099e-61,
+            "turn": -0.00005818786930077491,
+            "spread": 0.118300316306577,
+            "curl": 0.5799995837932147,
+            "point": 2.162197574168123e-77,
+            "indexCurl": 0.1150149226889471,
+            "middleCurl": 0.1750322633712809,
+            "ringCurl": 0.25506603583290016,
+            "littleCurl": 0.33512984992971984,
+            "thumbCurl": 0.2199997493964181,
+            "opposition": 0.12000007613346206,
+            "pinch": 2.3570501747348783e-144,
+            "sweep": 5.803691854707558e-7,
+            "wristFlex": 0.00019624598090541744
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 9.667947131701313,
+          "opening": 7.773509560995624,
+          "curve": 1.2383290383524452,
+          "teeth": false
+        },
+        "mouthOpen": true,
+        "mouthAmplitude": 7.773509560995624,
+        "viseme": "o",
+        "breath": -0.7462060078365084,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -0.0000011260747901461491,
+            "rightBrow": -2.0753059286108024e-17,
+            "leftFrown": -8.62451392662332e-19,
+            "rightFrown": -8.624513926623316e-19,
+            "smile": -0.0000019304139261603193,
+            "cheek": 3.3204909522964126e-16,
+            "squint": -0.000004889726918305997,
+            "downcast": -1.848110127133585e-18,
+            "pitch": 0.011623326780373571,
+            "yaw": 2.743220907277418e-44,
+            "tilt": -0.0034209285998537922,
+            "lean": -0.013109420614647906,
+            "leftHand": -0.0011476328560718059,
+            "rightHand": -0.0038122918796262666,
+            "openness": 6.6409797087079925e-16
+          },
+          "motion": {
+            "torso": -0.0017730013003538804,
+            "shift": -0.6095071667772656,
+            "shoulderLeft": 0.38422919956860996,
+            "shoulderRight": 0.3230154849133462,
+            "gazeX": 0,
+            "gazeY": 0.0075220297641042
+          },
+          "left": {
+            "lift": -0.0013803718198914666,
+            "reach": 2.988544222367017e-38,
+            "turn": 0.00006805706131745663,
+            "spread": -6.770330565875647e-7,
+            "curl": 0.000001012554605897793,
+            "point": -8.526908632149025e-144,
+            "indexCurl": -0.000013903081477331726,
+            "middleCurl": -0.000033225044321310824,
+            "ringCurl": -0.00007542094083819424,
+            "littleCurl": -0.00016446608850001346,
+            "thumbCurl": 2.7843430314667093e-7,
+            "opposition": -8.437455768665149e-8,
+            "pinch": 0,
+            "sweep": 0.000012996374597975493,
+            "wristFlex": -0.0003073966205600807
+          },
+          "right": {
+            "lift": -0.0046282649185185,
+            "reach": 5.146446464049382e-60,
+            "turn": 0.0007936424752047192,
+            "spread": -0.0000044634899340976365,
+            "curl": 0.000005862567320182732,
+            "point": -3.225382228381763e-76,
+            "indexCurl": -0.00024739592524310856,
+            "middleCurl": -0.0005029218501481848,
+            "ringCurl": -0.0009640042340748868,
+            "littleCurl": -0.0017671623582774109,
+            "thumbCurl": 0.000003524457516647643,
+            "opposition": -0.00000107858271518967,
+            "pinch": -3.5250769901011848e-143,
+            "sweep": -0.0000075651989644602845,
+            "wristFlex": -0.0020795559940751814
+          },
+          "face": {
+            "eyeOpen": -9.982873818717666e-8,
+            "browLeft": -4.3403799130410675e-7,
+            "browRight": -2.734439343221743e-7,
+            "browPinch": -1.9890422610503766e-58,
+            "lipPress": -2.278498150883802e-21,
+            "asymmetry": 1.8497925885847536e-16,
+            "innerBrow": -9.113992603535205e-21,
+            "lowerLidLeft": -0.00003408249165675016,
+            "lowerLidRight": -0.000034082491656406834,
+            "cheekLeft": -2.1701899616996807e-7,
+            "cheekRight": -1.4757291763599684e-7,
+            "cornerLeft": -7.812683836731964e-8,
+            "cornerRight": -5.208455871168577e-8,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 1280,
+          "height": 720,
+          "deskY": 573,
+          "actors": [
+            {
+              "x": 302,
+              "y": 85,
+              "scale": 1.02
+            }
+          ],
+          "headline": {
+            "x": 610,
+            "y": 205,
+            "width": 570,
+            "height": 161
+          },
+          "context": {
+            "x": 610,
+            "y": 413,
+            "width": 562,
+            "height": 69
+          },
+          "caption": {
+            "x": 53,
+            "y": 647,
+            "width": 1174,
+            "height": 61
+          },
+          "microphones": [
+            {
+              "x": 530.48,
+              "y": 421.02,
+              "scale": 0.8772,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "landscape",
+      "time": 30,
+      "mood": "attention",
+      "sample": {
+        "seconds": 30,
+        "acting": {
+          "innerBrow": 0.09058542220782544,
+          "rightBrow": 0.030000000000000002,
+          "leftFrown": 6.235622080119879e-50,
+          "rightFrown": 6.235622080119655e-50,
+          "smile": 0.020000000000000195,
+          "cheek": 1.1174540989381048e-16,
+          "squint": 0.001341018024463265,
+          "downcast": 1.3362047314542632e-49,
+          "pitch": 0.037326867339920446,
+          "yaw": -3.174055561783086e-71,
+          "tilt": -0.004226513924468859,
+          "lean": 0.011870920419465813,
+          "leftHand": 0.0639023575535285,
+          "rightHand": 0.0544987540398717,
+          "openness": 0.32600000000000007
+        },
+        "face": {
+          "eyeOpen": 1.0336465852692043,
+          "browLeft": 0.134602544648713,
+          "browRight": 0.1345276031286892,
+          "browPinch": 3.552315216790469e-94,
+          "lipPress": 6.537211216067511e-57,
+          "asymmetry": 2.4211655168732735e-19,
+          "innerBrow": 2.614884486426997e-56,
+          "lowerLidLeft": 0.0023556677597410284,
+          "lowerLidRight": 0.002355667759741111,
+          "cheekLeft": 0.00010127232435812918,
+          "cheekRight": 0.00006886518056405032,
+          "cornerLeft": 0.06723645803676834,
+          "cornerRight": 0.06722430535784556,
+          "jawDrop": 1.2677234692960537
+        },
+        "motion": {
+          "torso": -0.000034395214292369967,
+          "shift": -0.3463230635954975,
+          "shoulderLeft": 0.5810121800710053,
+          "shoulderRight": 0.4884449114818524,
+          "gazeX": 0,
+          "gazeY": 0.0005591306291085652,
+          "left": {
+            "lift": 0.0639023575535285,
+            "reach": -9.706609247972088e-72,
+            "turn": -0.014035317127783758,
+            "spread": 0.029193290357661723,
+            "curl": 0.5798769667271901,
+            "point": 0.00027067320018148443,
+            "indexCurl": 0.09378744192740339,
+            "middleCurl": 0.1593514190001822,
+            "ringCurl": 0.2459229841482936,
+            "littleCurl": 0.33355207894182015,
+            "thumbCurl": 0.21993231479160663,
+            "opposition": 0.1200222096748319,
+            "pinch": 0,
+            "sweep": -0.003435390817559369,
+            "wristFlex": 0.01286225829175041
+          },
+          "right": {
+            "lift": 0.0544987540398717,
+            "reach": 0.00032214156351568287,
+            "turn": -0.08772674898653718,
+            "spread": 0.08035776111945205,
+            "curl": 0.5797267013033595,
+            "point": 8.191015263171061e-110,
+            "indexCurl": 0.22629346669928663,
+            "middleCurl": 0.31196821587445717,
+            "ringCurl": 0.4152310735694412,
+            "littleCurl": 0.5170387614711935,
+            "thumbCurl": 0.22291648982185797,
+            "opposition": 0.12133915387285941,
+            "pinch": 0.0014839272645199033,
+            "sweep": -0.0009439933437325977,
+            "wristFlex": 0.04206274374495431
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12.000020219215275,
+          "opening": 2.3049517623564615,
+          "curve": 0.05754215408564097,
+          "teeth": false
+        },
+        "mouthOpen": true,
+        "mouthAmplitude": 2.3049517623564615,
+        "viseme": "consonant",
+        "breath": -0.7961609972232422,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -0.0022336440989473906,
+            "rightBrow": -2.0753059286108024e-17,
+            "leftFrown": -8.655205577647067e-49,
+            "rightFrown": -8.65520557764676e-49,
+            "smile": -2.6279286814977924e-15,
+            "cheek": -1.5255194266100291e-15,
+            "squint": -0.01370212946612327,
+            "downcast": -1.8546869094958063e-48,
+            "pitch": -0.005427989955409924,
+            "yaw": 3.785804996529265e-70,
+            "tilt": 0.006782331201245326,
+            "lean": -0.011493439520613609,
+            "leftHand": -0.21092329772049276,
+            "rightHand": -0.10661857640086045,
+            "openness": -1.3043602001534426e-15
+          },
+          "motion": {
+            "torso": -0.0005278772741937125,
+            "shift": 0.587781603629974,
+            "shoulderLeft": 0.06306512757077726,
+            "shoulderRight": 0.048164608296941795,
+            "gazeX": 0,
+            "gazeY": -0.010430054195752889
+          },
+          "left": {
+            "lift": -0.2928274502966465,
+            "reach": 1.447366796595908e-70,
+            "turn": 0.1651968731077114,
+            "spread": -0.0009581876782583157,
+            "curl": 0.0016004684266489168,
+            "point": -0.0035210305386272106,
+            "indexCurl": -0.19894820763667942,
+            "middleCurl": -0.2610309551587372,
+            "ringCurl": -0.3253753395140423,
+            "littleCurl": -0.38984844079811554,
+            "thumbCurl": 0.0009103526676806153,
+            "opposition": -0.00030452612974630377,
+            "pinch": 0,
+            "sweep": 0.044049446634404715,
+            "wristFlex": -0.10985714556034655
+          },
+          "right": {
+            "lift": -0.13538049447685874,
+            "reach": -0.00418706980823633,
+            "turn": 0.6392259599698096,
+            "spread": -0.00372352718966371,
+            "curl": 0.0036758748922143367,
+            "point": -1.223853743631114e-108,
+            "indexCurl": -0.8893203595393827,
+            "middleCurl": -1.0200696987428202,
+            "ringCurl": -1.108812081324065,
+            "littleCurl": -1.1737745893443896,
+            "thumbCurl": -0.037463534542862706,
+            "opposition": -0.017841372111105227,
+            "pinch": -0.01977016909608968,
+            "sweep": 0.023832715091691506,
+            "wristFlex": -0.11825486098246688
+          },
+          "face": {
+            "eyeOpen": -0.0006499716681691471,
+            "browLeft": -0.0028259637746438225,
+            "browRight": -0.0017803571780256261,
+            "browPinch": -5.6578552275866675e-93,
+            "lipPress": -1.0381177607487247e-55,
+            "asymmetry": -3.7892826255344176e-18,
+            "innerBrow": -4.1524710429948865e-55,
+            "lowerLidLeft": -0.015448834381586167,
+            "lowerLidRight": -0.015448834381587274,
+            "cheekLeft": -0.0014129818873438791,
+            "cheekRight": -0.0009608276834008785,
+            "cornerLeft": -0.0005086734794359092,
+            "cornerRight": -0.0003391156529572787,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 1280,
+          "height": 720,
+          "deskY": 573,
+          "actors": [
+            {
+              "x": 302,
+              "y": 85,
+              "scale": 1.02
+            }
+          ],
+          "headline": {
+            "x": 610,
+            "y": 205,
+            "width": 570,
+            "height": 161
+          },
+          "context": {
+            "x": 610,
+            "y": 413,
+            "width": 562,
+            "height": 69
+          },
+          "caption": {
+            "x": 53,
+            "y": 647,
+            "width": 1174,
+            "height": 61
+          },
+          "microphones": [
+            {
+              "x": 530.48,
+              "y": 421.02,
+              "scale": 0.8772,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "landscape",
+      "time": 35,
+      "mood": "attention",
+      "sample": {
+        "seconds": 35,
+        "acting": {
+          "innerBrow": 0.09040000000000002,
+          "rightBrow": 0.030000000000000002,
+          "leftFrown": 3.963081637174595e-80,
+          "rightFrown": 3.9630816371742675e-80,
+          "smile": 0.020000000000000004,
+          "cheek": 1.2177874696442914e-46,
+          "squint": 1.0615099749785919e-32,
+          "downcast": 8.49231779394484e-80,
+          "pitch": -0.060110231747911635,
+          "yaw": -3.7890643098230306e-97,
+          "tilt": -0.002228748852987187,
+          "lean": 0.005040000000000001,
+          "leftHand": 0.03999999999999996,
+          "rightHand": 0.03000000000000004,
+          "openness": 0.326
+        },
+        "face": {
+          "eyeOpen": 1.0336000000015586,
+          "browLeft": 0.1344000000067758,
+          "browRight": 0.13440000000426874,
+          "browPinch": 8.744091989269667e-129,
+          "lipPress": 1.8870132995447885e-91,
+          "asymmetry": 1.2002759128191888e-53,
+          "innerBrow": 7.54805319817923e-91,
+          "lowerLidLeft": 2.5391089539529855e-31,
+          "lowerLidRight": 2.5391089539529855e-31,
+          "cheekLeft": 3.387895605492621e-12,
+          "cheekRight": 2.3037690117349773e-12,
+          "cornerLeft": 0.06720000000121963,
+          "cornerRight": 0.0672000000008131,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": -0.00595268579500991,
+          "shift": 0.7927213075617292,
+          "shoulderLeft": 0.5343444526316538,
+          "shoulderRight": 0.44884934021058914,
+          "gazeX": 0,
+          "gazeY": -0.018170744353529677,
+          "left": {
+            "lift": 0.03999999999999996,
+            "reach": -3.7551555886130335e-104,
+            "turn": -6.447472100104786e-34,
+            "spread": 0.15999999999999998,
+            "curl": 0.4,
+            "point": 7.944865409742849e-36,
+            "indexCurl": 0.08,
+            "middleCurl": 0.14000000000000004,
+            "ringCurl": 0.22,
+            "littleCurl": 0.30000000000000004,
+            "thumbCurl": 0.21999999999999997,
+            "opposition": 0.12000000000000001,
+            "pinch": 0,
+            "sweep": -1.0940214697442083e-34,
+            "wristFlex": 2.06051230573052e-27
+          },
+          "right": {
+            "lift": 0.03000000000000004,
+            "reach": 9.502222971486777e-36,
+            "turn": -9.297825123857547e-33,
+            "spread": 0.15999999999999998,
+            "curl": 0.4,
+            "point": 2.8367537369728862e-142,
+            "indexCurl": 0.115,
+            "middleCurl": 0.17500000000000004,
+            "ringCurl": 0.25500000000000006,
+            "littleCurl": 0.335,
+            "thumbCurl": 0.22000000000000003,
+            "opposition": 0.12000000000000001,
+            "pinch": 3.7307055462801813e-35,
+            "sweep": 1.2702118259528903e-34,
+            "wristFlex": 1.7290195152314702e-26
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": 0.07,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "rest",
+        "breath": -0.6757476359921668,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -8.301223714443215e-17,
+            "rightBrow": -2.0753059286108037e-17,
+            "leftFrown": -5.518631463604217e-79,
+            "rightFrown": -5.518631463603768e-79,
+            "smile": -2.0753059286108037e-17,
+            "cheek": -1.6894314733141486e-45,
+            "squint": -1.4659499954206974e-31,
+            "downcast": -1.1825638850579472e-78,
+            "pitch": 0.019621127635628368,
+            "yaw": 4.526683188967482e-96,
+            "tilt": -0.007302844915873582,
+            "lean": -5.188264821527009e-18,
+            "leftHand": 3.8325299535560663e-16,
+            "rightHand": -3.6458257914903304e-16,
+            "openness": -3.320489485777286e-16
+          },
+          "motion": {
+            "torso": 0.0018525789564055397,
+            "shift": -0.4532867800866658,
+            "shoulderLeft": -0.30251133163099153,
+            "shoulderRight": -0.2541095185700328,
+            "gazeX": 0,
+            "gazeY": 0.0071366411855206474
+          },
+          "left": {
+            "lift": 4.491195372182984e-16,
+            "reach": 5.60963123575818e-103,
+            "turn": 9.549777812000924e-33,
+            "spread": 1.7565352519920765e-16,
+            "curl": -9.55928306711733e-40,
+            "point": -1.177290151119096e-34,
+            "indexCurl": -1.243227752246754e-80,
+            "middleCurl": -1.9400131452520497e-16,
+            "ringCurl": -1.0759128244486448e-64,
+            "littleCurl": -3.513070503984153e-16,
+            "thumbCurl": 1.7565352519920765e-16,
+            "opposition": -8.782676259960383e-17,
+            "pinch": 0,
+            "sweep": 1.6209922081858626e-33,
+            "wristFlex": -2.4336570908253014e-26
+          },
+          "right": {
+            "lift": -4.226260870494641e-16,
+            "reach": -1.408054800377979e-34,
+            "turn": 1.3765480945556666e-31,
+            "spread": 1.7565352519920765e-16,
+            "curl": -9.55928306711733e-40,
+            "point": -4.2422770431971994e-141,
+            "indexCurl": -2.290204239468342e-76,
+            "middleCurl": -1.9400131452520497e-16,
+            "ringCurl": -3.6995851771694145e-16,
+            "littleCurl": -3.513070503984153e-16,
+            "thumbCurl": -1.7565352519920765e-16,
+            "opposition": -8.782676259960383e-17,
+            "pinch": -5.52939401333343e-34,
+            "sweep": -1.879407779317834e-33,
+            "wristFlex": -2.0409796737097572e-25
+          },
+          "face": {
+            "eyeOpen": -2.3940362339879107e-11,
+            "browLeft": -1.0408607816715625e-10,
+            "browRight": -6.557420185000095e-11,
+            "browPinch": -1.3943893364027844e-127,
+            "lipPress": -3.005078402752681e-90,
+            "asymmetry": -1.9051756301409817e-52,
+            "innerBrow": -1.2020313611010842e-89,
+            "lowerLidLeft": -3.493184935206452e-30,
+            "lowerLidRight": -3.493184935206452e-30,
+            "cheekLeft": -5.204300123226936e-11,
+            "cheekRight": -3.5389240837943106e-11,
+            "cornerLeft": -1.8735469284889775e-11,
+            "cornerRight": -1.2490307190589701e-11,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 1280,
+          "height": 720,
+          "deskY": 573,
+          "actors": [
+            {
+              "x": 302,
+              "y": 85,
+              "scale": 1.02
+            }
+          ],
+          "headline": {
+            "x": 610,
+            "y": 205,
+            "width": 570,
+            "height": 161
+          },
+          "context": {
+            "x": 610,
+            "y": 413,
+            "width": 562,
+            "height": 69
+          },
+          "caption": {
+            "x": 53,
+            "y": 647,
+            "width": 1174,
+            "height": 61
+          },
+          "microphones": [
+            {
+              "x": 530.48,
+              "y": 421.02,
+              "scale": 0.8772,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "portrait",
+      "time": 0,
+      "mood": "attention",
+      "sample": {
+        "seconds": 0,
+        "acting": {
+          "innerBrow": 0.09040000000000001,
+          "rightBrow": 0.03,
+          "leftFrown": 0,
+          "rightFrown": 0,
+          "smile": 0.02,
+          "cheek": 0,
+          "squint": 0,
+          "downcast": 0,
+          "pitch": 0.015109757982234654,
+          "yaw": 0,
+          "tilt": 0.009125425258974454,
+          "lean": 0.01008,
+          "leftHand": 0.03,
+          "rightHand": 0.04,
+          "openness": 0.32599999999999996
+        },
+        "face": {
+          "eyeOpen": 1.0336,
+          "browLeft": 0.1344,
+          "browRight": 0.1344,
+          "browPinch": 0,
+          "lipPress": 0,
+          "asymmetry": 0,
+          "innerBrow": 0,
+          "lowerLidLeft": 0,
+          "lowerLidRight": 0,
+          "cheekLeft": 0,
+          "cheekRight": 0,
+          "cornerLeft": 0.0672,
+          "cornerRight": 0.0672,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": -0.00009,
+          "shift": 0.7844002392341255,
+          "shoulderLeft": -0.5323164734401764,
+          "shoulderRight": -0.4471458376897482,
+          "gazeX": 0,
+          "gazeY": 0.024983065446816565,
+          "left": {
+            "lift": 0.03,
+            "reach": 0,
+            "turn": 0,
+            "spread": 0.029119999999999997,
+            "curl": 0.58,
+            "point": 0,
+            "indexCurl": 0.08,
+            "middleCurl": 0.14,
+            "ringCurl": 0.22,
+            "littleCurl": 0.3,
+            "thumbCurl": 0.22,
+            "opposition": 0.12,
+            "pinch": 0,
+            "sweep": 0,
+            "wristFlex": 0
+          },
+          "right": {
+            "lift": 0.04,
+            "reach": 0,
+            "turn": 0,
+            "spread": 0.08008,
+            "curl": 0.58,
+            "point": 0,
+            "indexCurl": 0.115,
+            "middleCurl": 0.17500000000000002,
+            "ringCurl": 0.255,
+            "littleCurl": 0.33499999999999996,
+            "thumbCurl": 0.22,
+            "opposition": 0.12,
+            "pinch": 0,
+            "sweep": 0,
+            "wristFlex": 0
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": 0.07,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "rest",
+        "breath": 0.7242400999186075,
+        "dynamics": {
+          "acting": {
+            "innerBrow": 0,
+            "rightBrow": 0,
+            "leftFrown": 0,
+            "rightFrown": 0,
+            "smile": 0,
+            "cheek": 0,
+            "squint": 0,
+            "downcast": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "tilt": 0,
+            "lean": 0,
+            "leftHand": 0,
+            "rightHand": 0,
+            "openness": 0
+          },
+          "motion": {
+            "torso": 0,
+            "shift": 0,
+            "shoulderLeft": 0,
+            "shoulderRight": 0,
+            "gazeX": 0,
+            "gazeY": 0
+          },
+          "left": {
+            "lift": 0,
+            "reach": 0,
+            "turn": 0,
+            "spread": 0,
+            "curl": 0,
+            "point": 0,
+            "indexCurl": 0,
+            "middleCurl": 0,
+            "ringCurl": 0,
+            "littleCurl": 0,
+            "thumbCurl": 0,
+            "opposition": 0,
+            "pinch": 0,
+            "sweep": 0,
+            "wristFlex": 0
+          },
+          "right": {
+            "lift": 0,
+            "reach": 0,
+            "turn": 0,
+            "spread": 0,
+            "curl": 0,
+            "point": 0,
+            "indexCurl": 0,
+            "middleCurl": 0,
+            "ringCurl": 0,
+            "littleCurl": 0,
+            "thumbCurl": 0,
+            "opposition": 0,
+            "pinch": 0,
+            "sweep": 0,
+            "wristFlex": 0
+          },
+          "face": {
+            "eyeOpen": 0,
+            "browLeft": 0,
+            "browRight": 0,
+            "browPinch": 0,
+            "lipPress": 0,
+            "asymmetry": 0,
+            "innerBrow": 0,
+            "lowerLidLeft": 0,
+            "lowerLidRight": 0,
+            "cheekLeft": 0,
+            "cheekRight": 0,
+            "cornerLeft": 0,
+            "cornerRight": 0,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 720,
+          "height": 1280,
+          "deskY": 1005,
+          "actors": [
+            {
+              "x": 360,
+              "y": 336,
+              "scale": 1.4
+            }
+          ],
+          "headline": {
+            "x": 48,
+            "y": 194,
+            "width": 624,
+            "height": 145
+          },
+          "context": {
+            "x": 48,
+            "y": 1057,
+            "width": 624,
+            "height": 40
+          },
+          "caption": {
+            "x": 30,
+            "y": 1104,
+            "width": 660,
+            "height": 119
+          },
+          "microphones": [
+            {
+              "x": 650,
+              "y": 796.4,
+              "scale": 1.204,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "portrait",
+      "time": 5,
+      "mood": "attention",
+      "sample": {
+        "seconds": 5,
+        "acting": {
+          "innerBrow": 0.09040000000000449,
+          "rightBrow": 0.03,
+          "leftFrown": 0,
+          "rightFrown": 0,
+          "smile": 0.02,
+          "cheek": 0,
+          "squint": 6.110256224403501e-14,
+          "downcast": 0,
+          "pitch": 0.01932759780184152,
+          "yaw": 0,
+          "tilt": -0.005543606399517078,
+          "lean": 0.01008000119944392,
+          "leftHand": 0.03000001234486926,
+          "rightHand": 0.04000000329038405,
+          "openness": 0.32599999999999996
+        },
+        "face": {
+          "eyeOpen": 1.0336000000000003,
+          "browLeft": 0.13440000000000013,
+          "browRight": 0.13440000000000007,
+          "browPinch": 0,
+          "lipPress": 0,
+          "asymmetry": 0,
+          "innerBrow": 0,
+          "lowerLidLeft": 1.0003660542006795e-12,
+          "lowerLidRight": 1.0003660542006795e-12,
+          "cheekLeft": 6.209995246523488e-17,
+          "cheekRight": 4.222796767635966e-17,
+          "cornerLeft": 0.06720000000000002,
+          "cornerRight": 0.06720000000000001,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": -0.0000899999999994271,
+          "shift": -1.1080690361822116,
+          "shoulderLeft": -0.425542751742901,
+          "shoulderRight": -0.3574559114640343,
+          "gazeX": 0,
+          "gazeY": -0.017824477133509407,
+          "left": {
+            "lift": 0.03000001234486926,
+            "reach": 0,
+            "turn": -8.03763801241397e-14,
+            "spread": 0.0291200000000003,
+            "curl": 0.5799999999999995,
+            "point": 1.1649486321256955e-15,
+            "indexCurl": 0.08000000000000033,
+            "middleCurl": 0.14000000000000293,
+            "ringCurl": 0.22000000000002454,
+            "littleCurl": 0.30000000000019983,
+            "thumbCurl": 0.21999999999999978,
+            "opposition": 0.12000000000000006,
+            "pinch": 0,
+            "sweep": -1.4204057133335167e-14,
+            "wristFlex": 2.0432317425272197e-11
+          },
+          "right": {
+            "lift": 0.04000000329038405,
+            "reach": 1.2416386939922827e-15,
+            "turn": -1.1011799966437851e-12,
+            "spread": 0.0800800000000009,
+            "curl": 0.5799999999999991,
+            "point": 0,
+            "indexCurl": 0.11500000000000683,
+            "middleCurl": 0.17500000000005148,
+            "ringCurl": 0.25500000000036677,
+            "littleCurl": 0.3350000000025171,
+            "thumbCurl": 0.2200000000000119,
+            "opposition": 0.1200000000000045,
+            "pinch": 4.999723464289095e-15,
+            "sweep": 1.4005571536996881e-14,
+            "wristFlex": 1.626363950730278e-10
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": 0.07,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "rest",
+        "breath": 0.4938179242313727,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -6.088018687390867e-14,
+            "rightBrow": 0,
+            "leftFrown": 0,
+            "rightFrown": 0,
+            "smile": 0,
+            "cheek": 0,
+            "squint": -8.265382501327999e-13,
+            "downcast": 0,
+            "pitch": -0.022015101118737678,
+            "yaw": 0,
+            "tilt": 0.006230942013960384,
+            "lean": -1.583160843129113e-8,
+            "leftHand": -1.055178691233089e-7,
+            "rightHand": -2.8277501628143656e-8,
+            "openness": 0
+          },
+          "motion": {
+            "torso": -8.31240762500254e-15,
+            "shift": 0.20277955479005735,
+            "shoulderLeft": 0.5196611575573052,
+            "shoulderRight": 0.4365153723481002,
+            "gazeX": 0,
+            "gazeY": -0.0073405849784033425
+          },
+          "left": {
+            "lift": -1.2415465043859468e-7,
+            "reach": 0,
+            "turn": 1.1685243981855362e-12,
+            "spread": -4.4382528442005204e-15,
+            "curl": 7.374721974908123e-15,
+            "point": -1.6978728831427012e-14,
+            "indexCurl": -5.7806134743415426e-15,
+            "middleCurl": -4.809129183969368e-14,
+            "ringCurl": -3.813520873626745e-13,
+            "littleCurl": -2.904432061179831e-12,
+            "thumbCurl": 3.160563417600079e-15,
+            "opposition": -9.836144900018465e-16,
+            "pinch": 0,
+            "sweep": 2.0692381772840372e-13,
+            "wristFlex": -2.356603677163172e-10
+          },
+          "right": {
+            "lift": -3.318420016193485e-8,
+            "reach": -1.8097419983240733e-14,
+            "turn": 1.5962899060055835e-11,
+            "spread": -1.3205107561438322e-14,
+            "curl": 1.2649823105733806e-14,
+            "point": 0,
+            "indexCurl": -1.1952700060595184e-13,
+            "middleCurl": -8.483356218088196e-13,
+            "ringCurl": -5.681023107949499e-12,
+            "littleCurl": -3.648131347092341e-11,
+            "thumbCurl": -1.7337526296975716e-13,
+            "opposition": -6.586986691119345e-14,
+            "pinch": -7.295663990039481e-14,
+            "sweep": -2.0211522504696872e-13,
+            "wristFlex": -1.868832309694002e-9
+          },
+          "face": {
+            "eyeOpen": -1.4931334314519492e-15,
+            "browLeft": -2.04605944542161e-15,
+            "browRight": -1.1914774565438578e-15,
+            "browPinch": 0,
+            "lipPress": 0,
+            "asymmetry": 0,
+            "innerBrow": 0,
+            "lowerLidLeft": -1.3206264941917962e-11,
+            "lowerLidRight": -1.3206264941917962e-11,
+            "cheekLeft": -9.671101726533538e-16,
+            "cheekRight": -6.576349174042793e-16,
+            "cornerLeft": -3.380761257418548e-16,
+            "cornerRight": -2.183898606910654e-16,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 720,
+          "height": 1280,
+          "deskY": 1005,
+          "actors": [
+            {
+              "x": 360,
+              "y": 336,
+              "scale": 1.4
+            }
+          ],
+          "headline": {
+            "x": 48,
+            "y": 194,
+            "width": 624,
+            "height": 145
+          },
+          "context": {
+            "x": 48,
+            "y": 1057,
+            "width": 624,
+            "height": 40
+          },
+          "caption": {
+            "x": 30,
+            "y": 1104,
+            "width": 660,
+            "height": 119
+          },
+          "microphones": [
+            {
+              "x": 650,
+              "y": 796.4,
+              "scale": 1.204,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "portrait",
+      "time": 10,
+      "mood": "curiosity",
+      "sample": {
+        "seconds": 10,
+        "acting": {
+          "innerBrow": 0.21640000002085066,
+          "rightBrow": 0.40799999999999986,
+          "leftFrown": 0,
+          "rightFrown": 0,
+          "smile": 0.03679999999999999,
+          "cheek": 0,
+          "squint": 2.0539719095003477e-10,
+          "downcast": 0,
+          "pitch": 0.010183730195887128,
+          "yaw": 0,
+          "tilt": -0.06373644978465481,
+          "lean": 0.029400014203775977,
+          "leftHand": 0.05000083639284516,
+          "rightHand": 0.04000496236903225,
+          "openness": 0.7879999999999999
+        },
+        "face": {
+          "eyeOpen": 1.0672000000004624,
+          "browLeft": 0.48720000000200986,
+          "browRight": 0.26880000000126625,
+          "browPinch": 0,
+          "lipPress": 0,
+          "asymmetry": 0,
+          "innerBrow": 0.13439999999999996,
+          "lowerLidLeft": 2.5920566637649823e-9,
+          "lowerLidRight": 2.5920566637649823e-9,
+          "cheekLeft": 1.004939256735897e-12,
+          "cheekRight": 6.833586945804124e-13,
+          "cornerLeft": 0.04200000000036178,
+          "cornerRight": 0.04200000000024119,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": 0.005275780116771795,
+          "shift": 1.1681410121274995,
+          "shoulderLeft": -0.20053126454545672,
+          "shoulderRight": -0.1684462627984621,
+          "gazeX": 0,
+          "gazeY": 0.00006011330663548251,
+          "left": {
+            "lift": 0.05000083639284516,
+            "reach": 0.13999999999999999,
+            "turn": -6.984218404912572e-10,
+            "spread": 0.1419600000097322,
+            "curl": 0.5799999999852995,
+            "point": 9.756806249209166e-48,
+            "indexCurl": 0.08000000001801166,
+            "middleCurl": 0.140000000085297,
+            "ringCurl": 0.22000000038520928,
+            "littleCurl": 0.3000000016791732,
+            "thumbCurl": 0.21999999999972789,
+            "opposition": 0.12000000000122225,
+            "pinch": 0,
+            "sweep": -1.2222652072979122e-10,
+            "wristFlex": 2.6230034288045156e-8
+          },
+          "right": {
+            "lift": 0.04000496236903225,
+            "reach": 0.13999999999999999,
+            "turn": -9.136020387381364e-9,
+            "spread": 0.14196000015685892,
+            "curl": 0.5799999997565287,
+            "point": 0,
+            "indexCurl": 0.11500000035388158,
+            "middleCurl": 0.17500000142881142,
+            "ringCurl": 0.25500000546045315,
+            "littleCurl": 0.335000020052341,
+            "thumbCurl": 0.21999999999633166,
+            "opposition": 0.12000000001664683,
+            "pinch": 4.070398810745947e-47,
+            "sweep": 1.0029548113977268e-10,
+            "wristFlex": 1.9962413305919132e-7
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": 0.12879999999999997,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "rest",
+        "breath": 0.1577249790010038,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -2.7994266673313994e-10,
+            "rightBrow": 3.3204894857772805e-16,
+            "leftFrown": 0,
+            "rightFrown": 0,
+            "smile": 4.1506118572216006e-17,
+            "cheek": 0,
+            "squint": -2.7393321535120556e-9,
+            "downcast": 0,
+            "pitch": 0.03346623945990585,
+            "yaw": 0,
+            "tilt": -0.007466780738093213,
+            "lean": -1.8574236528882674e-7,
+            "leftHand": -0.000007072433015739516,
+            "rightHand": -0.000041566225727403865,
+            "openness": 6.640978971554561e-16
+          },
+          "motion": {
+            "torso": -0.0025531854066117394,
+            "shift": 0.06505751744537563,
+            "shoulderLeft": 0.7162938534018718,
+            "shoulderRight": 0.6016868452077404,
+            "gazeX": 0,
+            "gazeY": 0.010433562743602978
+          },
+          "left": {
+            "lift": -0.0000083655511698482,
+            "reach": 1.7565352519920738e-16,
+            "turn": 1.0024970548085029e-8,
+            "spread": -1.4076948572445192e-10,
+            "curl": 2.1254165713087043e-10,
+            "point": -1.4502482738121958e-46,
+            "indexCurl": -3.1227974375795877e-10,
+            "middleCurl": -1.39373005849461e-9,
+            "ringCurl": -5.909886256035081e-9,
+            "littleCurl": -2.4087058872766144e-8,
+            "thumbCurl": 3.936346339730286e-12,
+            "opposition": -1.7725026283416274e-11,
+            "pinch": 0,
+            "sweep": 1.7610463915998325e-9,
+            "wristFlex": -2.974922275809132e-7
+          },
+          "right": {
+            "lift": -0.00004939520421766824,
+            "reach": 1.7565352519920738e-16,
+            "turn": 1.3036401718829013e-7,
+            "spread": -2.258357512677514e-9,
+            "curl": 3.5035997715183775e-9,
+            "point": 0,
+            "indexCurl": -6.1040564134844835e-9,
+            "middleCurl": -2.3220302608563347e-8,
+            "ringCurl": -8.329560408305345e-8,
+            "littleCurl": -2.858974544644341e-7,
+            "thumbCurl": 5.286054772101275e-11,
+            "opposition": -2.4058686046420597e-10,
+            "pinch": -6.0509751280445275e-46,
+            "sweep": -1.4151353102705703e-9,
+            "wristFlex": -0.0000022465058281815043
+          },
+          "face": {
+            "eyeOpen": -7.12836246442961e-12,
+            "browLeft": -3.0988929479512184e-11,
+            "browRight": -1.952306951248933e-11,
+            "browPinch": 0,
+            "lipPress": 0,
+            "asymmetry": 0,
+            "innerBrow": 1.8497925885847046e-16,
+            "lowerLidLeft": -3.301713645728471e-8,
+            "lowerLidRight": -3.301713645728471e-8,
+            "cheekLeft": -1.5494394870424258e-11,
+            "cheekRight": -1.0536188511888532e-11,
+            "cornerLeft": -5.578016077626414e-12,
+            "cornerRight": -3.71866437625917e-12,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 720,
+          "height": 1280,
+          "deskY": 1005,
+          "actors": [
+            {
+              "x": 360,
+              "y": 336,
+              "scale": 1.4
+            }
+          ],
+          "headline": {
+            "x": 48,
+            "y": 194,
+            "width": 624,
+            "height": 145
+          },
+          "context": {
+            "x": 48,
+            "y": 1057,
+            "width": 624,
+            "height": 40
+          },
+          "caption": {
+            "x": 30,
+            "y": 1104,
+            "width": 660,
+            "height": 119
+          },
+          "microphones": [
+            {
+              "x": 650,
+              "y": 796.4,
+              "scale": 1.204,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "portrait",
+      "time": 15,
+      "mood": "doubt",
+      "sample": {
+        "seconds": 15,
+        "acting": {
+          "innerBrow": 0.04000000000037884,
+          "rightBrow": 0.576,
+          "leftFrown": 0.2352,
+          "rightFrown": 0,
+          "smile": -0.09759999999999996,
+          "cheek": 0,
+          "squint": 0.16800000000124457,
+          "downcast": 0,
+          "pitch": 0.02028127301329377,
+          "yaw": -0.03780000001105185,
+          "tilt": 0.06550862186978136,
+          "lean": 7.037370020575778e-7,
+          "leftHand": 0.04000005047454449,
+          "rightHand": 0.03000013636127723,
+          "openness": 0.4100000000000001
+        },
+        "face": {
+          "eyeOpen": 0.7144000000000046,
+          "browLeft": 0.6300000000000202,
+          "browRight": -0.20159999999998726,
+          "browPinch": 0.18479999999999996,
+          "lipPress": 0.20999999999999996,
+          "asymmetry": 0.5459999999999999,
+          "innerBrow": 1.6973560697410534e-29,
+          "lowerLidLeft": 0.11928000001875062,
+          "lowerLidRight": 0.17178000001875063,
+          "cheekLeft": 1.0088659139804072e-14,
+          "cheekRight": 6.860288215066749e-15,
+          "cornerLeft": -0.04157999999999635,
+          "cornerRight": -0.2272199999999976,
+          "jawDrop": 1.7544722787260218
+        },
+        "motion": {
+          "torso": 0.000089999999991216,
+          "shift": -1.0040984578419612,
+          "shoulderLeft": 0.6553913687151126,
+          "shoulderRight": 0.6446087497202349,
+          "gazeX": 0,
+          "gazeY": 0.017739992320187695,
+          "left": {
+            "lift": 0.04000005047454449,
+            "reach": -0.12999999999999998,
+            "turn": -9.354590112619032e-12,
+            "spread": 0.0964600000000448,
+            "curl": 0.5799999999999177,
+            "point": 4.391126545735562e-80,
+            "indexCurl": 0.0800000000001008,
+            "middleCurl": 0.14000000000064314,
+            "ringCurl": 0.2200000000039129,
+            "littleCurl": 0.300000000022967,
+            "thumbCurl": 0.21999999999997452,
+            "opposition": 0.12000000000000735,
+            "pinch": 0,
+            "sweep": -1.654880511648888e-12,
+            "wristFlex": 8.794328003524739e-10
+          },
+          "right": {
+            "lift": 0.03000013636127723,
+            "reach": -0.24999999999999997,
+            "turn": -1.2506970518128701e-10,
+            "spread": 0.02912000000005971,
+            "curl": 0.5800000000000821,
+            "point": 5.167656133285077e-13,
+            "indexCurl": 0.11500000000207017,
+            "middleCurl": 0.17500000001123348,
+            "ringCurl": 0.25500000005773554,
+            "littleCurl": 0.33500000028579685,
+            "thumbCurl": 0.22000000000139108,
+            "opposition": 0.12000000000053018,
+            "pinch": 1.8218891837972137e-79,
+            "sweep": 1.5725523863568755e-12,
+            "wristFlex": 6.902495286302537e-9
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 13.066829294380293,
+          "opening": 3.1899495976836763,
+          "curve": -0.26488335291502063,
+          "teeth": true
+        },
+        "mouthOpen": true,
+        "mouthAmplitude": 3.1899495976836763,
+        "viseme": "e",
+        "breath": -0.21211911030367722,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -5.118013828017878e-12,
+            "rightBrow": 6.640978971554561e-16,
+            "leftFrown": 1.6602447428886402e-16,
+            "rightFrown": 0,
+            "smile": -8.301223714443201e-17,
+            "cheek": 0,
+            "squint": -1.6760980633379077e-11,
+            "downcast": 0,
+            "pitch": -0.028834161260582036,
+            "yaw": 1.27283350744909e-10,
+            "tilt": 0.005581029020903914,
+            "lean": -0.000008935929871293727,
+            "leftHand": -4.306337208874422e-7,
+            "rightHand": -0.0000011581341733957788,
+            "openness": -3.3204894857772805e-16
+          },
+          "motion": {
+            "torso": 1.2597842829609528e-13,
+            "shift": -0.32041293309236374,
+            "shoulderLeft": 0.7596487529666679,
+            "shoulderRight": 0.6381049524986694,
+            "gazeX": 0,
+            "gazeY": -0.007323016976131388
+          },
+          "left": {
+            "lift": -5.07150869752559e-7,
+            "reach": -1.7565352519920738e-16,
+            "turn": 1.3523838400726628e-10,
+            "spread": -6.516312802017086e-13,
+            "curl": 1.1958933299251165e-12,
+            "point": -6.551137171385299e-79,
+            "indexCurl": -1.7583838205503346e-12,
+            "middleCurl": -1.057848827661791e-11,
+            "ringCurl": -6.045459178629368e-11,
+            "littleCurl": -3.319154815627277e-10,
+            "thumbCurl": 3.705020290081738e-13,
+            "opposition": -1.0712877582395408e-13,
+            "pinch": 0,
+            "sweep": 2.399043149809408e-11,
+            "wristFlex": -1.0069288611473012e-8
+          },
+          "right": {
+            "lift": -0.000001366940274926869,
+            "reach": -1.7565352519920738e-16,
+            "turn": 1.8005593632278214e-9,
+            "spread": -8.672952022152809e-13,
+            "curl": -1.1932865953415736e-12,
+            "point": -7.501813213819293e-12,
+            "indexCurl": -3.5990799576728203e-11,
+            "middleCurl": -1.8408586561869237e-10,
+            "ringCurl": -8.885129717414715e-10,
+            "littleCurl": -4.113161033439407e-9,
+            "thumbCurl": -2.01679475577109e-11,
+            "opposition": -7.703175037417878e-12,
+            "pinch": -2.718202233427401e-78,
+            "sweep": -2.2491189762149614e-11,
+            "wristFlex": -7.86119232839819e-8
+          },
+          "face": {
+            "eyeOpen": -7.148058560212964e-14,
+            "browLeft": -3.129637644467575e-13,
+            "browRight": -1.970365056179817e-13,
+            "browPinch": 1.8497925885847046e-16,
+            "lipPress": 1.8497925885847046e-16,
+            "asymmetry": 7.399170354338818e-16,
+            "innerBrow": -2.6766826403193403e-28,
+            "lowerLidLeft": -2.4489161726668537e-10,
+            "lowerLidRight": -2.44891752930719e-10,
+            "cheekLeft": -1.5641555984547966e-13,
+            "cheekRight": -1.0636258069492589e-13,
+            "cornerLeft": -5.6266632965111235e-14,
+            "cornerRight": -3.750260245325436e-14,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 720,
+          "height": 1280,
+          "deskY": 1005,
+          "actors": [
+            {
+              "x": 360,
+              "y": 336,
+              "scale": 1.4
+            }
+          ],
+          "headline": {
+            "x": 48,
+            "y": 194,
+            "width": 624,
+            "height": 145
+          },
+          "context": {
+            "x": 48,
+            "y": 1057,
+            "width": 624,
+            "height": 40
+          },
+          "caption": {
+            "x": 30,
+            "y": 1104,
+            "width": 660,
+            "height": 119
+          },
+          "microphones": [
+            {
+              "x": 650,
+              "y": 796.4,
+              "scale": 1.204,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "portrait",
+      "time": 20,
+      "mood": "empathy",
+      "sample": {
+        "seconds": 20,
+        "acting": {
+          "innerBrow": 0.5608000261993121,
+          "rightBrow": 0.030000000000000002,
+          "leftFrown": 0.11760000000000002,
+          "rightFrown": 0.1176,
+          "smile": -0.10599999999999998,
+          "cheek": 0,
+          "squint": 4.664491901132536e-7,
+          "downcast": 0.25199999999999995,
+          "pitch": 0.04113522881614723,
+          "yaw": -1.1318826743153132e-19,
+          "tilt": -0.009876157132491887,
+          "lean": 0.015241378137990006,
+          "leftHand": 0.040068624462944256,
+          "rightHand": 0.030347708475203544,
+          "openness": 0.24200000000000002
+        },
+        "face": {
+          "eyeOpen": 0.8992000016855949,
+          "browLeft": -0.03359999267132693,
+          "browRight": -0.03359999538293596,
+          "browPinch": 2.9697826390400605e-25,
+          "lipPress": 0.16800000000000004,
+          "asymmetry": 8.774357797163867e-25,
+          "innerBrow": 0.6719999999999999,
+          "lowerLidLeft": 0.0000035902436732753974,
+          "lowerLidRight": 0.0000035902436732753974,
+          "cheekLeft": 3.664336535736993e-9,
+          "cheekRight": 2.4917488443011427e-9,
+          "cornerLeft": -0.33599999868083885,
+          "cornerRight": -0.3359999991205592,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": 0.00008997466382301521,
+          "shift": 0.6474138750269199,
+          "shoulderLeft": 1.7488930426836027,
+          "shoulderRight": 1.6975497445688488,
+          "gazeX": 0,
+          "gazeY": -0.024992362477152114,
+          "left": {
+            "lift": 0.040068624462944256,
+            "reach": -1.5080197562708072e-7,
+            "turn": -0.0000013383411838654076,
+            "spread": 0.029120003403372324,
+            "curl": 0.5799999843437287,
+            "point": 1.652386561580363e-112,
+            "indexCurl": 0.080000178755406,
+            "middleCurl": 0.14000049670565332,
+            "ringCurl": 0.22000131643848275,
+            "littleCurl": 0.3000033696022846,
+            "thumbCurl": 0.22000000302964043,
+            "opposition": 0.12000000270649266,
+            "pinch": 0,
+            "sweep": -2.5902959694928415e-7,
+            "wristFlex": 0.000010528257026479378
+          },
+          "right": {
+            "lift": 0.030347708475203544,
+            "reach": -6.171099855658499e-29,
+            "turn": -0.00001692599555216305,
+            "spread": 0.0691600670949844,
+            "curl": 0.579999861179667,
+            "point": 4.7281171308572626e-45,
+            "indexCurl": 0.11500331014750532,
+            "middleCurl": 0.1750078278906996,
+            "ringCurl": 0.25501752794222005,
+            "littleCurl": 0.33503772999878356,
+            "thumbCurl": 0.2200000388411061,
+            "opposition": 0.1200000352261663,
+            "pinch": 6.839809204460088e-112,
+            "sweep": 1.7478145402204455e-7,
+            "wristFlex": 0.00007476443672562492
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": -0.37099999999999994,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "mbp",
+        "breath": -0.5365724016629755,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -3.450773657020124e-7,
+            "rightBrow": -2.075305932440505e-17,
+            "leftFrown": -8.301223714455722e-17,
+            "rightFrown": 8.301223714455722e-17,
+            "smile": -8.301223714443223e-17,
+            "cheek": 0,
+            "squint": -0.000006027310348693599,
+            "downcast": 3.320489485778536e-16,
+            "pitch": -0.026226002251057607,
+            "yaw": 1.328182610215169e-18,
+            "tilt": -0.0013620429260046561,
+            "lean": -0.0013536237121418537,
+            "leftHand": -0.0005649088002479254,
+            "rightHand": -0.002789362688097168,
+            "openness": -1.660244742889414e-16
+          },
+          "motion": {
+            "torso": 3.5260838965514776e-7,
+            "shift": 0.5142952960561864,
+            "shoulderLeft": 0.6404493360366926,
+            "shoulderRight": 0.5379832402820534,
+            "gazeX": 0,
+            "gazeY": -0.00014160316247888234
+          },
+          "left": {
+            "lift": -0.0006771104952245101,
+            "reach": 0.0000021418278889220868,
+            "turn": 0.000018736440828854118,
+            "spread": -4.853303772964155e-8,
+            "curl": 2.2305362156566486e-7,
+            "point": -2.4690565788777044e-111,
+            "indexCurl": -0.0000030342642801746683,
+            "middleCurl": -0.00000793699991814138,
+            "ringCurl": -0.000019726389263159992,
+            "littleCurl": -0.000047143587337240684,
+            "thumbCurl": -4.318099052076482e-8,
+            "opposition": -3.8756463383711416e-8,
+            "pinch": 0,
+            "sweep": 0.0000036608806682492718,
+            "wristFlex": -0.00011563558188470436
+          },
+          "right": {
+            "lift": -0.003386831380082181,
+            "reach": 9.122105455239378e-28,
+            "turn": 0.0002334017705720735,
+            "spread": -9.483802154326514e-7,
+            "curl": 0.00000195895547914005,
+            "point": -7.025297903117817e-44,
+            "indexCurl": -0.00005541270949369775,
+            "middleCurl": -0.00012327193269570433,
+            "ringCurl": -0.00025864152887111763,
+            "littleCurl": -0.0005193564527963461,
+            "thumbCurl": -5.491077199903655e-7,
+            "opposition": -5.011031885521798e-7,
+            "pinch": -1.022052121676168e-110,
+            "sweep": -0.000002329108235931324,
+            "wristFlex": -0.000804067451091972
+          },
+          "face": {
+            "eyeOpen": -2.5544996927450252e-8,
+            "browLeft": -1.110652027996426e-7,
+            "browRight": -6.997107777864958e-8,
+            "browPinch": -4.6722993129373066e-24,
+            "lipPress": -1.8497925885847065e-16,
+            "asymmetry": -1.3804520697314853e-23,
+            "innerBrow": 7.399170354338826e-16,
+            "lowerLidLeft": -0.00004188292961987068,
+            "lowerLidRight": -0.00004188292961987068,
+            "cheekLeft": -5.553260140753783e-8,
+            "cheekRight": -3.776216895712555e-8,
+            "cornerLeft": -1.999173644373695e-8,
+            "cornerRight": -1.3327824381305628e-8,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 720,
+          "height": 1280,
+          "deskY": 1005,
+          "actors": [
+            {
+              "x": 360,
+              "y": 336,
+              "scale": 1.4
+            }
+          ],
+          "headline": {
+            "x": 48,
+            "y": 194,
+            "width": 624,
+            "height": 145
+          },
+          "context": {
+            "x": 48,
+            "y": 1057,
+            "width": 624,
+            "height": 40
+          },
+          "caption": {
+            "x": 30,
+            "y": 1104,
+            "width": 660,
+            "height": 119
+          },
+          "microphones": [
+            {
+              "x": 650,
+              "y": 796.4,
+              "scale": 1.204,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "portrait",
+      "time": 25,
+      "mood": "amusement",
+      "sample": {
+        "seconds": 25,
+        "acting": {
+          "innerBrow": 0.040000085934491024,
+          "rightBrow": 0.030000000000000002,
+          "leftFrown": 6.294521426038549e-20,
+          "rightFrown": 6.294521426038542e-20,
+          "smile": 0.5240001473162704,
+          "cheek": 0.29399999999999993,
+          "squint": 0.15120037833725683,
+          "downcast": 1.3488260198654156e-19,
+          "pitch": 0.03605389747228448,
+          "yaw": -2.3079645946084052e-45,
+          "tilt": -0.012085667613516721,
+          "lean": 0.004756550148387193,
+          "leftHand": 0.04014039133726726,
+          "rightHand": 0.030475099044935842,
+          "openness": 0.578
+        },
+        "face": {
+          "eyeOpen": 0.9748000066179134,
+          "browLeft": 0.16800002877353648,
+          "browRight": 0.16800001812732795,
+          "browPinch": 1.2521026762120487e-59,
+          "lipPress": 1.4511966595520408e-22,
+          "asymmetry": 0.15119999999999997,
+          "innerBrow": 5.804786638208161e-22,
+          "lowerLidLeft": 0.449717919931613,
+          "lowerLidRight": 0.4969889199316129,
+          "cheekLeft": 0.5523000143867683,
+          "cheekRight": 0.5523000097830025,
+          "cornerLeft": 0.8237040051792365,
+          "cornerRight": 0.7722960034528243,
+          "jawDrop": 4.275430258547593
+        },
+        "motion": {
+          "torso": -0.025721824364444416,
+          "shift": -0.16651923969234494,
+          "shoulderLeft": 0.5057257399534485,
+          "shoulderRight": 0.4247907083467978,
+          "gazeX": 0,
+          "gazeY": 0.017384927544131255,
+          "left": {
+            "lift": 0.04014039133726726,
+            "reach": -2.013827937466519e-39,
+            "turn": -0.000004892382618212748,
+            "spread": 0.11830004764811382,
+            "curl": 0.5799999286598629,
+            "point": 5.701611998491985e-145,
+            "indexCurl": 0.08000082415988236,
+            "middleCurl": 0.14000209286780116,
+            "ringCurl": 0.22000506799676464,
+            "littleCurl": 0.30001184155914934,
+            "thumbCurl": 0.2199999803910067,
+            "opposition": 0.12000000591054383,
+            "pinch": 0,
+            "sweep": -9.243845503630133e-7,
+            "wristFlex": 0.0000282518605499321
+          },
+          "right": {
+            "lift": 0.030475099044935842,
+            "reach": -3.454990670076099e-61,
+            "turn": -0.00005818786930077491,
+            "spread": 0.118300316306577,
+            "curl": 0.5799995837932147,
+            "point": 2.162197574168123e-77,
+            "indexCurl": 0.1150149226889471,
+            "middleCurl": 0.1750322633712809,
+            "ringCurl": 0.25506603583290016,
+            "littleCurl": 0.33512984992971984,
+            "thumbCurl": 0.2199997493964181,
+            "opposition": 0.12000007613346206,
+            "pinch": 2.3570501747348783e-144,
+            "sweep": 5.803691854707558e-7,
+            "wristFlex": 0.00019624598090541744
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 9.667947131701313,
+          "opening": 7.773509560995624,
+          "curve": 1.2383290383524452,
+          "teeth": false
+        },
+        "mouthOpen": true,
+        "mouthAmplitude": 7.773509560995624,
+        "viseme": "o",
+        "breath": -0.7462060078365084,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -0.0000011260747901461491,
+            "rightBrow": -2.0753059286108024e-17,
+            "leftFrown": -8.62451392662332e-19,
+            "rightFrown": -8.624513926623316e-19,
+            "smile": -0.0000019304139261603193,
+            "cheek": 3.3204909522964126e-16,
+            "squint": -0.000004889726918305997,
+            "downcast": -1.848110127133585e-18,
+            "pitch": 0.011623326780373571,
+            "yaw": 2.743220907277418e-44,
+            "tilt": -0.0034209285998537922,
+            "lean": -0.013109420614647906,
+            "leftHand": -0.0011476328560718059,
+            "rightHand": -0.0038122918796262666,
+            "openness": 6.6409797087079925e-16
+          },
+          "motion": {
+            "torso": -0.0017730013003538804,
+            "shift": -0.6095071667772656,
+            "shoulderLeft": 0.38422919956860996,
+            "shoulderRight": 0.3230154849133462,
+            "gazeX": 0,
+            "gazeY": 0.0075220297641042
+          },
+          "left": {
+            "lift": -0.0013803718198914666,
+            "reach": 2.988544222367017e-38,
+            "turn": 0.00006805706131745663,
+            "spread": -6.770330565875647e-7,
+            "curl": 0.000001012554605897793,
+            "point": -8.526908632149025e-144,
+            "indexCurl": -0.000013903081477331726,
+            "middleCurl": -0.000033225044321310824,
+            "ringCurl": -0.00007542094083819424,
+            "littleCurl": -0.00016446608850001346,
+            "thumbCurl": 2.7843430314667093e-7,
+            "opposition": -8.437455768665149e-8,
+            "pinch": 0,
+            "sweep": 0.000012996374597975493,
+            "wristFlex": -0.0003073966205600807
+          },
+          "right": {
+            "lift": -0.0046282649185185,
+            "reach": 5.146446464049382e-60,
+            "turn": 0.0007936424752047192,
+            "spread": -0.0000044634899340976365,
+            "curl": 0.000005862567320182732,
+            "point": -3.225382228381763e-76,
+            "indexCurl": -0.00024739592524310856,
+            "middleCurl": -0.0005029218501481848,
+            "ringCurl": -0.0009640042340748868,
+            "littleCurl": -0.0017671623582774109,
+            "thumbCurl": 0.000003524457516647643,
+            "opposition": -0.00000107858271518967,
+            "pinch": -3.5250769901011848e-143,
+            "sweep": -0.0000075651989644602845,
+            "wristFlex": -0.0020795559940751814
+          },
+          "face": {
+            "eyeOpen": -9.982873818717666e-8,
+            "browLeft": -4.3403799130410675e-7,
+            "browRight": -2.734439343221743e-7,
+            "browPinch": -1.9890422610503766e-58,
+            "lipPress": -2.278498150883802e-21,
+            "asymmetry": 1.8497925885847536e-16,
+            "innerBrow": -9.113992603535205e-21,
+            "lowerLidLeft": -0.00003408249165675016,
+            "lowerLidRight": -0.000034082491656406834,
+            "cheekLeft": -2.1701899616996807e-7,
+            "cheekRight": -1.4757291763599684e-7,
+            "cornerLeft": -7.812683836731964e-8,
+            "cornerRight": -5.208455871168577e-8,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 720,
+          "height": 1280,
+          "deskY": 1005,
+          "actors": [
+            {
+              "x": 360,
+              "y": 336,
+              "scale": 1.4
+            }
+          ],
+          "headline": {
+            "x": 48,
+            "y": 194,
+            "width": 624,
+            "height": 145
+          },
+          "context": {
+            "x": 48,
+            "y": 1057,
+            "width": 624,
+            "height": 40
+          },
+          "caption": {
+            "x": 30,
+            "y": 1104,
+            "width": 660,
+            "height": 119
+          },
+          "microphones": [
+            {
+              "x": 650,
+              "y": 796.4,
+              "scale": 1.204,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "portrait",
+      "time": 30,
+      "mood": "attention",
+      "sample": {
+        "seconds": 30,
+        "acting": {
+          "innerBrow": 0.09058542220782544,
+          "rightBrow": 0.030000000000000002,
+          "leftFrown": 6.235622080119879e-50,
+          "rightFrown": 6.235622080119655e-50,
+          "smile": 0.020000000000000195,
+          "cheek": 1.1174540989381048e-16,
+          "squint": 0.001341018024463265,
+          "downcast": 1.3362047314542632e-49,
+          "pitch": 0.037326867339920446,
+          "yaw": -3.174055561783086e-71,
+          "tilt": -0.004226513924468859,
+          "lean": 0.011870920419465813,
+          "leftHand": 0.0639023575535285,
+          "rightHand": 0.0544987540398717,
+          "openness": 0.32600000000000007
+        },
+        "face": {
+          "eyeOpen": 1.0336465852692043,
+          "browLeft": 0.134602544648713,
+          "browRight": 0.1345276031286892,
+          "browPinch": 3.552315216790469e-94,
+          "lipPress": 6.537211216067511e-57,
+          "asymmetry": 2.4211655168732735e-19,
+          "innerBrow": 2.614884486426997e-56,
+          "lowerLidLeft": 0.0023556677597410284,
+          "lowerLidRight": 0.002355667759741111,
+          "cheekLeft": 0.00010127232435812918,
+          "cheekRight": 0.00006886518056405032,
+          "cornerLeft": 0.06723645803676834,
+          "cornerRight": 0.06722430535784556,
+          "jawDrop": 1.2677234692960537
+        },
+        "motion": {
+          "torso": -0.000034395214292369967,
+          "shift": -0.3463230635954975,
+          "shoulderLeft": 0.5810121800710053,
+          "shoulderRight": 0.4884449114818524,
+          "gazeX": 0,
+          "gazeY": 0.0005591306291085652,
+          "left": {
+            "lift": 0.0639023575535285,
+            "reach": -9.706609247972088e-72,
+            "turn": -0.014035317127783758,
+            "spread": 0.029193290357661723,
+            "curl": 0.5798769667271901,
+            "point": 0.00027067320018148443,
+            "indexCurl": 0.09378744192740339,
+            "middleCurl": 0.1593514190001822,
+            "ringCurl": 0.2459229841482936,
+            "littleCurl": 0.33355207894182015,
+            "thumbCurl": 0.21993231479160663,
+            "opposition": 0.1200222096748319,
+            "pinch": 0,
+            "sweep": -0.003435390817559369,
+            "wristFlex": 0.01286225829175041
+          },
+          "right": {
+            "lift": 0.0544987540398717,
+            "reach": 0.00032214156351568287,
+            "turn": -0.08772674898653718,
+            "spread": 0.08035776111945205,
+            "curl": 0.5797267013033595,
+            "point": 8.191015263171061e-110,
+            "indexCurl": 0.22629346669928663,
+            "middleCurl": 0.31196821587445717,
+            "ringCurl": 0.4152310735694412,
+            "littleCurl": 0.5170387614711935,
+            "thumbCurl": 0.22291648982185797,
+            "opposition": 0.12133915387285941,
+            "pinch": 0.0014839272645199033,
+            "sweep": -0.0009439933437325977,
+            "wristFlex": 0.04206274374495431
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12.000020219215275,
+          "opening": 2.3049517623564615,
+          "curve": 0.05754215408564097,
+          "teeth": false
+        },
+        "mouthOpen": true,
+        "mouthAmplitude": 2.3049517623564615,
+        "viseme": "consonant",
+        "breath": -0.7961609972232422,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -0.0022336440989473906,
+            "rightBrow": -2.0753059286108024e-17,
+            "leftFrown": -8.655205577647067e-49,
+            "rightFrown": -8.65520557764676e-49,
+            "smile": -2.6279286814977924e-15,
+            "cheek": -1.5255194266100291e-15,
+            "squint": -0.01370212946612327,
+            "downcast": -1.8546869094958063e-48,
+            "pitch": -0.005427989955409924,
+            "yaw": 3.785804996529265e-70,
+            "tilt": 0.006782331201245326,
+            "lean": -0.011493439520613609,
+            "leftHand": -0.21092329772049276,
+            "rightHand": -0.10661857640086045,
+            "openness": -1.3043602001534426e-15
+          },
+          "motion": {
+            "torso": -0.0005278772741937125,
+            "shift": 0.587781603629974,
+            "shoulderLeft": 0.06306512757077726,
+            "shoulderRight": 0.048164608296941795,
+            "gazeX": 0,
+            "gazeY": -0.010430054195752889
+          },
+          "left": {
+            "lift": -0.2928274502966465,
+            "reach": 1.447366796595908e-70,
+            "turn": 0.1651968731077114,
+            "spread": -0.0009581876782583157,
+            "curl": 0.0016004684266489168,
+            "point": -0.0035210305386272106,
+            "indexCurl": -0.19894820763667942,
+            "middleCurl": -0.2610309551587372,
+            "ringCurl": -0.3253753395140423,
+            "littleCurl": -0.38984844079811554,
+            "thumbCurl": 0.0009103526676806153,
+            "opposition": -0.00030452612974630377,
+            "pinch": 0,
+            "sweep": 0.044049446634404715,
+            "wristFlex": -0.10985714556034655
+          },
+          "right": {
+            "lift": -0.13538049447685874,
+            "reach": -0.00418706980823633,
+            "turn": 0.6392259599698096,
+            "spread": -0.00372352718966371,
+            "curl": 0.0036758748922143367,
+            "point": -1.223853743631114e-108,
+            "indexCurl": -0.8893203595393827,
+            "middleCurl": -1.0200696987428202,
+            "ringCurl": -1.108812081324065,
+            "littleCurl": -1.1737745893443896,
+            "thumbCurl": -0.037463534542862706,
+            "opposition": -0.017841372111105227,
+            "pinch": -0.01977016909608968,
+            "sweep": 0.023832715091691506,
+            "wristFlex": -0.11825486098246688
+          },
+          "face": {
+            "eyeOpen": -0.0006499716681691471,
+            "browLeft": -0.0028259637746438225,
+            "browRight": -0.0017803571780256261,
+            "browPinch": -5.6578552275866675e-93,
+            "lipPress": -1.0381177607487247e-55,
+            "asymmetry": -3.7892826255344176e-18,
+            "innerBrow": -4.1524710429948865e-55,
+            "lowerLidLeft": -0.015448834381586167,
+            "lowerLidRight": -0.015448834381587274,
+            "cheekLeft": -0.0014129818873438791,
+            "cheekRight": -0.0009608276834008785,
+            "cornerLeft": -0.0005086734794359092,
+            "cornerRight": -0.0003391156529572787,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 720,
+          "height": 1280,
+          "deskY": 1005,
+          "actors": [
+            {
+              "x": 360,
+              "y": 336,
+              "scale": 1.4
+            }
+          ],
+          "headline": {
+            "x": 48,
+            "y": 194,
+            "width": 624,
+            "height": 145
+          },
+          "context": {
+            "x": 48,
+            "y": 1057,
+            "width": 624,
+            "height": 40
+          },
+          "caption": {
+            "x": 30,
+            "y": 1104,
+            "width": 660,
+            "height": 119
+          },
+          "microphones": [
+            {
+              "x": 650,
+              "y": 796.4,
+              "scale": 1.204,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    },
+    {
+      "format": "portrait",
+      "time": 35,
+      "mood": "attention",
+      "sample": {
+        "seconds": 35,
+        "acting": {
+          "innerBrow": 0.09040000000000002,
+          "rightBrow": 0.030000000000000002,
+          "leftFrown": 3.963081637174595e-80,
+          "rightFrown": 3.9630816371742675e-80,
+          "smile": 0.020000000000000004,
+          "cheek": 1.2177874696442914e-46,
+          "squint": 1.0615099749785919e-32,
+          "downcast": 8.49231779394484e-80,
+          "pitch": -0.060110231747911635,
+          "yaw": -3.7890643098230306e-97,
+          "tilt": -0.002228748852987187,
+          "lean": 0.005040000000000001,
+          "leftHand": 0.03999999999999996,
+          "rightHand": 0.03000000000000004,
+          "openness": 0.326
+        },
+        "face": {
+          "eyeOpen": 1.0336000000015586,
+          "browLeft": 0.1344000000067758,
+          "browRight": 0.13440000000426874,
+          "browPinch": 8.744091989269667e-129,
+          "lipPress": 1.8870132995447885e-91,
+          "asymmetry": 1.2002759128191888e-53,
+          "innerBrow": 7.54805319817923e-91,
+          "lowerLidLeft": 2.5391089539529855e-31,
+          "lowerLidRight": 2.5391089539529855e-31,
+          "cheekLeft": 3.387895605492621e-12,
+          "cheekRight": 2.3037690117349773e-12,
+          "cornerLeft": 0.06720000000121963,
+          "cornerRight": 0.0672000000008131,
+          "jawDrop": 0
+        },
+        "motion": {
+          "torso": -0.00595268579500991,
+          "shift": 0.7927213075617292,
+          "shoulderLeft": 0.5343444526316538,
+          "shoulderRight": 0.44884934021058914,
+          "gazeX": 0,
+          "gazeY": -0.018170744353529677,
+          "left": {
+            "lift": 0.03999999999999996,
+            "reach": -3.7551555886130335e-104,
+            "turn": -6.447472100104786e-34,
+            "spread": 0.15999999999999998,
+            "curl": 0.4,
+            "point": 7.944865409742849e-36,
+            "indexCurl": 0.08,
+            "middleCurl": 0.14000000000000004,
+            "ringCurl": 0.22,
+            "littleCurl": 0.30000000000000004,
+            "thumbCurl": 0.21999999999999997,
+            "opposition": 0.12000000000000001,
+            "pinch": 0,
+            "sweep": -1.0940214697442083e-34,
+            "wristFlex": 2.06051230573052e-27
+          },
+          "right": {
+            "lift": 0.03000000000000004,
+            "reach": 9.502222971486777e-36,
+            "turn": -9.297825123857547e-33,
+            "spread": 0.15999999999999998,
+            "curl": 0.4,
+            "point": 2.8367537369728862e-142,
+            "indexCurl": 0.115,
+            "middleCurl": 0.17500000000000004,
+            "ringCurl": 0.25500000000000006,
+            "littleCurl": 0.335,
+            "thumbCurl": 0.22000000000000003,
+            "opposition": 0.12000000000000001,
+            "pinch": 3.7307055462801813e-35,
+            "sweep": 1.2702118259528903e-34,
+            "wristFlex": 1.7290195152314702e-26
+          }
+        },
+        "blink": 1,
+        "mouth": {
+          "halfWidth": 12,
+          "opening": 0,
+          "curve": 0.07,
+          "teeth": false
+        },
+        "mouthOpen": false,
+        "mouthAmplitude": 0,
+        "viseme": "rest",
+        "breath": -0.6757476359921668,
+        "dynamics": {
+          "acting": {
+            "innerBrow": -8.301223714443215e-17,
+            "rightBrow": -2.0753059286108037e-17,
+            "leftFrown": -5.518631463604217e-79,
+            "rightFrown": -5.518631463603768e-79,
+            "smile": -2.0753059286108037e-17,
+            "cheek": -1.6894314733141486e-45,
+            "squint": -1.4659499954206974e-31,
+            "downcast": -1.1825638850579472e-78,
+            "pitch": 0.019621127635628368,
+            "yaw": 4.526683188967482e-96,
+            "tilt": -0.007302844915873582,
+            "lean": -5.188264821527009e-18,
+            "leftHand": 3.8325299535560663e-16,
+            "rightHand": -3.6458257914903304e-16,
+            "openness": -3.320489485777286e-16
+          },
+          "motion": {
+            "torso": 0.0018525789564055397,
+            "shift": -0.4532867800866658,
+            "shoulderLeft": -0.30251133163099153,
+            "shoulderRight": -0.2541095185700328,
+            "gazeX": 0,
+            "gazeY": 0.0071366411855206474
+          },
+          "left": {
+            "lift": 4.491195372182984e-16,
+            "reach": 5.60963123575818e-103,
+            "turn": 9.549777812000924e-33,
+            "spread": 1.7565352519920765e-16,
+            "curl": -9.55928306711733e-40,
+            "point": -1.177290151119096e-34,
+            "indexCurl": -1.243227752246754e-80,
+            "middleCurl": -1.9400131452520497e-16,
+            "ringCurl": -1.0759128244486448e-64,
+            "littleCurl": -3.513070503984153e-16,
+            "thumbCurl": 1.7565352519920765e-16,
+            "opposition": -8.782676259960383e-17,
+            "pinch": 0,
+            "sweep": 1.6209922081858626e-33,
+            "wristFlex": -2.4336570908253014e-26
+          },
+          "right": {
+            "lift": -4.226260870494641e-16,
+            "reach": -1.408054800377979e-34,
+            "turn": 1.3765480945556666e-31,
+            "spread": 1.7565352519920765e-16,
+            "curl": -9.55928306711733e-40,
+            "point": -4.2422770431971994e-141,
+            "indexCurl": -2.290204239468342e-76,
+            "middleCurl": -1.9400131452520497e-16,
+            "ringCurl": -3.6995851771694145e-16,
+            "littleCurl": -3.513070503984153e-16,
+            "thumbCurl": -1.7565352519920765e-16,
+            "opposition": -8.782676259960383e-17,
+            "pinch": -5.52939401333343e-34,
+            "sweep": -1.879407779317834e-33,
+            "wristFlex": -2.0409796737097572e-25
+          },
+          "face": {
+            "eyeOpen": -2.3940362339879107e-11,
+            "browLeft": -1.0408607816715625e-10,
+            "browRight": -6.557420185000095e-11,
+            "browPinch": -1.3943893364027844e-127,
+            "lipPress": -3.005078402752681e-90,
+            "asymmetry": -1.9051756301409817e-52,
+            "innerBrow": -1.2020313611010842e-89,
+            "lowerLidLeft": -3.493184935206452e-30,
+            "lowerLidRight": -3.493184935206452e-30,
+            "cheekLeft": -5.204300123226936e-11,
+            "cheekRight": -3.5389240837943106e-11,
+            "cornerLeft": -1.8735469284889775e-11,
+            "cornerRight": -1.2490307190589701e-11,
+            "jawDrop": 0
+          }
+        },
+        "layout": {
+          "width": 720,
+          "height": 1280,
+          "deskY": 1005,
+          "actors": [
+            {
+              "x": 360,
+              "y": 336,
+              "scale": 1.4
+            }
+          ],
+          "headline": {
+            "x": 48,
+            "y": 194,
+            "width": 624,
+            "height": 145
+          },
+          "context": {
+            "x": 48,
+            "y": 1057,
+            "width": 624,
+            "height": 40
+          },
+          "caption": {
+            "x": 30,
+            "y": 1104,
+            "width": 660,
+            "height": 119
+          },
+          "microphones": [
+            {
+              "x": 650,
+              "y": 796.4,
+              "scale": 1.204,
+              "mirror": false
+            }
+          ]
+        },
+        "headWidth": 156.56,
+        "design": "hybrid",
+        "visibleActors": [
+          0
+        ],
+        "actorCount": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "role": "B",
+  "scoreSha256": "fc3983114b1c630311381be2be9259bfd08c889e53ccd89398b7dd6f0a09feb1",
+  "checkedAt": "2026-10-23T15:13:15.484Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 36101,
+  "outputTokens": 2599,
+  "issues": [
+    "La descrizione/social summary non è in forma di elenco con un bullet per ciascuna notizia; inoltre aggiunge un claim non verificato sul sabato a Taiwan.",
+    "Il titolo della prima notizia è un po’ troppo forte rispetto all’evidenza: i rifornimenti ripartono in modo graduale e le scorte non sono già normalizzate."
+  ],
+  "checks": {
+    "selection": {
+      "status": "pass",
+      "reason": "Le cinque notizie hanno rilevanza pubblica e coprono Italia, Europa/Asia e dati economici con conseguenze concrete per il pubblico italiano. La scelta è giustificata da impatti diretti su rifornimenti, rischio di tensione militare, sanità regionale, mobilità a Taiwan e lettura corretta dei consumi britannici.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb"
+      ]
+    },
+    "opening": {
+      "status": "pass",
+      "reason": "L’avvio è breve, orienta l’ascoltatore e anticipa correttamente i temi principali senza framing serale o numerato.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html"
+      ]
+    },
+    "rhythm": {
+      "status": "unverifiable",
+      "reason": "La scansione scritta è coerente con un cinque minuti, ma non è verificabile qui il ritmo audio reale né la pausa tecnica di due secondi.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3"
+      ]
+    },
+    "explanation": {
+      "status": "pass",
+      "reason": "Le quattro storie sono spiegate per un pubblico non specialista, con contesto minimo su armistizio coreano, iter regionale umbro, volumi retail e differenza tra mese e trimestre.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "transitions": {
+      "status": "pass",
+      "reason": "I passaggi fra le storie sono naturali e non usano formule numerate. La sequenza procede in modo chiaro dall’Italia al mondo e poi ai dati economici.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb"
+      ]
+    },
+    "closing": {
+      "status": "pass",
+      "reason": "La chiusura mantiene l’invito fisso all’audience e include il richiamo ai commenti con indicazione coerente del gesto verso il basso, senza introdurre una rubrica AI separata.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html"
+      ]
+    },
+    "summary": {
+      "status": "revise",
+      "reason": "La descrizione non rispetta il formato richiesto a bullet per ciascuna notizia e include una frase non verificata: le chiusure di sabato 24 a Taiwan non risultano confermate nelle evidenze fornite.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html",
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest"
+      ]
+    },
+    "story_carburanti": {
+      "status": "revise",
+      "reason": "La storia è corretta ma il framing del titolo e di alcune frasi è un po’ troppo assertivo: l’evidenza parla di ripartenza graduale e di scorte ancora non normalizzate, non di ritorno già pieno alla normalità.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html",
+        "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html"
+      ]
+    },
+    "story_coree": {
+      "status": "pass",
+      "reason": "La notizia è presentata come proposta sudcoreana, con corretta attribuzione e con l’incertezza sulla risposta di Pyongyang esplicitata.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.unc.mil/History/1951-1953-Armistice-Negotiations/"
+      ]
+    },
+    "story_umbria": {
+      "status": "pass",
+      "reason": "Il voto regionale è attribuito correttamente e spiegato nel quadro nazionale senza presentarlo come via libera automatico o già operativo.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+        "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html"
+      ]
+    },
+    "story_taiwan": {
+      "status": "pass",
+      "reason": "La storia è di evidente interesse pubblico per chiusure, voli e trasporti. Resta da correggere solo il passaggio sul sabato nella summary, ma il corpo della notizia è sostanzialmente corretto e ben attribuito.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "story_consumi": {
+      "status": "pass",
+      "reason": "La spiegazione distingue correttamente il dato mensile dal trimestre e aiuta il pubblico a non confondere un calo di un mese con una tendenza unica.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back"
+      ]
+    }
+  },
+  "passed": false
+}

@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "date": "2026-10-24",
+  "timezone": "Europe/Rome",
+  "scope": "Local Daily controller, durable runbook, per-edition editorial texts and private GUI. No public application deployment.",
+  "schedule": {
+    "firstEditionDate": "2026-10-24",
+    "productionTime": "08:00",
+    "publicationTimeProposal": "09:00",
+    "closesAtLocal": "09:30",
+    "productionDriver": "launchd",
+    "publicationDriver": "chatgpt-work",
+    "localTimerLoaded": true,
+    "persistentAtUserLogin": true,
+    "databaseSettingsSaved": true,
+    "databaseConnected": true,
+    "latestObservedTick": "2026-10-23T22:40:00.452Z",
+    "latestObservedTickResult": "before_production",
+    "workTaskVerified": false
+  },
+  "validation": {
+    "tgUnitPassed": 99,
+    "integrationSkippedByDefaultUnitSuite": 18,
+    "outboxIntegrationPassedSeparately": 16,
+    "scheduledWorkerIntegrationPassedSeparately": 2,
+    "scheduledWorkerCases": [
+      "fresh audio needed",
+      "resumed legacy audio"
+    ],
+    "scheduledWorkerExternalFetch": "forbidden by child-process preload; no provider calls",
+    "browserDistinctNewsroomCasesPassed": 12,
+    "browserExecution": "10 passed in the full rerun; corrected calendar and real GUI schedule-save cases passed separately",
+    "viewportsChecked": [
+      320,
+      390,
+      1440
+    ],
+    "typecheck": "passed, including final production build",
+    "affectedEslint": "passed",
+    "meetingProductionBuild": ".next-build-daily-agent-final-20261024",
+    "meetingBuildResult": "passed",
+    "approvedVisualFingerprints": "17/17 unchanged",
+    "previewNewsroom": "http://127.0.0.1:3107/podcast/tg/redazione",
+    "previewHttpStatus": 200,
+    "realVoiceCalls": 0,
+    "realNewsGenerationRuns": 0,
+    "realSocialPosts": 0
+  },
+  "remainingBeforeAutonomousVideoPublication": [
+    "Connect the approved Alex 2 identity to the automatic voice adapter; the legacy worker still uses Inworld.",
+    "Connect the approved measured pause/alignment, natural-duration workflow and 50 fps exports to that runner.",
+    "Run a full real edition through media checks and final AI review.",
+    "Save and verify the actual desktop ChatGPT Work publication task and its unattended permissions.",
+    "Verify authenticated channel delivery, including the required Spotify video host, before enabling sends."
+  ],
+  "safetyBehavior": "Reviewed editorial files are retained. Both fresh synthesis and resumed legacy audio stop before producing an unapproved voice/video. The background publisher excludes Work-owned editions.",
+  "verifiedAtUtc": "2026-10-23T22:40:43.783Z"
+}

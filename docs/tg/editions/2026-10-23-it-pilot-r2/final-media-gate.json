@@ -1,0 +1,29 @@
+{
+  "id": "2026-10-23-it-pilot-r2",
+  "mediaVersion": "d684e69b9c6d",
+  "scoreSha256": "48ad0449be5e869020b319c278c7716b655dff5285b00f6de49c03cf31ac3b5b",
+  "checkedAt": "2026-10-23T16:57:05.110Z",
+  "scope": "local media technical verification and primary AI visual review",
+  "duration": 300,
+  "formats": 2,
+  "fps": 50,
+  "decodedBothFiles": true,
+  "measuredOpeningPauseSeconds": 2.0000003051757815,
+  "approvedPointerAtSeconds": 292,
+  "geometryFrames": 30000,
+  "geometryIssues": 0,
+  "playerWidths": [
+    360,
+    390,
+    1440
+  ],
+  "allFiveNewsChapters": true,
+  "closingCaptions": true,
+  "visualIdentityAssets": 17,
+  "sourceOutsideReviewedSpliceUnchanged": true,
+  "providerCallsInMediaQA": 0,
+  "passed": true,
+  "perceptualNaturalnessRequiresUserReview": true,
+  "publicationApproved": false,
+  "automaticPipelineEnabled": false
+}

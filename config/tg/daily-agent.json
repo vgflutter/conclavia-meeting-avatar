@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "firstEditionDate": "2026-10-24",
+  "productionDriver": "launchd",
+  "publicationDriver": "chatgpt-work",
+  "product": {
+    "edition": "it",
+    "name": "Conclavia Daily · Italia",
+    "language": "it",
+    "seconds": 300,
+    "presenters": 1,
+    "productionStandard": "cdaily-v1",
+    "productionTime": "08:00",
+    "publishTime": "09:00",
+    "timezone": "Europe/Rome",
+    "enabled": true,
+    "automatic": true,
+    "publicationDriver": "chatgpt-work",
+    "platforms": ["youtube", "instagram", "tiktok", "spotify"]
+  }
+}

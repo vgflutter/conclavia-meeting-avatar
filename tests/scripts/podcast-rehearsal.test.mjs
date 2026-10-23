@@ -6,13 +6,19 @@ import ts from "typescript";
 
 const testModule = { exports: {} };
 const network = [];
+let networkHandler;
 const compiled = ts.transpileModule(readFileSync(new URL("../../src/lib/podcast/rehearsal-player.ts", import.meta.url), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 runInNewContext(compiled, {
-  module: testModule, exports: testModule.exports, AbortController, AbortSignal, DOMException, Response, ReadableStream, setTimeout, clearTimeout,
-  fetch: (...args) => { network.push(args); throw new Error("Unexpected network request"); },
+  module: testModule, exports: testModule.exports, AbortController, AbortSignal, DOMException, Response, ReadableStream, TextDecoder, setTimeout, clearTimeout,
+  fetch: (...args) => { if (networkHandler) return networkHandler(...args); network.push(args); throw new Error("Unexpected network request"); },
   require(name) {
+    if (name === "@/lib/podcast/llm-models") {
+      const models = { exports: {} };
+      runInNewContext(ts.transpileModule(readFileSync(new URL("../../src/lib/podcast/llm-models.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { module: models, exports: models.exports });
+      return models.exports;
+    }
     if (name !== "@conclavia/avatar-kit/lib/streaming-voice-player") throw new Error(`Unexpected dependency: ${name}`);
     return {
       requestStreamingSpeech() { throw new Error("Unexpected default synthesis"); },
@@ -243,4 +249,49 @@ test("stale generation results and an expired editorial budget cannot loop into 
   await expired.start();
   assert.equal(expired.state.advance, 0);
   assert.deepEqual(expired.state.prepared, []);
+});
+
+test("short overlaps require actual complete PCM timing, distinct AI voices and a heated exchange", () => {
+  const { overlapAllowed } = testModule.exports;
+  const a = { ...message(1), performance: { sentences: [{ mood: "disagreement", intensity: .7 }] } };
+  const b = { ...message(2), intent: "challenge" };
+  const progress = { seconds: 2.7, bufferedSeconds: 3, complete: true, sentenceIndex: 0 };
+  assert.equal(overlapAllowed(a, b, progress, { allowInterruptions: true }), true);
+  for (const [first, second, timing, settings] of [
+    [a, b, { ...progress, complete: false }, { allowInterruptions: true }],
+    [a, b, { ...progress, seconds: 1 }, { allowInterruptions: true }],
+    [a, b, progress, { allowInterruptions: false }],
+    [{ ...a, origin: "human" }, b, progress, { allowInterruptions: true }],
+    [a, { ...b, participantIndex: 0 }, progress, { allowInterruptions: true }],
+    [a, { ...b, intent: "closing" }, progress, { allowInterruptions: true }],
+    [{ ...a, performance: undefined }, b, progress, { allowInterruptions: true }],
+  ]) assert.equal(overlapAllowed(first, second, timing, settings), false);
+});
+
+test("streamed generation releases stored speech before editorial completion and rejects truncated completion", async () => {
+  const { advanceRehearsalTurn } = testModule.exports;
+  let output;
+  networkHandler = async () => new Response(new ReadableStream({ start(controller) { output = controller; } }), { headers: { "Content-Type": "text/event-stream" } });
+  try {
+    let stored = 0, completed = false;
+    const final = advanceRehearsalTurn(runId, new AbortController().signal, ready => { stored++; assert.equal(ready.messages.length, 1); });
+    await flush();
+    const event = new TextEncoder().encode(`data: ${JSON.stringify({ type: "speech_stored", run: run(1, "generating") })}\r\n\r\n`);
+    output.enqueue(event.slice(0, 17)); output.enqueue(event.slice(17));
+    final.then(() => { completed = true; });
+    await flush();
+    assert.equal(stored, 1);
+    assert.equal(completed, false);
+    output.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ type: "complete", run: run(1) })}\n\n`)); output.close();
+    assert.equal((await final).messages.length, 1);
+    networkHandler = async () => new Response(`data: ${JSON.stringify({ type: "speech_stored", run: run(1) })}\n\n`);
+    await assert.rejects(advanceRehearsalTurn(runId, new AbortController().signal), /Incomplete/u);
+  } finally { networkHandler = undefined; }
+});
+
+test("default pauses adapt to pace instead of imposing the previous fixed silence", async () => {
+  const f = fixture({ pauseMs: undefined, maxTurns: 2 });
+  await f.start();
+  assert.equal(f.state.waits.length, 1);
+  assert.ok(f.state.waits[0] >= 60 && f.state.waits[0] <= 340);
 });

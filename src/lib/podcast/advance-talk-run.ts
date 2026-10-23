@@ -60,6 +60,7 @@ export class AdvanceTalkRunError extends Error {
 }
 
 interface AdvanceHooks {
+  onSpeechStored?: (run: TalkRunResponse) => void | Promise<void>;
   onPlan?: (plan: TalkRunTurnPlan) => void | Promise<void>;
   onDelta?: (delta: string) => void | Promise<void>;
   onPreparing?: (plan: TalkRunTurnPlan) => void | Promise<void>;
@@ -75,6 +76,7 @@ interface AdvanceHooks {
 }
 
 interface AdvanceOptions {
+  lowLatency?: boolean;
   prepareNext?: boolean;
   signal?: AbortSignal;
 }
@@ -415,7 +417,6 @@ async function replayPreparedText(
   for (const chunk of chunks) {
     signal?.throwIfAborted();
     await onDelta(chunk);
-    await new Promise((resolve) => setTimeout(resolve, 4));
   }
 }
 
@@ -929,6 +930,20 @@ export async function advanceTalkRun(
     );
     let discussionState = projected.discussionState;
     const generatedMessage = projected.messages.at(-1);
+    // Make validated speech available while editorial review runs off-air.
+    // Keep the generation lease: another turn cannot start against unfinished memory.
+    const storedBeforeReview = options.lowLatency === true && Boolean(generatedMessage);
+    if (storedBeforeReview) {
+      options.signal?.throwIfAborted();
+      const stored = await TalkRunModel.findOneAndUpdate(leaseFilter(claimed), {
+        $push: { messages: { ...generatedMessage, createdAt: new Date(generatedMessage!.createdAt), inputTokens: generation.inputTokens, outputTokens: generation.outputTokens } },
+        $set: { participantTurnCount: projected.participantTurnCount, estimatedAirtimeSeconds: projected.estimatedAirtimeSeconds,
+          discussionState: projected.discussionState, phase: projected.phase, nextParticipantIndex: projected.nextParticipantIndex },
+      }, { new: true }).exec();
+      if (!stored) throw new Error("Podcast generation lease changed before speech storage");
+      await hooks.onSpeechStored?.(serializeTalkRun(stored));
+      options.signal?.throwIfAborted();
+    }
     if (generatedMessage) await hooks.onSpeechReady?.(generatedMessage);
     if (editorialReviewNeeded) {
       await hooks.onEditorialReviewStarted?.();
@@ -976,7 +991,7 @@ export async function advanceTalkRun(
     const savedCurrent = await TalkRunModel.findOneAndUpdate(
       leaseFilter(claimed),
       {
-        $push: {
+        ...(storedBeforeReview ? {} : { $push: {
           messages: {
             sequence: claimed.messages.length + 1,
             speakerType: plan.speakerType,
@@ -1002,7 +1017,7 @@ export async function advanceTalkRun(
             audienceCue: plan.audienceCue,
             createdAt: new Date(),
           },
-        },
+        } }),
         $set: {
           status: transition.completed
             ? "completed"

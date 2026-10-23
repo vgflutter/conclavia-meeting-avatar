@@ -1,0 +1,235 @@
+{
+  "role": "A",
+  "scoreSha256": "4c058d9bc9a8b72714f95adc0d15d06ee69a987dd38fa79a39fd7bd489e07e79",
+  "checkedAt": "2026-10-23T15:17:06.984Z",
+  "provider": "openai",
+  "model": "openai-default",
+  "inputTokens": 37271,
+  "outputTokens": 3581,
+  "issues": [
+    "La parte su Taiwan va corretta: le chiusure di sabato 24 ottobre non risultano confermate nelle evidenze disponibili, quindi non vanno presentate come certe.",
+    "La frase finale su Taiwan (“Le misure annunciate per sabato sono confermate”) è in conflitto con il brief di verifica.",
+    "Di conseguenza anche il riepilogo in description contiene un’affermazione troppo forte su Taiwan."
+  ],
+  "checks": {
+    "description": {
+      "status": "revise",
+      "reason": "Nel quarto punto attribuisce come annunciate/confermate le chiusure di sabato 24 ottobre a Taiwan, ma il brief di verifica non le conferma.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "headline_0": {
+      "status": "pass",
+      "reason": "“Rifornimenti in ripresa graduale” è coerente con il riavvio delle consegne e il rientro solo parziale della normalità.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "headline_1": {
+      "status": "pass",
+      "reason": "Riassume correttamente la proposta sudcoreana di colloqui militari.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813"
+      ]
+    },
+    "headline_2": {
+      "status": "pass",
+      "reason": "Il voto umbro sul fine vita è confermato dalle fonti istituzionali e giornalistiche.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "headline_3": {
+      "status": "pass",
+      "reason": "Il titolo è coerente con il blocco di scuole/uffici e le cancellazioni dei trasporti causate dal tifone.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "headline_4": {
+      "status": "pass",
+      "reason": "Il richiamo al confronto statistico è fedele ai dati ONS su mese e trimestre.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back"
+      ]
+    },
+    "sentence_0": {
+      "status": "pass",
+      "reason": "Saluto e framing coerenti, senza affermazioni fattuali da verificare.",
+      "sourceUrls": []
+    },
+    "sentence_1": {
+      "status": "pass",
+      "reason": "Annuncia correttamente i temi della puntata senza aggiungere fatti non verificati.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "sentence_2": {
+      "status": "pass",
+      "reason": "La rimozione dei presidi e il riavvio dei mezzi sono confermati dalle fonti ANSA/Adnkronos.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "sentence_3": {
+      "status": "pass",
+      "reason": "Le code, le pompe a secco e la ricostituzione delle scorte sono supportate dalle evidenze disponibili.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g"
+      ]
+    },
+    "sentence_4": {
+      "status": "pass",
+      "reason": "Il decreto del 22 ottobre e l’ordine di grandezza dei fondi sono confermati; la spiegazione dei crediti d’imposta è corretta.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html",
+        "https://www.ilfattoquotidiano.it/2026/10/22/caro-gasolio-decreto-governo-autotrasporto-notizie/8546627/"
+      ]
+    },
+    "sentence_5": {
+      "status": "pass",
+      "reason": "La distinzione tra riavvio dei rifornimenti e effetto concreto sulle singole zone è supportata dalle fonti.",
+      "sourceUrls": [
+        "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+        "https://www.adnkronos.com/cronaca/protesta-autotrasportatori-notizie-ultima-ora_3AbSQo5APtfWTWS8Haju8g",
+        "https://www.ilfattoquotidiano.it/2026/10/22/caro-gasolio-decreto-governo-autotrasporto-notizie/8546627/"
+      ]
+    },
+    "sentence_6": {
+      "status": "pass",
+      "reason": "La proposta sudcoreana di nuovi colloqui militari e il riferimento alla linea di demarcazione sono confermati.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813"
+      ]
+    },
+    "sentence_7": {
+      "status": "pass",
+      "reason": "Il contesto storico dell’armistizio del 1953 è corretto.",
+      "sourceUrls": [
+        "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf",
+        "https://www.unc.mil/History/1951-1953-Armistice-Negotiations/"
+      ]
+    },
+    "sentence_8": {
+      "status": "pass",
+      "reason": "È corretto dire che si tratta di un’offerta di dialogo annunciata il 23 ottobre e che non c’è ancora conferma di accettazione nordcoreana.",
+      "sourceUrls": [
+        "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+        "https://www.marketscreener.com/news/south-korea-proposes-talks-with-north-korea-on-land-border-again-ce785cded18df22c",
+        "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813"
+      ]
+    },
+    "sentence_9": {
+      "status": "pass",
+      "reason": "Il voto dell’Assemblea legislativa dell’Umbria e il risultato numerico sono confermati.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita",
+        "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+      ]
+    },
+    "sentence_10": {
+      "status": "pass",
+      "reason": "La descrizione del quadro regionale e del richiamo a disciplina statale e giurisprudenza costituzionale è supportata.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "sentence_11": {
+      "status": "pass",
+      "reason": "La possibilità di sospendere o revocare la richiesta è confermata nel materiale istituzionale.",
+      "sourceUrls": [
+        "https://consiglio.regione.umbria.it/informazione/notizie/comunicati/assistenza-sanitaria-alla-morte-volontaria-medicalmente-assistita"
+      ]
+    },
+    "sentence_12": {
+      "status": "pass",
+      "reason": "Le chiusure, le evacuazioni, i danni e le interruzioni di corrente sono coerenti con le fonti su Champi.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+        "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+      ]
+    },
+    "sentence_13": {
+      "status": "revise",
+      "reason": "L’affermazione sulle chiusure di sabato 24 ottobre non risulta confermata nelle evidenze disponibili; il brief specifica che questa parte non è verificata.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures"
+      ]
+    },
+    "sentence_14": {
+      "status": "revise",
+      "reason": "La frase dice che le misure annunciate per sabato sono confermate, ma il brief di verifica non trova conferma per quelle chiusure.",
+      "sourceUrls": [
+        "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+        "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures"
+      ]
+    },
+    "sentence_15": {
+      "status": "pass",
+      "reason": "Il dato mensile del -0,4% è corretto e attribuito al rilascio ONS del 23 ottobre.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back"
+      ]
+    },
+    "sentence_16": {
+      "status": "pass",
+      "reason": "Il confronto trimestrale +0,7% è corretto e il commento sul diverso periodo di riferimento è fedele ai dati.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back"
+      ]
+    },
+    "sentence_17": {
+      "status": "pass",
+      "reason": "La cautela sulle oscillazioni mensili e il riferimento all’abbigliamento sono supportati dalle fonti.",
+      "sourceUrls": [
+        "https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest",
+        "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back"
+      ]
+    },
+    "sentence_18": {
+      "status": "pass",
+      "reason": "È una chiusura promozionale, senza affermazioni fattuali da verificare.",
+      "sourceUrls": []
+    },
+    "sentence_19": {
+      "status": "pass",
+      "reason": "È una call-to-action, non un claim fattuale.",
+      "sourceUrls": []
+    },
+    "sentence_20": {
+      "status": "pass",
+      "reason": "È una call-to-action, non un claim fattuale.",
+      "sourceUrls": []
+    },
+    "sentence_21": {
+      "status": "pass",
+      "reason": "È una firma/chiusura editoriale, senza claim fattuali.",
+      "sourceUrls": []
+    }
+  },
+  "scope": "editorial-pre-take",
+  "mediaTimingNotYetVerified": true,
+  "passed": false
+}

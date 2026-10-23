@@ -25,6 +25,8 @@ export async function POST(request: Request, context: RouteContext) {
 
   // One operator action produces one turn. Speculative paid preparation stays off.
   const prepareNext = false;
+  const disconnected = new AbortController();
+  const signal = AbortSignal.any([request.signal, disconnected.signal]);
   let connected = true;
   request.signal.addEventListener("abort", () => {
     connected = false;
@@ -46,6 +48,7 @@ export async function POST(request: Request, context: RouteContext) {
           const run = await advanceTalkRun(
             id,
             {
+              onSpeechStored: (run) => send("speech_stored", { run }),
               onPlan: (plan) => send("plan", { plan }),
               onDelta: (delta) => send("delta", { delta }),
               onPreparing: (plan) => send("preparing", { plan }),
@@ -59,7 +62,7 @@ export async function POST(request: Request, context: RouteContext) {
               onTurnSaved: (savedRun) =>
                 send("turn_complete", { run: savedRun }),
             },
-            { prepareNext, signal: request.signal },
+            { prepareNext, lowLatency: true, signal },
           );
           send("complete", { run });
         } catch (error) {
@@ -81,6 +84,7 @@ export async function POST(request: Request, context: RouteContext) {
         }
       })();
     },
+    cancel() { connected = false; disconnected.abort(); },
   });
 
   return new Response(stream, {

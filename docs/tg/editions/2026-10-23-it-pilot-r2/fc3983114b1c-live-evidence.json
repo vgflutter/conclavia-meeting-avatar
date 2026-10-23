@@ -1,0 +1,905 @@
+{
+  "sourceScoreSha256": "fc3983114b1c630311381be2be9259bfd08c889e53ccd89398b7dd6f0a09feb1",
+  "retrievedAt": "2026-10-23T15:13:03.650Z",
+  "data": [
+    {
+      "storyId": "carburanti",
+      "brief": "Here is a concise evidence brief based on fresh keyword searches, with the event date and the latest verified development separated from publication time.\n\n**Confirmed event and date**\n- The event is the Campania autotrasportatori/carburanti protest, with blockages and fuel-supply disruption in the Naples area and along parts of the regional road network. ANSA places the key latest developments on **23 October 2026** and the preceding status update on **22 October 2026**. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html?utm_source=openai))\n\n**Latest verified development time**\n- The latest reported development I found is **23 October 2026, 08:16**: ANSA says the road blockades were removed overnight in the Casertano and Salernitano. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html?utm_source=openai))\n- A second same-day update at **11:24** says supply is only gradually normalising on Ischia and Procida, with the first fuel tankers expected shortly. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html?utm_source=openai))\n\n**Supported details**\n- ANSA reports that the presidi on the motorway network in Campania were removed overnight, while many fuel stations were still empty and queues remained at those open. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html?utm_source=openai))\n- The 22 October ANSA update says the situation in Naples was still severe because the presìdio at via Argine was blocking fuel leaving the depots, and that the prefecture was considering alternative measures to restore distribution. ([ansa.it](https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html?utm_source=openai))\n- ANSA also reports that some distribution centres for large-scale retail had reopened, allowing some fresh goods back into supermarkets, but that shortages at shelves and petrol stations persisted. ([ansa.it](https://www.ansa.it/amp/campania/notizie/2026/10/22/a-napoli-ancora-blocchi-e-pompe-a-secco-delusi-da-misure-governo_c65fe805-c50f-4ab7-8370-f48be505e4d3.html?utm_source=openai))\n- On the policy side, ANSA says a decree approved on **22 October** provided about **€175 million** for road transport, agriculture and fishing, with the transport part mainly via tax credits on diesel costs. This is a separate measure from the immediate restart of deliveries. ([ansa.it](https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html?utm_source=openai))\n\n**Attributed claims and uncertainties**\n- ANSA attributes the overnight removal of blockades to the reporting from the ground; it is not yet clear from the material I found whether all local supply chains were fully restored by the morning of 23 October. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html?utm_source=openai))\n- The reports describe **gradual** recovery, not a complete return to normal. The remaining uncertainty is the timing of full replenishment at individual stations and in retail stores. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html?utm_source=openai))\n\n**What looks recycled, expired, or misframed**\n- The claim that “the roads reopen” is **partly true but incomplete**: ANSA’s 23 October reporting shows roads were reopened, yet fuel shortages and queues were still present. So this is not a fully resolved story. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html?utm_source=openai))\n- The statement that “the scorte ripartono” is **too strong if presented as already normalised**; the evidence supports only a **gradual resumption**. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html?utm_source=openai))\n- The 27 October reference is a **future scheduled meeting**, not something that has happened; it should only be treated as an announced date, not as a completed event. ([ansa.it](https://www.ansa.it/amp/campania/notizie/2026/10/20/autotrasportatore-campania-blocchi-avanti-fino-al-27-ottobre_12c80c46-8b35-419e-85be-cb28f78cd209.html?utm_source=openai))\n\nIf you want, I can next turn this into a broadcast-ready 5-line evidence note in Italian with the exact phrasing split into “what is confirmed / what remains uncertain / what is outdated.”",
+      "sources": [
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html"
+        },
+        {
+          "url": "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html",
+          "title": "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/campania/notizie/2026/10/20/autotrasportatore-campania-blocchi-avanti-fino-al-27-ottobre_12c80c46-8b35-419e-85be-cb28f78cd209.html",
+          "title": "https://www.ansa.it/amp/campania/notizie/2026/10/20/autotrasportatore-campania-blocchi-avanti-fino-al-27-ottobre_12c80c46-8b35-419e-85be-cb28f78cd209.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html",
+          "title": "https://www.ansa.it/amp/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html"
+        },
+        {
+          "url": "https://www.ansa.it/campania/notizie/2026/10/22/infiltrazioni-mafiose-nelle-protesta-degli-autotrasportatori-la-procura-di-napoli-dispone-accertamenti_5150666d-d872-48ed-9042-88ead93f0e4f.html",
+          "title": "https://www.ansa.it/campania/notizie/2026/10/22/infiltrazioni-mafiose-nelle-protesta-degli-autotrasportatori-la-procura-di-napoli-dispone-accertamenti_5150666d-d872-48ed-9042-88ead93f0e4f.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/campania/notizie/2026/10/22/a-napoli-ancora-blocchi-e-pompe-a-secco-delusi-da-misure-governo_c65fe805-c50f-4ab7-8370-f48be505e4d3.html",
+          "title": "https://www.ansa.it/amp/campania/notizie/2026/10/22/a-napoli-ancora-blocchi-e-pompe-a-secco-delusi-da-misure-governo_c65fe805-c50f-4ab7-8370-f48be505e4d3.html"
+        },
+        {
+          "url": "https://www.ansa.it/campania/notizie/2026/10/20/autotrasportatore-campania-auspico-che-le-proteste-si-fermino_92c186a5-40f9-439c-94e0-79f04052f119.html",
+          "title": "https://www.ansa.it/campania/notizie/2026/10/20/autotrasportatore-campania-auspico-che-le-proteste-si-fermino_92c186a5-40f9-439c-94e0-79f04052f119.html"
+        },
+        {
+          "url": "https://www.ansa.it/sito/notizie/flash/2026/10/22/-corteo-lento-dei-tir-a-napoli-delusi-da-misure-governo-_774c42b5-75dc-4424-aa35-a33b532bcbbf.html",
+          "title": "https://www.ansa.it/sito/notizie/flash/2026/10/22/-corteo-lento-dei-tir-a-napoli-delusi-da-misure-governo-_774c42b5-75dc-4424-aa35-a33b532bcbbf.html"
+        },
+        {
+          "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/20/in-sicilia-revocato-il-fermo-dei-tir.-in-calabria-prosegue-fino-al-27-ottobre_3a6127ff-0b4c-4c40-8785-32cfb644514b.html",
+          "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/20/in-sicilia-revocato-il-fermo-dei-tir.-in-calabria-prosegue-fino-al-27-ottobre_3a6127ff-0b4c-4c40-8785-32cfb644514b.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/21/ore-di-coda-a-napoli-e-pompe-a-secco.-allarme-per-trasporti-sanitari_a4de4635-a850-48ef-8a89-37e9ddbcadda.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/21/ore-di-coda-a-napoli-e-pompe-a-secco.-allarme-per-trasporti-sanitari_a4de4635-a850-48ef-8a89-37e9ddbcadda.html"
+        },
+        {
+          "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/21/rixi-fondi-allautotrasporto-gia-da-oggi-si-smobilitino-i-blocchi.-gli-industriali-di-campania_9c1d4f81-b58b-423e-aef2-9fa4b224c7bf.html",
+          "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/21/rixi-fondi-allautotrasporto-gia-da-oggi-si-smobilitino-i-blocchi.-gli-industriali-di-campania_9c1d4f81-b58b-423e-aef2-9fa4b224c7bf.html"
+        },
+        {
+          "url": "https://www.ansa.it/ansa-pressrelease/docs/123/pdf/pressrelease_doc_123_1635325007419.pdf",
+          "title": "https://www.ansa.it/ansa-pressrelease/docs/123/pdf/pressrelease_doc_123_1635325007419.pdf"
+        },
+        {
+          "url": "https://www.ansa.it/documents/1674565699849_sciopero-benzinai-impianti-autostrada-aperti.pdf",
+          "title": "https://www.ansa.it/documents/1674565699849_sciopero-benzinai-impianti-autostrada-aperti.pdf"
+        }
+      ]
+    },
+    {
+      "storyId": "coree",
+      "brief": "Fresh keyword search confirms this is a **new development on 23 October 2026**, not recycled old coverage. AP reports that South Korea’s defense ministry **formally proposed military talks to North Korea** on Friday, 23 October, to verify the exact ground military demarcation line, restore military communication channels, and reduce the risk of accidental clashes. AP quotes a South Korean defense official saying the proposal was made in a televised statement the same day. ([apnews.com](https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3?utm_source=openai))\n\nWhat is **confirmed**:\n- The **event date** is **Friday, 23 October 2026**. AP’s article was published “today” and timestamped **07:04:30 UTC**. ([apnews.com](https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3?utm_source=openai))\n- Euronews also carried the story the same day, with an article published at **11:30 GMT+2**. ([arabic.euronews.com](https://arabic.euronews.com/2026/10/23/south-korea-north-korea-military-talks-demarcation-line?utm_source=openai))\n- The stated purpose is to **clarify the border line** and **restore military hotlines/communication** to avoid accidental incidents. ([apnews.com](https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3?utm_source=openai))\n\nWhat is **not yet confirmed**:\n- I found **no confirmation that North Korea has accepted** the proposal. That remains the key unknown. ([apnews.com](https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3?utm_source=openai))\n- The available reporting does **not yet show a later same-day development** beyond the proposal itself; the latest verified development is the **announcement of the offer** on 23 October. This is distinct from the article publication time. ([apnews.com](https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3?utm_source=openai))\n\nContext that is supported, but should not be mistaken for the new event:\n- The Korea armistice of **1953** ended fighting but **did not create a peace treaty**; the military demarcation line and DMZ remain politically sensitive. The UN armistice text defines the military demarcation line and demilitarized zone. ([peacemaker.un.org](https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf?utm_source=openai))\n- Earlier coverage this month and in late September on DMZ mine blasts and border tensions is **older context**, not the same event. Euronews’ related reports from late September say the UN Command assessed North Korea’s actions as an armistice violation, but that is a separate, earlier story. ([euronews.com](https://www.euronews.com/2026/09/29/north-korean-landmine-blasts-in-dmz-a-violation-of-armistice-seoul-says?utm_source=openai))\n\nBottom line: the provided headline is **accurate as a same-day proposal story**, but it should be presented as an **announcement, not a completed dialogue**, until Pyongyang’s response is confirmed. ([apnews.com](https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3?utm_source=openai))",
+      "sources": [
+        {
+          "url": "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+          "title": "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3"
+        },
+        {
+          "url": "https://apnews.com/article/82e0337612400f9f056914d89dd47b6d",
+          "title": "https://apnews.com/article/82e0337612400f9f056914d89dd47b6d"
+        },
+        {
+          "url": "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813",
+          "title": "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813"
+        },
+        {
+          "url": "https://www.euronews.com/2026/09/30/north-korea-slams-souths-claim-it-was-behind-dmz-mine-blasts-calling-it-a-farce",
+          "title": "https://www.euronews.com/2026/09/30/north-korea-slams-souths-claim-it-was-behind-dmz-mine-blasts-calling-it-a-farce"
+        },
+        {
+          "url": "https://arabic.euronews.com/2026/10/23/south-korea-north-korea-military-talks-demarcation-line",
+          "title": "https://arabic.euronews.com/2026/10/23/south-korea-north-korea-military-talks-demarcation-line"
+        },
+        {
+          "url": "https://www.euronews.com/2026/10/04/north-korea-fires-intermediate-range-missile-claiming-evasive-flight-and-ai-features",
+          "title": "https://www.euronews.com/2026/10/04/north-korea-fires-intermediate-range-missile-claiming-evasive-flight-and-ai-features"
+        },
+        {
+          "url": "https://www.euronews.com/2026/10/12/north-korea-fires-several-ballistic-missiles-into-sea-of-japan-seouls-military-says?trk=article-ssr-frontend-pulse_little-text-block",
+          "title": "https://www.euronews.com/2026/10/12/north-korea-fires-several-ballistic-missiles-into-sea-of-japan-seouls-military-says?trk=article-ssr-frontend-pulse_little-text-block"
+        },
+        {
+          "url": "https://www.euronews.com/2026/09/29/north-korean-landmine-blasts-in-dmz-a-violation-of-armistice-seoul-says",
+          "title": "https://www.euronews.com/2026/09/29/north-korean-landmine-blasts-in-dmz-a-violation-of-armistice-seoul-says"
+        },
+        {
+          "url": "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf",
+          "title": "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf"
+        },
+        {
+          "url": "https://www.theguardian.com/world/south-korea%2Bnorth-korea",
+          "title": "https://www.theguardian.com/world/south-korea%2Bnorth-korea"
+        },
+        {
+          "url": "https://www.euronews.com/2026/09/18/south-korean-president-urges-trump-dialogue-with-pyongyang",
+          "title": "https://www.euronews.com/2026/09/18/south-korean-president-urges-trump-dialogue-with-pyongyang"
+        },
+        {
+          "url": "https://www.euronews.com/2026/02/26/north-korea-shuns-relations-with-south-as-kim-jong-un-says-it-could-get-along-with-us",
+          "title": "https://www.euronews.com/2026/02/26/north-korea-shuns-relations-with-south-as-kim-jong-un-says-it-could-get-along-with-us"
+        },
+        {
+          "url": "https://www.euronews.com/tag/south-korea",
+          "title": "https://www.euronews.com/tag/south-korea"
+        },
+        {
+          "url": "https://www.euronews.com/2017/07/17/south-korea-proposes-talks-with-the-north",
+          "title": "https://www.euronews.com/2017/07/17/south-korea-proposes-talks-with-the-north"
+        },
+        {
+          "url": "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp20kr071004declaration20on20advancement20of20south-north20korean20relations.pdf",
+          "title": "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp20kr071004declaration20on20advancement20of20south-north20korean20relations.pdf"
+        },
+        {
+          "url": "https://www.euronews.com/2026/10/02/south-korea-warns-of-further-measures-if-ukraine-refuses-public-apology-over-pow-transfer-",
+          "title": "https://www.euronews.com/2026/10/02/south-korea-warns-of-further-measures-if-ukraine-refuses-public-apology-over-pow-transfer-"
+        },
+        {
+          "url": "https://www.euronews.com/programs/world",
+          "title": "https://www.euronews.com/programs/world"
+        },
+        {
+          "url": "https://digitallibrary.un.org/record/4036169/files/ST_DPI_SER.A_79-EN.pdf",
+          "title": "https://digitallibrary.un.org/record/4036169/files/ST_DPI_SER.A_79-EN.pdf"
+        }
+      ]
+    },
+    {
+      "storyId": "umbria",
+      "brief": "Ecco un breve **evidence brief** aggiornato sull’evento Umbria/fine vita, con distinzione tra **evento**, **ora del fatto** e **pubblicazione**.\n\n- **Evento confermato:** l’**Assemblea legislativa dell’Umbria** ha approvato il **22 ottobre 2026** la proposta di legge regionale di iniziativa popolare sul suicidio medicalmente assistito / fine vita. ANSA e RaiNews convergono sul via libera in Aula; ANSA indica anche l’approvazione a maggioranza con **11 voti favorevoli, 6 contrari e 3 astensioni**. ([videoembed.ansa.it](https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html?utm_source=openai))\n- **Ora del fatto (latest development time, non la pubblicazione):** la notizia ANSA riporta **22 ottobre 2026, 19:32**; un’altra versione ANSA riporta **20:01**; RaiNews segnala il **22/10/2026** senza un orario di pubblicazione nel testo estratto. Il **fatto verificato più recente** è quindi il voto dell’Aula del **22 ottobre 2026 in serata**. ([videoembed.ansa.it](https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html?utm_source=openai))\n- **Dettagli supportati:** ANSA dice che il testo approvato riguarda “**Disposizioni per l’assistenza sanitaria regionale alla morte volontaria medicalmente assistita**” e che le **modalità attuative** sono affidate a ciascuna **Azienda Usl**; RaiNews aggiunge che la presidente della Regione, **Stefania Proietti**, ha annunciato la **non partecipazione al voto**. ([videoembed.ansa.it](https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html?utm_source=openai))\n- **Contenuti del provvedimento confermati:** la versione ANSA del 22 ottobre indica che sono stati approvati emendamenti per chiarire che le modalità applicative spettano alle singole aziende sanitarie locali; un’altra ANSA del 22 ottobre 17:16 dice che il testo prevede l’organizzazione regionale dell’accesso al procedimento di morte volontaria medicalmente assistita. Le cure palliative compaiono nel dibattito come contesto e presidio sanitario, ma non ho trovato nell’estratto una formulazione completa su tutti i passaggi procedurali che citi. ([videoembed.ansa.it](https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html?utm_source=openai))\n- **Attribution / uncertainties:** la posizione della presidente Proietti sulla non partecipazione al voto è attribuita da RaiNews e ANSA; resta invece da verificare, con un testo integrale del provvedimento o con documenti istituzionali, l’esatta formulazione di alcuni punti che nel tuo prompt sono presentati come confermati, in particolare il passaggio su **sospensione/revoca della richiesta** e il dettaglio completo dell’iter operativo nelle strutture. ([videoembed.ansa.it](https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html?utm_source=openai))\n- **Da non confondere con notizie riciclate o future:** la seduta era **annunciata** già il **20 ottobre 2026** e il **19 ottobre 2026**; questi sono preavvisi, non la notizia nuova. Non va trattato come un evento futuro già accaduto: il fatto nuovo è il **voto del 22 ottobre 2026**. ([videoembed.ansa.it](https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html?utm_source=openai))\n\nSe vuoi, posso fare un secondo passaggio e costruire una **scheda fact-check riga per riga** sui tre claim del tuo testo, indicando per ciascuno: **confermato / parzialmente confermato / non verificato**.",
+      "sources": [
+        {
+          "url": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+          "title": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html",
+          "title": "https://www.ansa.it/amp/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/english/news/2026/10/22/umbria-approves-law-on-medically-assisted-suicide_804f4592-beb5-4079-a905-0237b9bca8b8.html",
+          "title": "https://videoembed.ansa.it/english/news/2026/10/22/umbria-approves-law-on-medically-assisted-suicide_804f4592-beb5-4079-a905-0237b9bca8b8.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/2026/10/20/pd-m5s-avs-sul-fine-vita-scriviamo-insieme-una-pagina-di-buona_9c8a04c9-98fb-4e6b-b97d-c7f24233b939.html",
+          "title": "https://www.ansa.it/umbria/notizie/2026/10/20/pd-m5s-avs-sul-fine-vita-scriviamo-insieme-una-pagina-di-buona_9c8a04c9-98fb-4e6b-b97d-c7f24233b939.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/2026/10/21/umbria-domani-sul-fine-vita-liberta-di-voto-secondo-coscienza_b49d67ce-3fae-424e-883b-b21d84980ffa.html",
+          "title": "https://www.ansa.it/umbria/notizie/2026/10/21/umbria-domani-sul-fine-vita-liberta-di-voto-secondo-coscienza_b49d67ce-3fae-424e-883b-b21d84980ffa.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/09/22/audizione-a-palazzo-cesaroni-sul-suicidio-medicalmente-assistito_1c8e0bb2-d8fb-4c7e-ab70-3e1b55291892.html",
+          "title": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/09/22/audizione-a-palazzo-cesaroni-sul-suicidio-medicalmente-assistito_1c8e0bb2-d8fb-4c7e-ab70-3e1b55291892.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/07/22/cominciato-liter-legislativo-in-umbria-per-il-suicidio-medicalmente-assistito_bd24c1a8-3d0e-4f52-8f28-ecc7e47d280f.html",
+          "title": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/07/22/cominciato-liter-legislativo-in-umbria-per-il-suicidio-medicalmente-assistito_bd24c1a8-3d0e-4f52-8f28-ecc7e47d280f.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/2025/11/27/in-umbria-e-ammissibile-la-legge-popolare-sul-suicidio-assistito_b4d08bcc-2a03-42af-92b8-ad560b774c78.html",
+          "title": "https://www.ansa.it/umbria/notizie/2025/11/27/in-umbria-e-ammissibile-la-legge-popolare-sul-suicidio-assistito_b4d08bcc-2a03-42af-92b8-ad560b774c78.html"
+        },
+        {
+          "url": "https://www.euronews.com/2026/10",
+          "title": "https://www.euronews.com/2026/10"
+        },
+        {
+          "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/15/fine-vita-malata-di-sla-ottiene-strumentazione-per-suicidio-assistito_7f0f39a4-ba16-40f8-8fe0-cef391c153a3.html",
+          "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/15/fine-vita-malata-di-sla-ottiene-strumentazione-per-suicidio-assistito_7f0f39a4-ba16-40f8-8fe0-cef391c153a3.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/index.shtml_1162158449.shtml",
+          "title": "https://www.ansa.it/umbria/notizie/index.shtml_1162158449.shtml"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/index.shtml_1162158448.shtml",
+          "title": "https://www.ansa.it/umbria/notizie/index.shtml_1162158448.shtml"
+        },
+        {
+          "url": "https://static.euronews.com/media/download/press-conference/Editorial-Charter-EN-27-04-12.pdf",
+          "title": "https://static.euronews.com/media/download/press-conference/Editorial-Charter-EN-27-04-12.pdf"
+        },
+        {
+          "url": "https://advertising.theguardian.com/assets/files/media-kit-2026-1772022840.pdf",
+          "title": "https://advertising.theguardian.com/assets/files/media-kit-2026-1772022840.pdf"
+        },
+        {
+          "url": "https://assistenza.ansa.it/XAWE_DOC/XAWESWebLite_QuickReference_V03.pdf",
+          "title": "https://assistenza.ansa.it/XAWE_DOC/XAWESWebLite_QuickReference_V03.pdf"
+        },
+        {
+          "url": "https://www.ansa.it/documents/1761927405421_calendario_eventi.pdf",
+          "title": "https://www.ansa.it/documents/1761927405421_calendario_eventi.pdf"
+        },
+        {
+          "url": "https://www.ansa.it/documents/1720937094847_relazione2020IVG.pdf",
+          "title": "https://www.ansa.it/documents/1720937094847_relazione2020IVG.pdf"
+        },
+        {
+          "url": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html",
+          "title": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+        },
+        {
+          "url": "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html",
+          "title": "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/politica/2026/10/22/lumbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito_212b49db-819a-43c2-a9f5-bb036e25c585.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/politica/2026/10/22/lumbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito_212b49db-819a-43c2-a9f5-bb036e25c585.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html",
+          "title": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html"
+        },
+        {
+          "url": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/10/19/approda-in-aula-la-proposta-di-legge-umbra-sul-suicidio-assistito_b90addf5-3a12-4fd5-9f03-a478637090c9.html",
+          "title": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/10/19/approda-in-aula-la-proposta-di-legge-umbra-sul-suicidio-assistito_b90addf5-3a12-4fd5-9f03-a478637090c9.html"
+        },
+        {
+          "url": "https://www.rainews.it/video/2026/10/fine-vita-in-umbria-via-libera-alla-legge-sul-suicidio-assistito-86e06476-1243-4efd-b0f9-79a01471fdaf.html",
+          "title": "https://www.rainews.it/video/2026/10/fine-vita-in-umbria-via-libera-alla-legge-sul-suicidio-assistito-86e06476-1243-4efd-b0f9-79a01471fdaf.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/presidente-assemblea-umbria-legge-sul-suicidio-assistito-e-pagina-storica_8056b27d-1d8a-4e05-a969-7d5227033f5e.html",
+          "title": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/presidente-assemblea-umbria-legge-sul-suicidio-assistito-e-pagina-storica_8056b27d-1d8a-4e05-a969-7d5227033f5e.html"
+        },
+        {
+          "url": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/assemblea-esamina-la-proposta-di-legge-di-iniziativa-popolare-sul-suicidio-assistito_54c83ed1-56a9-46f6-8a3e-69b10fff8942.html",
+          "title": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/assemblea-esamina-la-proposta-di-legge-di-iniziativa-popolare-sul-suicidio-assistito_54c83ed1-56a9-46f6-8a3e-69b10fff8942.html"
+        },
+        {
+          "url": "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html",
+          "title": "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html"
+        },
+        {
+          "url": "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf",
+          "title": "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf"
+        },
+        {
+          "url": "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf",
+          "title": "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf"
+        },
+        {
+          "url": "https://mnb2.ansa.it/mnb20/help_it/mnb-howto.pdf",
+          "title": "https://mnb2.ansa.it/mnb20/help_it/mnb-howto.pdf"
+        },
+        {
+          "url": "https://www.ansa.it/documents/1490022008099_legge229.pdf",
+          "title": "https://www.ansa.it/documents/1490022008099_legge229.pdf"
+        }
+      ]
+    },
+    {
+      "storyId": "taiwan",
+      "brief": "Here is a concise evidence brief based on fresh keyword searches and only from allowed publishers/official coverage.\n\n**Confirmed event and date**\n- The event is **Typhoon Champi affecting Taiwan on Friday, October 23, 2026**. AP reports Taiwan shut schools and offices and grounded hundreds of flights as the storm brushed past the island. Euronews’ Taiwan package was updated on **23/10/2026 at 09:30–09:31 CEST**, and ANSA also published on **23 October 2026 at 07:34 Rome time**. ([apnews.com](https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb?utm_source=openai))\n\n**Latest development time vs publication time**\n- The **latest verifiable development time in the material found is Friday, October 23, 2026, morning local time in Taiwan**, when the storm was still affecting the island and transport. The AP story is timestamped **04:50 UTC** on Oct. 23, while Euronews shows an update at **09:30–09:31 CEST**; these are publication/update times, not the event time. The underlying event described is occurring **that Friday**, not on a later date. ([apnews.com](https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb?utm_source=openai))\n\n**Supported details**\n- AP says Taiwan **shut schools and offices** and **grounded hundreds of flights** as Champi passed by. ([apnews.com](https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb?utm_source=openai))\n- Euronews says the storm left **one person dead, 94 injured**, and caused **931 flight cancellations**, including **262 domestic** and **669 international** flights. ([euronews.com](https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures?utm_source=openai))\n- Euronews also says authorities **evacuated nearly 1,300 people** from vulnerable mountainous areas and warned coastal residents to stay indoors. ([euronews.com](https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures?utm_source=openai))\n- ANSA says authorities urged people away from coasts and mountains, and that **evacuations were underway** in the northeast near a landslide-dam area; it also repeats that **hundreds of flights** were cancelled and that **at least one death** had been reported. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html?utm_source=openai))\n\n**Attributed claims and uncertainties**\n- **AP** attributes the Taiwan closures and flight groundings to the storm brushing past the island; it does not, in the snippet available, give the casualty count. ([apnews.com](https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb?utm_source=openai))\n- **Euronews** attributes the casualty and cancellation figures to its reporting, but the brief snippet does not show the underlying sourcing detail, so those numbers should be treated as **reported figures, not independently verified here**. ([euronews.com](https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures?utm_source=openai))\n- **ANSA** explicitly says it is relaying what “**Lo scrive Bbc**” reports, so its Taiwan item is a **secondary report** rather than primary local coverage. ([videoembed.ansa.it](https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html?utm_source=openai))\n\n**What does not check out / should be flagged**\n- The claim that **“tredici città e contee hanno annunciato scuole e uffici chiusi anche sabato 24”** is **not confirmed in the sources found here**. The evidence located supports closures on **Friday, October 23**, but I did not find an allowed-source confirmation of a **new announcement for Saturday, October 24** in the material returned by the searches. ([apnews.com](https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb?utm_source=openai))\n- Likewise, the statement that “**the measures announced for Saturday are confirmed**” is **not supported** by the evidence retrieved so far. Treat it as **unverified** until a direct official or mainstream report confirms it. ([apnews.com](https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb?utm_source=openai))\n- This is **not recycled older news** from a different typhoon: the searches returned a fresh **October 23, 2026** Champi event, distinct from older Taiwan storm coverage. ([apnews.com](https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb?utm_source=openai))\n\nIf you want, I can now do a second pass focused only on **official Taiwan government / weather / aviation sources** and extract whether the **October 24 school-office closures** were actually announced today.",
+      "sources": [
+        {
+          "url": "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+          "title": "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb"
+        },
+        {
+          "url": "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+          "title": "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures"
+        },
+        {
+          "url": "https://www.euronews.com/2026/10/23",
+          "title": "https://www.euronews.com/2026/10/23"
+        },
+        {
+          "url": "https://www.theguardian.com/world/2026/oct/23/spain-floods-storm-adam-uk-storm-austen",
+          "title": "https://www.theguardian.com/world/2026/oct/23/spain-floods-storm-adam-uk-storm-austen"
+        },
+        {
+          "url": "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html",
+          "title": "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+        },
+        {
+          "url": "https://es.euronews.com/video/2026/10/23/taiwan-el-mortal-tifon-champi-causa-caos-en-los-viajes-y-cierre-de-escuelas",
+          "title": "https://es.euronews.com/video/2026/10/23/taiwan-el-mortal-tifon-champi-causa-caos-en-los-viajes-y-cierre-de-escuelas"
+        },
+        {
+          "url": "https://fr.euronews.com/video/2026/10/23/taiwan-le-typhon-champi-provoque-chaos-dans-les-transports-et-fermeture-decoles",
+          "title": "https://fr.euronews.com/video/2026/10/23/taiwan-le-typhon-champi-provoque-chaos-dans-les-transports-et-fermeture-decoles"
+        },
+        {
+          "url": "https://de.euronews.com/video/2026/10/23/taiwan-taifun-champi-sorgt-fur-reisechaos-und-schulschliessungen",
+          "title": "https://de.euronews.com/video/2026/10/23/taiwan-taifun-champi-sorgt-fur-reisechaos-und-schulschliessungen"
+        },
+        {
+          "url": "https://it.euronews.com/video/2026/10/23/taiwan-il-tifone-champi-provoca-vittime-caos-nei-trasporti-e-scuole-chiuse",
+          "title": "https://it.euronews.com/video/2026/10/23/taiwan-il-tifone-champi-provoca-vittime-caos-nei-trasporti-e-scuole-chiuse"
+        },
+        {
+          "url": "https://pl.euronews.com/video/2026/10/23/tajwan-grozny-tajfun-champi-paralizuje-transport-i-zamyka-szkoly",
+          "title": "https://pl.euronews.com/video/2026/10/23/tajwan-grozny-tajfun-champi-paralizuje-transport-i-zamyka-szkoly"
+        },
+        {
+          "url": "https://hu.euronews.com/video/2026/10/23/tajvan-a-halalos-champi-tajfun-kozlekedesi-kaoszt-es-iskolabezarasokat-okoz",
+          "title": "https://hu.euronews.com/video/2026/10/23/tajvan-a-halalos-champi-tajfun-kozlekedesi-kaoszt-es-iskolabezarasokat-okoz"
+        },
+        {
+          "url": "https://www.theguardian.com/weather/taiwan",
+          "title": "https://www.theguardian.com/weather/taiwan"
+        },
+        {
+          "url": "https://www.theguardian.com/world/taiwan",
+          "title": "https://www.theguardian.com/world/taiwan"
+        },
+        {
+          "url": "https://apnews.com/article/bd2bb6ce53aa7a637c2ce5a9845e8e42",
+          "title": "https://apnews.com/article/bd2bb6ce53aa7a637c2ce5a9845e8e42"
+        },
+        {
+          "url": "https://staticcyl.euronews.com/wp-content/uploads/2023/05/Fact_sheet_Habillage2023_V2_sc.pdf",
+          "title": "https://staticcyl.euronews.com/wp-content/uploads/2023/05/Fact_sheet_Habillage2023_V2_sc.pdf"
+        }
+      ]
+    },
+    {
+      "storyId": "consumi",
+      "brief": "**Evidence brief — Great Britain retail sales, 23 October 2026**\n\n- **Confirmed event/date:** The event is the release of **Great Britain retail sales data for September 2026** by the UK’s **Office for National Statistics (ONS)** on **23 October 2026**. The latest verified development is the data release itself; the underlying period covered is **September 2026**, not a live day-of-event occurrence. ([theguardian.com](https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back?utm_source=openai))\n\n- **Latest development time vs publication time:** The ONS figures were published on **23 October 2026**; the report says **monthly sales volumes fell 0.4% in September** after a revised **0.7% rise in August**. The *actual latest development* is therefore the statistical release on 23 October, while the underlying measured change happened during **September 2026**. ([theguardian.com](https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back?utm_source=openai))\n\n- **Supported details:** The Guardian and ANSA both report that sales volumes fell **0.4% month on month in September**, with the earlier **August increase revised to 0.7%**. The Guardian adds that the **three-month period to September rose 0.7%**, showing that a weak month can still sit inside a stronger quarter. ([theguardian.com](https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back?utm_source=openai))\n\n- **Attributed claims / interpretation:** The Guardian quotes an economist saying the drop, together with weaker consumer confidence, suggests household conditions may be tightening. That is **attributed analysis**, not a verified causal conclusion from the ONS data itself. ([theguardian.com](https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back?utm_source=openai))\n\n- **Uncertainties / caution:** The figures are **monthly volatility-sensitive** and should not be read as a full economic forecast. The data support the narrower statement that September was weaker than August, while the quarter as a whole still grew. ([theguardian.com](https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back?utm_source=openai))\n\n- **Recycled / stale / misframed items:**  \n  - This is **not** a recycled older story: it is tied to the **new ONS release on 23 October 2026**. ([theguardian.com](https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back?utm_source=openai))  \n  - It is **not** a future event described as already occurred; it is a **past statistical release** and a report on past sales. ([theguardian.com](https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back?utm_source=openai))  \n  - The earlier **August** figure is context, not the latest development. ([theguardian.com](https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back?utm_source=openai))\n\nIf you want, I can turn this into a **broadcast-ready two-sentence script** in Italian with the same evidence level.",
+      "sources": [
+        {
+          "url": "https://www.theguardian.com/business/live/2026/oct/23/global-stocks-fall-ai-fears-grow-british-retail-sales-fall-business-live-latest-news",
+          "title": "https://www.theguardian.com/business/live/2026/oct/23/global-stocks-fall-ai-fears-grow-british-retail-sales-fall-business-live-latest-news"
+        },
+        {
+          "url": "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back",
+          "title": "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back"
+        },
+        {
+          "url": "https://www.theguardian.com/business/2026/sep/18/retail-sales-bounce-back-across-great-britain",
+          "title": "https://www.theguardian.com/business/2026/sep/18/retail-sales-bounce-back-across-great-britain"
+        },
+        {
+          "url": "https://teleborsa.ansa.it/notiziario/economia/regno-unito-vendite-al-dettaglio-sotto-le-attese-a-settembre/",
+          "title": "https://teleborsa.ansa.it/notiziario/economia/regno-unito-vendite-al-dettaglio-sotto-le-attese-a-settembre/"
+        },
+        {
+          "url": "https://www.theguardian.com/business/retail%2Beconomicgrowth",
+          "title": "https://www.theguardian.com/business/retail%2Beconomicgrowth"
+        },
+        {
+          "url": "https://www.theguardian.com/business/retail%2Buk/office-for-national-statistics",
+          "title": "https://www.theguardian.com/business/retail%2Buk/office-for-national-statistics"
+        },
+        {
+          "url": "https://www.theguardian.com/business/live/2026/sep/18/japan-raises-interest-rates-central-bankers-fight-inflation-gb-retail-sales-rise-latest-news-updates?page=with%3Ablock-6aace9428f085ee1fe6a0322",
+          "title": "https://www.theguardian.com/business/live/2026/sep/18/japan-raises-interest-rates-central-bankers-fight-inflation-gb-retail-sales-rise-latest-news-updates?page=with%3Ablock-6aace9428f085ee1fe6a0322"
+        },
+        {
+          "url": "https://www.theguardian.com/business/retail%2Bbusiness",
+          "title": "https://www.theguardian.com/business/retail%2Bbusiness"
+        },
+        {
+          "url": "https://www.theguardian.com/business/2026/aug/21/retail-sales-in-great-britain-fall-despite-heatwave-increasing-food-and-drink-demand",
+          "title": "https://www.theguardian.com/business/2026/aug/21/retail-sales-in-great-britain-fall-despite-heatwave-increasing-food-and-drink-demand"
+        },
+        {
+          "url": "https://www.theguardian.com/business/retail%2Beconomics",
+          "title": "https://www.theguardian.com/business/retail%2Beconomics"
+        },
+        {
+          "url": "https://www.theguardian.com/business/live/2026/aug/21/retail-sales-economy-consumer-ons-heatwave-ftse-stock-market-growth-oil-live-updates?page=with%3Ablock-6a88082a8f089694d1d59bd3",
+          "title": "https://www.theguardian.com/business/live/2026/aug/21/retail-sales-economy-consumer-ons-heatwave-ftse-stock-market-growth-oil-live-updates?page=with%3Ablock-6a88082a8f089694d1d59bd3"
+        },
+        {
+          "url": "https://www.theguardian.com/business/retail%2Bbusiness?page=3",
+          "title": "https://www.theguardian.com/business/retail%2Bbusiness?page=3"
+        },
+        {
+          "url": "https://apnews.com/article/474ed13de492362589405a47ec044d29",
+          "title": "https://apnews.com/article/474ed13de492362589405a47ec044d29"
+        },
+        {
+          "url": "https://apnews.com/article/86bf3eb7412aa27b24febd52aae7a7f1",
+          "title": "https://apnews.com/article/86bf3eb7412aa27b24febd52aae7a7f1"
+        },
+        {
+          "url": "https://apnews.com/article/3e2bc5807d7396b8e6c5f599941cb2a9",
+          "title": "https://apnews.com/article/3e2bc5807d7396b8e6c5f599941cb2a9"
+        },
+        {
+          "url": "https://apnews.com/article/a642f3cc32f1e92f0a26812d8fa7c02f",
+          "title": "https://apnews.com/article/a642f3cc32f1e92f0a26812d8fa7c02f"
+        },
+        {
+          "url": "https://apnews.com/article/31b321fce5b28dfcedfa4b7894b7ff57",
+          "title": "https://apnews.com/article/31b321fce5b28dfcedfa4b7894b7ff57"
+        },
+        {
+          "url": "https://apnews.com/article/65f5a2476b28c19ebdada5ec287160d8",
+          "title": "https://apnews.com/article/65f5a2476b28c19ebdada5ec287160d8"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html"
+    },
+    {
+      "url": "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html",
+      "title": "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/campania/notizie/2026/10/20/autotrasportatore-campania-blocchi-avanti-fino-al-27-ottobre_12c80c46-8b35-419e-85be-cb28f78cd209.html",
+      "title": "https://www.ansa.it/amp/campania/notizie/2026/10/20/autotrasportatore-campania-blocchi-avanti-fino-al-27-ottobre_12c80c46-8b35-419e-85be-cb28f78cd209.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html",
+      "title": "https://www.ansa.it/amp/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html"
+    },
+    {
+      "url": "https://www.ansa.it/campania/notizie/2026/10/22/infiltrazioni-mafiose-nelle-protesta-degli-autotrasportatori-la-procura-di-napoli-dispone-accertamenti_5150666d-d872-48ed-9042-88ead93f0e4f.html",
+      "title": "https://www.ansa.it/campania/notizie/2026/10/22/infiltrazioni-mafiose-nelle-protesta-degli-autotrasportatori-la-procura-di-napoli-dispone-accertamenti_5150666d-d872-48ed-9042-88ead93f0e4f.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/campania/notizie/2026/10/22/a-napoli-ancora-blocchi-e-pompe-a-secco-delusi-da-misure-governo_c65fe805-c50f-4ab7-8370-f48be505e4d3.html",
+      "title": "https://www.ansa.it/amp/campania/notizie/2026/10/22/a-napoli-ancora-blocchi-e-pompe-a-secco-delusi-da-misure-governo_c65fe805-c50f-4ab7-8370-f48be505e4d3.html"
+    },
+    {
+      "url": "https://www.ansa.it/campania/notizie/2026/10/20/autotrasportatore-campania-auspico-che-le-proteste-si-fermino_92c186a5-40f9-439c-94e0-79f04052f119.html",
+      "title": "https://www.ansa.it/campania/notizie/2026/10/20/autotrasportatore-campania-auspico-che-le-proteste-si-fermino_92c186a5-40f9-439c-94e0-79f04052f119.html"
+    },
+    {
+      "url": "https://www.ansa.it/sito/notizie/flash/2026/10/22/-corteo-lento-dei-tir-a-napoli-delusi-da-misure-governo-_774c42b5-75dc-4424-aa35-a33b532bcbbf.html",
+      "title": "https://www.ansa.it/sito/notizie/flash/2026/10/22/-corteo-lento-dei-tir-a-napoli-delusi-da-misure-governo-_774c42b5-75dc-4424-aa35-a33b532bcbbf.html"
+    },
+    {
+      "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/20/in-sicilia-revocato-il-fermo-dei-tir.-in-calabria-prosegue-fino-al-27-ottobre_3a6127ff-0b4c-4c40-8785-32cfb644514b.html",
+      "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/20/in-sicilia-revocato-il-fermo-dei-tir.-in-calabria-prosegue-fino-al-27-ottobre_3a6127ff-0b4c-4c40-8785-32cfb644514b.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/21/ore-di-coda-a-napoli-e-pompe-a-secco.-allarme-per-trasporti-sanitari_a4de4635-a850-48ef-8a89-37e9ddbcadda.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/economia/2026/10/21/ore-di-coda-a-napoli-e-pompe-a-secco.-allarme-per-trasporti-sanitari_a4de4635-a850-48ef-8a89-37e9ddbcadda.html"
+    },
+    {
+      "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/21/rixi-fondi-allautotrasporto-gia-da-oggi-si-smobilitino-i-blocchi.-gli-industriali-di-campania_9c1d4f81-b58b-423e-aef2-9fa4b224c7bf.html",
+      "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/21/rixi-fondi-allautotrasporto-gia-da-oggi-si-smobilitino-i-blocchi.-gli-industriali-di-campania_9c1d4f81-b58b-423e-aef2-9fa4b224c7bf.html"
+    },
+    {
+      "url": "https://www.ansa.it/ansa-pressrelease/docs/123/pdf/pressrelease_doc_123_1635325007419.pdf",
+      "title": "https://www.ansa.it/ansa-pressrelease/docs/123/pdf/pressrelease_doc_123_1635325007419.pdf"
+    },
+    {
+      "url": "https://www.ansa.it/documents/1674565699849_sciopero-benzinai-impianti-autostrada-aperti.pdf",
+      "title": "https://www.ansa.it/documents/1674565699849_sciopero-benzinai-impianti-autostrada-aperti.pdf"
+    },
+    {
+      "url": "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+      "title": "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3"
+    },
+    {
+      "url": "https://apnews.com/article/82e0337612400f9f056914d89dd47b6d",
+      "title": "https://apnews.com/article/82e0337612400f9f056914d89dd47b6d"
+    },
+    {
+      "url": "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813",
+      "title": "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813"
+    },
+    {
+      "url": "https://www.euronews.com/2026/09/30/north-korea-slams-souths-claim-it-was-behind-dmz-mine-blasts-calling-it-a-farce",
+      "title": "https://www.euronews.com/2026/09/30/north-korea-slams-souths-claim-it-was-behind-dmz-mine-blasts-calling-it-a-farce"
+    },
+    {
+      "url": "https://arabic.euronews.com/2026/10/23/south-korea-north-korea-military-talks-demarcation-line",
+      "title": "https://arabic.euronews.com/2026/10/23/south-korea-north-korea-military-talks-demarcation-line"
+    },
+    {
+      "url": "https://www.euronews.com/2026/10/04/north-korea-fires-intermediate-range-missile-claiming-evasive-flight-and-ai-features",
+      "title": "https://www.euronews.com/2026/10/04/north-korea-fires-intermediate-range-missile-claiming-evasive-flight-and-ai-features"
+    },
+    {
+      "url": "https://www.euronews.com/2026/10/12/north-korea-fires-several-ballistic-missiles-into-sea-of-japan-seouls-military-says?trk=article-ssr-frontend-pulse_little-text-block",
+      "title": "https://www.euronews.com/2026/10/12/north-korea-fires-several-ballistic-missiles-into-sea-of-japan-seouls-military-says?trk=article-ssr-frontend-pulse_little-text-block"
+    },
+    {
+      "url": "https://www.euronews.com/2026/09/29/north-korean-landmine-blasts-in-dmz-a-violation-of-armistice-seoul-says",
+      "title": "https://www.euronews.com/2026/09/29/north-korean-landmine-blasts-in-dmz-a-violation-of-armistice-seoul-says"
+    },
+    {
+      "url": "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf",
+      "title": "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf"
+    },
+    {
+      "url": "https://www.theguardian.com/world/south-korea%2Bnorth-korea",
+      "title": "https://www.theguardian.com/world/south-korea%2Bnorth-korea"
+    },
+    {
+      "url": "https://www.euronews.com/2026/09/18/south-korean-president-urges-trump-dialogue-with-pyongyang",
+      "title": "https://www.euronews.com/2026/09/18/south-korean-president-urges-trump-dialogue-with-pyongyang"
+    },
+    {
+      "url": "https://www.euronews.com/2026/02/26/north-korea-shuns-relations-with-south-as-kim-jong-un-says-it-could-get-along-with-us",
+      "title": "https://www.euronews.com/2026/02/26/north-korea-shuns-relations-with-south-as-kim-jong-un-says-it-could-get-along-with-us"
+    },
+    {
+      "url": "https://www.euronews.com/tag/south-korea",
+      "title": "https://www.euronews.com/tag/south-korea"
+    },
+    {
+      "url": "https://www.euronews.com/2017/07/17/south-korea-proposes-talks-with-the-north",
+      "title": "https://www.euronews.com/2017/07/17/south-korea-proposes-talks-with-the-north"
+    },
+    {
+      "url": "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp20kr071004declaration20on20advancement20of20south-north20korean20relations.pdf",
+      "title": "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp20kr071004declaration20on20advancement20of20south-north20korean20relations.pdf"
+    },
+    {
+      "url": "https://www.euronews.com/2026/10/02/south-korea-warns-of-further-measures-if-ukraine-refuses-public-apology-over-pow-transfer-",
+      "title": "https://www.euronews.com/2026/10/02/south-korea-warns-of-further-measures-if-ukraine-refuses-public-apology-over-pow-transfer-"
+    },
+    {
+      "url": "https://www.euronews.com/programs/world",
+      "title": "https://www.euronews.com/programs/world"
+    },
+    {
+      "url": "https://digitallibrary.un.org/record/4036169/files/ST_DPI_SER.A_79-EN.pdf",
+      "title": "https://digitallibrary.un.org/record/4036169/files/ST_DPI_SER.A_79-EN.pdf"
+    },
+    {
+      "url": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+      "title": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html",
+      "title": "https://www.ansa.it/amp/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/english/news/2026/10/22/umbria-approves-law-on-medically-assisted-suicide_804f4592-beb5-4079-a905-0237b9bca8b8.html",
+      "title": "https://videoembed.ansa.it/english/news/2026/10/22/umbria-approves-law-on-medically-assisted-suicide_804f4592-beb5-4079-a905-0237b9bca8b8.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/2026/10/20/pd-m5s-avs-sul-fine-vita-scriviamo-insieme-una-pagina-di-buona_9c8a04c9-98fb-4e6b-b97d-c7f24233b939.html",
+      "title": "https://www.ansa.it/umbria/notizie/2026/10/20/pd-m5s-avs-sul-fine-vita-scriviamo-insieme-una-pagina-di-buona_9c8a04c9-98fb-4e6b-b97d-c7f24233b939.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/2026/10/21/umbria-domani-sul-fine-vita-liberta-di-voto-secondo-coscienza_b49d67ce-3fae-424e-883b-b21d84980ffa.html",
+      "title": "https://www.ansa.it/umbria/notizie/2026/10/21/umbria-domani-sul-fine-vita-liberta-di-voto-secondo-coscienza_b49d67ce-3fae-424e-883b-b21d84980ffa.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/09/22/audizione-a-palazzo-cesaroni-sul-suicidio-medicalmente-assistito_1c8e0bb2-d8fb-4c7e-ab70-3e1b55291892.html",
+      "title": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/09/22/audizione-a-palazzo-cesaroni-sul-suicidio-medicalmente-assistito_1c8e0bb2-d8fb-4c7e-ab70-3e1b55291892.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/07/22/cominciato-liter-legislativo-in-umbria-per-il-suicidio-medicalmente-assistito_bd24c1a8-3d0e-4f52-8f28-ecc7e47d280f.html",
+      "title": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/07/22/cominciato-liter-legislativo-in-umbria-per-il-suicidio-medicalmente-assistito_bd24c1a8-3d0e-4f52-8f28-ecc7e47d280f.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/2025/11/27/in-umbria-e-ammissibile-la-legge-popolare-sul-suicidio-assistito_b4d08bcc-2a03-42af-92b8-ad560b774c78.html",
+      "title": "https://www.ansa.it/umbria/notizie/2025/11/27/in-umbria-e-ammissibile-la-legge-popolare-sul-suicidio-assistito_b4d08bcc-2a03-42af-92b8-ad560b774c78.html"
+    },
+    {
+      "url": "https://www.euronews.com/2026/10",
+      "title": "https://www.euronews.com/2026/10"
+    },
+    {
+      "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/15/fine-vita-malata-di-sla-ottiene-strumentazione-per-suicidio-assistito_7f0f39a4-ba16-40f8-8fe0-cef391c153a3.html",
+      "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/15/fine-vita-malata-di-sla-ottiene-strumentazione-per-suicidio-assistito_7f0f39a4-ba16-40f8-8fe0-cef391c153a3.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/index.shtml_1162158449.shtml",
+      "title": "https://www.ansa.it/umbria/notizie/index.shtml_1162158449.shtml"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/index.shtml_1162158448.shtml",
+      "title": "https://www.ansa.it/umbria/notizie/index.shtml_1162158448.shtml"
+    },
+    {
+      "url": "https://static.euronews.com/media/download/press-conference/Editorial-Charter-EN-27-04-12.pdf",
+      "title": "https://static.euronews.com/media/download/press-conference/Editorial-Charter-EN-27-04-12.pdf"
+    },
+    {
+      "url": "https://advertising.theguardian.com/assets/files/media-kit-2026-1772022840.pdf",
+      "title": "https://advertising.theguardian.com/assets/files/media-kit-2026-1772022840.pdf"
+    },
+    {
+      "url": "https://assistenza.ansa.it/XAWE_DOC/XAWESWebLite_QuickReference_V03.pdf",
+      "title": "https://assistenza.ansa.it/XAWE_DOC/XAWESWebLite_QuickReference_V03.pdf"
+    },
+    {
+      "url": "https://www.ansa.it/documents/1761927405421_calendario_eventi.pdf",
+      "title": "https://www.ansa.it/documents/1761927405421_calendario_eventi.pdf"
+    },
+    {
+      "url": "https://www.ansa.it/documents/1720937094847_relazione2020IVG.pdf",
+      "title": "https://www.ansa.it/documents/1720937094847_relazione2020IVG.pdf"
+    },
+    {
+      "url": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html",
+      "title": "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html"
+    },
+    {
+      "url": "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html",
+      "title": "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/politica/2026/10/22/lumbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito_212b49db-819a-43c2-a9f5-bb036e25c585.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/politica/2026/10/22/lumbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito_212b49db-819a-43c2-a9f5-bb036e25c585.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html",
+      "title": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html"
+    },
+    {
+      "url": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/10/19/approda-in-aula-la-proposta-di-legge-umbra-sul-suicidio-assistito_b90addf5-3a12-4fd5-9f03-a478637090c9.html",
+      "title": "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/10/19/approda-in-aula-la-proposta-di-legge-umbra-sul-suicidio-assistito_b90addf5-3a12-4fd5-9f03-a478637090c9.html"
+    },
+    {
+      "url": "https://www.rainews.it/video/2026/10/fine-vita-in-umbria-via-libera-alla-legge-sul-suicidio-assistito-86e06476-1243-4efd-b0f9-79a01471fdaf.html",
+      "title": "https://www.rainews.it/video/2026/10/fine-vita-in-umbria-via-libera-alla-legge-sul-suicidio-assistito-86e06476-1243-4efd-b0f9-79a01471fdaf.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/presidente-assemblea-umbria-legge-sul-suicidio-assistito-e-pagina-storica_8056b27d-1d8a-4e05-a969-7d5227033f5e.html",
+      "title": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/presidente-assemblea-umbria-legge-sul-suicidio-assistito-e-pagina-storica_8056b27d-1d8a-4e05-a969-7d5227033f5e.html"
+    },
+    {
+      "url": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/assemblea-esamina-la-proposta-di-legge-di-iniziativa-popolare-sul-suicidio-assistito_54c83ed1-56a9-46f6-8a3e-69b10fff8942.html",
+      "title": "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/assemblea-esamina-la-proposta-di-legge-di-iniziativa-popolare-sul-suicidio-assistito_54c83ed1-56a9-46f6-8a3e-69b10fff8942.html"
+    },
+    {
+      "url": "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html",
+      "title": "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html"
+    },
+    {
+      "url": "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf",
+      "title": "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf"
+    },
+    {
+      "url": "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf",
+      "title": "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf"
+    },
+    {
+      "url": "https://mnb2.ansa.it/mnb20/help_it/mnb-howto.pdf",
+      "title": "https://mnb2.ansa.it/mnb20/help_it/mnb-howto.pdf"
+    },
+    {
+      "url": "https://www.ansa.it/documents/1490022008099_legge229.pdf",
+      "title": "https://www.ansa.it/documents/1490022008099_legge229.pdf"
+    },
+    {
+      "url": "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+      "title": "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb"
+    },
+    {
+      "url": "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+      "title": "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures"
+    },
+    {
+      "url": "https://www.euronews.com/2026/10/23",
+      "title": "https://www.euronews.com/2026/10/23"
+    },
+    {
+      "url": "https://www.theguardian.com/world/2026/oct/23/spain-floods-storm-adam-uk-storm-austen",
+      "title": "https://www.theguardian.com/world/2026/oct/23/spain-floods-storm-adam-uk-storm-austen"
+    },
+    {
+      "url": "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html",
+      "title": "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html"
+    },
+    {
+      "url": "https://es.euronews.com/video/2026/10/23/taiwan-el-mortal-tifon-champi-causa-caos-en-los-viajes-y-cierre-de-escuelas",
+      "title": "https://es.euronews.com/video/2026/10/23/taiwan-el-mortal-tifon-champi-causa-caos-en-los-viajes-y-cierre-de-escuelas"
+    },
+    {
+      "url": "https://fr.euronews.com/video/2026/10/23/taiwan-le-typhon-champi-provoque-chaos-dans-les-transports-et-fermeture-decoles",
+      "title": "https://fr.euronews.com/video/2026/10/23/taiwan-le-typhon-champi-provoque-chaos-dans-les-transports-et-fermeture-decoles"
+    },
+    {
+      "url": "https://de.euronews.com/video/2026/10/23/taiwan-taifun-champi-sorgt-fur-reisechaos-und-schulschliessungen",
+      "title": "https://de.euronews.com/video/2026/10/23/taiwan-taifun-champi-sorgt-fur-reisechaos-und-schulschliessungen"
+    },
+    {
+      "url": "https://it.euronews.com/video/2026/10/23/taiwan-il-tifone-champi-provoca-vittime-caos-nei-trasporti-e-scuole-chiuse",
+      "title": "https://it.euronews.com/video/2026/10/23/taiwan-il-tifone-champi-provoca-vittime-caos-nei-trasporti-e-scuole-chiuse"
+    },
+    {
+      "url": "https://pl.euronews.com/video/2026/10/23/tajwan-grozny-tajfun-champi-paralizuje-transport-i-zamyka-szkoly",
+      "title": "https://pl.euronews.com/video/2026/10/23/tajwan-grozny-tajfun-champi-paralizuje-transport-i-zamyka-szkoly"
+    },
+    {
+      "url": "https://hu.euronews.com/video/2026/10/23/tajvan-a-halalos-champi-tajfun-kozlekedesi-kaoszt-es-iskolabezarasokat-okoz",
+      "title": "https://hu.euronews.com/video/2026/10/23/tajvan-a-halalos-champi-tajfun-kozlekedesi-kaoszt-es-iskolabezarasokat-okoz"
+    },
+    {
+      "url": "https://www.theguardian.com/weather/taiwan",
+      "title": "https://www.theguardian.com/weather/taiwan"
+    },
+    {
+      "url": "https://www.theguardian.com/world/taiwan",
+      "title": "https://www.theguardian.com/world/taiwan"
+    },
+    {
+      "url": "https://apnews.com/article/bd2bb6ce53aa7a637c2ce5a9845e8e42",
+      "title": "https://apnews.com/article/bd2bb6ce53aa7a637c2ce5a9845e8e42"
+    },
+    {
+      "url": "https://staticcyl.euronews.com/wp-content/uploads/2023/05/Fact_sheet_Habillage2023_V2_sc.pdf",
+      "title": "https://staticcyl.euronews.com/wp-content/uploads/2023/05/Fact_sheet_Habillage2023_V2_sc.pdf"
+    },
+    {
+      "url": "https://www.theguardian.com/business/live/2026/oct/23/global-stocks-fall-ai-fears-grow-british-retail-sales-fall-business-live-latest-news",
+      "title": "https://www.theguardian.com/business/live/2026/oct/23/global-stocks-fall-ai-fears-grow-british-retail-sales-fall-business-live-latest-news"
+    },
+    {
+      "url": "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back",
+      "title": "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back"
+    },
+    {
+      "url": "https://www.theguardian.com/business/2026/sep/18/retail-sales-bounce-back-across-great-britain",
+      "title": "https://www.theguardian.com/business/2026/sep/18/retail-sales-bounce-back-across-great-britain"
+    },
+    {
+      "url": "https://teleborsa.ansa.it/notiziario/economia/regno-unito-vendite-al-dettaglio-sotto-le-attese-a-settembre/",
+      "title": "https://teleborsa.ansa.it/notiziario/economia/regno-unito-vendite-al-dettaglio-sotto-le-attese-a-settembre/"
+    },
+    {
+      "url": "https://www.theguardian.com/business/retail%2Beconomicgrowth",
+      "title": "https://www.theguardian.com/business/retail%2Beconomicgrowth"
+    },
+    {
+      "url": "https://www.theguardian.com/business/retail%2Buk/office-for-national-statistics",
+      "title": "https://www.theguardian.com/business/retail%2Buk/office-for-national-statistics"
+    },
+    {
+      "url": "https://www.theguardian.com/business/live/2026/sep/18/japan-raises-interest-rates-central-bankers-fight-inflation-gb-retail-sales-rise-latest-news-updates?page=with%3Ablock-6aace9428f085ee1fe6a0322",
+      "title": "https://www.theguardian.com/business/live/2026/sep/18/japan-raises-interest-rates-central-bankers-fight-inflation-gb-retail-sales-rise-latest-news-updates?page=with%3Ablock-6aace9428f085ee1fe6a0322"
+    },
+    {
+      "url": "https://www.theguardian.com/business/retail%2Bbusiness",
+      "title": "https://www.theguardian.com/business/retail%2Bbusiness"
+    },
+    {
+      "url": "https://www.theguardian.com/business/2026/aug/21/retail-sales-in-great-britain-fall-despite-heatwave-increasing-food-and-drink-demand",
+      "title": "https://www.theguardian.com/business/2026/aug/21/retail-sales-in-great-britain-fall-despite-heatwave-increasing-food-and-drink-demand"
+    },
+    {
+      "url": "https://www.theguardian.com/business/retail%2Beconomics",
+      "title": "https://www.theguardian.com/business/retail%2Beconomics"
+    },
+    {
+      "url": "https://www.theguardian.com/business/live/2026/aug/21/retail-sales-economy-consumer-ons-heatwave-ftse-stock-market-growth-oil-live-updates?page=with%3Ablock-6a88082a8f089694d1d59bd3",
+      "title": "https://www.theguardian.com/business/live/2026/aug/21/retail-sales-economy-consumer-ons-heatwave-ftse-stock-market-growth-oil-live-updates?page=with%3Ablock-6a88082a8f089694d1d59bd3"
+    },
+    {
+      "url": "https://www.theguardian.com/business/retail%2Bbusiness?page=3",
+      "title": "https://www.theguardian.com/business/retail%2Bbusiness?page=3"
+    },
+    {
+      "url": "https://apnews.com/article/474ed13de492362589405a47ec044d29",
+      "title": "https://apnews.com/article/474ed13de492362589405a47ec044d29"
+    },
+    {
+      "url": "https://apnews.com/article/86bf3eb7412aa27b24febd52aae7a7f1",
+      "title": "https://apnews.com/article/86bf3eb7412aa27b24febd52aae7a7f1"
+    },
+    {
+      "url": "https://apnews.com/article/3e2bc5807d7396b8e6c5f599941cb2a9",
+      "title": "https://apnews.com/article/3e2bc5807d7396b8e6c5f599941cb2a9"
+    },
+    {
+      "url": "https://apnews.com/article/a642f3cc32f1e92f0a26812d8fa7c02f",
+      "title": "https://apnews.com/article/a642f3cc32f1e92f0a26812d8fa7c02f"
+    },
+    {
+      "url": "https://apnews.com/article/31b321fce5b28dfcedfa4b7894b7ff57",
+      "title": "https://apnews.com/article/31b321fce5b28dfcedfa4b7894b7ff57"
+    },
+    {
+      "url": "https://apnews.com/article/65f5a2476b28c19ebdada5ec287160d8",
+      "title": "https://apnews.com/article/65f5a2476b28c19ebdada5ec287160d8"
+    }
+  ],
+  "webByStory": {
+    "carburanti": [
+      "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/rimossi-nella-notte-i-blocchi-stradali-dei-tir-in-campania_2a4c0046-f2d4-422d-b4f6-bf8fc350b64d.html",
+      "https://www.ansa.it/campania/notizie/2026/10/22/carburanti-per-sblocco-rifornimenti-vertice-in-prefettura-a-napoli_4e602cf3-5a13-45be-8819-eb6ab8410263.html",
+      "https://www.ansa.it/amp/campania/notizie/2026/10/20/autotrasportatore-campania-blocchi-avanti-fino-al-27-ottobre_12c80c46-8b35-419e-85be-cb28f78cd209.html",
+      "https://www.ansa.it/amp/campania/notizie/2026/10/22/protesta-tir-rientra-a-macchia-di-leopardo-in-campania-benzinai-ancora-a-secco_928c7b65-82a7-44a8-b35e-f6d13c7635c3.html",
+      "https://videoembed.ansa.it/sito/notizie/economia/2026/10/23/prime-autobotti-sulle-isole-del-golfo-di-napoli-ma-saltano-ancora-corse_612379e8-c541-4b98-936f-3aa79e2ddf38.html",
+      "https://www.ansa.it/campania/notizie/2026/10/22/infiltrazioni-mafiose-nelle-protesta-degli-autotrasportatori-la-procura-di-napoli-dispone-accertamenti_5150666d-d872-48ed-9042-88ead93f0e4f.html",
+      "https://www.ansa.it/amp/campania/notizie/2026/10/22/a-napoli-ancora-blocchi-e-pompe-a-secco-delusi-da-misure-governo_c65fe805-c50f-4ab7-8370-f48be505e4d3.html",
+      "https://www.ansa.it/campania/notizie/2026/10/20/autotrasportatore-campania-auspico-che-le-proteste-si-fermino_92c186a5-40f9-439c-94e0-79f04052f119.html",
+      "https://www.ansa.it/sito/notizie/flash/2026/10/22/-corteo-lento-dei-tir-a-napoli-delusi-da-misure-governo-_774c42b5-75dc-4424-aa35-a33b532bcbbf.html",
+      "https://www.ansa.it/sito/notizie/cronaca/2026/10/20/in-sicilia-revocato-il-fermo-dei-tir.-in-calabria-prosegue-fino-al-27-ottobre_3a6127ff-0b4c-4c40-8785-32cfb644514b.html",
+      "https://videoembed.ansa.it/sito/notizie/economia/2026/10/21/ore-di-coda-a-napoli-e-pompe-a-secco.-allarme-per-trasporti-sanitari_a4de4635-a850-48ef-8a89-37e9ddbcadda.html",
+      "https://www.ansa.it/sito/notizie/cronaca/2026/10/21/rixi-fondi-allautotrasporto-gia-da-oggi-si-smobilitino-i-blocchi.-gli-industriali-di-campania_9c1d4f81-b58b-423e-aef2-9fa4b224c7bf.html",
+      "https://www.ansa.it/ansa-pressrelease/docs/123/pdf/pressrelease_doc_123_1635325007419.pdf",
+      "https://www.ansa.it/documents/1674565699849_sciopero-benzinai-impianti-autostrada-aperti.pdf"
+    ],
+    "coree": [
+      "https://apnews.com/article/9498c415c93ae9bc3767caf83e15b8b3",
+      "https://apnews.com/article/82e0337612400f9f056914d89dd47b6d",
+      "https://apnews.com/article/8c8d7f87b20c4be0859e5206044b1813",
+      "https://www.euronews.com/2026/09/30/north-korea-slams-souths-claim-it-was-behind-dmz-mine-blasts-calling-it-a-farce",
+      "https://arabic.euronews.com/2026/10/23/south-korea-north-korea-military-talks-demarcation-line",
+      "https://www.euronews.com/2026/10/04/north-korea-fires-intermediate-range-missile-claiming-evasive-flight-and-ai-features",
+      "https://www.euronews.com/2026/10/12/north-korea-fires-several-ballistic-missiles-into-sea-of-japan-seouls-military-says?trk=article-ssr-frontend-pulse_little-text-block",
+      "https://www.euronews.com/2026/09/29/north-korean-landmine-blasts-in-dmz-a-violation-of-armistice-seoul-says",
+      "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp2bkr530727agreementconcerningmilitaryarmistice.pdf",
+      "https://www.theguardian.com/world/south-korea%2Bnorth-korea",
+      "https://www.euronews.com/2026/09/18/south-korean-president-urges-trump-dialogue-with-pyongyang",
+      "https://www.euronews.com/2026/02/26/north-korea-shuns-relations-with-south-as-kim-jong-un-says-it-could-get-along-with-us",
+      "https://www.euronews.com/tag/south-korea",
+      "https://www.euronews.com/2017/07/17/south-korea-proposes-talks-with-the-north",
+      "https://peacemaker.un.org/sites/default/files/document/files/2024/05/kp20kr071004declaration20on20advancement20of20south-north20korean20relations.pdf",
+      "https://www.euronews.com/2026/10/02/south-korea-warns-of-further-measures-if-ukraine-refuses-public-apology-over-pow-transfer-",
+      "https://www.euronews.com/programs/world",
+      "https://digitallibrary.un.org/record/4036169/files/ST_DPI_SER.A_79-EN.pdf"
+    ],
+    "umbria": [
+      "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/a-maggioranza-lapprovazione-sul-suicidio-assistito-in-assemblea-umbria_c16984f7-e90b-4990-b2f8-269242de99b8.html",
+      "https://www.ansa.it/amp/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html",
+      "https://videoembed.ansa.it/english/news/2026/10/22/umbria-approves-law-on-medically-assisted-suicide_804f4592-beb5-4079-a905-0237b9bca8b8.html",
+      "https://www.ansa.it/umbria/notizie/2026/10/20/pd-m5s-avs-sul-fine-vita-scriviamo-insieme-una-pagina-di-buona_9c8a04c9-98fb-4e6b-b97d-c7f24233b939.html",
+      "https://www.ansa.it/umbria/notizie/2026/10/21/umbria-domani-sul-fine-vita-liberta-di-voto-secondo-coscienza_b49d67ce-3fae-424e-883b-b21d84980ffa.html",
+      "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/09/22/audizione-a-palazzo-cesaroni-sul-suicidio-medicalmente-assistito_1c8e0bb2-d8fb-4c7e-ab70-3e1b55291892.html",
+      "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/07/22/cominciato-liter-legislativo-in-umbria-per-il-suicidio-medicalmente-assistito_bd24c1a8-3d0e-4f52-8f28-ecc7e47d280f.html",
+      "https://www.ansa.it/umbria/notizie/2025/11/27/in-umbria-e-ammissibile-la-legge-popolare-sul-suicidio-assistito_b4d08bcc-2a03-42af-92b8-ad560b774c78.html",
+      "https://www.euronews.com/2026/10",
+      "https://www.ansa.it/sito/notizie/cronaca/2026/10/15/fine-vita-malata-di-sla-ottiene-strumentazione-per-suicidio-assistito_7f0f39a4-ba16-40f8-8fe0-cef391c153a3.html",
+      "https://www.ansa.it/umbria/notizie/index.shtml_1162158449.shtml",
+      "https://www.ansa.it/umbria/notizie/index.shtml_1162158448.shtml",
+      "https://static.euronews.com/media/download/press-conference/Editorial-Charter-EN-27-04-12.pdf",
+      "https://advertising.theguardian.com/assets/files/media-kit-2026-1772022840.pdf",
+      "https://assistenza.ansa.it/XAWE_DOC/XAWESWebLite_QuickReference_V03.pdf",
+      "https://www.ansa.it/documents/1761927405421_calendario_eventi.pdf",
+      "https://www.ansa.it/documents/1720937094847_relazione2020IVG.pdf",
+      "https://www.rainews.it/tgr/umbria/articoli/2026/10/in-corso-in-consiglio-regionale-la-votazione-sulla-proposta-di-legge-sul-fine-vita-0ee5df45-0c41-40b3-8be3-cc09d4467615.html",
+      "https://www.rainews.it/articoli/2026/10/umbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito-6fb0301e-6814-4159-a4ab-a3e0d1827f5b.html",
+      "https://videoembed.ansa.it/sito/notizie/politica/2026/10/22/lumbria-ha-approvato-la-legge-sul-suicidio-medicalmente-assistito_212b49db-819a-43c2-a9f5-bb036e25c585.html",
+      "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/20/il-22-ottobre-assemblea-legislativa-discute-la-legge-sul-fine-vita_57a96fd5-ed50-4661-8694-8c1cb9e66194.html",
+      "https://www.ansa.it/umbria/notizie/assemblea_informa/2026/10/19/approda-in-aula-la-proposta-di-legge-umbra-sul-suicidio-assistito_b90addf5-3a12-4fd5-9f03-a478637090c9.html",
+      "https://www.rainews.it/video/2026/10/fine-vita-in-umbria-via-libera-alla-legge-sul-suicidio-assistito-86e06476-1243-4efd-b0f9-79a01471fdaf.html",
+      "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/presidente-assemblea-umbria-legge-sul-suicidio-assistito-e-pagina-storica_8056b27d-1d8a-4e05-a969-7d5227033f5e.html",
+      "https://videoembed.ansa.it/umbria/notizie/assemblea_informa/2026/10/22/assemblea-esamina-la-proposta-di-legge-di-iniziativa-popolare-sul-suicidio-assistito_54c83ed1-56a9-46f6-8a3e-69b10fff8942.html",
+      "https://www.ansa.it/amp/umbria/notizie/2026/10/12/associazione-coscioni-assemblea-umbria-discuta-subito-la-legge-sul-fine-vita_c9325f53-4c5d-4c57-a9bc-eeb3f1911959.html",
+      "https://www.ansa.it/documents/1760900949925_bozza_manovra.pdf",
+      "https://www.ansa.it/documents/1761136389752_Ragioneria.pdf",
+      "https://mnb2.ansa.it/mnb20/help_it/mnb-howto.pdf",
+      "https://www.ansa.it/documents/1490022008099_legge229.pdf"
+    ],
+    "taiwan": [
+      "https://apnews.com/article/8cf1c88611fc6ede98ebac11201f91cb",
+      "https://www.euronews.com/video/2026/10/23/taiwan-deadly-typhoon-champi-brings-travel-chaos-and-school-closures",
+      "https://www.euronews.com/2026/10/23",
+      "https://www.theguardian.com/world/2026/oct/23/spain-floods-storm-adam-uk-storm-austen",
+      "https://videoembed.ansa.it/sito/notizie/mondo/2026/10/23/taiwan-si-prepara-allarrivo-del-potente-tifone-champi_a015edbe-e977-4c17-8010-b34a982550cc.html",
+      "https://es.euronews.com/video/2026/10/23/taiwan-el-mortal-tifon-champi-causa-caos-en-los-viajes-y-cierre-de-escuelas",
+      "https://fr.euronews.com/video/2026/10/23/taiwan-le-typhon-champi-provoque-chaos-dans-les-transports-et-fermeture-decoles",
+      "https://de.euronews.com/video/2026/10/23/taiwan-taifun-champi-sorgt-fur-reisechaos-und-schulschliessungen",
+      "https://it.euronews.com/video/2026/10/23/taiwan-il-tifone-champi-provoca-vittime-caos-nei-trasporti-e-scuole-chiuse",
+      "https://pl.euronews.com/video/2026/10/23/tajwan-grozny-tajfun-champi-paralizuje-transport-i-zamyka-szkoly",
+      "https://hu.euronews.com/video/2026/10/23/tajvan-a-halalos-champi-tajfun-kozlekedesi-kaoszt-es-iskolabezarasokat-okoz",
+      "https://www.theguardian.com/weather/taiwan",
+      "https://www.theguardian.com/world/taiwan",
+      "https://apnews.com/article/bd2bb6ce53aa7a637c2ce5a9845e8e42",
+      "https://staticcyl.euronews.com/wp-content/uploads/2023/05/Fact_sheet_Habillage2023_V2_sc.pdf"
+    ],
+    "consumi": [
+      "https://www.theguardian.com/business/live/2026/oct/23/global-stocks-fall-ai-fears-grow-british-retail-sales-fall-business-live-latest-news",
+      "https://www.theguardian.com/business/2026/oct/23/retail-sales-in-great-britain-fall-as-struggling-households-cut-back",
+      "https://www.theguardian.com/business/2026/sep/18/retail-sales-bounce-back-across-great-britain",
+      "https://teleborsa.ansa.it/notiziario/economia/regno-unito-vendite-al-dettaglio-sotto-le-attese-a-settembre/",
+      "https://www.theguardian.com/business/retail%2Beconomicgrowth",
+      "https://www.theguardian.com/business/retail%2Buk/office-for-national-statistics",
+      "https://www.theguardian.com/business/live/2026/sep/18/japan-raises-interest-rates-central-bankers-fight-inflation-gb-retail-sales-rise-latest-news-updates?page=with%3Ablock-6aace9428f085ee1fe6a0322",
+      "https://www.theguardian.com/business/retail%2Bbusiness",
+      "https://www.theguardian.com/business/2026/aug/21/retail-sales-in-great-britain-fall-despite-heatwave-increasing-food-and-drink-demand",
+      "https://www.theguardian.com/business/retail%2Beconomics",
+      "https://www.theguardian.com/business/live/2026/aug/21/retail-sales-economy-consumer-ons-heatwave-ftse-stock-market-growth-oil-live-updates?page=with%3Ablock-6a88082a8f089694d1d59bd3",
+      "https://www.theguardian.com/business/retail%2Bbusiness?page=3",
+      "https://apnews.com/article/474ed13de492362589405a47ec044d29",
+      "https://apnews.com/article/86bf3eb7412aa27b24febd52aae7a7f1",
+      "https://apnews.com/article/3e2bc5807d7396b8e6c5f599941cb2a9",
+      "https://apnews.com/article/a642f3cc32f1e92f0a26812d8fa7c02f",
+      "https://apnews.com/article/31b321fce5b28dfcedfa4b7894b7ff57",
+      "https://apnews.com/article/65f5a2476b28c19ebdada5ec287160d8"
+    ]
+  }
+}

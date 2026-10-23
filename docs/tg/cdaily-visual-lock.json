@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-20",
+  "baselineMediaVersion": "9b54b2933025",
+  "assets": [
+    {
+      "path": "public/brand/cdaily.svg",
+      "sha256": "49b57fffb5f0441144b3700b5dda7cf9814505d9513e33fcab5d955e4e23daf3"
+    },
+    {
+      "path": "public/brand/cdaily-white.svg",
+      "sha256": "859672447e931b739a7a2c0212c4648fc8ad31c9d5aa1fe58da01e4ccdb7cf42"
+    },
+    {
+      "path": "public/brand/cdaily-bricolage.woff2",
+      "sha256": "0834e5bdbf75e81e86cdeefc322e9819082cfd293775cc24162d6cfbe1d69d10"
+    },
+    {
+      "path": "public/brand/cdaily-bricolage-OFL.txt",
+      "sha256": "4b5a7d8f37f5602621c8a8d7358a6a2e71317e6c231c661e15aef0275d3e07ba"
+    },
+    {
+      "path": "public/daily-studio/studio-landscape-v2.png",
+      "sha256": "4e1a464dde1149f03cae230c217760a78703c1af89fcbf9e281f888f05134a4f"
+    },
+    {
+      "path": "public/daily-studio/studio-portrait-v2.png",
+      "sha256": "44ecd890e9f6fa2d8bdce1bb2d936de855af278234ae3551694c2303e4be4225"
+    },
+    {
+      "path": "public/daily-studio/conclavia-logo.svg",
+      "sha256": "5467e5ce6488178f93547b29e2c6674bac70b32d601afd4a3d671bb1c4c50b01"
+    },
+    {
+      "path": "public/daily-studio/conclavia-logo-white.svg",
+      "sha256": "4d408c09f2807f2d9ecd985ca4df51a8c389e42d89fbdd4da62dd034c6d44bb6"
+    },
+    {
+      "path": "src/components/tg/daily-video-identity.ts",
+      "sha256": "9e7981509a06f697bcf38b68ec79fe43180ed44cf43fd9b4f554fb6919a81acc"
+    },
+    {
+      "path": "src/components/tg/daily-robot-theme.ts",
+      "sha256": "5f051a22173c879915c09e1858b434d5544482cf5a2b31b0b5bafb5009652c67"
+    },
+    {
+      "path": "src/components/tg/daily-studio-theme.ts",
+      "sha256": "5c517b4bbea9b40f6d84247c5bdf1256e92d4f8de5785f6726a3d9c8aa157f6d"
+    },
+    {
+      "path": "../conclavia-avatar-kit/src/features/characters/robot/proposals/hybrid.ts",
+      "sha256": "ae770b9b5849a9744d65b1e1b23777fc858d6bdd0ccd169d7f929d9d0eb2221c"
+    },
+    {
+      "path": "../conclavia-avatar-kit/src/features/characters/robot/proposals/editorial-human.ts",
+      "sha256": "e2dfbe8948bc07afe30971071c19b82ec93fab8e9b6fdfe19d9d4399bd526add"
+    },
+    {
+      "path": "../conclavia-avatar-kit/src/features/characters/robot/proposals/hybrid-sculpted.ts",
+      "sha256": "1a2eb965151482d706ce2db1406e2826f77e9019132baef09038cf62ced0ab08"
+    },
+    {
+      "path": "../conclavia-avatar-kit/src/features/characters/robot/adult-face.ts",
+      "sha256": "11256907f2b582c3f9c12ec004c5c83047063381c7b5870b4d1e81592264f739"
+    },
+    {
+      "path": "../conclavia-avatar-kit/src/features/characters/robot/adult-sleeve.ts",
+      "sha256": "318967ffe86507b15070e37162541caf10573b854e8fbdc66304c8859d9b385b"
+    },
+    {
+      "path": "../conclavia-avatar-kit/src/features/characters/robot/shell-hands.ts",
+      "sha256": "bb231bbc9d1461178ac22d8bac7bc115d33acfcfba142f77a4abf27920e1491c"
+    }
+  ],
+  "avatarAppearanceReview": "2026-10-23 — continuous-light-materials-v1; user requested avatar graphic refinement"
+}

@@ -1,14 +1,17 @@
 import type { Participant, TalkInput } from "@/types/podcast";
 import { DEFAULT_LLM_MODEL } from "@/lib/podcast/llm-models";
+import { personalityProfile } from "@/lib/podcast/personality-presets";
 
 export function defaultParticipant(index: number, english = false): Participant {
   return { kind: index === 2 ? "human" : "ai", sex: index === 1 ? "female" : "male", name: index === 0 ? "Riccardo" : index === 1 ? "Sofia" : english ? "Our guest" : "Il nostro ospite",
-    role: index === 0 ? english ? "Curious host" : "Conduttore curioso" : index === 1 ? english ? "Critical co-host" : "Co-conduttrice critica" : english ? "Invited expert" : "Esperto invitato",
-    perspectiveMode: "custom",
-    perspectivePrompt: index === 0 ? english ? "Explore opportunities with optimism and practical examples. Ask open, concrete questions." : "Esplora le opportunità con ottimismo ed esempi pratici. Fa domande aperte e concrete." : index === 1 ? english ? "Test assumptions, ask for evidence, and bring alternative viewpoints without polemics." : "Mette alla prova le ipotesi, chiede prove e porta punti di vista alternativi senza polemica." : "",
+    role: index === 0 ? english ? "Host" : "Conduttore" : index === 1 ? english ? "Co-host" : "Co-conduttrice" : english ? "Invited expert" : "Esperto invitato",
+    perspectiveMode: index === 2 ? "custom" : "automatic",
+    perspectivePrompt: "",
     goals: index === 2 ? "" : english ? "Help the guest explain their experience; build on the other host’s contribution." : "Aiutare l’ospite a raccontare la sua esperienza; costruire sul contributo dell’altro conduttore.",
     speakingStylePrompt: index === 0 ? english ? "Warm, concise, a little self-deprecating. One question at a time." : "Caldo, conciso, con un pizzico di autoironia. Una domanda alla volta." : english ? "Thoughtful and direct. Light irony, no aggressive tone." : "Riflessiva e diretta. Ironia leggera, senza aggressività.",
-    nonNegotiables: "", assertiveness: index === 0 ? 55 : 65, patience: index === 0 ? 75 : 65, interruptiveness: 15, baselineTension: index === 0 ? 10 : 20, voiceDelivery: "natural" };
+    nonNegotiables: "", assertiveness: index === 0 ? 55 : 65, patience: index === 0 ? 75 : 65, interruptiveness: 15, baselineTension: index === 0 ? 10 : 20, voiceDelivery: "natural",
+    ...(index < 2 ? personalityProfile(index === 0 ? "curious" : "analytical", english ? "en" : "it") : {}),
+  };
 }
 
 export function defaultPodcast(english = false): TalkInput {

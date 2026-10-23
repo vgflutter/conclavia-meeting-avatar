@@ -1,0 +1,104 @@
+{
+  "revision": "palms-closer-20261023",
+  "providerCalls": 0,
+  "audioGenerated": false,
+  "chinMotion": {
+    "frames": 401,
+    "fps": 50,
+    "sha256": "e5557c1e7f09e6360042d2122aa579786070c92837af997ee55d0ef61bd66af4",
+    "unchanged": true
+  },
+  "referenceSample": {
+    "atSeconds": 2.2,
+    "fps": 50,
+    "posture": "standing",
+    "mood": "empathy",
+    "units": "avatar rig units",
+    "minimumOpposingFingerCapsuleClearance": 0.5756041843002269,
+    "minimumOppositePalmClearance": 4.085125131453811,
+    "fingertips": [
+      {
+        "name": "index",
+        "projectedGap": 1.6071594399700135,
+        "gap3D": 1.825424717383736
+      },
+      {
+        "name": "middle",
+        "projectedGap": 1.932703145666931,
+        "gap3D": 2.1865187091564504
+      },
+      {
+        "name": "ring",
+        "projectedGap": 1.6886845106062291,
+        "gap3D": 1.929537545799128
+      },
+      {
+        "name": "little",
+        "projectedGap": 1.5549303118196987,
+        "gap3D": 1.7387285962715167
+      },
+      {
+        "name": "thumb",
+        "projectedGap": 4.327478326909841,
+        "gap3D": 4.387693980716925
+      }
+    ]
+  },
+  "regressions": {
+    "kitPassed": 234,
+    "tgPassed": 84,
+    "mongoSkipped": 15,
+    "consumerBuilds": [
+      "meeting",
+      "onboarding"
+    ],
+    "anatomicalPaths": 36,
+    "fps": [
+      25,
+      50
+    ],
+    "browserPassed": 23
+  },
+  "exports": {
+    "hands-editorial-reassure": {
+      "duration": 8,
+      "frames": 400,
+      "fps": 50,
+      "width": 880,
+      "height": 570,
+      "audio": false,
+      "errors": [],
+      "renderSeconds": 4.58
+    },
+    "hands-editorial-reassure-detail": {
+      "duration": 8,
+      "frames": 400,
+      "fps": 50,
+      "width": 880,
+      "height": 570,
+      "audio": false,
+      "errors": [],
+      "renderSeconds": 4.78
+    },
+    "hands-palms-joined": {
+      "duration": 6,
+      "frames": 300,
+      "fps": 50,
+      "width": 880,
+      "height": 570,
+      "audio": false,
+      "errors": [],
+      "renderSeconds": 5.27
+    },
+    "hands-palms-joined-wide": {
+      "duration": 6,
+      "frames": 300,
+      "fps": 50,
+      "width": 880,
+      "height": 570,
+      "audio": false,
+      "errors": [],
+      "renderSeconds": 6.43
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { writeFile } from "node:fs/promises";
 import { defaultPodcast } from "../../src/components/podcast/podcast-defaults";
 import { createInitialDiscussionState } from "../../src/lib/podcast/talk-director";
 import type { TalkInput, TalkResponse } from "../../src/types/podcast";
@@ -7,7 +8,7 @@ import type { TalkRunMessageResponse, TalkRunResponse } from "../../src/types/po
 const talkId = "a".repeat(24);
 const runId = "b".repeat(24);
 
-async function installRehearsalFixture(page: Page, options: { completeAt?: number; truncated?: boolean; audioSeconds?: number } = {}) {
+async function installRehearsalFixture(page: Page, options: { completeAt?: number; truncated?: boolean; audioSeconds?: number; heated?: boolean; topics?: string[] } = {}) {
   const defaults = defaultPodcast();
   let talk: TalkResponse = { ...defaults, id: talkId, title: "Prova breve senza provider", participants: defaults.participants.slice(0, 2),
     settings: { ...defaults.settings, maxTurns: 8, targetDurationMinutes: 2 }, createdAt: new Date(0).toISOString(), updatedAt: new Date(0).toISOString() };
@@ -24,16 +25,18 @@ async function installRehearsalFixture(page: Page, options: { completeAt?: numbe
   const pcm = audio + (options.truncated ? "" : '{"done":true}\n');
   await page.context().addCookies([{ name: "conclavia_locale", value: "it", url: "http://127.0.0.1:3101" }]);
   await page.addInitScript(() => {
-    const events = { nextAt: [] as number[], audio: [] as Array<{ startedAt: number; endedAt: number | null }> };
+    const events = { nextAt: [] as number[], audio: [] as Array<{ startedAt: number; endedAt: number | null; startTime:number; endTime:number }> };
     Object.assign(window, { rehearsalAudioFixture: events });
     const fetcher = window.fetch.bind(window);
     window.fetch = (...args) => {
-      if (/\/api\/podcast\/runs\/[^/]+\/next$/u.test(String(args[0]))) events.nextAt.push(performance.now());
+      if (/\/api\/podcast\/runs\/[^/]+\/next(?:\/stream)?$/u.test(String(args[0]))) events.nextAt.push(performance.now());
       return fetcher(...args);
     };
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (...args) {
-      const event = { startedAt: performance.now(), endedAt: null as number | null };
+      const startTime=args[0]??this.context.currentTime;
+      const event = { startedAt: performance.now(), endedAt: null as number | null, startTime, endTime:startTime+(this.buffer?.duration??0) };
+      Object.assign(window,{rehearsalAudioContext:this.context});
       events.audio.push(event);
       this.addEventListener("ended", () => { event.endedAt = performance.now(); }, { once: true });
       return start.apply(this, args);
@@ -59,23 +62,23 @@ async function installRehearsalFixture(page: Page, options: { completeAt?: numbe
     return route.fulfill({ status: 201, json: { run } });
   });
   await page.route(`**/api/podcast/runs/${runId}`, route => route.fulfill({ json: { run } }));
-  await page.route(`**/api/podcast/runs/${runId}/next`, route => {
+  await page.route(`**/api/podcast/runs/${runId}/next/stream`, route => {
     calls.next++;
     const sequence = calls.next;
     const participantIndex = (sequence - 1) % 2;
     const sentences = [
-      { text: `Intervento ${sequence}: che cosa cambia quando deleghiamo una scelta?`, mood: participantIndex === 0 ? "curiosity" as const : "amusement" as const,
+      { text: `Intervento ${sequence}: che cosa cambia quando deleghiamo una scelta?`, mood: options.heated ? "disagreement" as const : participantIndex === 0 ? "curiosity" as const : "amusement" as const,
         intensity: .78, listenerMood: participantIndex === 0 ? "attention" as const : "curiosity" as const, listenerIntensity: .54 },
       { text: "Capisco il vantaggio, ma vorrei preservare il giudizio umano.", mood: participantIndex === 0 ? "disagreement" as const : "agreement" as const,
         intensity: .72, listenerMood: participantIndex === 0 ? "empathy" as const : "doubt" as const, listenerIntensity: .61 },
     ];
     const message: TalkRunMessageResponse = { sequence, participantIndex, speakerType: "participant", speakerName: talk.participants[participantIndex].name,
-      intent: sequence === 1 ? "question" : "reply", threadLabel: "Prova", arcPhase: "positions", preparationMode: "reactive", referenceStyle: "idea_first",
+      intent: options.heated ? "challenge" : sequence === 1 ? "question" : "reply", threadLabel: options.topics?.[sequence - 1] ?? "Prova", arcPhase: "positions", preparationMode: "reactive", referenceStyle: "idea_first",
       wordCount: 12, estimatedAirtimeSeconds: 1, origin: "ai", provider: "openai", model: "openai-default",
       content: sentences.map(sentence => sentence.text).join(" "), performance: { version: 1, source: "ai", sentences }, createdAt: new Date(sequence * 1000).toISOString() };
     run = { ...run, status: sequence === options.completeAt ? "completed" : "idle", messages: [...run.messages, message],
       participantTurnCount: sequence, nextParticipantIndex: (participantIndex + 1) % 2 };
-    return route.fulfill({ json: { run } });
+    return route.fulfill({ contentType: "text/event-stream", body: `data: ${JSON.stringify({ type: "speech_stored", run: { ...run, status: "generating" } })}\n\ndata: ${JSON.stringify({ type: "complete", run })}\n\n` });
   });
   await page.route(`**/api/podcast/runs/${runId}/speech`, route => {
     const body = route.request().postDataJSON() as { sequence: number };
@@ -94,9 +97,119 @@ const audioEvents = (page: Page) => page.evaluate(() => (window as unknown as {
   rehearsalAudioFixture: { nextAt: number[]; audio: Array<{ startedAt: number; endedAt: number | null }> };
 }).rehearsalAudioFixture);
 
+test("lively heated replies overlap actual audio and animate both faces; Stop releases both voices", async ({ page }, testInfo) => {
+  const calls = await installRehearsalFixture(page, { heated: true, audioSeconds: 3.2 });
+  await page.goto("/podcast/rehearsal");
+  await page.getByTestId("rehearsal-pace").selectOption("lively");
+  await page.getByTestId("rehearsal-prepare").click();
+  await expect(page.getByTestId("rehearsal-start")).toBeEnabled();
+  const stage = page.getByTestId("rehearsal-stage").locator("canvas[data-podcast-stage]");
+  await stage.evaluate(element => {
+    const canvas = element as HTMLCanvasElement;
+    let scheduled = false;
+    const observer = new MutationObserver(() => {
+      if (scheduled || canvas.dataset.podcastSpeaking !== "true,true" || canvas.dataset.podcastVisemes !== "a,a") return;
+      scheduled = true;
+      // `ended` belongs to the render thread and may precede the audible
+      // tail on a high-latency output device. Probe the scheduled intervals
+      // on the actual OUTPUT clock, the same clock that drives the mouths.
+      const heardAt = performance.now(),context=(window as unknown as {rehearsalAudioContext:AudioContext}).rehearsalAudioContext;
+      const stamp=context.getOutputTimestamp();
+      const outputTime=typeof stamp.performanceTime==='number'&&typeof stamp.contextTime==='number'&&stamp.performanceTime>0&&stamp.performanceTime<=heardAt&&heardAt-stamp.performanceTime<1000
+        ?Math.max(0,Math.min(context.currentTime,stamp.contextTime+(heardAt-stamp.performanceTime)/1000))
+        :Math.max(0,context.currentTime-(context.outputLatency||0)-(context.baseLatency||0));
+      const heard = structuredClone((window as unknown as { rehearsalAudioFixture: { audio: Array<{ startedAt: number; endedAt: number | null }> } }).rehearsalAudioFixture.audio);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (canvas.dataset.podcastSpeaking !== "true,true" || canvas.dataset.podcastVisemes !== "a,a") { scheduled = false; return; }
+        Object.assign(window, { overlapProbe: { image: canvas.toDataURL("image/png"), moods: canvas.dataset.podcastMoods, focus: canvas.dataset.podcastFocus,
+          caption: document.querySelector('[data-testid="rehearsal-caption"]')?.textContent,
+          heardAt, outputTime, paintedAt: performance.now(), events: heard } });
+        observer.disconnect();
+        // Stop in the captured overlap frame; screenshot tooling otherwise outlasts this short handoff.
+        (document.querySelector('[data-testid="rehearsal-stop"]') as HTMLButtonElement).click();
+      }));
+    });
+    observer.observe(canvas, { attributes: true });
+  });
+  await page.getByTestId("rehearsal-start").click();
+  await expect.poll(() => page.evaluate(() => Boolean((window as unknown as { overlapProbe?: unknown }).overlapProbe)), { timeout: 12_000 }).toBe(true);
+  const overlap = await page.evaluate(() => (window as unknown as { overlapProbe: { image: string; moods: string; focus: string; caption: string; outputTime:number; events: Array<{ startedAt: number; endedAt: number | null; startTime:number;endTime:number }> } }).overlapProbe);
+  const requestsAtStop = calls.next;
+  expect(overlap.moods).toBe("disagreement,disagreement");
+  expect(overlap.focus).toBe("all");
+  expect(overlap.caption).toContain("Riccardo"); expect(overlap.caption).toContain("Sofia");
+  expect(overlap.events.length).toBeGreaterThanOrEqual(2);
+  await writeFile(testInfo.outputPath("audible-overlap.json"), JSON.stringify({outputTime:overlap.outputTime,events:overlap.events}, null, 2));
+  expect(overlap.events.filter(event => event.startTime<=overlap.outputTime&&overlap.outputTime<event.endTime)).toHaveLength(2);
+  await writeFile(testInfo.outputPath("two-voices-overlap.png"), Buffer.from(overlap.image.split(",")[1], "base64"));
+  await expect(stage).toHaveAttribute("data-podcast-speaking", "false,false");
+  await expect.poll(async () => (await audioEvents(page)).audio.every(event => event.endedAt !== null)).toBe(true);
+  await page.waitForTimeout(500);
+  expect(calls.next).toBe(requestsAtStop);
+});
+
+for (const locale of ["it", "en"] as const) {
+  test(`personality setup stays simple, optional and separate from voice in ${locale}`, async ({ page }, testInfo) => {
+    const calls = await installRehearsalFixture(page);
+    await page.context().addCookies([{ name: "conclavia_locale", value: locale, url: "http://127.0.0.1:3101" }]);
+    await page.goto("/podcast/rehearsal");
+    const it = locale === "it";
+    const host = page.getByTestId("personality-card-0");
+    const profile = page.getByTestId("personality-profile-0");
+    const advanced = page.getByTestId("personality-advanced-0");
+    const description = host.getByLabel(it ? "Descrizione del carattere" : "Personality description", { exact: true });
+    const viewpoint = host.getByLabel(it ? "Punto di vista nella puntata" : "Viewpoint for this episode", { exact: true });
+    await expect(profile).toHaveValue("curious");
+    await expect(page.getByTestId("personality-profile-1")).toHaveValue("analytical");
+    await expect(advanced).not.toHaveAttribute("open");
+    await expect(host.getByRole("slider")).toHaveCount(0);
+    await expect(viewpoint).toBeEmpty();
+    await expect(page.getByTestId("rehearsal-prepare")).toBeEnabled();
+    for (const id of ["analytical", "playful", "empathetic", "curious"]) {
+      await profile.selectOption(id);
+      await expect(description).not.toBeEmpty();
+      await expect(profile).toHaveValue(id);
+      await expect(page.getByTestId("rehearsal-voice-0")).toHaveValue("im_nicola");
+      await expect(page.getByTestId("personality-profile-1")).toHaveValue("analytical");
+    }
+    await description.fill("Ascolta con calma e chiede un esempio prima di formulare un giudizio.");
+    await expect(profile).toHaveValue("custom");
+    await viewpoint.fill("Voglio capire quando l'AI riduce gli errori.");
+    await profile.selectOption("empathetic");
+    await expect(viewpoint).toHaveValue("Voglio capire quando l'AI riduce gli errori.");
+    await viewpoint.fill("");
+    await advanced.locator("summary").click();
+    await expect(host.getByRole("slider")).toHaveCount(4);
+    await expect(host.getByLabel(it ? "Interpretazione vocale" : "Voice delivery", { exact: true })).toHaveCount(0);
+    await host.getByLabel(it ? "Pazienza" : "Patience", { exact: false }).fill("80");
+    await expect(profile).toHaveValue("custom");
+    await advanced.locator("summary").click();
+    for (const width of [1440, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await host.scrollIntoViewIfNeeded();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await host.screenshot({ path: testInfo.outputPath(`personality-${locale}-${width}.png`) });
+    }
+    const submitted = page.waitForRequest(request => request.method() === "POST" && request.url().endsWith("/api/podcast/talks"));
+    await page.getByTestId("rehearsal-prepare").click();
+    const payload = (await submitted).postDataJSON() as TalkInput;
+    expect(payload.participants[0].personalityPrompt).toContain("Ascolta con attenzione");
+    expect(payload.participants[0].patience).toBe(80);
+    expect(payload.participants[0].perspectiveMode).toBe("automatic");
+    expect(payload.participants[0].perspectivePrompt).toBe("");
+    await expect(page.getByTestId("rehearsal-start")).toBeEnabled();
+    expect(calls.next).toBe(0);
+    expect(calls.speech).toEqual([]);
+    await profile.selectOption("curious");
+    await expect(page.getByTestId("rehearsal-start")).toBeDisabled();
+    expect(calls.prepare).toBe(1);
+  });
+}
+
 test("short rehearsal has no paid actions on load and never overlaps voices across at most eight turns", async ({ page }) => {
   const calls = await installRehearsalFixture(page);
   await page.goto("/podcast/rehearsal");
+  await page.getByTestId("rehearsal-pace").selectOption("natural");
   await expect(page.getByTestId("rehearsal-prepare")).toBeEnabled();
   expect(calls).toEqual({ prepare: 0, runs: 0, next: 0, speech: [], stop: 0 });
   await page.getByTestId("rehearsal-prepare").click();
@@ -112,7 +225,8 @@ test("short rehearsal has no paid actions on load and never overlaps voices acro
   const observed = await audioEvents(page);
   for (let i = 1; i < observed.audio.length; i++) {
     expect(observed.audio[i - 1].endedAt).not.toBeNull();
-    expect(observed.audio[i].startedAt - observed.audio[i - 1].endedAt!).toBeGreaterThanOrEqual(490);
+    expect(observed.audio[i].startedAt - observed.audio[i - 1].endedAt!).toBeGreaterThanOrEqual(90);
+    expect(observed.audio[i].startedAt - observed.audio[i - 1].endedAt!).toBeLessThan(450);
     // A next turn may be prepared during speech, after its first audible frame.
     expect(observed.nextAt[i]).toBeGreaterThanOrEqual(observed.audio[i - 1].startedAt);
   }
@@ -197,4 +311,20 @@ test("sentence PCM cues switch the actual speaker and listener moods during audi
   expect(await stage.getAttribute("data-podcast-moods")).toBe(stopped.moods);
   expect(calls.next).toBe(stopped.next);
   expect((await audioEvents(page)).audio).toHaveLength(2);
+});
+
+test("dynamic topic follows the audible turn while the next turn is prepared", async ({ page }) => {
+  const calls = await installRehearsalFixture(page, { audioSeconds: 3, completeAt: 2, topics: ["Le scelte umane", "Le prove concrete"] });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/podcast/rehearsal?topicMode=conversation");
+  const stage = page.locator('canvas[data-podcast-stage]').first();
+  await expect(stage).toHaveAttribute("data-podcast-painted-headline", "L’AI nel lavoro: aiuto o delega eccessiva?");
+  await page.getByTestId("rehearsal-prepare").click();
+  await page.getByTestId("rehearsal-start").click();
+  await expect(stage).toHaveAttribute("data-podcast-painted-headline", "Le scelte umane");
+  await expect.poll(() => calls.next).toBe(2);
+  // The prepared next turn must not put its headline on the current voice.
+  await expect(stage).toHaveAttribute("data-podcast-painted-headline", "Le scelte umane");
+  await expect(stage).toHaveAttribute("data-podcast-painted-headline", "Le prove concrete");
+  await page.getByTestId("rehearsal-stop").click();
 });

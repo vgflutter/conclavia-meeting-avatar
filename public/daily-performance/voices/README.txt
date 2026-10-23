@@ -1,0 +1,1 @@
+Confronto creativo esplicito: sei frasi originali dimostrative, stesso testo, modello Inworld TTS 2 e velocità 0,98. Non contiene notizie reali. Tre voci del catalogo già integrato; PCM 24 kHz e livello uniforme. Non eseguito da app, worker o test. Visemi approssimati da testo e PCM. Nessuna scelta editoriale o voce dei piloti è modificata da questi file.

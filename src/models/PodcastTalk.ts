@@ -50,6 +50,7 @@ const participantSchema = new Schema<Participant>(
       default: "custom",
     },
     perspectivePrompt: { type: String, default: "", trim: true },
+    personalityPrompt: { type: String, trim: true, maxlength: 2000 },
     goals: { type: String, trim: true },
     nonNegotiables: { type: String, trim: true },
     speakingStylePrompt: { type: String, trim: true },
@@ -126,6 +127,8 @@ const talkSchema = new Schema<TalkRecord>(
       required: true,
     },
     settings: {
+      videoTopicMode: { type: String, enum: ["episode", "conversation", "custom", "hidden"], default: "episode" },
+      videoTopicText: { type: String, trim: true, maxlength: 80, default: "" },
       voiceProvider: { type: String, enum: ["inworld", "kokoro"], default: "inworld" },
       maxTurns: { type: Number, required: true, min: 1, validate: Number.isInteger },
       targetDurationMinutes: {

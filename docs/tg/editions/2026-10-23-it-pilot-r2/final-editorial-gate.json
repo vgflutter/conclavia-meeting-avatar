@@ -1,0 +1,35 @@
+{
+  "scoreSha256": "48ad0449be5e869020b319c278c7716b655dff5285b00f6de49c03cf31ac3b5b",
+  "scope": "editorial-pre-take",
+  "checkedAt": "2026-10-23T15:32:58.839Z",
+  "factualRequiredChecksAllPass": true,
+  "editorialBPassed": true,
+  "rawAOverallPassed": false,
+  "rawAReport": "48ad0449be5e-review-A-source-repair.json",
+  "rawBReport": "48ad0449be5e-review-B-source-repair.json",
+  "aiResolution": {
+    "role": "primary AI editorial adjudication",
+    "keepsRawReports": true,
+    "doesNotOverrideUnsupportedChecks": true,
+    "dispositions": [
+      {
+        "issue": "La formulazione sui carburanti tende a suggerire una ripresa già in corso e scorte in ricostituzione, mentre le fonti parlano ancora di normalizzazione graduale e di carenze residue; meglio attenuare.",
+        "status": "advisory-addressed",
+        "reason": "All individual factual checks pass. The actual headline says ripresa graduale; body explicitly distinguishes removed roadblocks from unresolved shortages and later restocking. No claim of complete normality appears."
+      },
+      {
+        "issue": "Alcuni passaggi su Taiwan sono affidati a CNA come aggiornamento successivo: corretto in sé, ma va tenuta chiara la distinzione tra chiusure annunciate per sabato e il quadro di venerdì.",
+        "status": "advisory-addressed",
+        "reason": "All individual factual checks pass and the issue itself calls the CNA update correct. Sentence 13 explicitly says announced on 23 October for Saturday 24; sentence 12 describes Friday disruptions. Primary source is dated 13:29 UTC and independent retrieval now confirms it."
+      }
+    ]
+  },
+  "passed": true,
+  "mediaGate": {
+    "status": "passed-local-review",
+    "report": "final-media-gate.json",
+    "mediaVersion": "d684e69b9c6d",
+    "publicationApproved": false
+  },
+  "publicationApproved": false
+}

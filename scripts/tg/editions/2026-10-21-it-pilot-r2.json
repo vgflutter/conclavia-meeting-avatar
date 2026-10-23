@@ -1,0 +1,724 @@
+{
+  "id": "2026-10-21-it-pilot-r2",
+  "kind": "daily-pilot",
+  "editionDate": "2026-10-21",
+  "language": "it",
+  "researchCutoff": "2026-10-21T00:22:00+02:00",
+  "title": "CDaily · 21 ottobre 2026 · Quattro minuti",
+  "voice": "Alex 2 - daily",
+  "description": "Seconda prova italiana: quattro minuti, quattro storie e un ritmo più diretto. Aggiornamenti del 20 ottobre sera, ricontrollati per questa revisione. Musica solo nei primi quattro secondi. Presentatore e voce AI. Prova locale, senza pubblicazione social.",
+  "sources": [
+    {
+      "id": "arpal",
+      "publisher": "Arpal Liguria",
+      "url": "https://www.arpal.liguria.it/home-page/notizie-tematiche/item/martedi-20-ottobre-allerta-arancione-anche-sul-levante-zone-c-ed-e.html",
+      "date": "2026-10-20",
+      "note": "Bollettino aggiornato nel corpo del testo; la data iniziale della pagina è 17 ottobre. Arancione in A fino alle 02 del 21, B/C/D/E fino alle 06; successivi orari gialli distinti."
+    },
+    {
+      "id": "ansa-meteo",
+      "publisher": "ANSA",
+      "url": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/20/allerta-arancione-per-temporali-estesa-in-liguria-fino-a-domani_a493b23a-1d67-4043-a3ea-a78c4f96a158.html",
+      "date": "2026-10-20",
+      "note": "Riscontro del bollettino e delle scadenze per zona, non misura di piogge future."
+    },
+    {
+      "id": "ansa-trasporti",
+      "publisher": "ANSA",
+      "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/20/governo-promette-un-miliardo-ai-camionisti-ma-i-blocchi-continuano_3a6127ff-0b4c-4c40-8785-32cfb644514b.html",
+      "date": "2026-10-20",
+      "note": "Vertice, annunci di sostegno e prosecuzione di blocchi. Evitati importi e rivendicazioni non necessari al riepilogo."
+    },
+    {
+      "id": "pmi-trasporti",
+      "publisher": "PMI.it · intervista Confartigianato Trasporti",
+      "url": "https://www.pmi.it/economia/mercati/501942/credito-imposta-autotrasporto-pagamenti.html",
+      "date": "2026-10-20",
+      "note": "Riva riferisce sblocco e calendario atteso dei crediti dopo il vertice. Un annuncio non prova pagamenti già eseguiti."
+    },
+    {
+      "id": "norvegia",
+      "publisher": "Governo norvegese",
+      "url": "https://www.regjeringen.no/en/whats-new/the-prime-ministers-introduction-at-the-press-conference-with-ukraines-president-volodymyr-zelenskyy-and-the-finnish-president-alexander-stubb/id3179842/",
+      "date": "2026-10-20",
+      "note": "Dichiarazione del premier dopo l’incontro con Zelensky, Stubb e Witkoff. Kushner da remoto. Lavoro negoziale ancora in corso, senza annuncio di cessate il fuoco."
+    },
+    {
+      "id": "ansa-ucraina",
+      "publisher": "ANSA",
+      "url": "https://www.ansa.it/sito/notizie/mondo/2026/10/20/in-corso-lincontro-tra-zelensky-e-witkoff-a-oslo.-il-nyt-trump-vuole-imporgli_6d053c09-807c-406e-8549-fd712ebcc9f0.html",
+      "date": "2026-10-20",
+      "note": "Colloqui diplomatici a Oslo. Evitate ipotesi e indiscrezioni sulle condizioni di un accordo."
+    },
+    {
+      "id": "nasa",
+      "publisher": "NASA Earth Observatory",
+      "url": "https://science.nasa.gov/earth/earth-observatory/the-human-fingerprint-on-earths-water-cycle/",
+      "date": "2026-10-20",
+      "note": "Analisi di dati GRACE/GRACE-FO aprile 2002–novembre 2025: associazioni con attività umane in 40 regioni; maggiore dettaglio spaziale, minore dettaglio temporale. Non prevede la singola siccità futura."
+    }
+  ],
+  "lines": [
+    {
+      "scene": "apertura",
+      "text": "Fondi annunciati ai trasportatori, ma una parte dei blocchi continua.",
+      "mood": "attention",
+      "intensity": 0.8,
+      "intent": "explain",
+      "sourceIds": [],
+      "screenText": "Trasporti: fondi e proteste."
+    },
+    {
+      "scene": "apertura",
+      "text": "Nuovi colloqui sull’Ucraina.",
+      "mood": "attention",
+      "intensity": 0.8,
+      "intent": "explain",
+      "sourceIds": [],
+      "screenText": "Ucraina: nuovi colloqui."
+    },
+    {
+      "scene": "apertura",
+      "text": "E una mappa che racconta dove stiamo cambiando le riserve d’acqua.",
+      "mood": "attention",
+      "intensity": 0.8,
+      "intent": "explain",
+      "sourceIds": [],
+      "screenText": "L’acqua, vista dallo spazio."
+    },
+    {
+      "scene": "apertura",
+      "text": "È il ventuno ottobre: quattro minuti, con gli aggiornamenti verificati di ieri sera.",
+      "mood": "attention",
+      "intensity": 0.8,
+      "intent": "explain",
+      "sourceIds": [],
+      "screenText": "Quattro minuti. Il punto sulle notizie."
+    },
+    {
+      "scene": "apertura",
+      "text": "Partiamo.",
+      "mood": "attention",
+      "intensity": 0.8,
+      "intent": "explain",
+      "sourceIds": [],
+      "screenText": "Quattro minuti. Il punto sulle notizie."
+    },
+    {
+      "scene": "trasporti",
+      "text": "La prima notizia arriva dai trasporti.",
+      "mood": "attention",
+      "intensity": 0.77,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-trasporti"
+      ],
+      "screenText": "Trasporti: fondi e proteste."
+    },
+    {
+      "scene": "trasporti",
+      "text": "Dopo il vertice di Milano, il governo annuncia risorse per il settore, colpito dal caro gasolio.",
+      "mood": "attention",
+      "intensity": 0.77,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-trasporti"
+      ],
+      "screenText": "Fondi contro il caro gasolio."
+    },
+    {
+      "scene": "trasporti",
+      "text": "Il ministro Salvini parla di quattrocentottanta milioni immediati e di un impegno complessivo superiore al miliardo.",
+      "mood": "attention",
+      "intensity": 0.77,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-trasporti"
+      ],
+      "screenText": "480 milioni: l’annuncio del governo."
+    },
+    {
+      "scene": "trasporti",
+      "text": "Sono le cifre annunciate dal governo: non la prova di accrediti già arrivati a tutte le imprese.",
+      "mood": "attention",
+      "intensity": 0.77,
+      "intent": "explain",
+      "sourceIds": [
+        "ansa-trasporti"
+      ],
+      "screenText": "Pagamenti: attesa la verifica."
+    },
+    {
+      "scene": "trasporti",
+      "text": "E infatti la protesta non si chiude ovunque.",
+      "mood": "attention",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "ansa-trasporti"
+      ],
+      "screenText": "Proteste ancora aperte."
+    },
+    {
+      "scene": "trasporti",
+      "text": "La Sicilia revoca il fermo; in Calabria e Campania i presidi proseguono.",
+      "mood": "attention",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "ansa-trasporti"
+      ],
+      "screenText": "Sicilia: revocato il fermo."
+    },
+    {
+      "scene": "trasporti",
+      "text": "In Puglia gli autonomi annunciano una revoca soltanto parziale dei blocchi, in attesa di risposte concrete.",
+      "mood": "attention",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "ansa-trasporti"
+      ],
+      "screenText": "Puglia: revoca parziale."
+    },
+    {
+      "scene": "trasporti",
+      "text": "Situazioni diverse, dunque, anche tra territori vicini.",
+      "mood": "attention",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "ansa-trasporti"
+      ],
+      "screenText": "Decisioni diverse per regione."
+    },
+    {
+      "scene": "trasporti",
+      "text": "Il prossimo passaggio indicato dal ministro è un altro tavolo, il ventisette ottobre, per verificare l’avvio dei pagamenti.",
+      "mood": "attention",
+      "intensity": 0.73,
+      "intent": "emphasize",
+      "sourceIds": [
+        "ansa-trasporti",
+        "pmi-trasporti"
+      ],
+      "screenText": "Nuovo tavolo il 27 ottobre."
+    },
+    {
+      "scene": "trasporti",
+      "text": "Claudio Riva, di Confartigianato Trasporti, riferisce intanto un calendario atteso per lo sblocco dei crediti.",
+      "mood": "attention",
+      "intensity": 0.73,
+      "intent": "emphasize",
+      "sourceIds": [
+        "ansa-trasporti",
+        "pmi-trasporti"
+      ],
+      "screenText": "Crediti: un calendario annunciato."
+    },
+    {
+      "scene": "trasporti",
+      "text": "I tempi riportati nei resoconti non coincidono tutti: per ora teniamo distinti gli impegni, gli accrediti effettivi e le decisioni sui blocchi.",
+      "mood": "attention",
+      "intensity": 0.73,
+      "intent": "emphasize",
+      "sourceIds": [
+        "ansa-trasporti",
+        "pmi-trasporti"
+      ],
+      "screenText": "Impegni e accrediti: cosa verificare."
+    },
+    {
+      "scene": "mondo",
+      "text": "Seconda storia, l’Ucraina.",
+      "mood": "attention",
+      "intensity": 0.76,
+      "intent": "explain",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Ucraina: nuovi colloqui a Oslo."
+    },
+    {
+      "scene": "mondo",
+      "text": "A Oslo si incontrano il presidente Zelensky, l’inviato americano Steve Witkoff e i leader di Norvegia e Finlandia.",
+      "mood": "attention",
+      "intensity": 0.76,
+      "intent": "explain",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Il tavolo di Oslo."
+    },
+    {
+      "scene": "mondo",
+      "text": "Jared Kushner partecipa da remoto.",
+      "mood": "attention",
+      "intensity": 0.76,
+      "intent": "explain",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Il tavolo di Oslo."
+    },
+    {
+      "scene": "mondo",
+      "text": "È la composizione del tavolo confermata dal governo norvegese, che ospita i colloqui.",
+      "mood": "attention",
+      "intensity": 0.76,
+      "intent": "explain",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Il tavolo di Oslo."
+    },
+    {
+      "scene": "mondo",
+      "text": "Il premier Jonas Støre descrive l’incontro come costruttivo e dice che le squadre americane ed europee hanno lavorato con l’Ucraina sui nodi della trattativa.",
+      "mood": "attention",
+      "intensity": 0.7,
+      "intent": "contrast",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Støre: «Colloqui costruttivi»."
+    },
+    {
+      "scene": "mondo",
+      "text": "È la valutazione del premier: nella dichiarazione resta esplicita la necessità di altro lavoro diplomatico.",
+      "mood": "attention",
+      "intensity": 0.7,
+      "intent": "contrast",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Il negoziato resta aperto."
+    },
+    {
+      "scene": "mondo",
+      "text": "Non viene presentato un accordo di pace concluso.",
+      "mood": "attention",
+      "intensity": 0.7,
+      "intent": "contrast",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Il negoziato resta aperto."
+    },
+    {
+      "scene": "mondo",
+      "text": "Tra i temi citati ci sono sicurezza, territori, sanzioni e ricostruzione economica dopo la guerra.",
+      "mood": "attention",
+      "intensity": 0.7,
+      "intent": "contrast",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Sicurezza, territori e sanzioni."
+    },
+    {
+      "scene": "mondo",
+      "text": "Il premier annuncia anche un successivo incontro di Witkoff con la leadership russa: un passaggio previsto, di cui andrà verificato l’esito.",
+      "mood": "attention",
+      "intensity": 0.7,
+      "intent": "contrast",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Annunciato un nuovo incontro."
+    },
+    {
+      "scene": "mondo",
+      "text": "Støre ribadisce anche la posizione norvegese: le decisioni che riguardano l’Ucraina devono coinvolgere l’Ucraina.",
+      "mood": "attention",
+      "intensity": 0.73,
+      "intent": "reflect",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "La posizione norvegese."
+    },
+    {
+      "scene": "mondo",
+      "text": "Per seguire la notizia conta distinguere ciò che i partecipanti dichiarano dalle condizioni effettivamente concordate.",
+      "mood": "attention",
+      "intensity": 0.73,
+      "intent": "reflect",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Il negoziato resta aperto."
+    },
+    {
+      "scene": "mondo",
+      "text": "Il fatto verificato, qui, è che il confronto è avvenuto; l’esito del negoziato resta aperto.",
+      "mood": "attention",
+      "intensity": 0.73,
+      "intent": "reflect",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Il negoziato resta aperto."
+    },
+    {
+      "scene": "mondo",
+      "text": "Niente anticipazioni su clausole o scadenze che questa dichiarazione non conferma.",
+      "mood": "attention",
+      "intensity": 0.73,
+      "intent": "reflect",
+      "sourceIds": [
+        "norvegia"
+      ],
+      "screenText": "Il negoziato resta aperto."
+    },
+    {
+      "scene": "scienza",
+      "text": "Adesso una domanda diversa: come si misura l’acqua nascosta sotto terra, guardandola dallo spazio?",
+      "mood": "curiosity",
+      "intensity": 0.79,
+      "intent": "question",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "Come si misura l’acqua dallo spazio?"
+    },
+    {
+      "scene": "scienza",
+      "text": "Una ricerca presentata dalla NASA mette insieme oltre vent’anni di osservazioni delle missioni Grace e Grace Follow-On.",
+      "mood": "curiosity",
+      "intensity": 0.79,
+      "intent": "question",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "Oltre vent’anni di osservazioni."
+    },
+    {
+      "scene": "scienza",
+      "text": "I satelliti registrano piccole variazioni della gravità, che aiutano a ricostruire dove le riserve d’acqua aumentano o diminuiscono.",
+      "mood": "curiosity",
+      "intensity": 0.79,
+      "intent": "question",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "La gravità rivela le riserve d’acqua."
+    },
+    {
+      "scene": "scienza",
+      "text": "L’analisi copre il periodo dall’aprile duemiladue al novembre duemilaventicinque e riguarda l’acqua immagazzinata sulle terre emerse.",
+      "mood": "attention",
+      "intensity": 0.75,
+      "intent": "explain",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "Dati dal 2002 al 2025."
+    },
+    {
+      "scene": "scienza",
+      "text": "In quaranta regioni le variazioni mostrano associazioni con attività umane: irrigazione, riempimento dei bacini e cambiamenti nell’uso del suolo.",
+      "mood": "attention",
+      "intensity": 0.75,
+      "intent": "explain",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "40 regioni, anche la traccia umana."
+    },
+    {
+      "scene": "scienza",
+      "text": "Il clima rimane parte del quadro, insieme a come usiamo e spostiamo l’acqua.",
+      "mood": "attention",
+      "intensity": 0.75,
+      "intent": "explain",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "Clima e uso dell’acqua."
+    },
+    {
+      "scene": "scienza",
+      "text": "La novità è il dettaglio: la mappa distingue aree più piccole rispetto alle analisi precedenti.",
+      "mood": "curiosity",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "Una mappa più dettagliata."
+    },
+    {
+      "scene": "scienza",
+      "text": "Ma c’è un compromesso: guadagna precisione nello spazio e perde dettaglio nel tempo.",
+      "mood": "attention",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "Più dettaglio nello spazio."
+    },
+    {
+      "scene": "scienza",
+      "text": "Serve a leggere tendenze di lungo periodo; non prevede quando arriverà la prossima siccità.",
+      "mood": "curiosity",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "Tendenze, non previsioni di siccità."
+    },
+    {
+      "scene": "scienza",
+      "text": "È uno strumento per capire meglio un cambiamento già osservato.",
+      "mood": "curiosity",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "Un cambiamento già osservato."
+    },
+    {
+      "scene": "scienza",
+      "text": "Tra le aree descritte ci sono la California e l’India settentrionale, dove pesa il ricorso all’acqua sotterranea.",
+      "mood": "curiosity",
+      "intensity": 0.74,
+      "intent": "contrast",
+      "sourceIds": [
+        "nasa"
+      ],
+      "screenText": "California e India settentrionale."
+    },
+    {
+      "scene": "meteo",
+      "text": "Ultimo aggiornamento, la Liguria.",
+      "mood": "attention",
+      "intensity": 0.75,
+      "intent": "explain",
+      "sourceIds": [
+        "arpal",
+        "ansa-meteo"
+      ],
+      "screenText": "Liguria: il bollettino di ieri."
+    },
+    {
+      "scene": "meteo",
+      "text": "Il bollettino di ieri estendeva l’allerta arancione anche alla notte, con scadenze differenti per zona.",
+      "mood": "attention",
+      "intensity": 0.75,
+      "intent": "explain",
+      "sourceIds": [
+        "arpal",
+        "ansa-meteo"
+      ],
+      "screenText": "Allerta: scadenze diverse per zona."
+    },
+    {
+      "scene": "meteo",
+      "text": "Sul Ponente indicava il passaggio al giallo alle due; nelle altre zone alle sei.",
+      "mood": "attention",
+      "intensity": 0.75,
+      "intent": "explain",
+      "sourceIds": [
+        "arpal",
+        "ansa-meteo"
+      ],
+      "screenText": "Contano la zona e l’orario."
+    },
+    {
+      "scene": "meteo",
+      "text": "Anche la fine del giallo era distribuita tra le sei, le nove e le quattordici.",
+      "mood": "attention",
+      "intensity": 0.75,
+      "intent": "explain",
+      "sourceIds": [
+        "arpal",
+        "ansa-meteo"
+      ],
+      "screenText": "Contano la zona e l’orario."
+    },
+    {
+      "scene": "meteo",
+      "text": "Perché riportare gli orari?",
+      "mood": "attention",
+      "intensity": 0.72,
+      "intent": "emphasize",
+      "sourceIds": [
+        "arpal"
+      ],
+      "screenText": "Perché guardare gli orari?"
+    },
+    {
+      "scene": "meteo",
+      "text": "Perché un titolo regionale da solo non descrive la situazione del proprio comune.",
+      "mood": "attention",
+      "intensity": 0.72,
+      "intent": "emphasize",
+      "sourceIds": [
+        "arpal"
+      ],
+      "screenText": "Conta la situazione locale."
+    },
+    {
+      "scene": "meteo",
+      "text": "Arpal segnalava temporali persistenti e chiedeva di seguire gli aggiornamenti.",
+      "mood": "attention",
+      "intensity": 0.72,
+      "intent": "emphasize",
+      "sourceIds": [
+        "arpal"
+      ],
+      "screenText": "Temporali: segui gli aggiornamenti."
+    },
+    {
+      "scene": "meteo",
+      "text": "Questo è il riepilogo del bollettino di ieri: per decidere oggi contano l’ultimo avviso ufficiale e le indicazioni locali. Il passaggio a un colore diverso non significa che ogni rischio sia sparito.",
+      "mood": "attention",
+      "intensity": 0.72,
+      "intent": "emphasize",
+      "sourceIds": [
+        "arpal"
+      ],
+      "screenText": "Consulta l’ultimo bollettino."
+    },
+    {
+      "scene": "chiusura",
+      "text": "Per le fonti e gli approfondimenti, vai su daily.conclavia.me.",
+      "mood": "agreement",
+      "intensity": 0.79,
+      "intent": "invite",
+      "sourceIds": []
+    },
+    {
+      "scene": "chiusura",
+      "text": "Segui Conclavia Daily: ci ritroviamo con le prossime notizie.",
+      "mood": "agreement",
+      "intensity": 0.79,
+      "intent": "invite",
+      "sourceIds": []
+    },
+    {
+      "scene": "chiusura",
+      "text": "Meno rumore, più contesto.",
+      "mood": "agreement",
+      "intensity": 0.79,
+      "intent": "invite",
+      "sourceIds": []
+    }
+  ],
+  "scenes": [
+    {
+      "id": "apertura",
+      "kind": "cards",
+      "kicker": "21 OTTOBRE 2026 · EDIZIONE PILOTA",
+      "lines": [
+        "Quattro minuti.",
+        "Il punto sulle notizie."
+      ],
+      "items": [
+        "Trasporti: fondi e proteste.",
+        "Ucraina: nuovi colloqui.",
+        "L’acqua, vista dallo spazio.",
+        "Quattro minuti. Il punto sulle notizie.",
+        "Quattro minuti. Il punto sulle notizie."
+      ]
+    },
+    {
+      "id": "trasporti",
+      "kind": "cards",
+      "kicker": "TRASPORTI · ANSA / PMI.IT",
+      "lines": [
+        "Tir: fondi annunciati, blocchi ancora aperti."
+      ],
+      "items": [
+        "Trasporti: fondi e proteste.",
+        "Fondi contro il caro gasolio.",
+        "480 milioni: l’annuncio del governo.",
+        "Pagamenti: attesa la verifica.",
+        "Proteste ancora aperte.",
+        "Sicilia: revocato il fermo.",
+        "Puglia: revoca parziale.",
+        "Decisioni diverse per regione.",
+        "Nuovo tavolo il 27 ottobre.",
+        "Crediti: un calendario annunciato.",
+        "Impegni e accrediti: cosa verificare."
+      ]
+    },
+    {
+      "id": "mondo",
+      "kind": "cards",
+      "kicker": "UCRAINA · GOVERNO NORVEGESE / ANSA",
+      "lines": [
+        "A Oslo, nuovi colloqui."
+      ],
+      "items": [
+        "Ucraina: nuovi colloqui a Oslo.",
+        "Il tavolo di Oslo.",
+        "Il tavolo di Oslo.",
+        "Il tavolo di Oslo.",
+        "Støre: «Colloqui costruttivi».",
+        "Il negoziato resta aperto.",
+        "Il negoziato resta aperto.",
+        "Sicurezza, territori e sanzioni.",
+        "Annunciato un nuovo incontro.",
+        "La posizione norvegese.",
+        "Il negoziato resta aperto.",
+        "Il negoziato resta aperto.",
+        "Il negoziato resta aperto."
+      ]
+    },
+    {
+      "id": "scienza",
+      "kind": "cards",
+      "kicker": "SCIENZA · NASA EARTH OBSERVATORY",
+      "lines": [
+        "L’acqua vista dallo spazio."
+      ],
+      "items": [
+        "Come si misura l’acqua dallo spazio?",
+        "Oltre vent’anni di osservazioni.",
+        "La gravità rivela le riserve d’acqua.",
+        "Dati dal 2002 al 2025.",
+        "40 regioni, anche la traccia umana.",
+        "Clima e uso dell’acqua.",
+        "Una mappa più dettagliata.",
+        "Più dettaglio nello spazio.",
+        "Tendenze, non previsioni di siccità.",
+        "Un cambiamento già osservato.",
+        "California e India settentrionale."
+      ]
+    },
+    {
+      "id": "meteo",
+      "kind": "cards",
+      "kicker": "LIGURIA · BOLLETTINO DEL 20 OTTOBRE",
+      "lines": [
+        "Allerta: contano zona e orario."
+      ],
+      "items": [
+        "Liguria: il bollettino di ieri.",
+        "Allerta: scadenze diverse per zona.",
+        "Contano la zona e l’orario.",
+        "Contano la zona e l’orario.",
+        "Perché guardare gli orari?",
+        "Conta la situazione locale.",
+        "Temporali: segui gli aggiornamenti.",
+        "Consulta l’ultimo bollettino."
+      ]
+    },
+    {
+      "id": "chiusura",
+      "kind": "signature",
+      "kicker": "FONTI E CONTESTO",
+      "lines": [
+        "CDaily"
+      ]
+    }
+  ],
+  "revision": 2,
+  "targetSeconds": 240,
+  "speechModel": "eleven_v4_turbo"
+}

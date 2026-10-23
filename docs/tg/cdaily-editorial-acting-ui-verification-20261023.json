@@ -1,0 +1,76 @@
+{
+  "origin": "http://127.0.0.1:3107",
+  "providerCalls": 0,
+  "databaseWrites": 0,
+  "errors": [],
+  "results": [
+    {
+      "kind": "editorial-lab",
+      "intent": "reassure",
+      "width": 390,
+      "duration": 8,
+      "overflow": false,
+      "paused": true,
+      "audio": false
+    },
+    {
+      "kind": "editorial-lab",
+      "intent": "reassure",
+      "width": 1440,
+      "duration": 8,
+      "overflow": false,
+      "paused": true,
+      "audio": false
+    },
+    {
+      "kind": "editorial-lab",
+      "intent": "reflect",
+      "width": 390,
+      "duration": 8,
+      "overflow": false,
+      "paused": true,
+      "audio": false
+    },
+    {
+      "kind": "editorial-lab",
+      "intent": "reflect",
+      "width": 1440,
+      "duration": 8,
+      "overflow": false,
+      "paused": true,
+      "audio": false
+    },
+    {
+      "kind": "production-adapter",
+      "intent": "reassure",
+      "portrait": false,
+      "frames": 201,
+      "peak": 0.9999999620104643,
+      "audio": false
+    },
+    {
+      "kind": "production-adapter",
+      "intent": "reassure",
+      "portrait": true,
+      "frames": 201,
+      "peak": 0.9999999620104643,
+      "audio": false
+    },
+    {
+      "kind": "production-adapter",
+      "intent": "reflect",
+      "portrait": false,
+      "frames": 201,
+      "peak": 0.9999999620104643,
+      "audio": false
+    },
+    {
+      "kind": "production-adapter",
+      "intent": "reflect",
+      "portrait": true,
+      "frames": 201,
+      "peak": 0.9999999620104643,
+      "audio": false
+    }
+  ]
+}

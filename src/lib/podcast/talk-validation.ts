@@ -1,3 +1,4 @@
+import { isVideoTopicMode, normalizeVideoTopicMode, normalizeVideoTopicText, VIDEO_TOPIC_MAX_LENGTH } from "./video-topic";
 // Recovered from vgflutter/conclavia @ 5d4746f900a106defe1377131bce7ebbc5b69ca3.
 // Namespaced podcast feature; existing Meeting records and runtime stay separate.
 import type {
@@ -225,11 +226,18 @@ function parseParticipant(
       : requiredString(participant.role, `${field}.role`, issues);
 
   const sex = participantSex(participant.sex, index, `${field}.sex`, issues);
+  const personalityPrompt = kind === "ai"
+    ? optionalString(participant.personalityPrompt, `${field}.personalityPrompt`, issues)
+    : undefined;
+  if (personalityPrompt && personalityPrompt.length > 2000) {
+    issues.push(`${field}.personalityPrompt must not exceed 2000 characters`);
+  }
   return {
     kind,
     sex,
     name,
     role,
+    personalityPrompt,
     perspectiveMode: kind === "ai" ? mode : "custom",
     perspectivePrompt:
       kind === "ai"
@@ -474,7 +482,12 @@ function parseSettings(value: unknown, issues: string[]): TalkSettings {
   }
   if (settings.studioCast !== undefined && !isStudioCast(settings.studioCast)) issues.push("settings.studioCast must be one of the supported casts");
   if (settings.studioGuest !== undefined && !isStudioGuest(settings.studioGuest)) issues.push("settings.studioGuest must be auto, reserve, or hidden");
+  if (settings.videoTopicMode !== undefined && !isVideoTopicMode(settings.videoTopicMode)) issues.push("settings.videoTopicMode must be episode, conversation, custom, or hidden");
+  if (settings.videoTopicText !== undefined && (typeof settings.videoTopicText !== "string" || settings.videoTopicText.length > VIDEO_TOPIC_MAX_LENGTH)) issues.push("settings.videoTopicText must be a string of at most 80 characters");
+  if (settings.videoTopicMode === "custom" && !normalizeVideoTopicText(settings.videoTopicText)) issues.push("settings.videoTopicText is required for a custom video topic");
   return {
+    videoTopicMode: normalizeVideoTopicMode(settings.videoTopicMode),
+    videoTopicText: normalizeVideoTopicText(settings.videoTopicText),
     voiceProvider: settings.voiceProvider === "kokoro" ? "kokoro" : "inworld",
     maxTurns: Number.isInteger(maxTurns) ? (maxTurns as number) : 1,
     targetDurationMinutes: Number.isInteger(targetDurationMinutes)

@@ -1,0 +1,5 @@
+'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import styles from './TgNewsroom.module.css';
+export function TgNavigation(){const pathname=usePathname();return <nav className={styles.navigation} aria-label="Studio TG"><Link href="/podcast/tg" aria-current={pathname==='/podcast/tg'?'page':undefined}>Identità e formato</Link><Link href="/podcast/tg/avatar" aria-current={pathname==='/podcast/tg/avatar'?'page':undefined}>Rifinitura Alex</Link><Link href="/podcast/tg/performance" aria-current={pathname==='/podcast/tg/performance'?'page':undefined}>Prova di recitazione</Link><Link href="/podcast/tg/espressioni" aria-current={pathname==='/podcast/tg/espressioni'?'page':undefined}>Espressioni e transizioni</Link><Link href="/podcast/tg/presentazione" aria-current={pathname==='/podcast/tg/presentazione'?'page':undefined}>Presentazione</Link><Link href="/podcast/tg/redazione" aria-current={pathname==='/podcast/tg/redazione'?'page':undefined}>Redazione e pubblicazione</Link></nav>;}

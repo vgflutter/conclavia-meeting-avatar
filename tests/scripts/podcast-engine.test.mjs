@@ -28,7 +28,7 @@ function loader({ overrides = {}, env = {}, fetcher = () => { throw new Error("U
       ? load(name.slice(0, name.lastIndexOf("/") + 1) + dependency.replace(/^\.\//, ""))
       : load(dependency);
     runInNewContext(compiled, { module: testModule, exports: testModule.exports, require: localRequire,
-      process: { env }, console, fetch: fetcher, AbortController, AbortSignal, DOMException, TextDecoder, TextEncoder, setTimeout,
+      process: { env }, console, fetch: fetcher, AbortController, AbortSignal, DOMException, TextDecoder, TextEncoder, Response, ReadableStream, setTimeout,
     }, { filename: path });
     return testModule.exports;
   }
@@ -42,7 +42,7 @@ function fixture(count = 3) {
     participants: Array.from({ length: count }, (_, index) => ({
       kind: index === 2 ? "human" : "ai", sex: index % 2 ? "female" : "male",
       name: `Persona ${index}`, role: index === 2 ? "Ospite reale" : "Conduttore", perspectiveMode: "custom",
-      perspectivePrompt: `PRIVATE_POSITION_${index}`, speakingStylePrompt: `PRIVATE_VOICE_${index}`,
+      perspectivePrompt: `PRIVATE_POSITION_${index}`, speakingStylePrompt: `PRIVATE_VOICE_${index}`, personalityPrompt: `PRIVATE_PERSONALITY_${index}`,
       goals: `PRIVATE_GOAL_${index}`, assertiveness: 50, patience: 60, interruptiveness: 20, baselineTension: 20,
     })),
     moderator: { kind: "none", style: "neutral", canInterrupt: true, manageTime: true, summarizeAtEnd: true },
@@ -308,12 +308,95 @@ test("only the speaking AI's private character is included; real human is never 
   const built = prompt.buildTurnPrompt(talk, run, plan);
   const sent = built.instructions + "\n" + built.input;
   assert.match(sent, new RegExp(`PRIVATE_POSITION_${plan.participantIndex}`));
+  assert.match(sent, new RegExp(`PRIVATE_PERSONALITY_${plan.participantIndex}`));
   for (let index = 0; index < 3; index++) {
     if (index !== plan.participantIndex) assert.ok(!sent.includes(`PRIVATE_POSITION_${index}`));
+    if (index !== plan.participantIndex) assert.ok(!sent.includes(`PRIVATE_PERSONALITY_${index}`));
   }
   assert.match(built.instructions, /Never write dialogue.*real human/);
   assert.match(built.input, /Chi decide quando fidarsi/);
   assert.match(built.input, /Chiedi esempi concreti/);
+});
+
+test("personality is optional for legacy records, bounded for AI, and never assigned to the human guest", () => {
+  const input = fixture();
+  const parsed = validation.validateTalkInput(input);
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.data.participants[0].personalityPrompt, "PRIVATE_PERSONALITY_0");
+  assert.equal(parsed.data.participants[2].personalityPrompt, undefined);
+  const legacy = fixture();
+  for (const person of legacy.participants) delete person.personalityPrompt;
+  const original = JSON.stringify(legacy.participants);
+  const result = validation.validateTalkInput(legacy);
+  assert.equal(result.success, true);
+  assert.equal(result.data.participants[0].personalityPrompt, undefined);
+  assert.equal(result.data.participants[0].perspectivePrompt, "PRIVATE_POSITION_0");
+  assert.equal(JSON.stringify(legacy.participants), original);
+  for (const invalid of [25, {}, "a".repeat(2001)]) {
+    input.participants[0].personalityPrompt = invalid;
+    const rejected = validation.validateTalkInput(input);
+    assert.equal(rejected.success, false);
+    assert.ok(rejected.issues.some(issue => issue.includes("personalityPrompt")));
+  }
+});
+
+test("personality and episode viewpoint survive persistence separately and run snapshots remain immutable", () => {
+  const { Types } = nativeRequire("mongoose");
+  const { TalkModel } = load("@/models/PodcastTalk");
+  const { TalkRunModel } = load("@/models/PodcastRun");
+  const { serializeTalk } = load("@/lib/podcast/serialize-talk");
+  const { serializeTalkRun } = load("@/lib/podcast/serialize-talk-run");
+  const input = fixture();
+  const record = new TalkModel({ ...input, createdAt: new Date(0), updatedAt: new Date(0) });
+  assert.equal(record.validateSync(), undefined);
+  const snapshot = serializeTalk(TalkModel.hydrate(record.toObject()));
+  assert.equal(snapshot.participants[0].personalityPrompt, "PRIVATE_PERSONALITY_0");
+  assert.equal(snapshot.participants[0].perspectivePrompt, "PRIVATE_POSITION_0");
+  const run = new TalkRunModel({ ...runFixture(snapshot, director), talkId: new Types.ObjectId(),
+    talkSnapshot: snapshot, startedAt: new Date(0), createdAt: new Date(0), updatedAt: new Date(0) });
+  const persistedRun = TalkRunModel.hydrate(run.toObject());
+  record.participants[0].personalityPrompt = "Later personality";
+  snapshot.participants[0].personalityPrompt = "Later source edit";
+  const serialized = serializeTalkRun(persistedRun);
+  assert.equal(serialized.talkSnapshot.participants[0].personalityPrompt, "PRIVATE_PERSONALITY_0");
+  serialized.talkSnapshot.participants[0].personalityPrompt = "Later response edit";
+  assert.equal(persistedRun.talkSnapshot.participants[0].personalityPrompt, "PRIVATE_PERSONALITY_0");
+});
+
+test("simple personality profiles fill real character instructions without changing identity, voice or episode stance", () => {
+  const { personalityProfile, selectedPersonalityProfile } = load("@/lib/podcast/personality-presets");
+  for (const language of ["it", "en"]) {
+    for (const id of ["curious", "analytical", "playful", "empathetic"]) {
+      const before = fixture(2).participants[0];
+      before.voiceId = "im_nicola";
+      const person = { ...before, ...personalityProfile(id, language) };
+      assert.equal(selectedPersonalityProfile(person), id);
+      for (const key of ["voiceId", "name", "sex", "role", "perspectivePrompt", "goals"]) assert.equal(person[key], before[key]);
+      assert.equal(selectedPersonalityProfile({ ...person, patience: person.patience - 1 }), "custom");
+      assert.equal(selectedPersonalityProfile({ ...person, personalityPrompt: "My own character" }), "custom");
+    }
+  }
+  assert.equal(selectedPersonalityProfile(fixture(2).participants[0]), "custom");
+  assert.equal(personalityProfile("missing", "it"), undefined);
+});
+
+test("new hosts can start with a personality and no preassigned opinion", () => {
+  const { defaultPodcast } = load("@/components/podcast/podcast-defaults");
+  for (const english of [false, true]) {
+    const talk = defaultPodcast(english);
+    const parsed = validation.validateTalkInput(talk);
+    assert.equal(parsed.success, true, JSON.stringify(parsed));
+    for (const person of parsed.data.participants.filter(person => person.kind === "ai")) {
+      assert.equal(person.perspectiveMode, "automatic");
+      assert.equal(person.perspectivePrompt, "");
+      assert.ok(person.personalityPrompt.length > 0);
+    }
+    const run = runFixture(talk, director);
+    const plan = director.chooseNextTurn(talk, run);
+    const built = prompt.buildTurnPrompt(talk, run, plan);
+    assert.match(built.instructions, /Form your own position from the episode context/u);
+    assert.match(built.instructions, /allowing your opinion and sentence moods to evolve/u);
+  }
 });
 
 test("closing remains an AI turn with optional human guest; completed run has no next turn", () => {
@@ -380,7 +463,7 @@ test("Gemini structured responses reject token limits and blocked content withou
 });
 
 /** In-memory persistence boundary exercises orchestration without Mongo or a provider. */
-function orchestrationFixture({ expectHuman = false, aiEnabled = false, generation } = {}) {
+function orchestrationFixture({ expectHuman = false, aiEnabled = false, generation, review } = {}) {
   const { Types } = nativeRequire("mongoose");
   const talk = fixture(), run = runFixture(talk, director);
   const plan = { speakerType: "participant", participantIndex: 2, speakerName: talk.participants[2].name,
@@ -429,7 +512,7 @@ function orchestrationFixture({ expectHuman = false, aiEnabled = false, generati
       },
       ProviderError: class ProviderError extends Error {},
     },
-    "@/lib/podcast/talk-editorial-review": { reviewEditorialArc: () => { providerCalls++; throw new Error("No paid editorial calls"); } },
+    "@/lib/podcast/talk-editorial-review": { reviewEditorialArc: (...args) => { providerCalls++; if (review) return review(...args); throw new Error("No paid editorial calls"); } },
   } })("@/lib/podcast/advance-talk-run");
   return { engine, document, id: document._id.toString(), providerCalls: () => providerCalls };
 }
@@ -634,4 +717,123 @@ test("visual format presets cover six distinct families and preserve editorial c
     assert.equal(JSON.stringify({ participants: input.participants, topic: input.topic, centralQuestion: input.centralQuestion, voiceProvider: input.settings.voiceProvider }), before);
     assert.ok(formats.getStudioStyleGuide(format.selection.studioTheme).formats.some(item => item.id === format.id));
   }
+});
+
+test("low latency stores validated speech before editorial review and retains the lease until memory is ready", async () => {
+  let finishReview, startedReview;
+  const reviewing = new Promise(resolve => { startedReview = resolve; });
+  const release = new Promise(resolve => { finishReview = resolve; });
+  const context = orchestrationFixture({ aiEnabled: true, review: async (_talk, projected) => {
+    startedReview(); await release; return { state: projected.discussionState };
+  } });
+  context.document.participantTurnCount = 3;
+  let ready = 0;
+  const generating = context.engine.advanceTalkRun(context.id, {
+    onSpeechStored(run) {
+      ready++;
+      assert.equal(run.status, "generating");
+      assert.equal(context.document.messages.length, 1);
+      assert.equal(run.messages[0].performance.source, "ai");
+      assert.equal(context.document.generationToken.length > 0, true);
+    },
+  }, { lowLatency: true });
+  await reviewing;
+  assert.equal(ready, 1);
+  await assert.rejects(context.engine.advanceTalkRun(context.id), error => error.status === 409);
+  finishReview();
+  const result = await generating;
+  assert.equal(result.messages.length, 1, "early save and final review never duplicate speech");
+  assert.equal(result.status, "idle");
+  assert.equal(context.document.generationToken, undefined);
+});
+
+test("Claude receives the selected character and context in one structured API request without altering the shared schema", async () => {
+  const calls = [];
+  const data = { sentences: [acting("Un esempio concreto aiuterebbe.")] };
+  const schemaBefore = JSON.stringify(performance.TURN_PERFORMANCE_SCHEMA);
+  const provider = loader({ env: { PODCAST_AI_ENABLED: "true", ANTHROPIC_API_KEY: "offline-test-key", PODCAST_CLAUDE_MODEL: "configured-claude-test" },
+    fetcher: async (url, options) => {
+      calls.push({ url, options });
+      return Response.json({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify(data) }], usage: { input_tokens: 42, output_tokens: 23 } });
+    } })("@/lib/podcast/llm-provider");
+  const talk = fixture(2); talk.participants[0].modelOverride = "claude-default";
+  const run = runFixture(talk, director), plan = { ...director.chooseNextTurn(talk, run), participantIndex: 0 };
+  const built = prompt.buildTurnPrompt(talk, run, plan);
+  const result = await provider.generateLlmJson({ model: "claude-default", ...built, schemaName: "podcast_turn_performance", schema: performance.TURN_PERFORMANCE_SCHEMA });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, "https://api.anthropic.com/v1/messages");
+  const body = JSON.parse(calls[0].options.body);
+  assert.equal(body.model, "configured-claude-test");
+  assert.ok(body.system.includes("PRIVATE_PERSONALITY_0"));
+  assert.ok(!body.system.includes("PRIVATE_PERSONALITY_1"));
+  assert.ok(body.messages[0].content.includes(talk.centralQuestion));
+  assert.equal(body.output_config.format.type, "json_schema");
+  assert.equal(result.generation.provider, "claude");
+  assert.equal(result.generation.inputTokens, 42);
+  assert.equal(performance.parseGeneratedPerformance(result.data).performance.sentences[0].mood, "curiosity");
+  assert.equal(JSON.stringify(performance.TURN_PERFORMANCE_SCHEMA), schemaBefore);
+});
+
+test("Claude readiness requires an explicit model and key; partial or refused messages never become speech", async () => {
+  let network = 0;
+  const disabled = loader({ env: { ANTHROPIC_API_KEY: "offline-key", PODCAST_CLAUDE_MODEL: "test-model" }, fetcher: () => { network++; } })("@/lib/podcast/llm-provider");
+  assert.equal(disabled.isProviderConfigured("claude"), false);
+  await assert.rejects(disabled.generateLlmJson({ model: "claude-default", instructions: "test", input: "test", schemaName: "test", schema: {} }));
+  assert.equal(network, 0);
+  for (const stop_reason of ["max_tokens", "refusal", "stop_sequence"]) {
+    const provider = loader({ env: { PODCAST_AI_ENABLED: "true", ANTHROPIC_API_KEY: "offline-key", PODCAST_CLAUDE_MODEL: "test-model" },
+      fetcher: async () => Response.json({ stop_reason, content: [{ type: "text", text: '{"sentences":[]}' }] }) })("@/lib/podcast/llm-provider");
+    await assert.rejects(provider.generateLlmJson({ model: "claude-default", instructions: "test", input: "test", schemaName: "test", schema: {} }), /did not complete/u);
+  }
+});
+
+test("disconnecting the podcast SSE stream cancels its generation signal", async () => {
+  let observed;
+  const streamRoute = loader({ overrides: {
+    "@/lib/podcast/request-guard": { podcastMutationIsSameOrigin: () => true },
+    "@/lib/podcast/advance-talk-run": {
+      AdvanceTalkRunError: class AdvanceTalkRunError extends Error {},
+      advanceTalkRun: async (_id, hooks, options) => {
+        observed = options.signal;
+        hooks.onPlan({ speakerName: "Offline fixture" });
+        await new Promise((_, reject) => options.signal.addEventListener("abort", () => reject(new Error("Disconnected")), { once: true }));
+      },
+    },
+  } })("@/app/api/podcast/runs/[id]/next/stream/route");
+  const response = await streamRoute.POST(new Request("http://127.0.0.1/api/podcast/runs/aaaaaaaaaaaaaaaaaaaaaaaa/next/stream", { method: "POST" }), { params: Promise.resolve({ id: "a".repeat(24) }) });
+  const reader = response.body.getReader();
+  await reader.read(); assert.equal(observed.aborted, false);
+  await reader.cancel(); assert.equal(observed.aborted, true);
+});
+
+test("public video topic modes validate, serialize, and preserve immutable episode snapshots", () => {
+  const topic = load("@/lib/podcast/video-topic");
+  const input = fixture();
+  assert.equal(topic.resolveVideoTopic(input, "Un altro tema"), input.topic);
+  input.settings.videoTopicMode = "conversation";
+  assert.equal(topic.resolveVideoTopic(input), input.topic);
+  assert.equal(topic.resolveVideoTopic(input, "Una domanda in onda"), "Una domanda in onda");
+  input.settings.videoTopicMode = "hidden";
+  assert.equal(topic.resolveVideoTopic(input, "Una domanda in onda"), "");
+  input.settings.videoTopicMode = "custom";
+  input.settings.videoTopicText = "  AI: aiuto o delega?  ";
+  const valid = validation.validateTalkInput(input);
+  assert.equal(valid.success, true);
+  assert.equal(valid.data.settings.videoTopicText, "AI: aiuto o delega?");
+  assert.equal(topic.resolveVideoTopic(valid.data, "Altro"), "AI: aiuto o delega?");
+  const { TalkModel } = load("@/models/PodcastTalk");
+  const { serializeTalk } = load("@/lib/podcast/serialize-talk");
+  const record = new TalkModel({ ...valid.data, createdAt: new Date(0), updatedAt: new Date(0) });
+  assert.equal(record.validateSync(), undefined);
+  const saved = serializeTalk(TalkModel.hydrate(record.toObject()));
+  assert.equal(saved.settings.videoTopicMode, "custom");
+  assert.equal(saved.settings.videoTopicText, "AI: aiuto o delega?");
+  for (const changes of [{ videoTopicMode: "unknown" }, { videoTopicText: 23 }, { videoTopicText: "x".repeat(81) }, { videoTopicText: "  " }]) {
+    assert.equal(validation.validateTalkInput({ ...input, settings: { ...input.settings, ...changes } }).success, false);
+  }
+  const { studioSelectionQuery } = load("@/lib/podcast/studio-themes");
+  const query = new URLSearchParams(studioSelectionQuery(saved.settings));
+  assert.equal(query.get("topicText"), "AI: aiuto o delega?");
+  assert.equal(query.get("topicMode"), "custom");
+  assert.equal(topic.normalizeVideoTopicMode(undefined), "episode");
 });

@@ -43,6 +43,11 @@ export class ProviderError extends Error {
 }
 
 function configuredModel(model: LlmModelId): string {
+  if (getLlmModel(model).provider === "claude") {
+    const configured = process.env.PODCAST_CLAUDE_MODEL?.trim();
+    if (!configured) throw new ProviderError("claude", "PODCAST_CLAUDE_MODEL is not configured");
+    return configured;
+  }
   const value = getLlmModel(model).provider === "openai"
     ? process.env.PODCAST_OPENAI_MODEL?.trim() || process.env.OPENAI_MEETING_MODEL?.trim() || "gpt-5.4-mini"
     : process.env.PODCAST_GEMINI_MODEL?.trim();
@@ -78,7 +83,7 @@ function providerErrorMessage(
     ? nestedError.message
     : undefined;
 
-  return `${provider === "openai" ? "OpenAI" : "Gemini"} API ${status}${
+  return `${provider === "openai" ? "OpenAI" : provider === "claude" ? "Claude" : "Gemini"} API ${status}${
     message ? `: ${message.slice(0, 300)}` : ""
   }`;
 }
@@ -347,7 +352,9 @@ async function generateOpenAiJson(
   }
 
   if (isRecord(payload) && typeof payload.status === "string" && payload.status !== "completed") {
-    throw new ProviderError("openai", "OpenAI did not complete the structured response");
+    const detail=isRecord(payload.incomplete_details)?payload.incomplete_details.reason:undefined;
+    const reason=detail==='max_output_tokens'||detail==='content_filter'?`: ${detail}`:'';
+    throw new ProviderError("openai", `OpenAI did not complete the structured response${reason}`);
   }
   const refused = isRecord(payload) && Array.isArray(payload.output) && payload.output.some((item) =>
     isRecord(item) && Array.isArray(item.content) && item.content.some((part) =>
@@ -440,8 +447,42 @@ function parseGeneratedJson<T>(content: string, provider: LlmProvider): T {
   }
 }
 
+/** Claude accepts a smaller schema subset; original constraints are still validated locally. */
+function claudeSchema(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(claudeSchema);
+  if (!isRecord(value)) return value;
+  const constraints = ["minimum", "maximum", "minLength", "maxLength", "minItems", "maxItems", "pattern"];
+  const result = Object.fromEntries(Object.entries(value).filter(([key]) => !constraints.includes(key)).map(([key, item]) => [key, claudeSchema(item)]));
+  const limits = constraints.filter(key => key in value).map(key => `${key}: ${String(value[key])}`);
+  if (limits.length) result.description = [result.description, ...limits].filter(Boolean).join(". ");
+  return result;
+}
+
+async function generateClaude(request: GenerationRequest, schema?: Record<string, unknown>): Promise<GenerationResult> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) throw new ProviderError("claude", "ANTHROPIC_API_KEY is not configured");
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST", headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({
+      model: configuredModel(request.model), system: request.instructions,
+      messages: [{ role: "user", content: request.input }], max_tokens: request.maxOutputTokens ?? 4_000,
+      ...(schema ? { output_config: { format: { type: "json_schema", schema: claudeSchema(schema) } } } : {}),
+    }), signal: providerSignal(request.signal),
+  });
+  const payload = await parseJson(response);
+  if (!response.ok) throw new ProviderError("claude", `Claude API ${response.status}`);
+  if (!isRecord(payload) || payload.stop_reason !== "end_turn" || !Array.isArray(payload.content)) {
+    throw new ProviderError("claude", "Claude did not complete the response");
+  }
+  const content = payload.content.filter(part => isRecord(part) && part.type === "text" && typeof part.text === "string").map(part => part.text).join("").trim();
+  if (!content) throw new ProviderError("claude", "Claude returned no text output");
+  const usage = isRecord(payload.usage) ? payload.usage : undefined;
+  return { content, provider: "claude", model: request.model, inputTokens: integer(usage?.input_tokens), outputTokens: integer(usage?.output_tokens) };
+}
+
 export function isProviderConfigured(provider: LlmProvider): boolean {
   if (process.env.PODCAST_AI_ENABLED !== "true") return false;
+  if (provider === "claude") return Boolean(process.env.ANTHROPIC_API_KEY?.trim() && process.env.PODCAST_CLAUDE_MODEL?.trim());
   return provider === "openai"
     ? Boolean(process.env.OPENAI_API_KEY)
     : Boolean(process.env.GEMINI_API_KEY && process.env.PODCAST_GEMINI_MODEL);
@@ -453,6 +494,11 @@ export async function generateLlmTextStream(
 ): Promise<GenerationResult> {
   requireEnabled();
   const provider = getLlmModel(request.model).provider;
+  if (provider === "claude") {
+    const result = await generateClaude(request);
+    await onDelta?.(result.content);
+    return result;
+  }
   return provider === "openai"
     ? generateOpenAiStream(request, onDelta)
     : generateGeminiStream(request, onDelta);
@@ -470,7 +516,9 @@ export async function generateLlmJson<T>(
   requireEnabled();
   const provider = getLlmModel(request.model).provider;
   const generation =
-    provider === "openai"
+    provider === "claude"
+      ? await generateClaude(request, request.schema)
+      : provider === "openai"
       ? await generateOpenAiJson(request)
       : await generateGeminiJson(request);
   return { data: parseGeneratedJson<T>(generation.content, provider), generation };
