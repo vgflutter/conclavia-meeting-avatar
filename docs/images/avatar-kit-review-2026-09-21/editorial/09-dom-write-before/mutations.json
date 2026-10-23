@@ -1,12 +1,3 @@
-{
-  "d": 2250,
-  "opacity": 625,
-  "transform": 875,
-  "data-rendered-mouth-open": 125,
-  "data-hand-progress": 125,
-  "data-body-lean": 125,
-  "data-head-tilt": 125,
-  "data-head-orientation": 125,
-  "data-reduced-motion": 125,
-  "data-animation-ready": 125
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:424059b321e995b32f50feb217990cebbad212b4b00331b313cd2d6d4a81ab59
+size 260

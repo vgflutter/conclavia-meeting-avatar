@@ -1,16 +1,3 @@
-[
-  {
-    "style": "editorial",
-    "appearance": "business_clay",
-    "errors": [],
-    "writes": [],
-    "stopped": "idle"
-  },
-  {
-    "style": "editorial",
-    "appearance": "business_clay_female",
-    "errors": [],
-    "writes": [],
-    "stopped": "idle"
-  }
-]
+version https://git-lfs.github.com/spec/v1
+oid sha256:2d41104909055560962dd281bbba6bef9bbddc6be20167e180b779a630eb8427
+size 266

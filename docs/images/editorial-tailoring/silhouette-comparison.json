@@ -1,27 +1,3 @@
-{
-  "baseline": "08c3062576b18c57d7735737f42a4f6796831f45",
-  "before": [
-    {
-      "y": 540,
-      "left": 127,
-      "right": 555
-    },
-    {
-      "y": 620,
-      "left": 92,
-      "right": 590
-    }
-  ],
-  "after": [
-    {
-      "y": 540,
-      "left": 126,
-      "right": 556
-    },
-    {
-      "y": 620,
-      "left": 113,
-      "right": 569
-    }
-  ]
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:d6f10404f882178a96869e8d6b8c51a96d8ef49e3d88c91d874cf11aa4d14bfa
+size 363

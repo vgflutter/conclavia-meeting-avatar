@@ -1,21 +1,3 @@
-{
-  "source": "/avatar/test, actual nine-second silent sequence",
-  "previous_kit_revision": "58f6c32",
-  "captures": [
-    {
-      "style": "editorial",
-      "appearance": "business_clay",
-      "errors": [],
-      "writes": [],
-      "stopped": "idle"
-    },
-    {
-      "style": "editorial",
-      "appearance": "business_clay_female",
-      "errors": [],
-      "writes": [],
-      "stopped": "idle"
-    }
-  ],
-  "current_kit_revision": "19efb1b"
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:2f6630a1c2974d252e75399d7f8704a779e1ab4fcce1f56738641bbf0b274860
+size 453
