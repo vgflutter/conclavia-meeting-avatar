@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "checkedAt": "2026-10-24T13:33:46.228Z",
+  "mode": "editorial",
+  "hostRelease": "editorial-20261024132158764-5819ecf3",
+  "localTimerLoaded": false,
+  "controller": {
+    "online": true,
+    "lastSeen": "2026-10-24T13:32:02.805Z",
+    "mode": "editorial",
+    "driver": "systemd"
+  },
+  "textOnlyBundleTested": true,
+  "mediaAdaptersBundled": false,
+  "publicationAdaptersBundled": false,
+  "gui": "http://localhost:3107/podcast/tg/redazione",
+  "checks": {
+    "backendTests": 137,
+    "browserTests": 13,
+    "deployNodeTests": 65,
+    "deployPythonTests": 51,
+    "gatewayTests": 1,
+    "meetingBuild": true,
+    "approvedVisualFingerprints": 17
+  },
+  "productionWindow": {
+    "time": "08:00",
+    "timezone": "Europe/Rome",
+    "firstExpectedRemoteEdition": "2026-10-25",
+    "firstCollectionObserved": false
+  },
+  "publication": {
+    "driver": "chatgpt-work",
+    "taskVerified": false,
+    "enabled": false,
+    "metricoolObservedNetworks": [
+      "facebook",
+      "instagram",
+      "youtube"
+    ],
+    "tiktokVerified": false,
+    "spotifyDeliveryVerified": false
+  },
+  "newDailyProduced": false,
+  "newMediaProduced": false,
+  "posted": false
+}

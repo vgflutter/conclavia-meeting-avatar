@@ -4,6 +4,8 @@ Revisione: **24 ottobre 2026**, fuso editoriale **Europe/Rome**. Questo è il pu
 
 **Priorità corrente:** l’utente ha chiesto di smarcare prima tutto ciò che non riguarda audio/video. Le prossime edizioni Italia sono in `productionMode=editorial`: raccolta, copione e A/B, poi esportazione e stato `editorial_ready`. Nessuna sintesi, render o pubblicazione. [Stato non media e host separato](cdaily-nonmedia-readiness-20261024.md). La sincronizzazione Alex 2 resta rinviata, senza ripetere prove vocali.
 
+**Scheduler corrente:** host editoriale separato sul VPS, release `editorial-20261024132158764-5819ecf3`, timer systemd attivo e persistente, segnale condiviso nel DB. Il precedente timer launchd del Mac è stato disattivato dopo verifica remota; le sezioni storiche che lo descrivono attivo restano cronologia. La prima raccolta/A/B sul nuovo host è attesa il 25 ottobre alle 08:00 Rome (07:00 UTC). Work gestirà la pubblicazione, non una sessione Codex; task e trasporti reali ancora da collaudare e media tuttora rinviati.
+
 ## 1. Che cosa stiamo costruendo
 
 Conclavia Daily / CDaily, made by Conclavia: informazione e intrattenimento con un presentatore sintetico riconoscibile, fatti verificabili e spiegazioni accessibili. Claim: **«Meno rumore, più contesto.»** Sito pubblico: <https://daily.conclavia.me>, italiano e inglese.

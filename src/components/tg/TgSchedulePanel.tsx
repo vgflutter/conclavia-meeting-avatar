@@ -19,7 +19,7 @@ export function TgSchedulePanel({ slots, now, onSelect }: { slots: TgSlot[]; now
           <strong><time dateTime={slot.scheduledAt}>{clock(slot.scheduledAt, slot.timezone)}</time><small>{slot.timezone}</small></strong>
           <p>{slot.state ? TG_STATE_NAMES[slot.state] : !slot.enabled ? 'Preparazione disattivata' : missed ? 'Finestra saltata' : 'Pianificata · da preparare'}</p>
           <small>Avvio {clock(slot.prepareAt, slot.timezone)}{localEditionDate(new Date(slot.prepareAt),slot.timezone) !== slot.date ? ' · giorno precedente' : ''}</small>
-          <small>{slot.automatic ? 'Revisore finale AI' : 'Modalità assistita'}</small>
+          <small>{slot.productionMode==='editorial'?'Controlli AI A/B · media rinviati':slot.automatic ? 'Revisore finale AI' : 'Modalità assistita'}</small>
           {slot.adjusted && <p className={styles.warning}>Cambio dell’ora: prima occorrenza valida</p>}
           {slot.jobId && <button className={styles.calendarLink} onClick={() => onSelect(slot.jobId!)}>Apri edizione →</button>}
         </div>;

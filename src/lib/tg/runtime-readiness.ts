@@ -11,7 +11,7 @@ export async function productionRuntime(now=new Date()){
   ]);
   return {
     worker:{online:Boolean(worker&&now.getTime()-worker.heartbeatAt.getTime()<90000),lastSeen:worker?.heartbeatAt.toISOString(),phase:worker?.phase,jobId:worker?.jobId,lastErrorAt:worker?.lastErrorAt?.toISOString()},
-    controller:{online:Boolean(controller&&now.getTime()-controller.heartbeatAt.getTime()<180000),lastSeen:controller?.heartbeatAt.toISOString(),mode:controller?.mode,lastDate:controller?.lastDate,lastState:controller?.lastState,lastFinishedAt:controller?.lastFinishedAt?.toISOString()},
+    controller:{online:Boolean(controller&&now.getTime()-controller.heartbeatAt.getTime()<180000),lastSeen:controller?.heartbeatAt.toISOString(),mode:controller?.mode,driver:controller?.driver,lastDate:controller?.lastDate,lastState:controller?.lastState,lastFinishedAt:controller?.lastFinishedAt?.toISOString()},
   };
 }
 export function readinessWithRuntime(product:TgProduct,runtime:{worker:{online:boolean};controller:{online:boolean}}){

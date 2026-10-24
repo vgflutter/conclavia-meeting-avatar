@@ -97,8 +97,9 @@ async function main(){
     try{plan=await effectivePlan(configured);databaseStatus='connected';}catch{}
     const service=process.platform==='darwin'&&process.getuid?`gui/${process.getuid()}/me.conclavia.daily-production`:undefined;
     const loaded=service?(await spawnCommand('/bin/launchctl',['print',service])).code===0:false;
+    const controller=databaseStatus==='connected'?(await (await import('../../src/lib/tg/runtime-readiness')).productionRuntime()).controller:undefined;
     return output({at:now.toISOString(),database:databaseStatus,plan,decision:agentDecision(plan,now),
-      timer:{loaded,installation:await localState('installation.json'),lastTick:await localState('last-tick.json'),lastProduction:await localState('last-production.json'),lastError:await localState('last-error.json')},runtime:runtimeReadiness()});
+      timer:{scope:'local',loaded,installation:await localState('installation.json'),lastTick:await localState('last-tick.json'),lastProduction:await localState('last-production.json'),lastError:await localState('last-error.json')},runtime:{...runtimeReadiness(),productionController:controller}});
   }
   if(!['tick','run','publish','package','channels','preflight'].includes(command))throw new DailyAgentStop('Comandi: plan, status, configure, install, persist, uninstall, tick, run, package, channels, preflight, publish. Aggiungere --dry-run per anteprima senza effetti.');
   let plan=configured;

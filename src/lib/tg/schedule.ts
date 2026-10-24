@@ -7,6 +7,7 @@ export interface TgSlot {
   edition: TgProduct['edition']; date: string; timezone: string;
   prepareAt: string; scheduledAt: string; closesAt: string;
   adjusted: boolean; enabled: boolean; automatic: boolean; jobId?: string; state?: TgJob['state'];
+  productionMode?:TgProduct['productionMode'];
 }
 const wall = (date: Date, timezone: string) => new Intl.DateTimeFormat('sv-SE', {
   timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
@@ -41,7 +42,7 @@ export function editionSlot(product: TgProduct, date: string): TgSlot {
   const { at, adjusted } = editionInstant(date, product.publishTime, product.timezone);
   const production = product.productionTime ? editionInstant(date, product.productionTime, product.timezone) : undefined;
   if (production && production.at >= at) throw new Error('La produzione deve precedere la pubblicazione');
-  return { edition: product.edition, date, timezone: product.timezone,
+  return { edition: product.edition, date, timezone: product.timezone, productionMode:product.productionMode,
     prepareAt: production?.at.toISOString() ?? new Date(at.getTime() - PREPARATION_LEAD_MS).toISOString(), scheduledAt: at.toISOString(),
     closesAt: new Date(at.getTime() + PUBLICATION_GRACE_MS).toISOString(), adjusted: adjusted || Boolean(production?.adjusted),
     enabled: product.enabled, automatic: product.automatic };
