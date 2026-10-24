@@ -1,0 +1,21 @@
+<mood:agreement intensity="0.45" intent="acknowledge">Ciao, questo è Conclavia Daily. Oggi è il ventiquattro ottobre.</mood>
+<mood:attention intensity="0.52" intent="explain">Restiamo tra Italia e estero, con tre temi che si muovono già dalla mattina: piazze sotto controllo, terremoto in Sicilia e nuovi passaggi diplomatici.</mood>
+<mood:attention intensity="0.66" intent="explain">A Milano l’attenzione è già alta in vista delle manifestazioni di sabato, e il centro si prepara a possibili ripercussioni.</mood>
+<mood:attention intensity="0.64" intent="explain">In parallelo, il Movimento 17 ottobre ha revocato i punti annunciati in precedenza e dice che comunicherà le piazze solo all’ultimo momento.</mood>
+<mood:doubt intensity="0.56" intent="reflect">Per questo le autorità restano in allerta in più città, da Milano a Roma, Bologna e Bari.</mood>
+<mood:attention intensity="0.7" intent="explain">In Sicilia continua lo sciame sismico al largo delle Eolie.</mood>
+<mood:attention intensity="0.74" intent="explain">La scossa più forte, registrata dall’Ingv, è stata di magnitudo 5.5 a una profondità di 9 chilometri.</mood>
+<mood:attention intensity="0.63" intent="explain">Dopo la scossa principale sono arrivate altre repliche, tra cui una di magnitudo 3.2 nella notte.</mood>
+<mood:doubt intensity="0.54" intent="reflect">Al momento non risultano danni, e l’allarme maremoto era stato attivato e poi revocato.</mood>
+<mood:attention intensity="0.64" intent="explain">Le cinque attiviste italiane fermate dall’IDF in Cisgiordania rientrano sabato in Italia.</mood>
+<mood:attention intensity="0.7" intent="explain">Intanto Netanyahu ha annunciato una maxioperazione militare dopo l’attentato a un posto di blocco vicino Hebron, con due soldati israeliani uccisi.</mood>
+<mood:doubt intensity="0.56" intent="reflect">Resta aperto quanto durerà l’operazione e quali effetti avrà sul terreno.</mood>
+<mood:attention intensity="0.63" intent="explain">Sul capitolo carburanti, da fonti di Palazzo Chigi emerge la disponibilità kuwaitiana a prorogare il price cap su benzina e diesel.</mood>
+<mood:agreement intensity="0.6" intent="reassure">Eni conferma intanto che manterrà il tetto fino a fine anno, con i livelli attuali di 1,99 euro per la benzina e 2,25 per il gasolio.</mood>
+<mood:doubt intensity="0.54" intent="reflect">Resta però aperta la durata precisa dell’intesa e il livello futuro del tetto.</mood>
+<mood:attention intensity="0.62" intent="explain">Sul dossier Ucraina, Bruxelles punta a trasformare il prossimo round di colloqui in un formato multilaterale con una rappresentanza europea.</mood>
+<mood:attention intensity="0.61" intent="contrast">Zelensky, da parte sua, dice che Kiev è pronta a fare pace subito, ma non a cedere altri territori.</mood>
+<mood:doubt intensity="0.53" intent="reflect">Per ora c’è una spinta diplomatica europea e una linea ucraina molto chiara, ma non ancora un formato concordato dei colloqui.</mood>
+<mood:curiosity intensity="0.64" intent="point-down">Scrivici nei commenti cosa vuoi approfondire:</mood>
+<mood:agreement intensity="0.55" intent="invite">partiamo dalle tue domande.</mood>
+<mood:agreement intensity="0.44" intent="acknowledge">Meno rumore, più contesto.</mood>

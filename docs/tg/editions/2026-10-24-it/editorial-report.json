@@ -1,0 +1,931 @@
+{
+  "version": 1,
+  "edition": "it",
+  "date": "2026-10-24",
+  "scope": "text-only",
+  "scriptSha256": "78e112b20352e8412f5fed55e4b7ec65e9009fc1a656fc41f95435e67356f9a8",
+  "narrationSha256": "814457c3fc4e7d073a7b300560ee5e64af7457e41b7c68f10ebc7fcac452594c",
+  "words": 328,
+  "audit": {
+    "scriptSha256": "78e112b20352e8412f5fed55e4b7ec65e9009fc1a656fc41f95435e67356f9a8",
+    "passed": true,
+    "issues": [],
+    "checkedFacts": 16,
+    "checkedAt": "2026-10-24T06:30:12.696Z",
+    "evidence": "title: È un titolo neutro e coerente con i temi verificati, senza affermazioni fattuali specifiche da smentire.\ndescription: Tutte le cinque notizie elencate sono presenti e coerenti con le fonti: piazze/cortei, sciame sismico, attiviste in Cisgiordania, price cap carburanti e dossier Ucraina; non vedo omissioni fattuali rilevanti.\nheadline_0: L’allerta alta per i cortei di sabato e la vigilanza in più città sono confermate da AGI e Rai News.\nheadline_1: Lo sciame sismico nel Tirreno meridionale con nuove scosse è confermato da AGI, ANSA e INGV.\nheadline_2: Il rientro delle cinque italiane e l’ampliamento dell’operazione israeliana dopo Hebron sono entrambi supportati dalle fonti consultate.\nheadline_3: La proroga del price cap dopo il bilaterale in Kuwait è confermata dalle fonti economiche e politiche citate.\nheadline_4: La richiesta dell’Ue di entrare nei colloqui di pace sull’Ucraina è coerente con Euronews e il contesto politico citato.\ncontext_0: La frase descrive correttamente l’attenzione crescente per le manifestazioni di sabato a Milano.\nchange_0: AGI conferma che il Movimento 17 ottobre ha revocato gli appuntamenti iniziali e comunicherà le piazze all’ultimo momento.\ncontext_1: Le fonti parlano di uno sciame sismico al largo delle Eolie, nel Tirreno meridionale, in corso da ieri.\nchange_1: Adnkronos e AGI riportano una nuova scossa notturna di magnitudo 3.2 dopo la più forte di magnitudo 5.5.\ncontext_2: Euronews e ANSA dicono che le cinque attiviste italiane fermate in Cisgiordania rientrano sabato in Italia.\nchange_2: AP e RaiNews riportano che Netanyahu ha annunciato una vasta operazione dopo l’attacco vicino Hebron.\ncontext_3: Il Sole 24 Ore e ANSA riportano la disponibilità kuwaitiana a prorogare il price cap su benzina e diesel.\nchange_3: ANSA ed Euronews dicono che Eni manterrà il price cap fino a fine anno.\ncontext_4: Euronews riferisce che Bruxelles vuole un ruolo europeo nel prossimo round di colloqui di pace sull’Ucraina.\nchange_4: Zelensky dice che Kiev è pronta a fare pace subito, ma non a cedere altri territori.\nsentence_0: Saluto e data, senza affermazioni fattuali verificabili.\nsentence_1: È un raccordo editoriale generale, non un fatto da verificare.\nsentence_2: L’allerta a Milano è alta in vista delle manifestazioni di sabato e il centro si prepara a possibili ripercussioni.\nsentence_3: Il Movimento 17 ottobre ha revocato i punti annunciati e dice che comunicherà le piazze all’ultimo momento.\nsentence_4: Le autorità restano in allerta anche a Roma, Bologna e Bari oltre che a Milano.\nsentence_5: È in corso uno sciame sismico al largo delle Eolie, nel Tirreno meridionale.\nsentence_6: La scossa più forte è stata di magnitudo 5.5 a 9 chilometri di profondità.\nsentence_7: Le fonti confermano nuove repliche dopo la scossa principale, compresa una di magnitudo 3.2 nella notte.\nsentence_8: Le fonti dicono che al momento non risultano danni e che l’allarme maremoto è stato attivato e poi revocato.\nsentence_9: Euronews riporta che le cinque attiviste italiane fermate dall’IDF rientrano sabato in Italia.\nsentence_10: AP, ANSA e Rai News riportano l’attacco vicino Hebron con due soldati israeliani uccisi e la successiva stretta/operazione israeliana in Cisgiordania.\nsentence_11: Le fonti lasciano ancora aperti durata ed effetti dell’operazione, senza un perimetro definitivo già confermato.\nsentence_12: Le fonti di Palazzo Chigi parlano di disponibilità kuwaitiana a prorogare il price cap su benzina e diesel.\nsentence_13: Eni conferma che manterrà il tetto fino a fine anno e indica i livelli attuali di 1,99 euro per la benzina e 2,25 per il gasolio.\nsentence_14: Le fonti indicano che la durata precisa dell’intesa resta aperta e che non c’è ancora un livello futuro definitivo del tetto.\nsentence_15: Euronews dice che Bruxelles punta a trasformare il prossimo round di colloqui di pace in un formato multilaterale con rappresentanza europea.\nsentence_16: Le fonti riportano che Zelensky è pronto a fare pace ma non a cedere altri territori.\nsentence_17: Le fonti confermano una spinta diplomatica europea, la linea ferma di Kiev e il fatto che un formato concordato non sia ancora definito.\nsentence_18: Invito alla partecipazione del pubblico, senza affermazioni fattuali.\nsentence_19: Chiusura colloquiale/funzionale, senza contenuto fattuale.\nsentence_20: Formula di chiusura editoriale, non fattuale.",
+    "checks": [
+      {
+        "key": "title",
+        "status": "supported",
+        "evidence": "È un titolo neutro e coerente con i temi verificati, senza affermazioni fattuali specifiche da smentire.",
+        "sourceUrls": []
+      },
+      {
+        "key": "description",
+        "status": "supported",
+        "evidence": "Tutte le cinque notizie elencate sono presenti e coerenti con le fonti: piazze/cortei, sciame sismico, attiviste in Cisgiordania, price cap carburanti e dossier Ucraina; non vedo omissioni fattuali rilevanti.",
+        "sourceUrls": [
+          "https://www.agi.it/cronaca/news/2026-10-23/milano-roma-proteste-movimento-17-ottobre-revoca-piazze-39679652/",
+          "https://www.agi.it/cronaca/news/2026-10-23/terremoto-sicilia-palermo-allerta-39672151/",
+          "https://it.euronews.com/2026/10/23/cisgiordania-le-cinque-attiviste-italiane-fermate-dallidf-rientrano-in-italia",
+          "https://www.ansa.it/sito/notizie/mondo/2026/10/24/attacco-al-checkpoint-di-hebron-scattata-unoperazione-antiterrorismo_9ba2138b-09b6-4e76-8477-6a022b91575a.html",
+          "https://www.ansa.it/sito/notizie/politica/2026/10/23/meloni-vede-lemiro-kuwait-disponibile-a-proroga-del-price-cap-q8-sui_02fe203f-3d95-483b-8a77-d06399e5f3bd.html",
+          "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html",
+          "https://www.euronews.com/2026/10/23/eu-vies-to-expand-role-in-ukraine-russia-peace-talks-to-influence-us-thinking",
+          "https://www.rainews.it/articoli/2026/10/zelensky-alla-abc-pronti-a-fare-pace-subito-ma-non-cederemo-altri-territori-guerra-in-ucraina-dd9f5815-406d-4b0b-ac70-9f2c35b6dbb5.html"
+        ]
+      },
+      {
+        "key": "headline_0",
+        "status": "supported",
+        "evidence": "L’allerta alta per i cortei di sabato e la vigilanza in più città sono confermate da AGI e Rai News.",
+        "sourceUrls": [
+          "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/azione-preventiva-del-viminale-il-movimento-17-ottobre-cambia-le-piazze_56996a1f-2ff3-42af-a212-a36e9eaf0944.html",
+          "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/da-milano-a-castel-volturno-la-mappa-delle-piazze_4b093092-5d16-474b-ad7e-21a60f02d95f.html"
+        ]
+      },
+      {
+        "key": "headline_1",
+        "status": "supported",
+        "evidence": "Lo sciame sismico nel Tirreno meridionale con nuove scosse è confermato da AGI, ANSA e INGV.",
+        "sourceUrls": [
+          "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html",
+          "https://cat.ingv.it/it/media-e-documenti/news-it/533-terremoto-eolie-23-ottobre-2026-e-allerta-tsunami"
+        ]
+      },
+      {
+        "key": "headline_2",
+        "status": "supported",
+        "evidence": "Il rientro delle cinque italiane e l’ampliamento dell’operazione israeliana dopo Hebron sono entrambi supportati dalle fonti consultate.",
+        "sourceUrls": [
+          "https://it.euronews.com/2026/10/23/cisgiordania-le-cinque-attiviste-italiane-fermate-dallidf-rientrano-in-italia",
+          "https://www.ansa.it/sito/notizie/mondo/2026/10/24/attacco-al-checkpoint-di-hebron-scattata-unoperazione-antiterrorismo_9ba2138b-09b6-4e76-8477-6a022b91575a.html"
+        ]
+      },
+      {
+        "key": "headline_3",
+        "status": "supported",
+        "evidence": "La proroga del price cap dopo il bilaterale in Kuwait è confermata dalle fonti economiche e politiche citate.",
+        "sourceUrls": [
+          "https://www.ansa.it/sito/notizie/politica/2026/10/23/meloni-vede-lemiro-kuwait-disponibile-a-proroga-del-price-cap-q8-sui_02fe203f-3d95-483b-8a77-d06399e5f3bd.html",
+          "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html"
+        ]
+      },
+      {
+        "key": "headline_4",
+        "status": "supported",
+        "evidence": "La richiesta dell’Ue di entrare nei colloqui di pace sull’Ucraina è coerente con Euronews e il contesto politico citato.",
+        "sourceUrls": [
+          "https://www.euronews.com/2026/10/23/eu-vies-to-expand-role-in-ukraine-russia-peace-talks-to-influence-us-thinking",
+          "https://it.euronews.com/2026/10/23/ucraina-ue-vuole-un-posto-ai-negoziati-di-pace-possibile-contatto-diretto-con-mosca"
+        ]
+      },
+      {
+        "key": "context_0",
+        "status": "supported",
+        "evidence": "La frase descrive correttamente l’attenzione crescente per le manifestazioni di sabato a Milano.",
+        "sourceUrls": [
+          "https://www.rainews.it/video/2026/10/massima-allerta-a-milano-i-negozi-del-centro-si-blindano-5968c14f-c993-44d3-9b54-5efb2eda06df.html"
+        ]
+      },
+      {
+        "key": "change_0",
+        "status": "supported",
+        "evidence": "AGI conferma che il Movimento 17 ottobre ha revocato gli appuntamenti iniziali e comunicherà le piazze all’ultimo momento.",
+        "sourceUrls": [
+          "https://www.agi.it/cronaca/news/2026-10-23/milano-roma-proteste-movimento-17-ottobre-revoca-piazze-39679652/",
+          "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/azione-preventiva-del-viminale-il-movimento-17-ottobre-cambia-le-piazze_56996a1f-2ff3-42af-a212-a36e9eaf0944.html"
+        ]
+      },
+      {
+        "key": "context_1",
+        "status": "supported",
+        "evidence": "Le fonti parlano di uno sciame sismico al largo delle Eolie, nel Tirreno meridionale, in corso da ieri.",
+        "sourceUrls": [
+          "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html",
+          "https://www.agi.it/cronaca/news/2026-10-23/terremoto-sicilia-palermo-allerta-39672151/"
+        ]
+      },
+      {
+        "key": "change_1",
+        "status": "supported",
+        "evidence": "Adnkronos e AGI riportano una nuova scossa notturna di magnitudo 3.2 dopo la più forte di magnitudo 5.5.",
+        "sourceUrls": [
+          "https://www.adnkronos.com/cronaca/terremoto-sicilia-oggi-sciame-sismico-palermo-ultime-news_5rET6j9UuuB2l2l5koXw32",
+          "https://www.agi.it/cronaca/news/2026-10-23/terremoto-sicilia-palermo-allerta-39672151/"
+        ]
+      },
+      {
+        "key": "context_2",
+        "status": "supported",
+        "evidence": "Euronews e ANSA dicono che le cinque attiviste italiane fermate in Cisgiordania rientrano sabato in Italia.",
+        "sourceUrls": [
+          "https://it.euronews.com/2026/10/23/cisgiordania-le-cinque-attiviste-italiane-fermate-dallidf-rientrano-in-italia",
+          "https://www.ansa.it/sito/notizie/mondo/2026/10/23/attiviste-italiane-espulse-da-israele.-tajani-domani-mattina-il-rientro-in-italia_9b783e6a-ae93-41de-ab9b-63414f183e13.html"
+        ]
+      },
+      {
+        "key": "change_2",
+        "status": "supported",
+        "evidence": "AP e RaiNews riportano che Netanyahu ha annunciato una vasta operazione dopo l’attacco vicino Hebron.",
+        "sourceUrls": [
+          "https://apnews.com/article/f6646718072b4ff6929cff43297edd05",
+          "https://www.rainews.it/maratona/2026/10/guerre-medio-oriente-israele-arresta-5-italiane-in-cisgiordania-farnesina-chiede-chiarimenti-0bc60231-743f-477f-9f6f-0e813d6f5af9.html"
+        ]
+      },
+      {
+        "key": "context_3",
+        "status": "supported",
+        "evidence": "Il Sole 24 Ore e ANSA riportano la disponibilità kuwaitiana a prorogare il price cap su benzina e diesel.",
+        "sourceUrls": [
+          "https://www.ilsole24ore.com/art/fonti-chigi-disponibilita-q8-prorogare-price-cap-AJkl03sB",
+          "https://www.ansa.it/sito/notizie/politica/2026/10/23/meloni-vede-lemiro-kuwait-disponibile-a-proroga-del-price-cap-q8-sui_02fe203f-3d95-483b-8a77-d06399e5f3bd.html"
+        ]
+      },
+      {
+        "key": "change_3",
+        "status": "supported",
+        "evidence": "ANSA ed Euronews dicono che Eni manterrà il price cap fino a fine anno.",
+        "sourceUrls": [
+          "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html",
+          "https://it.euronews.com/2026/10/23/eni-annuncia-che-manterra-un-tetto-ai-carburanti-almeno-per-altri-due-mesi-monitorando-il-"
+        ]
+      },
+      {
+        "key": "context_4",
+        "status": "supported",
+        "evidence": "Euronews riferisce che Bruxelles vuole un ruolo europeo nel prossimo round di colloqui di pace sull’Ucraina.",
+        "sourceUrls": [
+          "https://www.euronews.com/2026/10/23/eu-vies-to-expand-role-in-ukraine-russia-peace-talks-to-influence-us-thinking",
+          "https://it.euronews.com/2026/10/23/ucraina-ue-vuole-un-posto-ai-negoziati-di-pace-possibile-contatto-diretto-con-mosca"
+        ]
+      },
+      {
+        "key": "change_4",
+        "status": "supported",
+        "evidence": "Zelensky dice che Kiev è pronta a fare pace subito, ma non a cedere altri territori.",
+        "sourceUrls": [
+          "https://www.rainews.it/articoli/2026/10/zelensky-alla-abc-pronti-a-fare-pace-subito-ma-non-cederemo-altri-territori-guerra-in-ucraina-dd9f5815-406d-4b0b-ac70-9f2c35b6dbb5.html",
+          "https://www.euronews.com/2026/10/22/a-fraught-push-for-peace-and-a-race-to-fund-ukraine"
+        ]
+      },
+      {
+        "key": "sentence_0",
+        "status": "supported",
+        "evidence": "Saluto e data, senza affermazioni fattuali verificabili.",
+        "sourceUrls": []
+      },
+      {
+        "key": "sentence_1",
+        "status": "supported",
+        "evidence": "È un raccordo editoriale generale, non un fatto da verificare.",
+        "sourceUrls": []
+      },
+      {
+        "key": "sentence_2",
+        "status": "supported",
+        "evidence": "L’allerta a Milano è alta in vista delle manifestazioni di sabato e il centro si prepara a possibili ripercussioni.",
+        "sourceUrls": [
+          "https://www.rainews.it/video/2026/10/massima-allerta-a-milano-i-negozi-del-centro-si-blindano-5968c14f-c993-44d3-9b54-5efb2eda06df.html",
+          "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/scheda-scontri-milano-la-mappa-delle-piazze-a-rischio-sabato_4b093092-5d16-474b-ad7e-21a60f02d95f.html"
+        ]
+      },
+      {
+        "key": "sentence_3",
+        "status": "supported",
+        "evidence": "Il Movimento 17 ottobre ha revocato i punti annunciati e dice che comunicherà le piazze all’ultimo momento.",
+        "sourceUrls": [
+          "https://www.agi.it/cronaca/news/2026-10-23/milano-roma-proteste-movimento-17-ottobre-revoca-piazze-39679652/",
+          "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/azione-preventiva-del-viminale-il-movimento-17-ottobre-cambia-le-piazze_56996a1f-2ff3-42af-a212-a36e9eaf0944.html"
+        ]
+      },
+      {
+        "key": "sentence_4",
+        "status": "supported",
+        "evidence": "Le autorità restano in allerta anche a Roma, Bologna e Bari oltre che a Milano.",
+        "sourceUrls": [
+          "https://www.agi.it/cronaca/news/2026-10-23/milano-roma-proteste-movimento-17-ottobre-revoca-piazze-39679652/",
+          "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/azione-preventiva-del-viminale-il-movimento-17-ottobre-cambia-le-piazze_56996a1f-2ff3-42af-a212-a36e9eaf0944.html"
+        ]
+      },
+      {
+        "key": "sentence_5",
+        "status": "supported",
+        "evidence": "È in corso uno sciame sismico al largo delle Eolie, nel Tirreno meridionale.",
+        "sourceUrls": [
+          "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html",
+          "https://videoembed.ansa.it/canale_scienza/notizie/terra_poli/2026/10/23/sequenza-sismica-al-largo-della-sicilia-60-terremoti-in-una-settimana_1c8acd65-267b-4f01-b793-016a21a0caa9.html"
+        ]
+      },
+      {
+        "key": "sentence_6",
+        "status": "supported",
+        "evidence": "La scossa più forte è stata di magnitudo 5.5 a 9 chilometri di profondità.",
+        "sourceUrls": [
+          "https://www.agi.it/cronaca/news/2026-10-23/terremoto-sicilia-palermo-allerta-39672151/",
+          "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/terremoto-in-sicilia-una-serie-di-scosse-la-piu-forte-di-magnitudo-5.5-scuole_81346d86-485c-4b00-88cd-aadc8e45e917.html"
+        ]
+      },
+      {
+        "key": "sentence_7",
+        "status": "supported",
+        "evidence": "Le fonti confermano nuove repliche dopo la scossa principale, compresa una di magnitudo 3.2 nella notte.",
+        "sourceUrls": [
+          "https://www.adnkronos.com/cronaca/terremoto-sicilia-oggi-sciame-sismico-palermo-ultime-news_5rET6j9UuuB2l2l5koXw32",
+          "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html"
+        ]
+      },
+      {
+        "key": "sentence_8",
+        "status": "supported",
+        "evidence": "Le fonti dicono che al momento non risultano danni e che l’allarme maremoto è stato attivato e poi revocato.",
+        "sourceUrls": [
+          "https://www.agi.it/cronaca/news/2026-10-23/terremoto-sicilia-palermo-allerta-39672151/",
+          "https://www.ansa.it/amp/calabria/notizie/2026/10/23/protezione-civile-nessuna-allerta-maremoto-per-le-coste-calabresi_861dcebe-7e92-4a0f-8375-dc494a532df5.html"
+        ]
+      },
+      {
+        "key": "sentence_9",
+        "status": "supported",
+        "evidence": "Euronews riporta che le cinque attiviste italiane fermate dall’IDF rientrano sabato in Italia.",
+        "sourceUrls": [
+          "https://it.euronews.com/2026/10/23/cisgiordania-le-cinque-attiviste-italiane-fermate-dallidf-rientrano-in-italia",
+          "https://www.ansa.it/sito/notizie/mondo/2026/10/23/attiviste-italiane-espulse-da-israele.-tajani-domani-mattina-il-rientro-in-italia_9b783e6a-ae93-41de-ab9b-63414f183e13.html"
+        ]
+      },
+      {
+        "key": "sentence_10",
+        "status": "supported",
+        "evidence": "AP, ANSA e Rai News riportano l’attacco vicino Hebron con due soldati israeliani uccisi e la successiva stretta/operazione israeliana in Cisgiordania.",
+        "sourceUrls": [
+          "https://apnews.com/article/f6646718072b4ff6929cff43297edd05",
+          "https://www.ansa.it/sito/notizie/mondo/2026/10/24/attacco-al-checkpoint-di-hebron-scattata-unoperazione-antiterrorismo_9ba2138b-09b6-4e76-8477-6a022b91575a.html"
+        ]
+      },
+      {
+        "key": "sentence_11",
+        "status": "supported",
+        "evidence": "Le fonti lasciano ancora aperti durata ed effetti dell’operazione, senza un perimetro definitivo già confermato.",
+        "sourceUrls": [
+          "https://apnews.com/article/f6646718072b4ff6929cff43297edd05",
+          "https://www.ansa.it/sito/notizie/mondo/2026/10/24/attacco-al-checkpoint-di-hebron-scattata-unoperazione-antiterrorismo_9ba2138b-09b6-4e76-8477-6a022b91575a.html"
+        ]
+      },
+      {
+        "key": "sentence_12",
+        "status": "supported",
+        "evidence": "Le fonti di Palazzo Chigi parlano di disponibilità kuwaitiana a prorogare il price cap su benzina e diesel.",
+        "sourceUrls": [
+          "https://www.ilsole24ore.com/art/fonti-chigi-disponibilita-q8-prorogare-price-cap-AJkl03sB",
+          "https://www.ansa.it/sito/notizie/politica/2026/10/23/meloni-vede-lemiro-kuwait-disponibile-a-proroga-del-price-cap-q8-sui_02fe203f-3d95-483b-8a77-d06399e5f3bd.html"
+        ]
+      },
+      {
+        "key": "sentence_13",
+        "status": "supported",
+        "evidence": "Eni conferma che manterrà il tetto fino a fine anno e indica i livelli attuali di 1,99 euro per la benzina e 2,25 per il gasolio.",
+        "sourceUrls": [
+          "https://it.euronews.com/2026/10/23/eni-annuncia-che-manterra-un-tetto-ai-carburanti-almeno-per-altri-due-mesi-monitorando-il-",
+          "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html"
+        ]
+      },
+      {
+        "key": "sentence_14",
+        "status": "supported",
+        "evidence": "Le fonti indicano che la durata precisa dell’intesa resta aperta e che non c’è ancora un livello futuro definitivo del tetto.",
+        "sourceUrls": [
+          "https://www.ilsole24ore.com/art/fonti-chigi-disponibilita-q8-prorogare-price-cap-AJkl03sB",
+          "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html"
+        ]
+      },
+      {
+        "key": "sentence_15",
+        "status": "supported",
+        "evidence": "Euronews dice che Bruxelles punta a trasformare il prossimo round di colloqui di pace in un formato multilaterale con rappresentanza europea.",
+        "sourceUrls": [
+          "https://it.euronews.com/2026/10/23/ucraina-ue-vuole-un-posto-ai-negoziati-di-pace-possibile-contatto-diretto-con-mosca"
+        ]
+      },
+      {
+        "key": "sentence_16",
+        "status": "supported",
+        "evidence": "Le fonti riportano che Zelensky è pronto a fare pace ma non a cedere altri territori.",
+        "sourceUrls": [
+          "https://www.rainews.it/articoli/2026/10/zelensky-alla-abc-pronti-a-fare-pace-subito-ma-non-cederemo-altri-territori-guerra-in-ucraina-dd9f5815-406d-4b0b-ac70-9f2c35b6dbb5.html"
+        ]
+      },
+      {
+        "key": "sentence_17",
+        "status": "supported",
+        "evidence": "Le fonti confermano una spinta diplomatica europea, la linea ferma di Kiev e il fatto che un formato concordato non sia ancora definito.",
+        "sourceUrls": [
+          "https://www.euronews.com/2026/10/23/eu-vies-to-expand-role-in-ukraine-russia-peace-talks-to-influence-us-thinking",
+          "https://it.euronews.com/2026/10/23/ucraina-ue-vuole-un-posto-ai-negoziati-di-pace-possibile-contatto-diretto-con-mosca"
+        ]
+      },
+      {
+        "key": "sentence_18",
+        "status": "supported",
+        "evidence": "Invito alla partecipazione del pubblico, senza affermazioni fattuali.",
+        "sourceUrls": []
+      },
+      {
+        "key": "sentence_19",
+        "status": "supported",
+        "evidence": "Chiusura colloquiale/funzionale, senza contenuto fattuale.",
+        "sourceUrls": []
+      },
+      {
+        "key": "sentence_20",
+        "status": "supported",
+        "evidence": "Formula di chiusura editoriale, non fattuale.",
+        "sourceUrls": []
+      }
+    ],
+    "sources": [
+      {
+        "url": "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/scheda-scontri-milano-la-mappa-delle-piazze-a-rischio-sabato_4b093092-5d16-474b-ad7e-21a60f02d95f.html",
+        "title": "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/scheda-scontri-milano-la-mappa-delle-piazze-a-rischio-sabato_4b093092-5d16-474b-ad7e-21a60f02d95f.html"
+      },
+      {
+        "url": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/17/corteo-a-milano-tafferugli-in-duomo-e-in-piazza-cordusio_237e9af3-e1a2-418d-9a73-536c01155cd6.html",
+        "title": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/17/corteo-a-milano-tafferugli-in-duomo-e-in-piazza-cordusio_237e9af3-e1a2-418d-9a73-536c01155cd6.html"
+      },
+      {
+        "url": "https://it.euronews.com/2026/10/19/vertice-a-palazzo-chigi-il-governo-lavora-a-una-stretta-dopo-le-devastazioni-di-milano",
+        "title": "https://it.euronews.com/2026/10/19/vertice-a-palazzo-chigi-il-governo-lavora-a-una-stretta-dopo-le-devastazioni-di-milano"
+      },
+      {
+        "url": "https://www.euronews.com/2026/10/18/cost-of-living-protests-50-detained-in-milan-clashes-in-turin-and-bologna",
+        "title": "https://www.euronews.com/2026/10/18/cost-of-living-protests-50-detained-in-milan-clashes-in-turin-and-bologna"
+      },
+      {
+        "url": "https://www.ansa.it/amp/lombardia/notizie/2026/10/19/il-movimento-17-ottobre-annuncia-mobilitazione-permanente-ogni-sabato_911bf4e2-79b1-4386-aeef-4fee7a1cd2b4.html",
+        "title": "https://www.ansa.it/amp/lombardia/notizie/2026/10/19/il-movimento-17-ottobre-annuncia-mobilitazione-permanente-ogni-sabato_911bf4e2-79b1-4386-aeef-4fee7a1cd2b4.html"
+      },
+      {
+        "url": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/azione-preventiva-del-viminale-il-movimento-17-ottobre-cambia-le-piazze_56996a1f-2ff3-42af-a212-a36e9eaf0944.html",
+        "title": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/azione-preventiva-del-viminale-il-movimento-17-ottobre-cambia-le-piazze_56996a1f-2ff3-42af-a212-a36e9eaf0944.html"
+      },
+      {
+        "url": "https://videoembed.ansa.it/sito/notizie/topnews/2026/10/17/scontri-a-milano-circa-50-fermati-quasi-la-meta-minorenni_672f523e-6b66-434f-b44d-ae835af7cc8b.html",
+        "title": "https://videoembed.ansa.it/sito/notizie/topnews/2026/10/17/scontri-a-milano-circa-50-fermati-quasi-la-meta-minorenni_672f523e-6b66-434f-b44d-ae835af7cc8b.html"
+      },
+      {
+        "url": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/da-milano-a-castel-volturno-la-mappa-delle-piazze_4b093092-5d16-474b-ad7e-21a60f02d95f.html",
+        "title": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/da-milano-a-castel-volturno-la-mappa-delle-piazze_4b093092-5d16-474b-ad7e-21a60f02d95f.html"
+      },
+      {
+        "url": "https://www.euronews.com/2026/10/23/italy-preparing-with-elite-troops-and-drone-surveillance-for-24-october-protests",
+        "title": "https://www.euronews.com/2026/10/23/italy-preparing-with-elite-troops-and-drone-surveillance-for-24-october-protests"
+      },
+      {
+        "url": "https://www.euronews.com/2026/10/19/more-than-200-arrested-in-second-day-of-street-clashes-against-cost-of-living-in-milan",
+        "title": "https://www.euronews.com/2026/10/19/more-than-200-arrested-in-second-day-of-street-clashes-against-cost-of-living-in-milan"
+      },
+      {
+        "url": "https://it.euronews.com/2026/10/23/italia-e-francia-blindano-le-citta-per-il-24-ottobre-schierati-droni-e-reparti-delite",
+        "title": "https://it.euronews.com/2026/10/23/italia-e-francia-blindano-le-citta-per-il-24-ottobre-schierati-droni-e-reparti-delite"
+      },
+      {
+        "url": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/16/gli-studenti-si-prendono-le-piazze-meloni-violenze-da-condannare_ff9071cf-026e-438f-8153-f7d47a260b42.html",
+        "title": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/16/gli-studenti-si-prendono-le-piazze-meloni-violenze-da-condannare_ff9071cf-026e-438f-8153-f7d47a260b42.html"
+      },
+      {
+        "url": "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html",
+        "title": "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html"
+      },
+      {
+        "url": "https://videoembed.ansa.it/canale_scienza/notizie/terra_poli/2026/10/23/sequenza-sismica-al-largo-della-sicilia-60-terremoti-in-una-settimana_1c8acd65-267b-4f01-b793-016a21a0caa9.html",
+        "title": "https://videoembed.ansa.it/canale_scienza/notizie/terra_poli/2026/10/23/sequenza-sismica-al-largo-della-sicilia-60-terremoti-in-una-settimana_1c8acd65-267b-4f01-b793-016a21a0caa9.html"
+      },
+      {
+        "url": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/paura-per-scosse-di-terremoto-in-sicilia-scuole-e-uffici-evacuati_81346d86-485c-4b00-88cd-aadc8e45e917.html",
+        "title": "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/paura-per-scosse-di-terremoto-in-sicilia-scuole-e-uffici-evacuati_81346d86-485c-4b00-88cd-aadc8e45e917.html"
+      },
+      {
+        "url": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/terremoto-in-sicilia-una-serie-di-scosse-la-piu-forte-di-magnitudo-5.5-scuole_81346d86-485c-4b00-88cd-aadc8e45e917.html",
+        "title": "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/terremoto-in-sicilia-una-serie-di-scosse-la-piu-forte-di-magnitudo-5.5-scuole_81346d86-485c-4b00-88cd-aadc8e45e917.html"
+      },
+      {
+        "url": "https://www.rainews.it/amp/tgr/sicilia/articoli/2026/10/due-scosse-in-meno-di-unora-epicentro-al-largo-delle-isole-eolie-4d151b93-5e84-4507-8fad-8e61f1b7dd4a.html",
+        "title": "https://www.rainews.it/amp/tgr/sicilia/articoli/2026/10/due-scosse-in-meno-di-unora-epicentro-al-largo-delle-isole-eolie-4d151b93-5e84-4507-8fad-8e61f1b7dd4a.html"
+      },
+      {
+        "url": "https://cat.ingv.it/it/media-e-documenti/news-it/533-terremoto-eolie-23-ottobre-2026-e-allerta-tsunami",
+        "title": "https://cat.ingv.it/it/media-e-documenti/news-it/533-terremoto-eolie-23-ottobre-2026-e-allerta-tsunami"
+      },
+      {
+        "url": "https://www.rainews.it/articoli/2026/10/cnr-sciame-sismico-in-sicilia-causato-da-nuova-faglia-tra-africa-eurasia-tra-eolie-e-ustica-93d174bc-9e9f-4369-b1ed-3f8594483e58.html",
+        "title": "https://www.rainews.it/articoli/2026/10/cnr-sciame-sismico-in-sicilia-causato-da-nuova-faglia-tra-africa-eurasia-tra-eolie-e-ustica-93d174bc-9e9f-4369-b1ed-3f8594483e58.html"
+      },
+      {
+        "url": "https://www.adnkronos.com/cronaca/terremoto-sicilia-palermo-sciame-sismico-42-scosse-cosa-sappiamo_2KQCNlX396gumRYBqS94Kb",
+        "title": "https://www.adnkronos.com/cronaca/terremoto-sicilia-palermo-sciame-sismico-42-scosse-cosa-sappiamo_2KQCNlX396gumRYBqS94Kb"
+      },
+      {
+        "url": "https://www.ansa.it/calabria/notizie/2026/09/04/terremoto-di-magnitudo-3.7-nel-cosentino-al-momento-nessun-danno-segnalato_7407d575-e409-4fab-a405-386f1a592377.html",
+        "title": "https://www.ansa.it/calabria/notizie/2026/09/04/terremoto-di-magnitudo-3.7-nel-cosentino-al-momento-nessun-danno-segnalato_7407d575-e409-4fab-a405-386f1a592377.html"
+      },
+      {
+        "url": "https://www.rainews.it/amp/articoli/2026/10/scosse-di-terremoto-a-palermo-e-messina-fino-a-magnitudo-5-efc03588-5545-4a89-acc9-6edecab30f93.html",
+        "title": "https://www.rainews.it/amp/articoli/2026/10/scosse-di-terremoto-a-palermo-e-messina-fino-a-magnitudo-5-efc03588-5545-4a89-acc9-6edecab30f93.html"
+      },
+      {
+        "url": "https://www.adnkronos.com/cronaca/terremoto-sicilia-oggi-sciame-sismico-palermo-ultime-news_5rET6j9UuuB2l2l5koXw32",
+        "title": "Terremoto in Sicilia, continua lo sciame sismico nel mar Tirreno Meridionale: decine di scosse nella notte"
+      },
+      {
+        "url": "https://www.ansa.it/amp/calabria/notizie/2026/10/23/protezione-civile-nessuna-allerta-maremoto-per-le-coste-calabresi_861dcebe-7e92-4a0f-8375-dc494a532df5.html",
+        "title": "https://www.ansa.it/amp/calabria/notizie/2026/10/23/protezione-civile-nessuna-allerta-maremoto-per-le-coste-calabresi_861dcebe-7e92-4a0f-8375-dc494a532df5.html"
+      },
+      {
+        "url": "https://soweb.ct.ingv.it/Dati/informative/sismico/ComunicatoSismico20250529002955.pdf",
+        "title": "https://soweb.ct.ingv.it/Dati/informative/sismico/ComunicatoSismico20250529002955.pdf"
+      },
+      {
+        "url": "https://quest.ingv.it/index.php/rilievi-macrosismici/48-rilievo-macrosismico-del-terremoto-eoliano-del-04-dicembre-2022/file",
+        "title": "https://quest.ingv.it/index.php/rilievi-macrosismici/48-rilievo-macrosismico-del-terremoto-eoliano-del-04-dicembre-2022/file"
+      },
+      {
+        "url": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/5855_2025_02_07_Avviso%207%20Febbraio%202025%20-%20Isole%20Eolie.pdf",
+        "title": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/5855_2025_02_07_Avviso%207%20Febbraio%202025%20-%20Isole%20Eolie.pdf"
+      },
+      {
+        "url": "https://apnews.com/article/f6646718072b4ff6929cff43297edd05",
+        "title": "https://apnews.com/article/f6646718072b4ff6929cff43297edd05"
+      },
+      {
+        "url": "https://apnews.com/article/6424dff433a4f99f00cac2328de0f7a4",
+        "title": "https://apnews.com/article/6424dff433a4f99f00cac2328de0f7a4"
+      },
+      {
+        "url": "https://it.euronews.com/2026/10/23/cisgiordania-le-cinque-attiviste-italiane-fermate-dallidf-rientrano-in-italia",
+        "title": "Cisgiordania, le cinque attiviste italiane fermate dall'IDF rientrano in Italia"
+      },
+      {
+        "url": "https://www.theguardian.com/world/2026/oct/23/netanyahu-orders-very-extensive-operation-west-bank-two-israeli-soldiers-killed",
+        "title": "https://www.theguardian.com/world/2026/oct/23/netanyahu-orders-very-extensive-operation-west-bank-two-israeli-soldiers-killed"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/mondo/2026/10/23/attiviste-italiane-espulse-da-israele.-tajani-domani-mattina-il-rientro-in-italia_9b783e6a-ae93-41de-ab9b-63414f183e13.html",
+        "title": "https://www.ansa.it/sito/notizie/mondo/2026/10/23/attiviste-italiane-espulse-da-israele.-tajani-domani-mattina-il-rientro-in-italia_9b783e6a-ae93-41de-ab9b-63414f183e13.html"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/mondo/2026/10/24/attacco-al-checkpoint-di-hebron-scattata-unoperazione-antiterrorismo_9ba2138b-09b6-4e76-8477-6a022b91575a.html",
+        "title": "https://www.ansa.it/sito/notizie/mondo/2026/10/24/attacco-al-checkpoint-di-hebron-scattata-unoperazione-antiterrorismo_9ba2138b-09b6-4e76-8477-6a022b91575a.html"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/mondo/2026/10/23/le-attiviste-italiane-fermate-in-cisgiordania-potrebbero-essere-espulse-gia-oggi_9b783e6a-ae93-41de-ab9b-63414f183e13.html",
+        "title": "https://www.ansa.it/sito/notizie/mondo/2026/10/23/le-attiviste-italiane-fermate-in-cisgiordania-potrebbero-essere-espulse-gia-oggi_9b783e6a-ae93-41de-ab9b-63414f183e13.html"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/mondo/2026/10/23/attacco-alle-truppe-israeliane-netanyahu-annuncia-la-chiusura-totale-della-cisgiordania_9ba2138b-09b6-4e76-8477-6a022b91575a.html",
+        "title": "https://www.ansa.it/sito/notizie/mondo/2026/10/23/attacco-alle-truppe-israeliane-netanyahu-annuncia-la-chiusura-totale-della-cisgiordania_9ba2138b-09b6-4e76-8477-6a022b91575a.html"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/mondo/2026/10/22/fermate-altre-attiviste-italiane-la-farnesina-chiede-chiarimenti-a-israele_b15e583e-19cd-4d3a-89f0-687591972967.html",
+        "title": "https://www.ansa.it/sito/notizie/mondo/2026/10/22/fermate-altre-attiviste-italiane-la-farnesina-chiede-chiarimenti-a-israele_b15e583e-19cd-4d3a-89f0-687591972967.html"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/mondo/2026/08/14/medio-oriente-attivista-italiana-allansa-da-domenica-con-la-famiglia-assediata-a-qusra_51321388-6445-4a70-9684-1e3cc28bb190.html",
+        "title": "https://www.ansa.it/sito/notizie/mondo/2026/08/14/medio-oriente-attivista-italiana-allansa-da-domenica-con-la-famiglia-assediata-a-qusra_51321388-6445-4a70-9684-1e3cc28bb190.html"
+      },
+      {
+        "url": "https://videoembed.ansa.it/sito/notizie/mondo/mediooriente/mediooriente.shtml",
+        "title": "https://videoembed.ansa.it/sito/notizie/mondo/mediooriente/mediooriente.shtml"
+      },
+      {
+        "url": "https://it.euronews.com/2026/08/14/cisgiordania-espulsi-cinque-attivisti-italiani-da-case-palestinesi-assediate-dai-coloni-is",
+        "title": "https://it.euronews.com/2026/08/14/cisgiordania-espulsi-cinque-attivisti-italiani-da-case-palestinesi-assediate-dai-coloni-is"
+      },
+      {
+        "url": "https://it.euronews.com/2025/02/04/cisgiordania-attacco-contro-un-posto-di-blocco-uccisi-due-soldati-israeliani",
+        "title": "https://it.euronews.com/2025/02/04/cisgiordania-attacco-contro-un-posto-di-blocco-uccisi-due-soldati-israeliani"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html",
+        "title": "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/politica/2026/10/23/meloni-vede-lemiro-kuwait-disponibile-a-proroga-del-price-cap-q8-sui_02fe203f-3d95-483b-8a77-d06399e5f3bd.html",
+        "title": "https://www.ansa.it/sito/notizie/politica/2026/10/23/meloni-vede-lemiro-kuwait-disponibile-a-proroga-del-price-cap-q8-sui_02fe203f-3d95-483b-8a77-d06399e5f3bd.html"
+      },
+      {
+        "url": "https://teleborsa.ansa.it/notiziario/economia/carburanti-da-palazzo-chigi-kuwait-disponibile-a-proroga-price-cap-di-q8-dopo-bilaterale-con-meloni/",
+        "title": "https://teleborsa.ansa.it/notiziario/economia/carburanti-da-palazzo-chigi-kuwait-disponibile-a-proroga-price-cap-di-q8-dopo-bilaterale-con-meloni/"
+      },
+      {
+        "url": "https://www.ansa.it/amp/english/news/world/2026/10/23/meloni-meets-kuwait-emir-open-to-extending-q8-fuel-price-cap_e9ef6308-71f6-4607-bac1-74101c7bbfe7.html",
+        "title": "https://www.ansa.it/amp/english/news/world/2026/10/23/meloni-meets-kuwait-emir-open-to-extending-q8-fuel-price-cap_e9ef6308-71f6-4607-bac1-74101c7bbfe7.html"
+      },
+      {
+        "url": "https://www.rainews.it/amp/articoli/2026/09/carburanti-petrolio-prezzi-benzina-diesel-gasolio-eni-ip-socar-q8-meloni-545edbd7-919a-4e82-8fed-d76c5a72966c.html",
+        "title": "https://www.rainews.it/amp/articoli/2026/09/carburanti-petrolio-prezzi-benzina-diesel-gasolio-eni-ip-socar-q8-meloni-545edbd7-919a-4e82-8fed-d76c5a72966c.html"
+      },
+      {
+        "url": "https://www.ansa.it/amp/english/news/business/2026/09/29/after-eni-and-ip-q8-says-it-will-cap-fuel-prices-in-italy_0b3359a4-d8c5-42f1-87b3-ec9a56c3e1b1.html",
+        "title": "https://www.ansa.it/amp/english/news/business/2026/09/29/after-eni-and-ip-q8-says-it-will-cap-fuel-prices-in-italy_0b3359a4-d8c5-42f1-87b3-ec9a56c3e1b1.html"
+      },
+      {
+        "url": "https://it.euronews.com/2026/09/29/carburanti-anche-q8-aderisce-al-piano-del-governo-con-un-tetto-ai-prezzi-per-30-giorni",
+        "title": "https://it.euronews.com/2026/09/29/carburanti-anche-q8-aderisce-al-piano-del-governo-con-un-tetto-ai-prezzi-per-30-giorni"
+      },
+      {
+        "url": "https://it.euronews.com/ultime-notizie",
+        "title": "https://it.euronews.com/ultime-notizie"
+      },
+      {
+        "url": "https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html",
+        "title": "https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/politica/2026/09/29/meloni-ringrazia-kuwait-e-q8-accolto-lappello-del-governo_f1ba5bd6-3eae-4483-bf41-92dc3b3f1c63.html",
+        "title": "https://www.ansa.it/sito/notizie/politica/2026/09/29/meloni-ringrazia-kuwait-e-q8-accolto-lappello-del-governo_f1ba5bd6-3eae-4483-bf41-92dc3b3f1c63.html"
+      },
+      {
+        "url": "https://it.euronews.com/tag/giorgia-meloni",
+        "title": "https://it.euronews.com/tag/giorgia-meloni"
+      },
+      {
+        "url": "https://teleborsa.ansa.it/",
+        "title": "https://teleborsa.ansa.it/"
+      },
+      {
+        "url": "https://eur-lex.europa.eu/legal-content/IT/TXT/PDF/?uri=CELEX%3A52026PC0438",
+        "title": "https://eur-lex.europa.eu/legal-content/IT/TXT/PDF/?uri=CELEX%3A52026PC0438"
+      },
+      {
+        "url": "https://www.regione.sicilia.it/sites/default/files/2024-11/D.R.A.%20n.%201085%20del%2007.11.2024_CARBURANTE_LIQUIDAZIONE_%E2%82%AC_2304.81_signed%28firmato%29.pdf",
+        "title": "https://www.regione.sicilia.it/sites/default/files/2024-11/D.R.A.%20n.%201085%20del%2007.11.2024_CARBURANTE_LIQUIDAZIONE_%E2%82%AC_2304.81_signed%28firmato%29.pdf"
+      },
+      {
+        "url": "https://www.bancaditalia.it/pubblicazioni/relazione-annuale/2025/app_2025_totale.pdf",
+        "title": "https://www.bancaditalia.it/pubblicazioni/relazione-annuale/2025/app_2025_totale.pdf"
+      },
+      {
+        "url": "https://www.ansa.it/documents/1773912484284_202502_Focus_Mercato_Italia-2.pdf",
+        "title": "https://www.ansa.it/documents/1773912484284_202502_Focus_Mercato_Italia-2.pdf"
+      },
+      {
+        "url": "https://www.europarl.europa.eu/doceo/document/E-10-2026-000953_IT.pdf",
+        "title": "https://www.europarl.europa.eu/doceo/document/E-10-2026-000953_IT.pdf"
+      },
+      {
+        "url": "https://www.euronews.com/2026/10/23/eu-vies-to-expand-role-in-ukraine-russia-peace-talks-to-influence-us-thinking",
+        "title": "https://www.euronews.com/2026/10/23/eu-vies-to-expand-role-in-ukraine-russia-peace-talks-to-influence-us-thinking"
+      },
+      {
+        "url": "https://it.euronews.com/2026/10/23/ucraina-ue-vuole-un-posto-ai-negoziati-di-pace-possibile-contatto-diretto-con-mosca",
+        "title": "Ucraina, UE vuole un posto ai negoziati di pace: possibile contatto diretto con Mosca"
+      },
+      {
+        "url": "https://www.ansa.it/sito/notizie/mondo/2026/06/09/zelensky-europa-non-puo-essere-mediatrice-con-noi-fermi-putin_1e25cb19-58e4-4b39-9230-bde1d465ac69.html",
+        "title": "https://www.ansa.it/sito/notizie/mondo/2026/06/09/zelensky-europa-non-puo-essere-mediatrice-con-noi-fermi-putin_1e25cb19-58e4-4b39-9230-bde1d465ac69.html"
+      }
+    ],
+    "freshness": {
+      "version": 1,
+      "checkedAt": "2026-10-24T06:30:12.696Z",
+      "researchSha256": "13016bfad09b4e5ae3f28a4136895347e435ea85cfce893d044878728f697fd6",
+      "scriptSha256": "78e112b20352e8412f5fed55e4b7ec65e9009fc1a656fc41f95435e67356f9a8",
+      "historySha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "windowStart": "2026-10-23T06:30:12.696Z",
+      "previousStoryKeys": [],
+      "checks": [
+        {
+          "status": "new",
+          "development": "Il 23 ottobre il Movimento 17 ottobre ha cambiato i punti di ritrovo per i cortei del 24 ottobre e ha detto che li comunicherà solo all’ultimo momento; il 24 ottobre Milano e altre città restano in allerta per le manifestazioni.",
+          "eventDate": "2026-10-23",
+          "evidence": "AGI e Rai News riportano la nuova strategia del movimento e l’innalzamento dell’allerta alla vigilia dei cortei; sono fonti diverse e contemporanee.",
+          "sourceIds": [
+            "b5ee16802107b50e1838",
+            "2374dc2971fa5f400e00"
+          ],
+          "webUrls": [
+            "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/azione-preventiva-del-viminale-il-movimento-17-ottobre-cambia-le-piazze_56996a1f-2ff3-42af-a212-a36e9eaf0944.html",
+            "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/da-milano-a-castel-volturno-la-mappa-delle-piazze_4b093092-5d16-474b-ad7e-21a60f02d95f.html"
+          ],
+          "previousStoryKeys": [],
+          "storyId": "storia-1"
+        },
+        {
+          "status": "new",
+          "development": "Nella notte tra 23 e 24 ottobre lo sciame sismico al largo delle Eolie è proseguito con nuove scosse; Adnkronos cita un evento alle 05:13 del 24 ottobre, mentre resta confermato che la sequenza è legata al mainshock del 23 ottobre.",
+          "eventDate": "2026-10-24",
+          "evidence": "Adnkronos aggiorna la sequenza con una nuova scossa notturna del 24 ottobre, mentre INGV e ANSA confermano il quadro del terremoto del 23 ottobre.",
+          "sourceIds": [
+            "ee2d62344398ca0cc0bc",
+            "dc9edfda2dfab8ea40fe"
+          ],
+          "webUrls": [
+            "https://www.adnkronos.com/cronaca/terremoto-sicilia-oggi-sciame-sismico-palermo-ultime-news_5rET6j9UuuB2l2l5koXw32",
+            "https://cat.ingv.it/it/media-e-documenti/news-it/533-terremoto-eolie-23-ottobre-2026-e-allerta-tsunami"
+          ],
+          "previousStoryKeys": [],
+          "storyId": "storia-2"
+        },
+        {
+          "status": "new",
+          "development": "Il 24 ottobre Israele ha annunciato una vasta operazione in Cisgiordania dopo l’attacco vicino Hebron, mentre resta in corso il rientro in Italia delle cinque attiviste italiane fermate dall’IDF.",
+          "eventDate": "2026-10-24",
+          "evidence": "ANSA e AP/Euronews descrivono l’annuncio della stretta militare di oggi; Euronews conferma anche il rientro delle attiviste italiane.",
+          "sourceIds": [
+            "23dee2f0d3e9d98a6475",
+            "c7e5b1d7ec7617fe5765"
+          ],
+          "webUrls": [
+            "https://www.ansa.it/sito/notizie/mondo/2026/10/24/attacco-al-checkpoint-di-hebron-scattata-unoperazione-antiterrorismo_9ba2138b-09b6-4e76-8477-6a022b91575a.html",
+            "https://it.euronews.com/2026/10/23/cisgiordania-le-cinque-attiviste-italiane-fermate-dallidf-rientrano-in-italia"
+          ],
+          "previousStoryKeys": [],
+          "storyId": "storia-4"
+        },
+        {
+          "status": "new",
+          "development": "Il 23 ottobre, dopo il bilaterale di Giorgia Meloni in Kuwait, fonti di Palazzo Chigi hanno riferito la disponibilità kuwaitiana a prorogare il price cap Q8; Eni ha confermato che manterrà il tetto fino a fine anno.",
+          "eventDate": "2026-10-23",
+          "evidence": "ANSA e Euronews riportano la stessa novità: disponibilità alla proroga e conferma del tetto da parte di Eni.",
+          "sourceIds": [
+            "5f23354d095b3c566563",
+            "7c63adefa46531a62c5c"
+          ],
+          "webUrls": [
+            "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html",
+            "https://www.ansa.it/sito/notizie/politica/2026/10/23/meloni-vede-lemiro-kuwait-disponibile-a-proroga-del-price-cap-q8-sui_02fe203f-3d95-483b-8a77-d06399e5f3bd.html"
+          ],
+          "previousStoryKeys": [],
+          "storyId": "storia-3"
+        },
+        {
+          "status": "new",
+          "development": "Il 23 ottobre l’Unione europea ha rilanciato l’idea di avere un posto nei colloqui di pace sull’Ucraina; Zelensky ha ribadito che Kiev è pronta a parlare ma non a cedere territori.",
+          "eventDate": "2026-10-23",
+          "evidence": "Euronews e Rai News corroborano la spinta europea e la posizione ucraina sui territori come sviluppo diplomatico nuovo di ieri.",
+          "sourceIds": [
+            "063931dbfb85cac79cf9",
+            "cb6a6456e8225784e199"
+          ],
+          "webUrls": [
+            "https://www.euronews.com/2026/10/23/eu-vies-to-expand-role-in-ukraine-russia-peace-talks-to-influence-us-thinking",
+            "https://www.ansa.it/amp/sito/notizie/mondo/2026/06/05/ue-appoggiamo-la-lettera-di-zelensky-ucraina-ed-europa-per-la-pace_9d824e5a-0027-40d7-9fa4-35b1a5c3a3b8.html"
+          ],
+          "previousStoryKeys": [],
+          "storyId": "storia-5"
+        }
+      ],
+      "issues": [],
+      "passed": true
+    },
+    "webSourceUrls": [
+      "https://www.ansa.it/sito/notizie/cronaca/2026/10/22/scheda-scontri-milano-la-mappa-delle-piazze-a-rischio-sabato_4b093092-5d16-474b-ad7e-21a60f02d95f.html",
+      "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/17/corteo-a-milano-tafferugli-in-duomo-e-in-piazza-cordusio_237e9af3-e1a2-418d-9a73-536c01155cd6.html",
+      "https://it.euronews.com/2026/10/19/vertice-a-palazzo-chigi-il-governo-lavora-a-una-stretta-dopo-le-devastazioni-di-milano",
+      "https://www.euronews.com/2026/10/18/cost-of-living-protests-50-detained-in-milan-clashes-in-turin-and-bologna",
+      "https://www.ansa.it/amp/lombardia/notizie/2026/10/19/il-movimento-17-ottobre-annuncia-mobilitazione-permanente-ogni-sabato_911bf4e2-79b1-4386-aeef-4fee7a1cd2b4.html",
+      "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/azione-preventiva-del-viminale-il-movimento-17-ottobre-cambia-le-piazze_56996a1f-2ff3-42af-a212-a36e9eaf0944.html",
+      "https://videoembed.ansa.it/sito/notizie/topnews/2026/10/17/scontri-a-milano-circa-50-fermati-quasi-la-meta-minorenni_672f523e-6b66-434f-b44d-ae835af7cc8b.html",
+      "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/da-milano-a-castel-volturno-la-mappa-delle-piazze_4b093092-5d16-474b-ad7e-21a60f02d95f.html",
+      "https://www.euronews.com/2026/10/23/italy-preparing-with-elite-troops-and-drone-surveillance-for-24-october-protests",
+      "https://www.euronews.com/2026/10/19/more-than-200-arrested-in-second-day-of-street-clashes-against-cost-of-living-in-milan",
+      "https://it.euronews.com/2026/10/23/italia-e-francia-blindano-le-citta-per-il-24-ottobre-schierati-droni-e-reparti-delite",
+      "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/16/gli-studenti-si-prendono-le-piazze-meloni-violenze-da-condannare_ff9071cf-026e-438f-8153-f7d47a260b42.html",
+      "https://www.ansa.it/sicilia/notizie/2026/10/23/terremoto-magnitudo-33-nel-tirreno-meridionale-avvertito-alle-eolie_a0ae7a4e-fa1c-43fc-8df2-91cff14d82e4.html",
+      "https://videoembed.ansa.it/canale_scienza/notizie/terra_poli/2026/10/23/sequenza-sismica-al-largo-della-sicilia-60-terremoti-in-una-settimana_1c8acd65-267b-4f01-b793-016a21a0caa9.html",
+      "https://videoembed.ansa.it/sito/notizie/cronaca/2026/10/23/paura-per-scosse-di-terremoto-in-sicilia-scuole-e-uffici-evacuati_81346d86-485c-4b00-88cd-aadc8e45e917.html",
+      "https://www.ansa.it/amp/sito/notizie/cronaca/2026/10/23/terremoto-in-sicilia-una-serie-di-scosse-la-piu-forte-di-magnitudo-5.5-scuole_81346d86-485c-4b00-88cd-aadc8e45e917.html",
+      "https://www.rainews.it/amp/tgr/sicilia/articoli/2026/10/due-scosse-in-meno-di-unora-epicentro-al-largo-delle-isole-eolie-4d151b93-5e84-4507-8fad-8e61f1b7dd4a.html",
+      "https://cat.ingv.it/it/media-e-documenti/news-it/533-terremoto-eolie-23-ottobre-2026-e-allerta-tsunami",
+      "https://www.rainews.it/articoli/2026/10/cnr-sciame-sismico-in-sicilia-causato-da-nuova-faglia-tra-africa-eurasia-tra-eolie-e-ustica-93d174bc-9e9f-4369-b1ed-3f8594483e58.html",
+      "https://www.adnkronos.com/cronaca/terremoto-sicilia-palermo-sciame-sismico-42-scosse-cosa-sappiamo_2KQCNlX396gumRYBqS94Kb",
+      "https://www.ansa.it/calabria/notizie/2026/09/04/terremoto-di-magnitudo-3.7-nel-cosentino-al-momento-nessun-danno-segnalato_7407d575-e409-4fab-a405-386f1a592377.html",
+      "https://www.rainews.it/amp/articoli/2026/10/scosse-di-terremoto-a-palermo-e-messina-fino-a-magnitudo-5-efc03588-5545-4a89-acc9-6edecab30f93.html",
+      "https://www.adnkronos.com/cronaca/terremoto-sicilia-oggi-sciame-sismico-palermo-ultime-news_5rET6j9UuuB2l2l5koXw32",
+      "https://www.ansa.it/amp/calabria/notizie/2026/10/23/protezione-civile-nessuna-allerta-maremoto-per-le-coste-calabresi_861dcebe-7e92-4a0f-8375-dc494a532df5.html",
+      "https://soweb.ct.ingv.it/Dati/informative/sismico/ComunicatoSismico20250529002955.pdf",
+      "https://quest.ingv.it/index.php/rilievi-macrosismici/48-rilievo-macrosismico-del-terremoto-eoliano-del-04-dicembre-2022/file",
+      "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/5855_2025_02_07_Avviso%207%20Febbraio%202025%20-%20Isole%20Eolie.pdf",
+      "https://apnews.com/article/f6646718072b4ff6929cff43297edd05",
+      "https://apnews.com/article/6424dff433a4f99f00cac2328de0f7a4",
+      "https://it.euronews.com/2026/10/23/cisgiordania-le-cinque-attiviste-italiane-fermate-dallidf-rientrano-in-italia",
+      "https://www.theguardian.com/world/2026/oct/23/netanyahu-orders-very-extensive-operation-west-bank-two-israeli-soldiers-killed",
+      "https://www.ansa.it/sito/notizie/mondo/2026/10/23/attiviste-italiane-espulse-da-israele.-tajani-domani-mattina-il-rientro-in-italia_9b783e6a-ae93-41de-ab9b-63414f183e13.html",
+      "https://www.ansa.it/sito/notizie/mondo/2026/10/24/attacco-al-checkpoint-di-hebron-scattata-unoperazione-antiterrorismo_9ba2138b-09b6-4e76-8477-6a022b91575a.html",
+      "https://www.ansa.it/sito/notizie/mondo/2026/10/23/le-attiviste-italiane-fermate-in-cisgiordania-potrebbero-essere-espulse-gia-oggi_9b783e6a-ae93-41de-ab9b-63414f183e13.html",
+      "https://www.ansa.it/sito/notizie/mondo/2026/10/23/attacco-alle-truppe-israeliane-netanyahu-annuncia-la-chiusura-totale-della-cisgiordania_9ba2138b-09b6-4e76-8477-6a022b91575a.html",
+      "https://www.ansa.it/sito/notizie/mondo/2026/10/22/fermate-altre-attiviste-italiane-la-farnesina-chiede-chiarimenti-a-israele_b15e583e-19cd-4d3a-89f0-687591972967.html",
+      "https://www.ansa.it/sito/notizie/mondo/2026/08/14/medio-oriente-attivista-italiana-allansa-da-domenica-con-la-famiglia-assediata-a-qusra_51321388-6445-4a70-9684-1e3cc28bb190.html",
+      "https://videoembed.ansa.it/sito/notizie/mondo/mediooriente/mediooriente.shtml",
+      "https://it.euronews.com/2026/08/14/cisgiordania-espulsi-cinque-attivisti-italiani-da-case-palestinesi-assediate-dai-coloni-is",
+      "https://it.euronews.com/2025/02/04/cisgiordania-attacco-contro-un-posto-di-blocco-uccisi-due-soldati-israeliani",
+      "https://www.ansa.it/sito/notizie/economia/2026/10/23/eni-il-tetto-al-prezzo-per-benzina-e-diesel-proseguira-fino-a-fine-anno_7f2ea08b-ce91-4f3c-90b8-ca8bf6e4c8aa.html",
+      "https://www.ansa.it/sito/notizie/politica/2026/10/23/meloni-vede-lemiro-kuwait-disponibile-a-proroga-del-price-cap-q8-sui_02fe203f-3d95-483b-8a77-d06399e5f3bd.html",
+      "https://teleborsa.ansa.it/notiziario/economia/carburanti-da-palazzo-chigi-kuwait-disponibile-a-proroga-price-cap-di-q8-dopo-bilaterale-con-meloni/",
+      "https://www.ansa.it/amp/english/news/world/2026/10/23/meloni-meets-kuwait-emir-open-to-extending-q8-fuel-price-cap_e9ef6308-71f6-4607-bac1-74101c7bbfe7.html",
+      "https://www.rainews.it/amp/articoli/2026/09/carburanti-petrolio-prezzi-benzina-diesel-gasolio-eni-ip-socar-q8-meloni-545edbd7-919a-4e82-8fed-d76c5a72966c.html",
+      "https://www.ansa.it/amp/english/news/business/2026/09/29/after-eni-and-ip-q8-says-it-will-cap-fuel-prices-in-italy_0b3359a4-d8c5-42f1-87b3-ec9a56c3e1b1.html",
+      "https://it.euronews.com/2026/09/29/carburanti-anche-q8-aderisce-al-piano-del-governo-con-un-tetto-ai-prezzi-per-30-giorni",
+      "https://it.euronews.com/ultime-notizie",
+      "https://www.rainews.it/maratona/2026/10/emergenza-sud-carburanti-blocchi-tir-dl-misure-sostegno-protesta-autotrasporto-agricoltura-disagi-rete-nazionale-34e5c228-5522-45d1-8882-60f103767510.html",
+      "https://www.ansa.it/sito/notizie/politica/2026/09/29/meloni-ringrazia-kuwait-e-q8-accolto-lappello-del-governo_f1ba5bd6-3eae-4483-bf41-92dc3b3f1c63.html",
+      "https://it.euronews.com/tag/giorgia-meloni",
+      "https://teleborsa.ansa.it/",
+      "https://eur-lex.europa.eu/legal-content/IT/TXT/PDF/?uri=CELEX%3A52026PC0438",
+      "https://www.regione.sicilia.it/sites/default/files/2024-11/D.R.A.%20n.%201085%20del%2007.11.2024_CARBURANTE_LIQUIDAZIONE_%E2%82%AC_2304.81_signed%28firmato%29.pdf",
+      "https://www.bancaditalia.it/pubblicazioni/relazione-annuale/2025/app_2025_totale.pdf",
+      "https://www.ansa.it/documents/1773912484284_202502_Focus_Mercato_Italia-2.pdf",
+      "https://www.europarl.europa.eu/doceo/document/E-10-2026-000953_IT.pdf",
+      "https://www.euronews.com/2026/10/23/eu-vies-to-expand-role-in-ukraine-russia-peace-talks-to-influence-us-thinking",
+      "https://it.euronews.com/2026/10/23/ucraina-ue-vuole-un-posto-ai-negoziati-di-pace-possibile-contatto-diretto-con-mosca",
+      "https://www.ansa.it/sito/notizie/mondo/2026/06/09/zelensky-europa-non-puo-essere-mediatrice-con-noi-fermi-putin_1e25cb19-58e4-4b39-9230-bde1d465ac69.html",
+      "https://www.euronews.com/2026/10/22/a-fraught-push-for-peace-and-a-race-to-fund-ukraine",
+      "https://www.euronews.com/2026/10/16/eu-summit-leaders-to-rally-behind-zelenskyy-amid-bitter-row-with-trump?webPushId=MTEyNjk%3D",
+      "https://www.euronews.com/2026/10/21/diplomatic-damage-control-in-oslo-as-zelenskyy-says-us-intelligence-sharing-restored",
+      "https://www.ansa.it/amp/europa/notizie/rubriche/altrenews/2026/06/19/merz-formato-e3-chiesto-da-kiev-ma-coinvolgiamo-sempre-italia-e-altri-stati_f11a78b1-a679-4403-865b-2c2d52397980.html",
+      "https://it.euronews.com/2025/10/24/bruxelles-zelensky-al-vertice-ue-lucraina-non-cedera-alcun-territorio",
+      "https://www.ansa.it/amp/sito/notizie/mondo/2026/06/05/ue-appoggiamo-la-lettera-di-zelensky-ucraina-ed-europa-per-la-pace_9d824e5a-0027-40d7-9fa4-35b1a5c3a3b8.html",
+      "https://www.ansa.it/sito/notizie/mondo/2026/02/05/colloqui-in-salita-cresce-lidea-di-un-inviato-ue-per-kiev_2884d1ab-6e43-46c8-a32d-ecde2ef7ae4d.html",
+      "https://it.euronews.com/2026/01/24/colloqui-per-la-pace-in-ucraina-ad-abu-dhabi-le-questioni-territoriali-sono-una-priorita"
+    ]
+  },
+  "scriptReview": {
+    "version": 1,
+    "inputSha256": "d156afaae2e28c60d90462c432c1a7d4909ba58e640d89e9415bb4773b551046",
+    "scriptSha256": "78e112b20352e8412f5fed55e4b7ec65e9009fc1a656fc41f95435e67356f9a8",
+    "checkedAt": "2026-10-24T06:31:03.544Z",
+    "model": "openai/openai-default",
+    "passed": true,
+    "issues": [],
+    "scoreMarkup": "<mood:agreement intensity=\"0.45\" intent=\"acknowledge\">Ciao, questo è Conclavia Daily. Oggi è il ventiquattro ottobre.</mood>\n<mood:attention intensity=\"0.52\" intent=\"explain\">Restiamo tra Italia e estero, con tre temi che si muovono già dalla mattina: piazze sotto controllo, terremoto in Sicilia e nuovi passaggi diplomatici.</mood>\n<mood:attention intensity=\"0.66\" intent=\"explain\">A Milano l’attenzione è già alta in vista delle manifestazioni di sabato, e il centro si prepara a possibili ripercussioni.</mood>\n<mood:attention intensity=\"0.64\" intent=\"explain\">In parallelo, il Movimento 17 ottobre ha revocato i punti annunciati in precedenza e dice che comunicherà le piazze solo all’ultimo momento.</mood>\n<mood:doubt intensity=\"0.56\" intent=\"reflect\">Per questo le autorità restano in allerta in più città, da Milano a Roma, Bologna e Bari.</mood>\n<mood:attention intensity=\"0.7\" intent=\"explain\">In Sicilia continua lo sciame sismico al largo delle Eolie.</mood>\n<mood:attention intensity=\"0.74\" intent=\"explain\">La scossa più forte, registrata dall’Ingv, è stata di magnitudo 5.5 a una profondità di 9 chilometri.</mood>\n<mood:attention intensity=\"0.63\" intent=\"explain\">Dopo la scossa principale sono arrivate altre repliche, tra cui una di magnitudo 3.2 nella notte.</mood>\n<mood:doubt intensity=\"0.54\" intent=\"reflect\">Al momento non risultano danni, e l’allarme maremoto era stato attivato e poi revocato.</mood>\n<mood:attention intensity=\"0.64\" intent=\"explain\">Le cinque attiviste italiane fermate dall’IDF in Cisgiordania rientrano sabato in Italia.</mood>\n<mood:attention intensity=\"0.7\" intent=\"explain\">Intanto Netanyahu ha annunciato una maxioperazione militare dopo l’attentato a un posto di blocco vicino Hebron, con due soldati israeliani uccisi.</mood>\n<mood:doubt intensity=\"0.56\" intent=\"reflect\">Resta aperto quanto durerà l’operazione e quali effetti avrà sul terreno.</mood>\n<mood:attention intensity=\"0.63\" intent=\"explain\">Sul capitolo carburanti, da fonti di Palazzo Chigi emerge la disponibilità kuwaitiana a prorogare il price cap su benzina e diesel.</mood>\n<mood:agreement intensity=\"0.6\" intent=\"reassure\">Eni conferma intanto che manterrà il tetto fino a fine anno, con i livelli attuali di 1,99 euro per la benzina e 2,25 per il gasolio.</mood>\n<mood:doubt intensity=\"0.54\" intent=\"reflect\">Resta però aperta la durata precisa dell’intesa e il livello futuro del tetto.</mood>\n<mood:attention intensity=\"0.62\" intent=\"explain\">Sul dossier Ucraina, Bruxelles punta a trasformare il prossimo round di colloqui in un formato multilaterale con una rappresentanza europea.</mood>\n<mood:attention intensity=\"0.61\" intent=\"contrast\">Zelensky, da parte sua, dice che Kiev è pronta a fare pace subito, ma non a cedere altri territori.</mood>\n<mood:doubt intensity=\"0.53\" intent=\"reflect\">Per ora c’è una spinta diplomatica europea e una linea ucraina molto chiara, ma non ancora un formato concordato dei colloqui.</mood>\n<mood:curiosity intensity=\"0.64\" intent=\"point-down\">Scrivici nei commenti cosa vuoi approfondire:</mood>\n<mood:agreement intensity=\"0.55\" intent=\"invite\">partiamo dalle tue domande.</mood>\n<mood:agreement intensity=\"0.44\" intent=\"acknowledge\">Meno rumore, più contesto.</mood>",
+    "narrationText": "Ciao, questo è Conclavia Daily. Oggi è il ventiquattro ottobre. Restiamo tra Italia e estero, con tre temi che si muovono già dalla mattina: piazze sotto controllo, terremoto in Sicilia e nuovi passaggi diplomatici.\n\nA Milano l’attenzione è già alta in vista delle manifestazioni di sabato, e il centro si prepara a possibili ripercussioni. In parallelo, il Movimento 17 ottobre ha revocato i punti annunciati in precedenza e dice che comunicherà le piazze solo all’ultimo momento. Per questo le autorità restano in allerta in più città, da Milano a Roma, Bologna e Bari.\n\nIn Sicilia continua lo sciame sismico al largo delle Eolie. La scossa più forte, registrata dall’Ingv, è stata di magnitudo 5.5 a una profondità di 9 chilometri. Dopo la scossa principale sono arrivate altre repliche, tra cui una di magnitudo 3.2 nella notte. Al momento non risultano danni, e l’allarme maremoto era stato attivato e poi revocato.\n\nLe cinque attiviste italiane fermate dall’IDF in Cisgiordania rientrano sabato in Italia. Intanto Netanyahu ha annunciato una maxioperazione militare dopo l’attentato a un posto di blocco vicino Hebron, con due soldati israeliani uccisi. Resta aperto quanto durerà l’operazione e quali effetti avrà sul terreno.\n\nSul capitolo carburanti, da fonti di Palazzo Chigi emerge la disponibilità kuwaitiana a prorogare il price cap su benzina e diesel. Eni conferma intanto che manterrà il tetto fino a fine anno, con i livelli attuali di 1,99 euro per la benzina e 2,25 per il gasolio. Resta però aperta la durata precisa dell’intesa e il livello futuro del tetto.\n\nSul dossier Ucraina, Bruxelles punta a trasformare il prossimo round di colloqui in un formato multilaterale con una rappresentanza europea. Zelensky, da parte sua, dice che Kiev è pronta a fare pace subito, ma non a cedere altri territori. Per ora c’è una spinta diplomatica europea e una linea ucraina molto chiara, ma non ancora un formato concordato dei colloqui.\n\nScrivici nei commenti cosa vuoi approfondire: partiamo dalle tue domande. Meno rumore, più contesto.",
+    "checks": {
+      "coherence": true,
+      "impartiality": true,
+      "opening": true,
+      "closing": true,
+      "coverage": true
+    },
+    "clauses": [
+      {
+        "index": 0,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Saluto e data coerenti con l’edizione; nessuna affermazione extra."
+      },
+      {
+        "index": 1,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Preview breve e generica, coerente con i temi poi trattati."
+      },
+      {
+        "index": 2,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Introduzione chiara e naturale; riassume correttamente i filoni della puntata."
+      },
+      {
+        "index": 3,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Allerta a Milano supportata dalle fonti e resa in tono neutro."
+      },
+      {
+        "index": 4,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Revoca dei punti e comunicazione all’ultimo momento sono attribuite correttamente al movimento."
+      },
+      {
+        "index": 5,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Allerta in più città conseguente e supportata dalle evidenze."
+      },
+      {
+        "index": 6,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Apertura della notizia sullo sciame sismico corretta e comprensibile."
+      },
+      {
+        "index": 7,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Magnitudo e profondità coincidono con le fonti disponibili."
+      },
+      {
+        "index": 8,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Replica notturna e sequenza sismica supportate; formulazione chiara."
+      },
+      {
+        "index": 9,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Nessun danno e revoca dell’allerta maremoto sono correttamente attribuiti."
+      },
+      {
+        "index": 10,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Rientro delle attiviste in Italia riportato senza overclaim."
+      },
+      {
+        "index": 11,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Annuncio di operazione dopo l’attentato è correttamente attribuito e contestualizzato."
+      },
+      {
+        "index": 12,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Qualifica l’incertezza senza aggiungere fatti non verificati."
+      },
+      {
+        "index": 13,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Disponibilità kuwaitiana al price cap riportata con attribuzione corretta."
+      },
+      {
+        "index": 14,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Dato sui prezzi Eni e durata fino a fine anno supportato dalle fonti."
+      },
+      {
+        "index": 15,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Resta aperta la durata dell’intesa: qualificazione corretta e prudente."
+      },
+      {
+        "index": 16,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Posizione UE sui colloqui sull’Ucraina è resa come sviluppo diplomatico, non come fatto chiuso."
+      },
+      {
+        "index": 17,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Dichiarazione di Zelensky fedele alle fonti e ben attribuita."
+      },
+      {
+        "index": 18,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Sintesi finale equilibrata, senza falsa certezza sul formato dei colloqui."
+      },
+      {
+        "index": 19,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Invito ai commenti presente e in tono colloquiale appropriato."
+      },
+      {
+        "index": 20,
+        "content": true,
+        "form": true,
+        "delivery": true,
+        "reason": "Chiusura breve e coerente, senza aggiunte fattuali non supportate."
+      }
+    ]
+  },
+  "publicationState": "unpublished",
+  "productionReady": false,
+  "blockers": [
+    "Alex 2 non collegato al worker API.",
+    "Il testo conta 328 parole: è una bozza breve, non ancora il Daily ampio da circa 4–6 minuti. Ampliare le spiegazioni solo con contesto sostenuto dalle fonti, poi ripetere entrambi i controlli."
+  ],
+  "media": {
+    "audio": false,
+    "portrait": false,
+    "landscape": false,
+    "subtitles": false
+  },
+  "previousRejectedRunPreserved": ".daily-agent/editorial-recovery-20261024/before-retry.json"
+}

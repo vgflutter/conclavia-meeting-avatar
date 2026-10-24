@@ -266,3 +266,32 @@ Documentazione ufficiale verificata per lo scheduling: [ChatGPT Work Automations
 **Ordine per completare l’autonomia video:** integrare Alex 2 senza cambiare identità; raccordare il percorso di take/allineamento approvato con pausa misurata di 2 s, clock naturale e 50 fps; provare il job completo e la revisione finale; verificare canali e task Work; abilitare invii solo con quelle prove. Nel modificare la voce gestire i segreti secondo `AGENTS.md`, senza copiarli in chat o nel repository. Le capacità riutilizzabili appartengono al kit, le scelte editoriali a Meeting. Modifiche al kit richiedono verifiche di feature, test pertinenti e build di entrambi i consumer.
 
 Il 24 ottobre sono stati applicati gli orari al DB Italia e caricato il timer locale, persistente al login. Il tunnel Mongo esistente è stato ripristinato e il DB verificato raggiungibile. La GUI aggiornata risponde sulla porta **3107**. Nessuna ricerca, sintesi o pubblicazione reale è stata eseguita anticipatamente. La preparazione delle 08:00 è attiva; il video completo resta condizionato alle integrazioni sopra. [Rapporto di verifica](cdaily-agent-verification-20261024.json).
+
+## 14. Primo avvio reale — 24 ottobre 2026
+
+Il timer ha eseguito la raccolta alle **08:00 Europe/Rome**. La prima verifica
+ha bloccato la puntata: l’AI aveva classificato cinque sviluppi come `update`
+con archivio pubblicato vuoto, oltre a due rilievi distinti sui riscontri.
+La [regola di continuità](cdaily-news-continuity-20261024.md), i prompt e lo
+schema sono stati corretti in `bc0c5e8`. Questo non ha approvato il vecchio rapporto.
+
+Su richiesta dell’utente di procedere è stato applicato **un solo nuovo tentativo
+esplicito**, attraverso l’azione dell’app con controllo di versione. Il rapporto
+precedente è conservato in `.daily-agent/editorial-recovery-20261024/`.
+La nuova raccolta ha superato attualità e controlli A/B dopo l’unica correzione
+editoriale automatica di un titolo troncato. Alle **08:31** il worker si è
+fermato prima della voce per Alex 2 non collegato, salvando tutti i testi.
+
+[Dossier dell’edizione](daily-20261024-it.md). Il testo verificato conta **328
+parole**: resta una bozza breve, da approfondire con contesto sostenuto dalle
+fonti per la base di circa 4–6 minuti. Il passaggio A/B non certifica il clock
+né la qualità del master. Un ampliamento richiede nuovi controlli; non
+azzerare i tentativi o approvare il pacchetto per aggirare il blocco.
+
+Nessun audio/video nuovo o invio social. I rapporti testuali hanno la normale
+scadenza e non autorizzano una produzione tardiva senza verifica aggiornata.
+[Piano concreto per Alex 2](cdaily-alex2-api-plan-20261024.md). Il browser non è
+accessibile e il catalogo plugin non ha restituito un connettore ElevenLabs.
+Per le credenziali la skill e il tool imposti da Secret Safety non sono
+disponibili: è stata chiesta all’utente una deroga per usare la configurazione
+privata locale. **Non presumere che sia concessa senza una risposta esplicita.**
