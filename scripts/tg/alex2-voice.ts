@@ -2,7 +2,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { elevenLabsSpeechPcm } from '@conclavia/avatar-kit/speech/server';
+import { ElevenLabsSpeechError, elevenLabsSpeechPcm } from '@conclavia/avatar-kit/speech/server';
 import { alex2ConfigStatus, alex2ConfigDigest, verifyAlex2Identity } from '../../src/lib/tg/alex2-config';
 import { wave } from '../../src/lib/tg/media';
 import { ALEX2_PROBE_TEXT, alex2ProofDirectory, alex2SynthesisVerified } from '../../src/lib/tg/alex2-proof';
@@ -29,4 +29,14 @@ async function main(){
   if(!alex2SynthesisVerified())throw Error();
   console.log(JSON.stringify({generated:true,synthesisVerified:true,seconds:take.pcm.length/48000,wordCount:take.words.length,proofDirectory:directory,completeVideoChecked:false,publishes:false}));
 }
-main().catch(()=>{console.error(JSON.stringify({ready:false,issue:'Alex 2 non verificato: controllare configurazione privata, identità, crediti o precedente tentativo. Nessun fallback; nessun segreto nei log.'}));process.exitCode=1;});
+main().catch(async(error:unknown)=>{
+  // Keep only our adapter's bounded classifications, never provider bodies,
+  // request headers, account identifiers or arbitrary exception messages.
+  const diagnostic=error instanceof ElevenLabsSpeechError?{stage:error.stage,status:error.status}
+    :{stage:'local',status:null};
+  if(action==='probe'){
+    await mkdir(directory,{recursive:true,mode:0o700});
+    await writeFile(path.join(directory,`failure-${Date.now()}.json`),JSON.stringify({version:1,checkedAt:new Date().toISOString(),...diagnostic}),{flag:'wx',mode:0o600}).catch(()=>{});
+  }
+  console.error(JSON.stringify({ready:false,...diagnostic,issue:'Alex 2 non verificato: controllare configurazione privata, identità, crediti o precedente tentativo. Nessun fallback; nessun segreto nei log.'}));process.exitCode=1;
+});

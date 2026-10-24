@@ -1,6 +1,6 @@
 # Alex 2 — raccordo API al percorso Daily approvato
 
-Stato aggiornato al **24 ottobre 2026**: adattatore e raccordo al worker implementati, verificati con fixture sintetiche. **Prova provider reale pendente**: mancano chiave e ID voce locali. [Implementazione e comandi](cdaily-alex2-integration-20261024.md). Nessuna nuova credenziale è stata creata; nessun audio reale è stato generato in questa integrazione.
+Stato aggiornato al **24 ottobre 2026**: adattatore e raccordo al worker implementati, verificati con fixture sintetiche. **Chiave privata creata su richiesta esplicita e identità Alex 2 verificata.** Due brevi richieste reali hanno generato audio, ma i tempi nativi sono incoerenti: il take più recente di 8,88 s è stato recuperato dalla cronologia senza nuova sintesi. La prova completa resta bloccata sulla sincronizzazione. [Implementazione, esito e comandi](cdaily-alex2-integration-20261024.md). Nessun nuovo Daily o invio social.
 
 ## Risultato da ottenere
 
@@ -39,9 +39,10 @@ privata». Il blocco generico AWS/Secret Safety in `AGENTS.md` è stato sostitui
 con regole pertinenti al backend esistente. Per collegare ElevenLabs non
 serve introdurre un servizio AWS né chiedere di nuovo la stessa autorizzazione.
 
-Servono una chiave ElevenLabs già esistente, l’identificativo della voce
-approvata e la selezione esplicita del modello, nella configurazione privata
-server. Non creare una nuova chiave, cambiare piano o acquistare crediti come
+Servono una chiave ElevenLabs, l’identificativo della voce approvata e la
+selezione esplicita del modello, nella configurazione privata server. Sono ora
+presenti in `.env.local` dopo autorizzazione specifica dell’utente e onboarding
+ufficiale. Non creare altre chiavi, cambiare piano o acquistare crediti come
 effetto collaterale. Nessun valore deve entrare in Git, output, bundle browser,
 manifest pubblico o chat; i controlli mostrano soltanto presenza e stato.
 
