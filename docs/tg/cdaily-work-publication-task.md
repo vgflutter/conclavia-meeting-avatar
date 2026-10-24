@@ -1,8 +1,8 @@
 # Task ChatGPT Work — distribuzione dal sito CDaily
 
-Aggiornamento del 24 ottobre 2026, richiesto dall’utente: **prima pubblicare automaticamente il pacchetto approvato sul sito; poi Work recupera da lì i due formati e i testi per i social**. Questa task si esegue sul web/in cloud: non richiede una cartella del Mac, Mongo, SSH, chiavi del backend o comandi Codex. Il presente file è un prompt pronto, non la prova che la task sia già stata salvata.
+Aggiornamento del 25 ottobre 2026, richiesto dall’utente: **prima pubblicare automaticamente il pacchetto approvato sul sito; poi Work recupera da lì i due formati e i testi per i social**. Questa task si esegue sul web/in cloud: non richiede una cartella del Mac, Mongo, SSH, chiavi del backend o comandi Codex. Il presente file è un prompt pronto, non la prova che la task sia già stata salvata.
 
-Calendario: ogni giorno alle **09:00 Europe/Rome**. La produzione editoriale parte alle 08:00; la finestra di distribuzione si chiude alle 09:30. Usare il fuso, non UTC fisso. Creare o aggiornare una sola task, verificare il primo esito e mantenere il contesto di distribuzione. Il [supporto ufficiale OpenAI](https://learn.chatgpt.com/docs/automations) distingue le task web, con strumenti connessi e sorgenti accessibili, dalle cartelle locali delle task desktop. Le sessioni e le connessioni effettive vanno collaudate, non presunte.
+Calendario: ogni giorno alle **08:15 Europe/Rome**. La produzione editoriale parte alle 07:45; la finestra di distribuzione si chiude alle 08:45. I trenta minuti sono un obiettivo ancora da misurare sul primo master completo, non una garanzia. Un ritardo non autorizza a saltare A/B o la revisione media. Usare il fuso, non UTC fisso. Creare o aggiornare una sola task, verificare il primo esito e mantenere il contesto di distribuzione. Il [supporto ufficiale OpenAI](https://learn.chatgpt.com/docs/automations) distingue le task web, con strumenti connessi e sorgenti accessibili, dalle cartelle locali delle task desktop. Le sessioni e le connessioni effettive vanno collaudate, non presunte.
 
 ## Prompt da salvare
 
@@ -12,11 +12,11 @@ L'utente ha autorizzato la pubblicazione automatica delle edizioni complete
 approvate dall'AI. La produzione e la pubblicazione sul sito avvengono nel
 backend: tu non crei notizie, copioni, voce o video e non usi Codex.
 
-Calcola la data corrente in Europe/Rome. Opera solo dalle 09:00 alle 09:30 locali.
+Calcola la data corrente in Europe/Rome. Opera solo dalle 08:15 alle 08:45 locali.
 Leggi https://daily.conclavia.me/edizioni/it/latest.json senza usare una copia
 precedente. Se kind è waiting o la data non è quella di oggi, manca un Daily
 pronto: non sostituirlo con ieri, presentazione, demo o un file trovato altrove.
-Puoi ricontrollare ogni cinque minuti entro le 09:30; poi segnala il blocco.
+Puoi ricontrollare ogni cinque minuti entro le 08:45; poi segnala il blocco.
 
 Quando kind=daily, apri releaseUrl soltanto se è HTTPS, ha origine esatta
 https://daily.conclavia.me e percorso /edizioni/it/[data-di-oggi]/[hash]/release.json.

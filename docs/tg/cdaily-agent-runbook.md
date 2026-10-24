@@ -1,12 +1,12 @@
 # CDaily: manuale per gli agenti e continuità di produzione
 
-Revisione: **24 ottobre 2026**, fuso editoriale **Europe/Rome**. Questo è il punto di ingresso per riprendere il progetto senza la chat. Leggerlo integralmente prima di creare un’edizione. Le istruzioni correnti dell’utente prevalgono; registrare qui le nuove decisioni approvate, distinguendole dalle prove.
+Revisione: **25 ottobre 2026**, fuso editoriale **Europe/Rome**. Questo è il punto di ingresso per riprendere il progetto senza la chat. Leggerlo integralmente prima di creare un’edizione. Le istruzioni correnti dell’utente prevalgono; registrare qui le nuove decisioni approvate, distinguendole dalle prove.
 
 **Priorità corrente dello scheduler:** le prossime edizioni Italia sono in `productionMode=editorial`: raccolta, copione e A/B, poi esportazione e stato `editorial_ready`. Nessuna sintesi, render o pubblicazione automatica. [Stato non media e host separato](cdaily-nonmedia-readiness-20261024.md). Dopo questo lavoro l’utente ha autorizzato una **demo isolata di circa un minuto con voce e gesti**: nuovo take Alex 2, allineamento ASR misurato e due formati, senza cambiare la modalità schedulata o la presentazione pubblicata. [Demo, limiti e verifiche del 24 ottobre](cdaily-acting-demo-20261024.md). I timestamp nativi incoerenti non sono stati accettati né la produzione autonoma dichiarata pronta.
 
-**Scheduler corrente:** host editoriale separato sul VPS, release `editorial-20261024204925120-3f975e30`, timer systemd attivo e persistente, segnale condiviso nel DB. Il precedente timer launchd del Mac è stato disattivato dopo verifica remota; le sezioni storiche che lo descrivono attivo restano cronologia. La prima raccolta/A/B sul nuovo host è attesa il 25 ottobre alle 08:00 Rome (07:00 UTC). Work gestirà la pubblicazione, non una sessione Codex; task e trasporti reali ancora da collaudare e media tuttora rinviati.
+**Scheduler corrente:** host editoriale separato sul VPS, release `editorial-20261024230925890-08684ff9`, timer systemd attivo e persistente, segnale condiviso nel DB. Il precedente timer launchd del Mac è stato disattivato dopo verifica remota; le sezioni storiche che lo descrivono attivo restano cronologia. Il piano aggiornato il 25 ottobre prevede preparazione alle **07:45 Europe/Rome**, uscita obiettivo **08:15** e chiusura **08:45**. Orari applicati e riletti sul DB effettivo del server; gli snapshot già accodati restano invariati. Work gestirà la pubblicazione, non una sessione Codex; task e trasporti reali ancora da collaudare e media tuttora rinviati.
 
-**Consegna sito approvata e attiva:** le puntate complete con `siteFirst=true` e revisione AI positiva vengono pubblicate dal servizio separato sul sito, nei due formati. Work legge `https://daily.conclavia.me/edizioni/it/latest.json` e la release immutabile, senza cartella del Mac. La demo del 24 è già online, esclusa dalle uscite Daily; `latest` è ancora `waiting`. [Architettura, URL, verifiche e limiti](cdaily-site-handoff-20261024.md). Redazione attuale `editorial-20261024204925120-3f975e30`, publisher `site-1792875880377-a7519222`; produzione video giornaliera e task Work restano da completare/collaudare. Questa decisione supera le indicazioni storiche di usare il CLI locale per la distribuzione delle nuove edizioni `siteFirst`.
+**Consegna sito approvata e attiva:** le puntate complete con `siteFirst=true` e revisione AI positiva vengono pubblicate dal servizio separato sul sito, nei due formati. Work legge `https://daily.conclavia.me/edizioni/it/latest.json` e la release immutabile, senza cartella del Mac. La demo del 24 è già online, esclusa dalle uscite Daily; `latest` è ancora `waiting`. [Architettura, URL, verifiche e limiti](cdaily-site-handoff-20261024.md). Redazione attuale `editorial-20261024230925890-08684ff9`, publisher `site-1792875880377-a7519222`; produzione video giornaliera e task Work restano da completare/collaudare. Questa decisione supera le indicazioni storiche di usare il CLI locale per la distribuzione delle nuove edizioni `siteFirst`.
 
 ## 1. Che cosa stiamo costruendo
 
@@ -89,7 +89,7 @@ senza uscite precedenti un fatto recente su una vicenda già in corso è `new`;
 
 ```mermaid
 flowchart TD
-  S[08:00 · data locale e prenotazione unica] --> H[Archivio delle uscite confermate]
+  S[07:45 · data locale e prenotazione unica] --> H[Archivio delle uscite confermate]
   H --> R[Feed e ricerca puntuale · registro delle prove]
   R --> N[Novità, rilevanza Italia e copertura]
   N --> E[Copione, titoli, riassunto social e score]
@@ -201,7 +201,7 @@ npm run daily:agent -- publish --date=today --dry-run
 
 `plan` è un’anteprima del file `config/tg/daily-agent.json`; `configure` applica quel piano alle impostazioni Italia nel DB. Dopo il salvataggio, **il DB/GUI è la configurazione effettiva** e viene letto a ogni tick. Le edizioni già accodate conservano la propria configurazione congelata. Ripetere `configure` sovrascrive le impostazioni di Italia: usarlo soltanto per un cambio deliberato di piano.
 
-Piano iniziale: primo giorno **2026-10-24**, creazione **08:00 Europe/Rome**, uscita proposta **09:00**, chiusura **09:30**. In ottobre il cambio dell’ora è gestito dal fuso IANA: il 24 l’avvio è 06:00 UTC, il 25 è 07:00 UTC. `run` non permette di retrodatare una puntata o recuperare automaticamente un’uscita di ieri. Una partenza tardiva oltre la finestra produce uno skip, non un video di notizie vecchie.
+Piano storico del 24 ottobre, superato dal calendario sotto: primo giorno **2026-10-24**, creazione **08:00 Europe/Rome**, uscita proposta **09:00**, chiusura **09:30**. In ottobre il cambio dell’ora è gestito dal fuso IANA: il 24 l’avvio è 06:00 UTC, il 25 è 07:00 UTC. `run` non permette di retrodatare una puntata o recuperare automaticamente un’uscita di ieri. Una partenza tardiva oltre la finestra produce uno skip, non un video di notizie vecchie.
 
 La task locale launchd controlla il calendario ogni minuto; fuori finestra non esegue ricerca AI. All’interno accoda una sola edizione e invoca il worker con `--once --job=ID --no-schedule --no-publish --approved-daily`. L’indice unico Mongo e le lease impediscono produzioni concorrenti e duplicati. Le fasi terminali non vengono rigenerate dal timer. `blocked` richiede una risoluzione esplicita; non azzerare automaticamente i contatori.
 
@@ -211,7 +211,7 @@ Il Mac deve essere acceso e il database raggiungibile. Al risveglio si rivaluta 
 
 ## 10. ChatGPT Work e distribuzione
 
-[Prompt e istruzioni correnti per la task Work](cdaily-work-publication-task.md). Per le nuove edizioni `siteFirst` è una task **web/in cloud**, alle **09:00 Europe/Rome**, che legge il sito pubblico e le connessioni autorizzate. Non richiede la cartella del Mac, Mongo o SSH. Il salvataggio e il primo esito vanno verificati nella UI; il CLI non inventa un ID task.
+[Prompt e istruzioni correnti per la task Work](cdaily-work-publication-task.md). Per le nuove edizioni `siteFirst` è una task **web/in cloud**, alle **08:15 Europe/Rome**, che legge il sito pubblico e le connessioni autorizzate. Non richiede la cartella del Mac, Mongo o SSH. Il salvataggio e il primo esito vanno verificati nella UI; il CLI non inventa un ID task.
 
 Work legge `it/latest.json`, richiede data odierna e `kind=daily`, poi recupera la release immutabile con i due formati e i testi approvati. Usa le connessioni social del progetto, confronta account e post esistenti e riconcilia le ricevute prima di un nuovo invio. Una demo, un vecchio Daily o un esito incerto non autorizzano un caricamento. Le ricevute Work restano nella task e nei servizi: non attribuirle all’outbox nativa senza un adattatore verificato. Quest’ultima esclude le edizioni `siteFirst`; il precedente comando locale `publish --date=today` rimane soltanto per gli altri snapshot.
 
@@ -320,3 +320,13 @@ Una sola registrazione per paragrafo di notizia, con contesto dei paragrafi vici
 Il master conserva l’obiettivo in `product.seconds` e la durata reale in `manifest.seconds`; rendering, revisione e approvazione usano quest’ultima. Il limite tecnico 180–420 s rileva take anomali; l’obiettivo resta circa 4–6 minuti, con chiarezza e sostanza. Nessun `atempo` nel percorso Alex 2. Le prove video devono ancora confermare recitazione, voce e leggibilità reali. Nessuna modifica al sito pubblico o ai master già approvati in questa integrazione.
 
 Aggiornamento del collegamento: onboarding ufficiale ElevenLabs completato con conferma esplicita dell’utente; `.env.local` contiene chiave e ID esatto, permessi `0600`, altre impostazioni conservate. `check` è positivo. Due richieste di prova generano il testo pubblico, ma il validatore respinge 139 intervalli su 143 con fine precedente all’inizio. La cronologia v4 li registra come dialogo a una voce: cercare la corrispondenza esatta negli input, non presumere assenza dopo un filtro sul solo `voice_id`. Take più recente recuperato senza rigenerazione in `.daily-agent/alex2-voice-proof/recovered-take.wav` (8,88 s); sincronizzazione e ascolto ancora pendenti, `synthesisVerified=false`. Nessun cambio piano, acquisto, nuovo Daily o pubblicazione. Non distribuire questo stato locale come prova di configurazione sul server di produzione.
+
+## 16. Calendario mattutino — 25 ottobre 2026
+
+Su richiesta dell’utente: preparazione **07:45**, pubblicazione obiettivo **08:15**, chiusura **08:45**, sempre `Europe/Rome`. Il 25 ottobre corrispondono a 06:45, 07:15 e 07:45 UTC; il giorno prima sarebbero state 05:45, 06:15 e 06:45 UTC. Il timer server controlla ogni minuto il prodotto salvato nel DB: aggiornare il solo JSON non basta.
+
+Il comando deploy `daily-editorial schedule`, dopo il rilascio del bundle aggiornato, applica solo i due orari al prodotto Italia esistente, con controllo di versione. Conserva modalità editoriale, destinazioni, configurazione privata e job congelati. Non accoda lavori né chiama provider. La task Work va ancora salvata nella chat esistente alle **08:15**, usando il prompt aggiornato; nessun ID inventato.
+
+Trenta minuti costituiscono un budget da collaudare, non un tempo di produzione già dimostrato: raccolta e A/B, take Alex 2/allineamento, due render a 50 fps e revisione finale devono restare completi. Il primo collaudo cronometrato dirà se serva anticipare il lavoro. Se il pacchetto non è pronto, Work segnala l’attesa e non pubblica demo o notizie vecchie. La generazione automatica di media resta da completare.
+
+Verifica operativa: rilascio `editorial-20261024230925890-08684ff9`, DB collegato, timer server attivo e abilitato. `daily-editorial schedule` ha confermato `changed=true`, avvio 07:45, uscita 08:15 e chiusura 08:45 per il 25 ottobre; stato `before_production`, nessuna ricerca o pubblicazione avviata dal comando. Verificati nove test calendario/pack, typecheck, lint, 65 test Node e 54 Python del deploy più il test Caddy nativo. Work non risulta ancora salvato; nessuna autonomia media completa dichiarata.

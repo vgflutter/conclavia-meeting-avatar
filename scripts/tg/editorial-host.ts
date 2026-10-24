@@ -18,7 +18,7 @@ import mongoose from 'mongoose';
 
 async function main(){
   const action=process.argv[2]??'status';
-  if(!['status','tick'].includes(action))throw Error('Invalid action');
+  if(!['status','tick','schedule'].includes(action))throw Error('Invalid action');
   const plan=parseAgentSchedule(JSON.parse(await readFile(process.env.TG_AGENT_PLAN_FILE||'config/tg/daily-agent.json','utf8')));
   if(plan.product.productionMode!=='editorial'||process.env.TG_EDITORIAL_ONLY!=='true'||process.env.TG_PUBLISH_ENABLED==='true')throw Error('Editorial ceiling required');
   await connectToDatabase();
@@ -29,6 +29,17 @@ async function main(){
   // into an editorial job. Operators configure the product through its GUI.
   if(product.productionMode!=='editorial')throw Error('Product is not editorial');
   const now=new Date(),decision=agentDecision({...plan,product},now);
+  if(action==='schedule'){
+    const proposed=parseProduct({...product,productionTime:plan.product.productionTime,publishTime:plan.product.publishTime});
+    if(proposed.timezone!=='Europe/Rome')throw Error('Existing editorial timezone differs');
+    let changed=false;
+    if(product.productionTime!==proposed.productionTime||product.publishTime!==proposed.publishTime){
+      const result=await TgEditionModel.updateOne({_id:stored._id,revision:stored.revision},{$set:{'product.productionTime':proposed.productionTime,'product.publishTime':proposed.publishTime,updatedAt:now},$inc:{revision:1}});
+      if(result.modifiedCount!==1)throw Error('Schedule changed concurrently');
+      changed=true;
+    }
+    return console.log(JSON.stringify({configured:true,changed,edition:proposed.edition,productionTime:proposed.productionTime,publishTime:proposed.publishTime,timezone:proposed.timezone,decision:agentDecision({...plan,product:proposed},now),generation:false,publication:false}));
+  }
   if(action==='status')return console.log(JSON.stringify({database:'connected',mode:'editorial',driver:plan.productionDriver,decision,generation:false,publication:false}));
   await TgControllerModel.updateOne({key:'daily-production'},{$set:{heartbeatAt:now,mode:'editorial',driver:plan.productionDriver}},{upsert:true});
   if(!decision.due)return console.log(JSON.stringify({action:'skipped',reason:decision.reason,date:decision.date}));

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "firstEditionDate": "2026-10-24",
-  "productionDriver": "launchd",
+  "productionDriver": "systemd",
   "publicationDriver": "chatgpt-work",
   "product": {
     "edition": "it",
@@ -11,8 +11,8 @@
     "presenters": 1,
     "productionStandard": "cdaily-v1",
     "productionMode": "editorial",
-    "productionTime": "08:00",
-    "publishTime": "09:00",
+    "productionTime": "07:45",
+    "publishTime": "08:15",
     "timezone": "Europe/Rome",
     "enabled": true,
     "automatic": true,
