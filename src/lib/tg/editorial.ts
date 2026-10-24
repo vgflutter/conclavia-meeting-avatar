@@ -1,7 +1,7 @@
 import { gestureIntents } from '@conclavia/avatar-kit/performance';
 import { createHash } from 'node:crypto';
 import { publicSourceUrl, independentGroup } from './sources';
-import {dailyStoryCount,requiresDailyCoverage} from './format';
+import {dailyStoryRange,requiresDailyCoverage} from './format';
 import type { TgAudit, TgProduct, TgResearch, TgScript, TgStory, TgSource } from './types';
 const moods = ['attention', 'curiosity', 'doubt', 'agreement', 'amusement', 'empathy', 'disagreement', 'surprise'];
 export const dailyEditorialIntents=['explain','question','contrast','emphasize','reassure','invite','reflect','acknowledge'] as const;
@@ -24,8 +24,8 @@ export function requireDailyCoverage(product: TgProduct, research: Pick<TgResear
   // New five-minute editions cover five items; archived four-minute jobs retain four.
   if (!requiresDailyCoverage(product)) return;
   const stories = new Set(research.stories.map(story => story.id));
-  const count=dailyStoryCount(product);
-  if (research.stories.length !== count || stories.size !== count) throw new TgCoverageError(`Il Daily richiede ${count} notizie distinte e corroborate`);
+  const range=dailyStoryRange(product),count=research.stories.length;
+  if (count<range.min||count>range.max||stories.size!==count) throw new TgCoverageError(`Il Daily richiede ${range.min===range.max?range.min:`da ${range.min} a ${range.max}`} notizie distinte e corroborate`);
   if (script) {
     const covered = new Set(script.sentences.map(sentence => sentence.storyId).filter(id => !['intro', 'outro'].includes(id)));
     if (covered.size !== count || [...covered].some(id => !stories.has(id))) throw new TgCoverageError(`Il copione del Daily deve sviluppare tutte le ${count} notizie selezionate`);
@@ -196,7 +196,7 @@ export function validateScript(value: unknown, product: TgProduct, research: TgR
   requireDailyCoverage(product, research, s);
   if (covered.size < 3) fail('Copione con copertura insufficiente');
   const words = s.sentences.reduce((sum, line) => sum + line.text.split(/\s+/u).length, 0);
-  if (words < Math.min(80,product.seconds) || words > product.seconds * 3) fail('Il copione non è compatibile con il minutaggio');
+  if (words < Math.min(80,product.seconds) || words > (product.productionStandard==='cdaily-v1'?1200:product.seconds * 3)) fail('Il copione non è compatibile con il minutaggio');
   return { title: s.title, description: s.description, ...(s.cards?{cards:s.cards.map(c=>({storyId:c.storyId,context:c.context.trim(),change:c.change.trim()}))}:{}), ...(s.headlines?{headlines:s.headlines.map(h=>({storyId:h.storyId,title:h.title.trim()}))}:{}), sentences: s.sentences.map(x => ({ text: x.text.trim(), storyId: x.storyId, speaker: x.speaker, mood: x.mood, intensity: x.intensity, sourceIds: [...x.sourceIds],...(x.intent?{intent:x.intent}:{}),...(x.gestureWord?{gestureWord:x.gestureWord}:{}) })) };
 }
 export function sentenceDigest(sentences: TgScript['sentences']) { return createHash('sha256').update(JSON.stringify(sentences.map(s=>({text:s.text,mood:s.mood,intensity:s.intensity,speaker:s.speaker,storyId:s.storyId,sourceIds:[...s.sourceIds].sort(),...(s.intent?{intent:s.intent}:{}),...(s.gestureWord?{gestureWord:s.gestureWord}:{})})))).digest('hex'); }

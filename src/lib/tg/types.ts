@@ -21,8 +21,10 @@ export interface TgResearch { stories: TgStory[]; sources: TgSource[]; collected
 export interface TgSentence { intent?:GestureIntent;gestureWord?:string;text: string; mood: PodcastEmotion; intensity: number; speaker: 0 | 1; storyId: string; sourceIds: string[] }
 export interface TgScript { cards?:{storyId:string;context:string;change:string}[]; headlines?: {storyId:string;title:string}[]; title: string; description: string; sentences: TgSentence[] }
 export interface TgCue extends TgSentence { choreography?:PerformanceChoreography;performanceWindow?:{start:number;end:number};gestureAccent?:number;gestureAlignment?:'word'|'phrase';start: number; end: number; alignment?:'word'|'estimated'|'sentence-pcm'; frameSeconds?: number; levels?: number[]; phones?: { start: number; end: number; viseme: string }[] }
-export interface TgSpeechPlan {provider:'inworld';model:'inworld-tts-2';speakingRate:number;direction:'daily-natural-v1'|'daily-phrased-v2'|'daily-brisk-v3';voices:string[]}
-export interface TgManifest { version: 1; product: TgProduct; date: string; seconds: number; stories: TgStory[]; sources: TgSource[]; cues: TgCue[]; demo?: boolean; speech?:TgSpeechPlan }
+export type TgSpeechPlan = {provider:'inworld';model:'inworld-tts-2';speakingRate:number;direction:'daily-natural-v1'|'daily-phrased-v2'|'daily-brisk-v3';voices:string[]}
+  | {provider:'elevenlabs';model:'eleven_v4';speakingRate:1;direction:'alex2-connected-v1';voices:string[]};
+export interface TgManifest { version: 1; product: TgProduct; date: string; seconds: number; stories: TgStory[]; sources: TgSource[]; cues: TgCue[]; demo?: boolean; speech?:TgSpeechPlan;
+  fps?:25|50; voiceConfigSha256?:string; lipSync?:'word-anchored-estimate'; openingPause?:{atSeconds:number;addedSeconds:number;wordGapSeconds:number;quietRms:number;fadeSeconds:number} }
 export interface TgAuditCheck { key: string; status: 'supported' | 'unsupported' | 'unverifiable'; evidence: string; sourceUrls: string[] }
 export interface TgPublishedEdition {
   id:string; edition:TgEdition; date:string; publishedAt:string;
@@ -51,6 +53,7 @@ export interface TgReview {
 }
 export interface TgMediaCheck {
   format: 'landscape' | 'portrait'; width: number; height: number; seconds: number;
+  fps?: number;
   rms: number; peak: number; clippedRatio: number; leadingSilence: number; trailingSilence: number;
 }
 export interface TgFinalReview {

@@ -31,7 +31,8 @@
     "test:tg": "node --conditions=react-server --import tsx --test tests/tg/*.test.ts",
     "tg:preview:hands": "node scripts/tg/build-hand-motion-preview.mjs",
     "tg:render:hands": "node scripts/tg/build-hand-motion-preview.mjs && node scripts/tg/render-hand-motion-preview.mjs",
-    "daily:agent": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/daily-agent.ts"
+    "daily:agent": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/daily-agent.ts",
+    "daily:voice": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/alex2-voice.ts"
   },
   "dependencies": {
     "@conclavia/avatar-kit": "file:../conclavia-avatar-kit",

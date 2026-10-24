@@ -13,6 +13,9 @@ import {tgSpeechPlan,directedTgPassage,tgSpeechPassages} from './speech-plan';
 import type { TgAsset, TgCue, TgManifest, TgProduct, TgResearch, TgScript } from './types';
 import {directDailyCueMotion} from './performance-direction';
 import {scoredNarration} from './script-review';
+import { assembleAlex2Take, recordAlex2Passages } from './alex2-speech';
+import { dailyRenderFps, naturalDailyClock } from './media-contract';
+import { alex2Config, alex2ConfigDigest } from './alex2-config';
 export async function command(file: string, args: string[], signal: AbortSignal) {
   const child = spawn(file, args, { stdio: ['ignore', 'pipe', 'pipe'], signal });
   let output = '', error = '';
@@ -33,6 +36,17 @@ export async function synthesize(id: string, product: TgProduct, date: string, r
   await mkdir(cache,{recursive:true,mode:0o700});
   await writeFile(path.join(jobDirectory(id),'narration.txt'),narration.narrationText,{mode:0o600});
   await writeFile(path.join(jobDirectory(id),'performance-score.txt'),narration.scoreMarkup,{mode:0o600});
+  if (naturalDailyClock(product)) {
+    if (product.edition !== 'it' || product.language !== 'it' || product.presenters !== 1) throw new Error('Alex 2 è approvato per Italia con un presentatore; configurare separatamente gli altri cast');
+    const voiceConfigSha256=alex2ConfigDigest(alex2Config());
+    const take = assembleAlex2Take(await recordAlex2Passages(id,narration.sentences,signal),date);
+    if(take.seconds<180||take.seconds>420)throw new TgDurationError(take.seconds/product.seconds,take.seconds);
+    const dir=jobDirectory(id);
+    await writeFile(path.join(dir,'raw.wav'),wave(take.pcm),{mode:0o600});
+    await writeFile(path.join(dir,'word-timings.json'),JSON.stringify({version:1,source:'elevenlabs-native-characters',words:take.words}),{mode:0o600});
+    await command('ffmpeg',['-y','-v','error','-i',path.join(dir,'raw.wav'),'-af',`apad=pad_dur=2,atrim=duration=${take.seconds},loudnorm=I=-16:TP=-1.5:LRA=11`,'-ar',String(SPEECH_SAMPLE_RATE),path.join(dir,'track.wav')],signal);
+    return {...editionManifest(product,date,research,script,take.cues,take.seconds),speech,fps:50,voiceConfigSha256,lipSync:'word-anchored-estimate',openingPause:take.openingPause};
+  }
   const chunks: Buffer[] = [], measured:TgCue[]=[]; let offset=0;
   for (const passage of tgSpeechPassages(narration.sentences)) {
     signal.throwIfAborted();
@@ -43,7 +57,7 @@ export async function synthesize(id: string, product: TgProduct, date: string, r
     try{const data=await readFile(cached);if(data.length>=2400&&data.length%2===0&&data.length<=SPEECH_SAMPLE_RATE*2*45)pcm=data;}catch{}
     if(pcm)try{const metadata=JSON.parse(await readFile(cached+'.json','utf8'));if(Array.isArray(metadata.words))words=metadata.words;if(Array.isArray(metadata.phones))nativePhones=metadata.phones;}catch{}
     if(!pcm){
-    const response = await inworldSpeechResponse(request);
+    const response = await inworldSpeechResponse({...request,model:'inworld-tts-2'});
     if (!response.body) throw new Error('Audio TG vuoto');
     const pieces: Buffer[] = []; let done = false, bytes = 0;
     for await (const rawFrame of readSpeechLines(response.body)) {
@@ -83,8 +97,13 @@ export async function synthesize(id: string, product: TgProduct, date: string, r
   await command('ffmpeg', ['-y', '-v', 'error', '-i', path.join(dir, 'raw.wav'), '-af', `${tempo}apad=pad_dur=2,atrim=duration=${seconds},loudnorm=I=-16:TP=-1.5:LRA=11`, '-ar', String(SPEECH_SAMPLE_RATE), path.join(dir, 'track.wav')], signal);
   const cues:TgCue[] = measured.map(c => ({...c,...(c.gestureAccent!==undefined?{gestureAccent:c.gestureAccent/ratio}:{}),start:c.start/ratio,end:c.end/ratio,frameSeconds:c.frameSeconds!/ratio,phones:c.phones!.map(p=>({...p,start:p.start/ratio,end:p.end/ratio}))}));
   directDailyCueMotion(cues,date);
-  const storyOrder=[...new Set(script.sentences.map(s=>s.storyId))];
-  return { version: 1, product:{...product,seconds}, date, seconds, speech,stories: research.stories.filter(story=>storyOrder.includes(story.id)).sort((a,b)=>storyOrder.indexOf(a.id)-storyOrder.indexOf(b.id)).map(story=>({...story,headline:script.headlines?.find(h=>h.storyId===story.id)?.title??product.name,whyItMatters:script.cards?.find(c=>c.storyId===story.id)?.context??'',changedSinceYesterday:script.cards?.find(c=>c.storyId===story.id)?.change??''})), sources: research.sources, cues };
+  return {...editionManifest({...product,seconds},date,research,script,cues,seconds),speech};
+}
+function editionManifest(product:TgProduct,date:string,research:TgResearch,script:TgScript,cues:TgCue[],seconds:number):TgManifest {
+  const order=[...new Set(script.sentences.map(s=>s.storyId))];
+  return {version:1,product,date,seconds,cues,sources:research.sources,stories:research.stories.filter(s=>order.includes(s.id))
+    .sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id)).map(s=>({...s,headline:script.headlines?.find(h=>h.storyId===s.id)?.title??product.name,
+      whyItMatters:script.cards?.find(c=>c.storyId===s.id)?.context??'',changedSinceYesterday:script.cards?.find(c=>c.storyId===s.id)?.change??''}))};
 }
 export async function renderMedia(id: string, manifest: TgManifest, signal: AbortSignal): Promise<TgAsset[]> {
   const { chromium } = await import('@playwright/test');
@@ -93,6 +112,7 @@ export async function renderMedia(id: string, manifest: TgManifest, signal: Abor
   const browser = await chromium.launch({ ...(process.env.TG_CHROME_CHANNEL ? { channel: process.env.TG_CHROME_CHANNEL } : {}) });
   const dir = jobDirectory(id); await mkdir(dir, { recursive: true, mode: 0o700 });
   const assets: TgAsset[] = [];
+  const fps=dailyRenderFps(manifest.product);
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.goto(new URL('/podcast/tg/render', origin).toString());
@@ -101,15 +121,17 @@ export async function renderMedia(id: string, manifest: TgManifest, signal: Abor
       signal.throwIfAborted();
       await page.evaluate(({ manifest, portrait }) => (window as unknown as {conclaviaTgRender: {prepare(m: unknown, p: boolean): void}}).conclaviaTgRender.prepare(manifest, portrait), { manifest, portrait });
       const name = portrait ? 'portrait.mp4' as const : 'landscape.mp4' as const, temporary = path.join(dir, name + '.partial.mp4');
-      const encoder = spawn('ffmpeg', ['-y', '-v', 'error', '-f', 'image2pipe', '-framerate', '25', '-vcodec', 'mjpeg', '-i', 'pipe:0', '-i', path.join(dir, 'track.wav'), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-t', String(manifest.seconds), '-movflags', '+faststart', temporary], { stdio: ['pipe', 'ignore', 'pipe'], signal });
+      const encoder = spawn('ffmpeg', ['-y', '-v', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-vcodec', 'mjpeg', '-i', 'pipe:0', '-i', path.join(dir, 'track.wav'), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-t', String(manifest.seconds), '-movflags', '+faststart', temporary], { stdio: ['pipe', 'ignore', 'pipe'], signal });
       encoder.stderr.resume(); const closed = once(encoder, 'close');
-      try { for (let frame = 0; frame < manifest.seconds * 25; frame++) {
+      try { for (let frame = 0; frame < Math.round(manifest.seconds * fps); frame++) {
         signal.throwIfAborted();
-        const data = await page.evaluate(t => (window as unknown as {conclaviaTgRender: {frame(t: number): string}}).conclaviaTgRender.frame(t), frame / 25);
+        const data = await page.evaluate(t => (window as unknown as {conclaviaTgRender: {frame(t: number): string}}).conclaviaTgRender.frame(t), frame / fps);
         if (!encoder.stdin.write(Buffer.from(data, 'base64'))) await Promise.race([once(encoder.stdin, 'drain'),closed.then(()=>{throw new Error('Encoder TG interrotto durante il rendering');})]);
       } encoder.stdin.end(); const [code] = await closed; if (code !== 0) throw new Error('Encoder TG non riuscito'); }
       catch (error) { encoder.kill('SIGTERM'); await closed.catch(() => undefined); throw error; }
-      const probe = JSON.parse(await command('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=width,height,codec_name', '-of', 'json', temporary], signal));
+      const probe = JSON.parse(await command('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=width,height,codec_name,avg_frame_rate', '-of', 'json', temporary], signal));
+      const video=probe.streams.find((s:{codec_name:string})=>s.codec_name==='h264'), rate=String(video?.avg_frame_rate).split('/').map(Number);
+      if(!Number.isFinite(rate[0]/rate[1])||Math.abs(rate[0]/rate[1]-fps)>.01)throw new Error('Frequenza video TG non conforme');
       const duration = Number(probe.format.duration);
       if (Math.abs(duration - manifest.seconds) > .1 || !probe.streams.some((s: {codec_name: string}) => s.codec_name === 'aac') || !probe.streams.some((s: {codec_name: string; width: number; height: number}) => s.codec_name === 'h264' && s.width === (portrait ? 1080 : 1920) && s.height === (portrait ? 1920 : 1080))) throw new Error('Durata o formato TG non conformi');
       await rename(temporary, path.join(dir, name)); assets.push(await inspectArtifact(id, name, duration));

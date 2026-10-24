@@ -53,7 +53,7 @@ Un presentatore; tono informale e comprensibile ai non esperti. Niente enfasi fa
 | 3:59–4:47 | Quinta notizia sostanziale (48 s). |
 | 4:47–5:00 | Sito per fonti, commenti, claim e breve recupero (13 s). |
 
-Il vecchio pilota r2 è stato esportato a **300 s**; la base Italia r3 successivamente apprezzata dall’utente dura **326,64 s**. Per le nuove edizioni il tempo segue selezione e chiarezza; non allungare con silenzi e non comprimere il parlato per questo vecchio clock. Il worker mantiene ancora il contratto tecnico a durata configurata: il nuovo comportamento elastico va implementato e verificato prima di dichiararlo operativo.
+Il vecchio pilota r2 è stato esportato a **300 s**; la base Italia r3 successivamente apprezzata dall’utente dura **326,64 s**. Per le nuove edizioni il tempo segue selezione e chiarezza; non allungare con silenzi e non comprimere il parlato per questo vecchio clock. Dal 24 ottobre `cdaily-v1` segue il take reale, con pausa misurata e 50 fps; il percorso legacy conserva il clock configurato. Il nuovo codice è testato offline: manca la prova API reale con Alex 2 e la revisione del master completo. [Stato e comandi](cdaily-alex2-integration-20261024.md).
 
 - Apertura delle prossime puntate: «Ciao, questo è Conclavia Daily. Oggi è il [giorno] [mese].» Generare la data dai metadati dell’edizione e dal fuso configurato, coerente con pagina e testo social. Il «22 ottobre» dell’esempio dell’utente non è una costante. [Regole complete ed esempio datato](cdaily-format-foundation.md#2-apertura-pronunciare-la-data-delledizione).
 - Aprire la giornata; evitare «ieri sera». Le date reali dei fatti restano accurate.
@@ -83,7 +83,7 @@ Prima di consegnare: ascoltare apertura e passaggi, rivedere scene e transizioni
 
 ## Prova italiana a durata naturale, 23 ottobre
 
-[Pilota Italia r3, durata naturale e verifiche](cdaily-italia-pilot-r3-20261023.md). I tool isolati del pilota seguono il take e mantengono la pausa reale e il gesto approvato; il worker generale conserva il clock configurato. La prova non abilita pubblicazione o autonomia end-to-end.
+[Pilota Italia r3, durata naturale e verifiche](cdaily-italia-pilot-r3-20261023.md). I tool isolati del pilota seguono il take e mantengono pausa reale e gesto approvato. Dal 24 ottobre anche il ramo `cdaily-v1` implementa questo comportamento, con collaudo provider reale ancora pendente; gli altri snapshot mantengono il clock storico. La prova non abilita pubblicazione o autonomia end-to-end.
 
 
 ### Testo editoriale e repertorio fisico — aggiornamento 23 ottobre 2026

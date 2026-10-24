@@ -1,7 +1,6 @@
 # Alex 2 — raccordo API al percorso Daily approvato
 
-Stato al **24 ottobre 2026**: progetto di integrazione, non adattatore già
-operativo. Nessuna credenziale è stata letta, creata o salvata con questo documento.
+Stato aggiornato al **24 ottobre 2026**: adattatore e raccordo al worker implementati, verificati con fixture sintetiche. **Prova provider reale pendente**: mancano chiave e ID voce locali. [Implementazione e comandi](cdaily-alex2-integration-20261024.md). Nessuna nuova credenziale è stata creata; nessun audio reale è stato generato in questa integrazione.
 
 ## Risultato da ottenere
 

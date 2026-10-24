@@ -7,10 +7,13 @@ import { freshnessIsCurrent } from './freshness';
 import { editionSlot } from './schedule';
 import {scriptReviewIsCurrent} from './script-review';
 import type { TgJob, TgPlatform, TgPublicationPlan, TgReview } from './types';
+import { masterSeconds, naturalDailyClock, validMasterClock } from './media-contract';
+import { dailyScriptDepthIssues } from './script-depth';
 
 export const AUDIT_MAX_AGE_MS = 6 * 3600000;
 export function factualAuditIsCurrent(job: TgJob, now = new Date()) {
   if (!job.research || !job.script) return false;
+  if(dailyScriptDepthIssues(job.product,job.script).length)return false;
   try { requireDailyCoverage(job.product, job.research, job.script); }
   catch { return false; }
   const checked = Date.parse(job.audit?.checkedAt ?? '');
@@ -57,10 +60,11 @@ export function parsePublicationPlan(value: unknown, job: TgJob, now = new Date(
   return {platforms:[...p.platforms].sort(),scheduledAt:new Date(at).toISOString()};
 }
 function requireMediaBundle(job: TgJob) {
+  if(naturalDailyClock(job.product)&&!validMasterClock(job.product,job.manifest))throw new Error('Standard del master non verificato');
   for (const name of ['landscape.mp4','portrait.mp4','audio.mp3','captions.vtt','manifest.json']) {
     const a = job.assets.find(a => a.name === name);
     if (!a || a.bytes <= 0 || !/^[a-f\d]{64}$/u.test(a.sha256)) throw new Error('Pacchetto video incompleto');
-    if (name.endsWith('.mp4') && (!Number.isFinite(a.duration) || Math.abs(a.duration! - job.product.seconds) > .1)) throw new Error('Durata video non verificata');
+    if (name.endsWith('.mp4') && (!Number.isFinite(a.duration) || Math.abs(a.duration! - masterSeconds(job)) > .1)) throw new Error('Durata video non verificata');
   }
 }
 export function createEditorialApproval(job: TgJob, input: {reviewer?: unknown; note?: unknown; checks?: unknown; plan?: unknown}, now = new Date(), env: Record<string,string|undefined> = process.env) {

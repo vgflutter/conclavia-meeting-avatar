@@ -2,6 +2,7 @@ import type {TgProduct,TgSentence,TgSpeechPlan} from './types';
 
 /** Daily's casting/direction policy. Transport and synthesis remain in the kit. */
 export function tgSpeechPlan(product:TgProduct):TgSpeechPlan {
+  if(product.productionStandard==='cdaily-v1') return {provider:'elevenlabs',model:'eleven_v4',speakingRate:1,direction:'alex2-connected-v1',voices:['Alex 2 - daily']};
   return {provider:'inworld',model:'inworld-tts-2',speakingRate:1.08,direction:'daily-brisk-v3',
     voices:(product.language==='it'?['Gianni','Orietta']:['Dennis','Olivia']).slice(0,product.presenters)};
 }

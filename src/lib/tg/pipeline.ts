@@ -2,6 +2,8 @@ import { requireDailyCoverage, scriptDigest, sentenceDigest, TgCoverageError, vi
 import { freshnessIsCurrent, requireFreshCandidates } from './freshness';
 import type { TgPublishedEdition } from './types';
 import {tgSpeechPlan} from './speech-plan';
+import { naturalDailyClock, validMasterClock } from './media-contract';
+import { dailyScriptDepthIssues } from './script-depth';
 import { factualAuditIsCurrent, createAiApproval } from './review';
 import {scoredNarration,scriptReviewIsCurrent} from './script-review';
 import type { TgAsset, TgAudit, TgFinalReview, TgJob, TgManifest, TgResearch, TgScript, TgScriptReview, TgState } from './types';
@@ -11,6 +13,7 @@ export interface TgProductionPorts {
   audit(research: TgResearch, script: TgScript): Promise<TgAudit>;
   reviewScript(research:TgResearch,script:TgScript):Promise<TgScriptReview>;
   voice(research: TgResearch, script: TgScript): Promise<TgManifest>;
+  voiceConfigurationSha256?():string;
   render(manifest: TgManifest): Promise<TgAsset[]>;
   finalReview?(job: TgJob): Promise<TgFinalReview>;
   now?(): Date;
@@ -52,6 +55,16 @@ export async function produceTg(job: TgJob, previous: string, ports: TgProductio
     for(;;){
       if(!await coverageValid(script))return false;
       scoredNarration(script!); // Reject labels in spoken text before any paid synthesis.
+      const depthIssues=dailyScriptDepthIssues(job.product,script!);
+      if(depthIssues.length){
+        if(editorialRepairs>=1)return stop(depthIssues,'Testo troppo compresso o sbilanciato: nessuna voce a pagamento');
+        editorialRepairs++;
+        await ports.checkpoint('verifying',{editorialRepairs,issues:depthIssues,manifest:undefined,assets:[],finalReview:undefined,review:undefined,approvedAt:undefined,publicationPlan:undefined},'Correzione della profondità del copione registrata prima della riscrittura');
+        script=await ports.write(research!,`The script is too compressed or unbalanced. Explain the verified stories for nonexperts with roles, essential sourced context and actual consequences. Use no filler, invented facts or artificial pauses. This consumes the single editorial repair. ${JSON.stringify({issues:depthIssues,previousScript:script})}`);
+        audit=undefined;scriptReview=undefined;force=true;
+        await ports.checkpoint('verifying',{script,audit:undefined,scriptReview:undefined,manifest:undefined,assets:[]},'Copione sviluppato: entrambi i controlli AI devono ripartire');
+        continue;
+      }
       if(force||!factualAuditIsCurrent(current(),now())||!freshnessIsCurrent(current(),now(),history)){
         audit=await ports.audit(research!,script!);scriptReview=undefined;
         await ports.checkpoint('verifying',{audit,scriptReview:undefined},'Controllo AI A: fatti, fonti e attualità del copione completo');
@@ -80,7 +93,8 @@ export async function produceTg(job: TgJob, previous: string, ports: TgProductio
   };
   if(!await verify())return;
   let manifest = job.manifest;
-  if (manifest && (JSON.stringify(manifest.speech)!==JSON.stringify(tgSpeechPlan(job.product)) || manifest.product.presenters!==job.product.presenters || manifest.seconds !== job.product.seconds || manifest.stories.some(story=>story.whyItMatters!==(script!.cards?.find(c=>c.storyId===story.id)?.context??'')||story.changedSinceYesterday!==(script!.cards?.find(c=>c.storyId===story.id)?.change??'')) || sentenceDigest(manifest.cues) !== sentenceDigest(script.sentences) || script.headlines?.some(h=>manifest!.stories.find(s=>s.id===h.storyId)?.headline!==h.title))) manifest = undefined;
+  if(manifest&&naturalDailyClock(job.product)&&manifest.voiceConfigSha256!==ports.voiceConfigurationSha256?.())manifest=undefined;
+  if (manifest && (JSON.stringify(manifest.speech)!==JSON.stringify(tgSpeechPlan(job.product)) || manifest.product.presenters!==job.product.presenters || !validMasterClock(job.product,manifest) || manifest.stories.some(story=>story.whyItMatters!==(script!.cards?.find(c=>c.storyId===story.id)?.context??'')||story.changedSinceYesterday!==(script!.cards?.find(c=>c.storyId===story.id)?.change??'')) || sentenceDigest(manifest.cues) !== sentenceDigest(script.sentences) || script.headlines?.some(h=>manifest!.stories.find(s=>s.id===h.storyId)?.headline!==h.title))) manifest = undefined;
   if (!manifest) {
     if(!await verify())return;
     await ports.checkpoint('voicing', {scriptReview}, 'Sintesi delle voci e misura del parlato reale');
@@ -107,9 +121,10 @@ export async function produceTg(job: TgJob, previous: string, ports: TgProductio
   }
   if(!await verify())return;
   if(sentenceDigest(manifest.cues)!==sentenceDigest(script!.sentences)||manifest.date!==job.date)return void await stop(['Il master vocale non corrisponde al copione verificato'],'Testo audio diverso: rendering bloccato');
+  if(!validMasterClock(job.product,manifest)||naturalDailyClock(job.product)&&manifest.voiceConfigSha256!==ports.voiceConfigurationSha256?.())return void await stop(['Clock, configurazione vocale o standard del master non conformi'],'Durata naturale o voce approvata non verificate');
   const assets = await ports.render(manifest);
   for (const name of ['landscape.mp4', 'portrait.mp4', 'audio.mp3', 'captions.vtt', 'manifest.json']) if (!assets.some(x => x.name === name && x.bytes > 0)) throw new Error('Pacchetto media TG incompleto');
-  for (const asset of assets.filter(x => x.name.endsWith('.mp4'))) if (asset.duration === undefined || Math.abs(asset.duration - job.product.seconds) > .1) throw new Error('Il video TG non rispetta il minutaggio');
+  for (const asset of assets.filter(x => x.name.endsWith('.mp4'))) if (asset.duration === undefined || Math.abs(asset.duration - manifest.seconds) > .1) throw new Error('Il video TG non rispetta il minutaggio misurato');
   if(!await freshnessValid())return;
   if (job.product.automatic) {
     const candidate: TgJob = { ...job, research, script, audit, scriptReview, manifest, assets, finalReview: undefined, state: 'reviewing' };

@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { parseAgentSchedule, agentCalendar, agentDecision, type DailyAgentSchedule } from '../../src/lib/tg/agent-schedule';
 import { parseProduct } from '../../src/lib/tg/config';
 import { localEditionDate } from '../../src/lib/tg/schedule';
+import { alex2ConfigStatus } from '../../src/lib/tg/alex2-config';
+import { alex2SynthesisVerified } from '../../src/lib/tg/alex2-proof';
 
 class DailyAgentStop extends Error {}
 const root=path.resolve(fileURLToPath(new URL('../..',import.meta.url)));
@@ -39,8 +41,9 @@ async function effectivePlan(plan:DailyAgentSchedule){
 }
 function runtimeReadiness(){return {
   researchAIConfigured:Boolean(process.env.OPENAI_API_KEY),databaseConfigured:Boolean(process.env.MONGODB_URI),
-  approvedVoiceConnected:false,
-  voiceReason:'Il worker usa ancora Inworld; Alex 2 - daily non ha un adattatore API collegato. Nessun cambio di voce automatico.',
+  approvedVoiceConnected:alex2SynthesisVerified(),
+  voiceConfiguration:alex2ConfigStatus(),
+  voiceReason:'Percorso Alex 2 implementato; prova reale API e master completo da verificare con daily:voice. Nessun cambio di voce automatico.',
   workTaskVerified:false,
   workReason:'Task ChatGPT Work da creare nella UI desktop con il prompt docs/tg/cdaily-work-publication-task.md. Il tool non crea né verifica task Work nella UI.',
 };}

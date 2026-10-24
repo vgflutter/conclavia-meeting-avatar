@@ -16,6 +16,7 @@ import { TgEditorialError } from '../../src/lib/tg/editorial';
 import { publishReadyTg } from '../../src/lib/tg/publishing';
 import { saveEditionTexts } from '../../src/lib/tg/edition-text-files';
 import { tgSpeechPlan } from '../../src/lib/tg/speech-plan';
+import { alex2Config, alex2ConfigDigest } from '../../src/lib/tg/alex2-config';
 const workerName = randomUUID();
 const once = process.argv.includes('--once');
 const jobId=process.argv.find(arg=>arg.startsWith('--job='))?.slice(6);
@@ -61,12 +62,13 @@ async function tick() {
         if(!evidence||evidence.key!==key||Date.now()-evidence.at>30*60000)evidence={key,value:await retrieveAuditEvidence(r,s,signal),at:Date.now()};
         return evidence.value;
       };
-      const requireApprovedVoice=()=>{if(requiresApprovedDaily&&tgSpeechPlan(run.product).provider==='inworld')throw new TgEditorialError('Alex 2 non collegato al worker API: testo, score e scaletta salvati; nessuna sostituzione della voce approvata');};
+      const requireApprovedVoice=()=>{if(requiresApprovedDaily){if(tgSpeechPlan(run.product).provider!=='elevenlabs')throw new TgEditorialError('Identità Alex 2 richiesta: nessuna sostituzione della voce approvata');alex2Config();}};
       await produceTg(serializeJob(run.toObject()), JSON.stringify(previous), {
         research: prior => researchEdition(run.product, now, prior, signal),
         write: (r, correction) => writeEdition(run.product, r, signal, correction,run.date),
         audit: async (r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s),signal,previous),
         reviewScript:async(r,s)=>reviewEditionScript(run.product,run.date,r,s,await getEvidence(r,s),signal),
+        voiceConfigurationSha256:()=>alex2ConfigDigest(alex2Config()),
         voice: async (r, s) => {
           const current=await TgRunModel.findById(id).lean().orFail();
           await saveEditionTexts({...serializeJob(current),research:r,script:s});

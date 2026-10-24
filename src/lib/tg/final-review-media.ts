@@ -6,6 +6,7 @@ import { jobDirectory, inspectArtifact } from './artifacts';
 import { mediaCheckIssues } from './final-review-policy';
 import { captionsVtt } from './timeline';
 import type { TgJob, TgMediaCheck } from './types';
+import { masterSeconds, naturalDailyClock } from './media-contract';
 
 /** Bounded binary output; no shell, URLs, or provider calls. */
 export function mediaCommand(file: string, args: string[], signal: AbortSignal, maxBytes = 24_000_000): Promise<Buffer> {
@@ -32,11 +33,11 @@ export function measurePcm(pcm: Buffer) {
 export function reviewSampleTimes(job: TgJob) {
   const cues = job.manifest?.cues ?? [];
   // Cover beginning, middle and end plus story/mood transitions. Max six per format.
-  const times = [1, job.product.seconds / 2, job.product.seconds - 3];
+  const times = [1, masterSeconds(job) / 2, masterSeconds(job) - 3];
   for (let i = 1; i < cues.length && times.length < 6; i++) {
     if (cues[i].storyId !== cues[i - 1].storyId || cues[i].mood !== cues[i - 1].mood) times.push(cues[i].start + .7);
   }
-  return [...new Set(times.filter(t => Number.isFinite(t) && t >= 0 && t < job.product.seconds).map(t => Math.round(t * 100) / 100))].sort((a, b) => a - b);
+  return [...new Set(times.filter(t => Number.isFinite(t) && t >= 0 && t < masterSeconds(job)).map(t => Math.round(t * 100) / 100))].sort((a, b) => a - b);
 }
 export async function inspectFinalMedia(job: TgJob, signal: AbortSignal, options={bundle:true}) {
   for (const asset of job.assets) {
@@ -57,16 +58,17 @@ export async function inspectFinalMedia(job: TgJob, signal: AbortSignal, options
     const video = probe.streams?.find((s: { codec_type: string }) => s.codec_type === 'video');
     if (!video || !probe.streams?.some((s: { codec_type: string }) => s.codec_type === 'audio')) throw new Error(`Video o audio ${format} mancanti`);
     const pcm = await mediaCommand('ffmpeg', ['-v', 'error', '-xerror', '-i', file, '-map', '0:a:0', '-ac', '1', '-ar', '16000', '-f', 's16le', 'pipe:1'], signal);
-    if (Math.abs(pcm.length / 32000 - job.product.seconds) > .2) throw new Error(`Traccia audio ${format} incompleta`);
+    if (Math.abs(pcm.length / 32000 - masterSeconds(job)) > .2) throw new Error(`Traccia audio ${format} incompleta`);
     await mediaCommand('ffmpeg', ['-v', 'error', '-xerror', '-i', file, '-map', '0:v:0', '-an', '-f', 'null', '-'], signal, 1000);
-    media.push({ format, width: Number(video.width), height: Number(video.height), seconds: Number(probe.format?.duration), ...measurePcm(pcm) });
+    const rate=String(video.avg_frame_rate).split('/').map(Number);
+    media.push({ format, width: Number(video.width), height: Number(video.height), seconds: Number(probe.format?.duration), fps:rate[0]/rate[1], ...measurePcm(pcm) });
     for (const at of reviewSampleTimes(job)) {
       const data = await mediaCommand('ffmpeg', ['-v', 'error', '-xerror', '-ss', String(at), '-i', file, '-frames:v', '1', '-vf', 'scale=640:-2', '-f', 'image2pipe', '-vcodec', 'mjpeg', 'pipe:1'], signal, 1200000);
       if (data.length < 1000) throw new Error('Fotogramma finale non disponibile');
       frames.push({ format, at, data: data.toString('base64') });
     }
   }
-  const issues = mediaCheckIssues(media, job.product.seconds);
+  const issues = mediaCheckIssues(media, masterSeconds(job),naturalDailyClock(job.product));
   if (issues.length) throw new Error(issues.join('; '));
   return { media, frames };
 }

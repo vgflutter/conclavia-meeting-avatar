@@ -1,10 +1,12 @@
 import type { TgProduct } from './types';
+import { alex2SynthesisVerified } from './alex2-proof';
 export function tgReadiness(product: TgProduct, env: Record<string, string | undefined> = process.env) {
   const scopedDaily=product.productionStandard==='cdaily-v1'&&product.publicationDriver==='chatgpt-work';
   const prefix = product.edition === 'it' ? 'TG_IT_' : 'TG_WORLD_';
+  const alex2=product.productionStandard==='cdaily-v1'&&product.edition==='it'&&product.presenters===1&&alex2SynthesisVerified(env);
   const checks = [
     { id: 'ai', label: 'Ricerca e redazione AI', ready: Boolean(env.OPENAI_API_KEY) && (scopedDaily || env.TG_AI_ENABLED === 'true' && env.PODCAST_AI_ENABLED === 'true') },
-    { id: 'speech', label: product.productionStandard==='cdaily-v1' ? 'Alex 2 · adattatore API da collegare' : product.language === 'it' ? 'Voci italiane · Inworld TTS-2' : 'Voci inglesi · Inworld TTS-2', ready: product.productionStandard!=='cdaily-v1' && env.PODCAST_SPEECH_ENABLED === 'true' && Boolean(env.INWORLD_API_KEY) },
+    { id: 'speech', label: product.productionStandard==='cdaily-v1' ? alex2?'Alex 2 · sintesi API verificata':'Alex 2 · verifica API reale richiesta' : product.language === 'it' ? 'Voci italiane · Inworld TTS-2' : 'Voci inglesi · Inworld TTS-2', ready: env.PODCAST_SPEECH_ENABLED === 'true'&&(product.productionStandard==='cdaily-v1'?alex2:Boolean(env.INWORLD_API_KEY)) },
     { id: 'worker', label: 'Worker video e archivio persistente', ready: env.TG_WORKER_ENABLED === 'true' && Boolean(env.TG_ARTIFACT_DIR) },
   ];
   if(product.automatic)checks.push({id:'final-review',label:'Revisore finale AI indipendente',ready:Boolean(env.OPENAI_API_KEY)&&(scopedDaily||env.TG_AUTOMATIC_REVIEW_ENABLED==='true'&&env.TG_AI_ENABLED==='true')});
