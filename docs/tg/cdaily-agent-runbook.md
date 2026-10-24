@@ -292,6 +292,9 @@ Nessun audio/video nuovo o invio social. I rapporti testuali hanno la normale
 scadenza e non autorizzano una produzione tardiva senza verifica aggiornata.
 [Piano concreto per Alex 2](cdaily-alex2-api-plan-20261024.md). Il browser non è
 accessibile e il catalogo plugin non ha restituito un connettore ElevenLabs.
-Per le credenziali la skill e il tool imposti da Secret Safety non sono
-disponibili: è stata chiesta all’utente una deroga per usare la configurazione
-privata locale. **Non presumere che sia concessa senza una risposta esplicita.**
+L’utente ha poi chiarito che AWS non è usato e ha autorizzato esplicitamente:
+«Sì, rimuovi il blocco AWS e usa la configurazione privata». Il blocco generico
+in `AGENTS.md` è stato rimosso e sostituito con regole per il backend esistente.
+Il raccordo ElevenLabs usa quella configurazione, senza nuovi servizi AWS o
+una richiesta di deroga. Non presumere che una chiave sia presente o valida
+senza una verifica che mostri soltanto stato e presenza, mai il valore.

@@ -32,21 +32,24 @@ CDaily restano in Meeting. Non duplicare la sintesi nei consumer.
 - La possibilità di usare i tempi restituiti insieme alla sintesi può evitare
   la successiva trascrizione: è un vantaggio atteso, da collaudare sul take reale.
 
-## Configurazione proposta, in attesa della decisione dell’utente
+## Configurazione privata server
 
-Usare la normale configurazione privata server del progetto solo se viene
-autorizzata la deroga al flusso Secret Safety di `AGENTS.md`. Servono la chiave
-ElevenLabs già esistente, l’identificativo della voce e la selezione esplicita
-del modello. Non creare una nuova chiave, cambiare piano o acquistare crediti
-come effetto collaterale. Nessun valore deve entrare in Git, output, bundle
-browser, manifest pubblico o chat.
+Il 24 ottobre l’utente ha chiarito che **AWS non è usato dal progetto** e ha
+autorizzato esplicitamente: «Sì, rimuovi il blocco AWS e usa la configurazione
+privata». Il blocco generico AWS/Secret Safety in `AGENTS.md` è stato sostituito
+con regole pertinenti al backend esistente. Per collegare ElevenLabs non
+serve introdurre un servizio AWS né chiedere di nuovo la stessa autorizzazione.
 
-La regola corrente impone prima la skill `aws-secrets-manager` e `asm-exec`:
-entrambi non sono disponibili nella sessione. Non considerare questa proposta
-come una deroga concessa. Il browser non è raggiungibile neppure dopo il reset
-della sessione e la ricerca nel catalogo dei plugin non ha trovato un
-collegamento ElevenLabs utilizzabile. Queste verifiche non dimostrano che
-l’account sia senza crediti o senza una chiave: tali dati non sono stati letti.
+Servono una chiave ElevenLabs già esistente, l’identificativo della voce
+approvata e la selezione esplicita del modello, nella configurazione privata
+server. Non creare una nuova chiave, cambiare piano o acquistare crediti come
+effetto collaterale. Nessun valore deve entrare in Git, output, bundle browser,
+manifest pubblico o chat; i controlli mostrano soltanto presenza e stato.
+
+Il browser non è risultato raggiungibile neppure dopo il reset della sessione
+e la ricerca nel catalogo dei plugin non ha trovato un collegamento ElevenLabs
+utilizzabile. Questi controlli non dimostrano che l’account sia senza crediti
+o senza una chiave: tali dati non erano stati letti.
 
 ## Collaudo prima di rimuovere il blocco
 
