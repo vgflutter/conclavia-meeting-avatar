@@ -60,6 +60,12 @@ Ogni notizia deve dare, in modo naturale:
 3. chi riguarda e perché conta;
 4. il limite dell’informazione o il prossimo passaggio, quando sono utili a comprenderla.
 
+Un tema importante può ricomparire per più giorni: occorre uno sviluppo nuovo
+verificato, raccontato per primo, con il contesto precedente limitato a ciò che
+serve per capirlo. Non ripetere la stessa notizia invariata. La data del nuovo
+sviluppo può essere quella del pomeriggio precedente, dopo l’ultima puntata;
+non inventare una data odierna. [Chiarimento approvato il 24 ottobre](cdaily-news-continuity-20261024.md).
+
 Evitare bollettini meteo ordinari, curiosità deboli, cataloghi di numeri e passaggi procedurali inseriti per allungare. Gli eventi locali importanti possono entrare per le loro conseguenze, senza esagerarne la gravità. Politica e diritti si raccontano con gli stessi criteri di prova degli altri temi; l’autore AI non garantisce assenza di bias.
 
 Transizioni sul tema, senza «seconda storia». Niente introduzione con «gli aggiornamenti di ieri sera». Niente richiamo a elementi «qui accanto al video»: per approfondire si indica il sito.

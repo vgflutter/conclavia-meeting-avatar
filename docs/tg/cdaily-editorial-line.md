@@ -52,6 +52,15 @@ worker: calendario e finestra di validità vanno allineati prima dell'attivazion
 
 ## 3. Che cosa merita spazio nell’edizione
 
+**Continuità chiarita il 24 ottobre 2026:** un tema importante può tornare anche
+in giorni consecutivi se ci sono evoluzioni nuove e verificate. Si apre su
+**che cosa è cambiato**; i fatti precedenti restano un contesto breve, datato e
+utile a chi non ha seguito la puntata prima. Non riproporre lo stesso resoconto
+invariato. Un fatto avvenuto dopo il precedente Daily può essere raccontato
+nell’edizione del mattino successivo, indicandone correttamente la data: non
+deve essere accaduto dopo mezzanotte per essere ammesso. La freschezza riguarda
+lo sviluppo, non l’età del tema. [Regola e verifica](cdaily-news-continuity-20261024.md).
+
 Valutare separatamente **ammissibilità fattuale** e **peso editoriale**. Una
 fonte istituzionale o due riscontri non rendono automaticamente interessante
 un fatto. Per ciascuna candidata rispondere:

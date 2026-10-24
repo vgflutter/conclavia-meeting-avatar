@@ -69,6 +69,16 @@ Per ciascuna candidata conservare URL, editore, origine indipendente, data di pu
 
 La notizia richiede uno **sviluppo nuovo nelle ultime 24 ore**, con riscontri normalmente entro 36 ore. Sette giorni sono solo contesto. Data recente dell’articolo non rende recente l’evento. Confrontare con l’archivio delle pubblicazioni confermate, non soltanto con le bozze. Un tema già trattato richiede un fatto nuovo esplicito. Archivio irraggiungibile significa controllo impossibile, non archivio vuoto. Rileggere la freschezza prima dell’invio.
 
+**Continuità approvata il 24 ottobre:** una notizia importante può tornare il
+giorno successivo e nei seguenti con evoluzioni verificate. Aprire su ciò che
+cambia e mantenere solo il contesto precedente necessario; non vietare il tema
+perché già trattato e non replicare il vecchio resoconto. Un nuovo sviluppo del
+pomeriggio precedente è ammissibile nel Daily mattutino, con la data corretta.
+`new` e `update` si riferiscono all’archivio pubblicato di **questo Daily**:
+senza uscite precedenti un fatto recente su una vicenda già in corso è `new`;
+`update` richiede riferimenti reali a una nostra storia già uscita.
+[Decisione e verifica](cdaily-news-continuity-20261024.md).
+
 ## 5. Pipeline e responsabilità
 
 ```mermaid

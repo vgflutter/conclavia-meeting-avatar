@@ -101,6 +101,14 @@ social confermata; sono escluse bozze, ricerche e tentativi falliti mai usciti.
 La memoria usa le frasi andate in onda, non tutti i fatti nel dossier di ricerca.
 Italiano e World hanno memorie separate.
 
+Un tema importante può tornare in giorni consecutivi con uno sviluppo nuovo
+verificato. Il copione parte dal cambiamento e richiama brevemente i fatti
+precedenti per renderlo comprensibile. La presenza di contesto già raccontato
+non rende duplicato un aggiornamento reale; la sola importanza del tema non
+autorizza invece la replica della puntata precedente. Le evoluzioni del
+pomeriggio dopo l’ultima edizione possono aprire quella del mattino seguente,
+con date corrette e dentro la finestra di attualità.
+
 Prima della scrittura un controllo locale richiede due origini attuali entro
 36 ore, almeno una fonte nuova nelle ultime 24 ore e dopo l’ultima puntata,
 ed esclude i fatti identici già trasmessi. La ricerca web indipendente deve
@@ -110,7 +118,11 @@ data di pubblicazione o aggiornamento della pagina.
 Un revisore AI distinto dalla selezione confronta semanticamente tutte le storie
 con l’archivio e il copione, anche quando cambiano titolo, parole, URL o ID.
 Assegna `new`, `update`, `duplicate`, `stale` o `unverifiable`. Solo i primi due
-possono proseguire. Un aggiornamento deve indicare la storia precedente, il
+possono proseguire. Le classificazioni si riferiscono alle uscite confermate
+del nostro Daily, non al fatto che una vicenda sia già nota sui giornali.
+Con archivio vuoto lo schema vieta `update` e impone riferimenti precedenti
+vuoti: uno sviluppo fresco di un evento in corso è `new` per questa edizione.
+Un aggiornamento di una nostra storia deve indicare la storia precedente, il
 fatto concretamente nuovo e i riscontri che lo sostengono. Un articolo fresco
 che ricicla un vecchio evento, una data incerta o un bollettino scaduto bloccano
 la scaletta prima della voce; non si risolvono parafrasando il vecchio testo.

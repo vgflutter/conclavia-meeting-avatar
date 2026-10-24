@@ -16,6 +16,10 @@ test('the actual audit adapter requests independent freshness, preserves negativ
   let data:unknown;
   if(request.text.format.name==='tg_freshness_audit'){
    assert.match(request.instructions,/independent freshness/);assert.match(request.input,/actual published editions/);
+   assert.match(request.input,/OUR CONFIRMED PUBLISHED ARCHIVE/);
+   const firstStory=request.text.format.schema.properties.checks.properties[r.stories[0].id].properties;
+   assert.equal(firstStory.status.enum.includes('update'),false);
+   assert.equal(firstStory.previousStoryKeys.maxItems,0);
    data={checks:structuredClone(checks)};
    if(duplicate)(data as {checks:typeof checks}).checks['story-0']={...checks['story-0'],status:'duplicate',evidence:'Lo stesso fatto era già stato raccontato nella puntata precedente.'};
   } else {

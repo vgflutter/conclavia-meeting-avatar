@@ -5,6 +5,12 @@ import type { TgFreshnessCheck, TgFreshnessReview, TgJob, TgPublishedEdition, Tg
 export const NEWS_WINDOW_MS = 24 * 3600000;
 export const FRESHNESS_MAX_AGE_MS = 3600000;
 const SOURCE_WINDOW_MS = 36 * 3600000;
+/** Programme continuity concerns the new development, never a ban on recurring topics. */
+export const DAILY_CONTINUITY_POLICY = [
+  'An important ongoing story may return in consecutive Daily editions when a concrete, corroborated development is new within the edition window.',
+  'Lead with what has changed and use brief, clearly dated background so a newcomer can understand it. Previously aired facts are allowed as context but cannot establish novelty. Never reject a developing story merely because its topic was covered before.',
+  'Do not replay the unchanged previous report or treat a new headline, refreshed article or source URL as a new development.',
+].join(' ');
 const normalize = (text: string) => text.normalize('NFKC').toLocaleLowerCase('it').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 export function historyDigest(history: TgPublishedEdition[]) {
   return createHash('sha256').update(JSON.stringify([...history].sort((a,b)=>a.id.localeCompare(b.id)))).digest('hex');
@@ -39,14 +45,14 @@ export function requireFreshCandidates(research:TgResearch, now:Date, history:Tg
 }
 export function freshnessSchema(research:TgResearch,history:TgPublishedEdition[],webByStory:Record<string,string[]>) {
   const str={type:'string'};
-  const object=(properties:Record<string,unknown>)=>({type:'object',properties,required:Object.keys(properties),additionalProperties:false});
+  const object=<T extends Record<string,unknown>>(properties:T)=>({type:'object',properties,required:Object.keys(properties),additionalProperties:false});
   const prior=history.flatMap(edition=>edition.stories.map(story=>story.key));
   return object({checks:object(Object.fromEntries(research.stories.map(story=>[story.id,object({
-    status:{type:'string',enum:['new','update','duplicate','stale','unverifiable']},
+    status:{type:'string',enum:prior.length?['new','update','duplicate','stale','unverifiable']:['new','duplicate','stale','unverifiable']},
     development:{type:'string',maxLength:700},eventDate:{type:'string',maxLength:10},evidence:{type:'string',maxLength:1000},
     sourceIds:{type:'array',maxItems:8,items:{type:'string',enum:story.sourceIds}},
     webUrls:{type:'array',maxItems:4,items:webByStory[story.id]?.length?{type:'string',enum:webByStory[story.id]}:str},
-    previousStoryKeys:{type:'array',maxItems:28,items:prior.length?{type:'string',enum:prior}:str},
+    previousStoryKeys:{type:'array',maxItems:Math.min(28,prior.length),items:prior.length?{type:'string',enum:prior}:str},
   })])))});
 }
 function checkIssues(checks:TgFreshnessCheck[],research:TgResearch,now:Date,start:number,previousKeys:string[]) {

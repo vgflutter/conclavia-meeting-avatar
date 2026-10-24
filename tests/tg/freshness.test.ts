@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { reviewFixture } from './fixtures';
 import { freshnessFixture } from './freshness-fixture';
-import { freshnessIsCurrent, requireFreshCandidates, validateFreshness, historyDigest } from '../../src/lib/tg/freshness';
+import { freshnessIsCurrent, freshnessSchema, requireFreshCandidates, validateFreshness, historyDigest } from '../../src/lib/tg/freshness';
 import { publishedHistory } from '../../src/lib/tg/history';
 import { auditIsCurrent } from '../../src/lib/tg/review';
 import { produceTg } from '../../src/lib/tg/pipeline';
@@ -32,6 +32,39 @@ test('same story may return only with an evidenced new development and real publ
  }
  c.development=history[0].stories[0].development!;
  assert.equal(validateFreshness({checks},r,s,history,web,now).passed,false);
+});
+test('a consequential ongoing story can return with a new fact and brief previously aired context',()=>{
+ const {r,s,web,checks,history}=context(),story=r.stories[0];
+ const background='Il vertice sui trasporti è stato convocato nella precedente giornata.';
+ const development='Il vertice ha prodotto un nuovo accordo, confermato oggi da due origini indipendenti.';
+ history[0].stories[0].claims=[background];
+ story.facts=[{text:background,sourceIds:story.sourceIds},{text:development,sourceIds:story.sourceIds}];
+ const first=s.sentences.find(sentence=>sentence.storyId===story.id)!;
+ first.text=development+' '+background;
+ Object.assign(checks[story.id],{status:'update',previousStoryKeys:['previous:transport'],development});
+ assert.doesNotThrow(()=>requireFreshCandidates(r,now,history));
+ assert.equal(validateFreshness({checks},r,s,history,web,now).passed,true);
+ // Importance and a refreshed source do not make unchanged facts new.
+ story.importance=100;story.facts=[{text:background,sourceIds:story.sourceIds}];
+ assert.throws(()=>requireFreshCandidates(r,now,history),/già stati raccontati/);
+});
+test('a first Daily can cover fresh developments in an ongoing event without inventing earlier editions',()=>{
+ const {r,s,web,checks,history}=context(),story=r.stories[0];
+ const emptyArchiveSchema=freshnessSchema(r,[],web);
+ const initial=emptyArchiveSchema.properties.checks.properties[story.id].properties;
+ assert.ok(initial.status.enum.includes('new'));
+ assert.equal(initial.status.enum.includes('update'),false);
+ assert.equal(initial.previousStoryKeys.maxItems,0);
+ checks[story.id].development='Il negoziato iniziato la scorsa settimana ha prodotto oggi un accordo verificato.';
+ assert.equal(validateFreshness({checks},r,s,[],web,now).passed,true);
+ // Preserve an inconsistent provider verdict as a failure, never silently relabel it.
+ checks[story.id].status='update';
+ assert.equal(validateFreshness({checks},r,s,[],web,now).passed,false);
+ const existingArchiveSchema=freshnessSchema(r,history,web);
+ const subsequent=existingArchiveSchema.properties.checks.properties[story.id].properties;
+ assert.ok(subsequent.status.enum.includes('update'));
+ assert.ok('enum' in subsequent.previousStoryKeys.items);
+ assert.deepEqual(subsequent.previousStoryKeys.items.enum,['previous:transport']);
 });
 test('new URLs, refreshed articles and changed IDs cannot bypass exact aired claims or source clocks',()=>{
  const {r,history}=context();
