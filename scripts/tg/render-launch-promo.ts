@@ -61,7 +61,7 @@ try{
    }
    continue;
   }
-  const target=`${dir}/${prefix}${format}.partial.mp4`,encoder=spawn('ffmpeg',['-y','-v','error','-f','image2pipe','-framerate',String(fps),'-vcodec','mjpeg','-i','pipe:0',...(proofRange?['-ss',String(offset)]:[]),'-i',dir+'/audio.wav','-map','0:v:0','-map','1:a:0','-c:v','libx264','-preset','fast','-crf','18','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k','-t',String(duration),'-movflags','+faststart',target],{stdio:['pipe','ignore','pipe']});let encodeError='';encoder.stderr.on('data',b=>{encodeError=(encodeError+String(b)).slice(-1800);});const closed=once(encoder,'close');
+  const target=`${dir}/${prefix}${format}.partial.mp4`,encoder=spawn('ffmpeg',['-y','-v','error','-f','image2pipe','-framerate',String(fps),'-vcodec','mjpeg','-i','pipe:0',...(proofRange?['-ss',String(offset)]:[]),'-i',dir+'/audio.wav','-map','0:v:0','-map','1:a:0','-c:v','libx264','-preset','fast','-crf','18','-pix_fmt','yuv420p','-c:a','aac','-ar','48000','-ac','2','-b:a','192k','-t',String(duration),'-movflags','+faststart',target],{stdio:['pipe','ignore','pipe']});let encodeError='';encoder.stderr.on('data',b=>{encodeError=(encodeError+String(b)).slice(-1800);});const closed=once(encoder,'close');
   try{
    for(let frame=0;frame<Math.round(duration*fps);frame++){
     const data=await page.evaluate(t=>window.conclaviaLaunchRender!.frame(t),offset+frame/fps);

@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "id": "2026-10-24-it-pilot-r1",
+  "kind": "daily-pilot",
+  "editionDate": "2026-10-24",
+  "editionScope": "acting-demo-not-news",
+  "language": "it",
+  "voice": "Alex 2 - daily",
+  "title": "CDaily · Demo voce e recitazione · 24 ottobre 2026",
+  "description": "Una prova di circa un minuto per valutare insieme la voce Alex 2, il labiale e la recitazione dell’avatar. Il testo descrive la direzione del progetto: capire i fatti, dichiarare i dubbi, rispettare le persone e stimolare la curiosità. Comprende il saluto datato, una pausa pulita e l’invito finale con il gesto verso i commenti. È una demo, non un’edizione di notizie e non un video pubblicato automaticamente.",
+  "researchCutoff": "2026-10-24T00:00:00+02:00",
+  "openingPauseSeconds": 2,
+  "speechModel": "eleven_v4",
+  "music": {
+    "mode": "none"
+  },
+  "sources": [],
+  "lines": [
+    {
+      "text": "Ciao, questo è Conclavia Daily. Oggi è il ventiquattro ottobre. Questa è una prova: un minuto per conoscerci meglio.",
+      "scene": "apertura",
+      "mood": "agreement",
+      "intensity": 0.42,
+      "intent": "acknowledge",
+      "sourceIds": []
+    },
+    {
+      "text": "Una notizia può sembrare semplice. Poi guardi bene e scopri che manca un pezzo. Che cosa è successo, perché conta, che cosa cambia per te? Non una corsa ai titoli: il tempo giusto per capirsi, senza complicare le cose.",
+      "scene": "curiosita",
+      "mood": "curiosity",
+      "intensity": 0.63,
+      "intent": "reflect",
+      "sourceIds": [],
+      "gestureWord": "notizia"
+    },
+    {
+      "text": "Quando qualcosa non è chiaro, meglio fermarsi e farsi una domanda. Un dubbio dichiarato vale più di una risposta sicura ma sbagliata.",
+      "scene": "dubbio",
+      "mood": "doubt",
+      "intensity": 0.6,
+      "intent": "reflect",
+      "sourceIds": [],
+      "gestureWord": "domanda"
+    },
+    {
+      "text": "E quando una notizia riguarda persone in difficoltà, il tono cambia. Servono attenzione, rispetto e parole misurate.",
+      "scene": "rispetto",
+      "mood": "empathy",
+      "intensity": 0.68,
+      "intent": "reassure",
+      "sourceIds": [],
+      "gestureWord": "persone"
+    },
+    {
+      "text": "Ma capire il mondo può anche accendere la curiosità. Un collegamento inatteso, ed ecco che il quadro diventa più chiaro.",
+      "scene": "energia",
+      "mood": "curiosity",
+      "intensity": 0.73,
+      "intent": "emphasize",
+      "sourceIds": [],
+      "gestureWord": "chiaro"
+    },
+    {
+      "text": "Segui Conclavia Daily sui social e su Spotify. Fonti e approfondimenti sul nostro sito.",
+      "scene": "chiusura",
+      "mood": "agreement",
+      "intensity": 0.52,
+      "intent": "invite",
+      "sourceIds": []
+    },
+    {
+      "text": "Scrivici nei commenti cosa vuoi approfondire: partiamo dalle tue domande.",
+      "scene": "chiusura",
+      "mood": "curiosity",
+      "intensity": 0.55,
+      "intent": "point-down",
+      "sourceIds": [],
+      "gestureWord": "commenti"
+    },
+    {
+      "text": "Meno rumore, più contesto.",
+      "scene": "chiusura",
+      "mood": "agreement",
+      "intensity": 0.38,
+      "intent": "acknowledge",
+      "sourceIds": []
+    }
+  ],
+  "scenes": [
+    {
+      "id": "apertura",
+      "kind": "host",
+      "kicker": "24 OTTOBRE 2026 · DEMO",
+      "lines": [
+        "Un minuto",
+        "per conoscerci."
+      ]
+    },
+    {
+      "id": "curiosita",
+      "kind": "host",
+      "kicker": "CAPIRE",
+      "lines": [
+        "Cosa cambia",
+        "per te?"
+      ]
+    },
+    {
+      "id": "dubbio",
+      "kind": "host",
+      "kicker": "FARSI DOMANDE",
+      "lines": [
+        "Dichiarare",
+        "i dubbi."
+      ]
+    },
+    {
+      "id": "rispetto",
+      "kind": "host",
+      "kicker": "LE PERSONE",
+      "lines": [
+        "Le parole",
+        "contano."
+      ]
+    },
+    {
+      "id": "energia",
+      "kind": "host",
+      "kicker": "COLLEGARE I FATTI",
+      "lines": [
+        "Accendere",
+        "la curiosità."
+      ]
+    },
+    {
+      "id": "chiusura",
+      "kind": "host",
+      "kicker": "SOCIAL · SPOTIFY · DAILY.CONCLAVIA.ME",
+      "lines": [
+        "Cosa vuoi",
+        "approfondire?"
+      ]
+    }
+  ],
+  "actingSeed": "2026-10-24-it-pilot-r1:demo-25"
+}

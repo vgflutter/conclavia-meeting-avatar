@@ -4,14 +4,14 @@ import {mkdir,readFile,writeFile,copyFile,stat} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {openAiSpeechWordTimings} from '@conclavia/avatar-kit/speech/server';
-import {SPEECH_SAMPLE_RATE,coalesceSpeechWordAnchors,punctuateSpeechWordAnchors,alignSpeechSegments,buildAudioLipSync,type SpeechWord} from '@conclavia/avatar-kit/speech';
+import {SPEECH_SAMPLE_RATE,coalesceSpeechWordAnchors,punctuateSpeechWordAnchors,alignSpeechSegments,buildWordAnchoredLipSync,type SpeechWord} from '@conclavia/avatar-kit/speech';
 import {planPerformancePhrases,type PerformanceMood,type GestureIntent} from '@conclavia/avatar-kit/performance';
 import type {TgPromoScene} from '@conclavia/avatar-kit/formats/tg';
 import {command,wave} from '../../src/lib/tg/media';
 import {dailyPerformanceDirection} from '../../src/lib/tg/performance-direction';
 import {dailyApprovedAvatar,dailyApprovedStyleRevision} from '../../src/components/tg/daily-avatar-preset';
 import {insertDailyOpeningPause} from '../../src/lib/tg/opening-pause';
-type Score={id:string;kind:'daily-pilot';editionDate:string;language:'it';voice:string;title:string;description:string;researchCutoff:string;targetSeconds?:number;openingPauseSeconds?:number;speechModel?:string;sources:{id:string;publisher:string;url:string;date:string;note:string}[];lines:{text:string;scene:string;mood:PerformanceMood;intensity:number;intent:GestureIntent;sourceIds:string[];thought?:string;gestureWord?:string}[];scenes:Omit<TgPromoScene,'start'|'end'>[]};
+type Score={id:string;kind:'daily-pilot';editionDate:string;language:'it';voice:string;title:string;description:string;researchCutoff:string;targetSeconds?:number;openingPauseSeconds?:number;speechModel?:string;actingSeed?:string;sources:{id:string;publisher:string;url:string;date:string;note:string}[];lines:{text:string;scene:string;mood:PerformanceMood;intensity:number;intent:GestureIntent;sourceIds:string[];thought?:string;gestureWord?:string}[];scenes:Omit<TgPromoScene,'start'|'end'>[]};
 /** Keep the canonical ASR adapter's two-minute request bound. Long editions
  * are split at measured low-energy boundaries; completed parts are cached. */
 async function pilotWordTimings(pcm:Buffer,text:string,root:string,sha:string){
@@ -66,7 +66,11 @@ async function main(){
  try{originalWords=JSON.parse(await readFile(cache,'utf8'));}catch{}
  if(!originalWords.length){
   if(!process.argv.includes('--align'))throw Error('No cached word timing. Explicit --align permits one transcription of this public synthetic take.');
-  originalWords=spokenSeconds<=120&&text.length<=4000?await openAiSpeechWordTimings({wave:wave(pcm),transcript:text,language:'it',signal:AbortSignal.timeout(90000)}):await pilotWordTimings(pcm,text,root,sha256);
+  originalWords=spokenSeconds<=120&&text.length<=4000?await openAiSpeechWordTimings({wave:wave(pcm),transcript:text,language:'it',signal:AbortSignal.timeout(90000)},{fetcher:async(input,init)=>{
+   const response=await fetch(input,init);
+   if(response.ok){const body=await response.clone().text();if(body.length<=500000)await writeFile(cache+'.asr-evidence.json',body,{mode:0o600});}
+   return response;
+  }}):await pilotWordTimings(pcm,text,root,sha256);
   await writeFile(cache,JSON.stringify(originalWords),{mode:0o600});
  }
  // Explicit, recording-bound editorial spelling review. Keep raw ASR evidence
@@ -114,12 +118,13 @@ async function main(){
     mood:score.lines[i].mood,intensity:score.lines[i].intensity,intent:score.lines[i].intent,
     accents:words.filter(w=>w.start>=timings[i].start&&w.end<=timings[i].end&&gestures.has(w.text.toLocaleLowerCase('it-IT').replace(/[^\p{L}]/gu,''))).map(w=>(w.start+w.end)/2-timings[i].start)}))}:{}),
    accents:words.filter(w=>w.start>=start&&w.end<=end&&gestures.has(w.text.toLocaleLowerCase('it-IT').replace(/[^\p{L}]/gu,''))).map(w=>(w.start+w.end)/2-start)};
- }),{seed:id,actorId:'promo-host',...dailyPerformanceDirection});
+ }),{seed:score.actingSeed??id,actorId:'promo-host',...dailyPerformanceDirection});
  const planned=new Map(groups.flatMap(({indices},group)=>indices.map(i=>[i,{choreography:plans[group],...(indices.length>1?{performanceWindow:{start:lead+timings[indices[0]].start,end:lead+timings[indices.at(-1)!].end}}:{})}] as const)));
  const cues=score.lines.map((line,i)=>{
   const t=timings[i],a=Math.floor(t.start*SPEECH_SAMPLE_RATE),b=Math.min(pcm.length/2,Math.floor(t.end*SPEECH_SAMPLE_RATE)),samples=new Float32Array(b-a);
   for(let j=0;j<samples.length;j++)samples[j]=pcm.readInt16LE((a+j)*2)/32768;
-  const lips=buildAudioLipSync(line.text,samples,SPEECH_SAMPLE_RATE);
+  const localWords=words.filter(w=>w.start>=t.start-.001&&w.start<t.end-.001).map(w=>({...w,start:Math.max(0,w.start-a/SPEECH_SAMPLE_RATE),end:Math.min(samples.length/SPEECH_SAMPLE_RATE,w.end-a/SPEECH_SAMPLE_RATE)}));
+  const lips=buildWordAnchoredLipSync(line.text,samples,SPEECH_SAMPLE_RATE,localWords);
   return {...line,start:lead+t.start,end:lead+t.end,frameSeconds:lips.frameSeconds,levels:lips.frames.map(f=>f.level),phones:lips.frames.map((f,n)=>({start:n*lips.frameSeconds,end:(n+1)*lips.frameSeconds,viseme:f.viseme})),alignment:t.alignment,...planned.get(i)};
  });
  const scenes=score.scenes.map((scene,i)=>{const current=cues.find(c=>c.scene===scene.id),next=score.scenes[i+1],nextCue=next?cues.find(c=>c.scene===next.id):undefined;if(!current)throw Error('Scene lacks measured narration');return {...scene,start:i?current.start:0,end:nextCue?.start??duration};});
