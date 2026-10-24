@@ -44,7 +44,7 @@ Una ricevuta `sitePublication` distinta congela le affermazioni realmente pubbli
 ## Host e deploy verificati
 
 - Servizio `conclavia-daily-site.service`, timer `conclavia-daily-site.timer`: installati, attivi e abilitati all’avvio; controllo ogni minuto.
-- Release publisher: `site-1792875512222-df1769d4`; database verificato con il runtime reale.
+- Release publisher: `site-1792875880377-a7519222`; database verificato con il runtime reale.
 - Archivio persistente: `/opt/conclavia/web/editions`, già compreso nel volume del gateway. I deploy grafici e i rollback del sito non cancellano le puntate.
 - Artefatti privati montati in sola lettura da `/opt/conclavia/daily/data`. Pubblico separato, nessuna porta aggiunta e nessuna chiave AI/voce/social nel publisher.
 - Redazione aggiornata: `editorial-20261024204925120-3f975e30`; `siteFirst=true` sul prodotto Italia, **productionMode=editorial conservato**, snapshot dei job già esistenti non riscritti.
@@ -70,3 +70,5 @@ Deploy: 65 test Node, 54 Python e integrazione Caddy reale positivi. Verificate 
 La task Work non è certificata da questi test. Prompt aggiornato in [cdaily-work-publication-task.md](cdaily-work-publication-task.md): sorgente pubblica, data, finestre, destinatari, riconciliazione e nessuna copia di ieri. Le ricevute dei connettori Work restano nella task e nei servizi, finché non sarà aggiunto un adattatore dedicato verso il registro backend. Il controllo della UI locale continua a restituire `Sky Computer Use native pipe startup failed`: nessun salvataggio di task è stato dichiarato senza evidenza.
 
 Verifica live finale: player attivo senza mute a 390/1440 px, passaggio tra i due formati, nessun overflow o errore browser; log privato in `../conclavia-web/.local/site-handoff-20261024/`. Ultimo ciclo automatico del publisher: `Result=success`, `ExecMainStatus=0`; la lettura del runtime conferma database connesso, generazione/social disabilitati.
+
+Verifica di recupero: il catalogo già committato permette di ricostruire la ricevuta DB verificando snapshot e byte anche dopo la chiusura della finestra. Questo riconcilia una pubblicazione realmente avvenuta, senza autorizzare un nuovo invio tardivo. Build di produzione Meeting positiva in una directory separata; 17 integrazioni outbox positive, inclusa l’esclusione `siteFirst` dal trasporto nativo.

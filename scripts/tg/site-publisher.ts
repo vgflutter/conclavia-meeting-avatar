@@ -5,7 +5,7 @@ import {TgRunModel} from '../../src/models/tg/TgRun';
 import {TgEditionModel} from '../../src/models/tg/TgEdition';
 import {serializeJob} from '../../src/lib/tg/store';
 import {loadPublishedHistory} from '../../src/lib/tg/history';
-import {assertSiteReady,publishEditionToSite} from '../../src/lib/tg/site-publication';
+import {assertSiteReady,publishEditionToSite,reconcileSitePublication} from '../../src/lib/tg/site-publication';
 async function main(){
  if(process.env.TG_SITE_PUBLISH_ENABLED!=='true'||!process.env.TG_SITE_PUBLIC_DIR||process.env.TG_PUBLISH_ENABLED==='true')throw Error('Website-only runtime required');
  await connectToDatabase();
@@ -19,13 +19,14 @@ async function main(){
   return console.log(JSON.stringify({configured:true,siteFirst:true,productionMode:edition.product.productionMode,changed:true,mediaEnabled:false}));
  }
  if(action==='status')return console.log(JSON.stringify({database:'connected',website:true,social:false,generation:false}));
- const records=await TgRunModel.find({'product.siteFirst':true,'product.productionMode':{$ne:'editorial'},'review.scope':'website',state:'ready',sitePublication:{$exists:false}}).sort({date:-1}).limit(4).lean();
+ const records=await TgRunModel.find({'product.siteFirst':true,'product.productionMode':{$ne:'editorial'},'review.scope':'website',state:{$in:['ready','publishing','blocked']},sitePublication:{$exists:false}}).sort({date:-1}).limit(4).lean();
  const results=[];
  for(const record of records){
   const job=serializeJob(record),now=new Date();
   try{
-   const history=await loadPublishedHistory(job.edition,job.date,now);
-   const receipt=await publishEditionToSite(job,process.env.TG_SITE_PUBLIC_DIR,history,now,async()=>{
+   const recovered=await reconcileSitePublication(job,process.env.TG_SITE_PUBLIC_DIR,now);
+   const history=recovered?[]:await loadPublishedHistory(job.edition,job.date,now);
+   const receipt=recovered??await publishEditionToSite(job,process.env.TG_SITE_PUBLIC_DIR,history,now,async()=>{
     const latest=await TgRunModel.findById(job.id).lean().orFail(),fresh=serializeJob(latest);
     if(fresh.review?.bundleSha256!==job.review?.bundleSha256||fresh.revision!==job.revision)throw Error('Edition changed before publication');
     assertSiteReady(fresh,await loadPublishedHistory(job.edition,job.date,new Date()),new Date());

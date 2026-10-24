@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {reviewFixture,scriptReviewFixture} from './fixtures';
 import {createAiApproval,approvalIsBound} from '../../src/lib/tg/review';
 import {finalReviewInputDigest} from '../../src/lib/tg/final-review-policy';
-import {assertSiteReady,publishEditionToSite,publicSiteEdition,publicEditionHtml} from '../../src/lib/tg/site-publication';
+import {assertSiteReady,publishEditionToSite,publicSiteEdition,publicEditionHtml,reconcileSitePublication} from '../../src/lib/tg/site-publication';
 import {publishedHistory,publishedStories} from '../../src/lib/tg/history';
 import type {TgJob} from '../../src/lib/tg/types';
 const now=new Date('2026-10-24T08:40:00Z');
@@ -40,6 +40,8 @@ test('hash mismatch or changed approval cannot commit the public index; successf
   await writeFile(path.join(dir,'portrait.mp4'),'synthetic fixture portrait.mp4');await assert.rejects(publishEditionToSite(job,root,[],now,async()=>{throw Error('changed approval')}),/changed approval/u);await assert.rejects(readFile(path.join(root,'index.json')));
   let calls=0;const a=await publishEditionToSite(job,root,[],now,async()=>{calls++}),b=await publishEditionToSite(job,root,[],new Date(now.getTime()+1000),async()=>{calls++});assert.deepEqual(a,b);assert.equal(calls,2);
   const index=JSON.parse(await readFile(path.join(root,'index.json'),'utf8'));assert.equal(index.editions.length,1);assert.equal(index.editions[0].kind,'daily');assert.doesNotMatch(await readFile(path.join(root,'it',job.date,'index.html'),'utf8'),/fixture-only/u);
+  const late=new Date('2026-10-24T11:00:00Z');assert.throws(()=>assertSiteReady(job,[],late));assert.deepEqual(await reconcileSitePublication(job,root,late),a);
+  const changed=structuredClone(job);changed.script!.title='A later unapproved draft';assert.equal(await reconcileSitePublication(changed,root,late),undefined);
  }finally{if(old===undefined)delete process.env.TG_ARTIFACT_DIR;else process.env.TG_ARTIFACT_DIR=old;await rm(base,{recursive:true,force:true});}
 });
 test('a confirmed website release enters the actual published history before any social delivery',()=>{

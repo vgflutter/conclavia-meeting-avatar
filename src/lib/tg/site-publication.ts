@@ -48,6 +48,23 @@ export function publicEditionHtml(m:Pick<PublicSiteEdition,'language'|'title'|'d
  return `<!doctype html><html lang="${m.language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(m.title)} · CDaily</title><meta name="description" content="${esc(m.description)}"><link rel="canonical" href="${esc(m.url)}"><meta property="og:title" content="${esc(m.title)}"><meta property="og:description" content="${esc(m.description)}"><meta property="og:type" content="video.other"><link rel="alternate" type="application/json" href="${esc(m.releaseUrl)}"><link rel="stylesheet" href="/assets/daily-edition.css"><script src="/assets/daily-edition.js" defer></script></head><body><header><a href="/"><img src="/assets/daily-edition-logo.svg" alt="CDaily"></a><a href="${it?'/edizioni/':'/en/editions/'}">${it?'Tutte le edizioni':'All editions'} ↗</a></header><main><p class="eyebrow">${esc(m.date)} · ${m.kind==='daily'?(it?'ITALIA':'WORLD'):'DEMO'} · ${duration}</p><h1>${esc(m.title)}</h1><p class="intro">${esc(m.description)}</p><nav class="formats" aria-label="${it?'Formato video':'Video format'}"><button data-format="portrait">${it?'Verticale':'Portrait'} · 9:16</button><button data-format="landscape">${it?'Orizzontale':'Landscape'} · 16:9</button></nav><video controls playsinline preload="metadata" data-portrait="${video('portrait.mp4')}" data-landscape="${video('landscape.mp4')}"><source media="(max-width:700px)" src="${video('portrait.mp4')}" type="video/mp4"><source src="${video('landscape.mp4')}" type="video/mp4"><track kind="captions" srclang="${m.language}" label="${it?'Italiano':'English'}" src="${video('captions.vtt')}"></video><p class="downloads"><a href="${video('portrait.mp4')}">MP4 9:16</a> · <a href="${video('landscape.mp4')}">MP4 16:9</a></p><nav class="chapters" aria-label="${it?'Scaletta':'Rundown'}">${m.stories.map(s=>`<button data-seek="${s.at}">${esc(s.title)}</button>`).join('')}</nav><section><h2>${it?'La scaletta':'The rundown'}</h2>${m.stories.map(s=>`<article><h3>${esc(s.title)}</h3><p>${esc(s.summary)}</p></article>`).join('')}</section><section><h2>${it?'Da condividere':'Share this edition'}</h2><p>${esc(m.description)}</p></section>${m.sources.length?`<section><h2>${it?'Fonti':'Sources'}</h2><ul>${m.sources.map(s=>`<li><a href="${esc(s.url)}" rel="noopener noreferrer" target="_blank">${esc(s.publisher)} · ${esc(s.title)}</a></li>`).join('')}</ul></section>`:''}<details><summary>${it?'Leggi il copione':'Read the transcript'}</summary>${m.transcript.split('\n\n').map(t=>`<p>${esc(t)}</p>`).join('')}</details></main><footer>CDaily · by Conclavia. ${it?'Presentatore e voce AI.':'AI presenter and voice.'}</footer></body></html>\n`;
 }
 async function fileHash(file:string){const hash=createHash('sha256');let bytes=0;for await(const chunk of createReadStream(file)){hash.update(chunk);bytes+=chunk.length;}return{bytes,sha256:hash.digest('hex')};}
+function siteReceipt(job:TgJob,data:PublicSiteEdition){return{url:data.url,releaseUrl:data.releaseUrl,bundleSha256:data.publicationKey,publishedAt:data.publishedAt,stories:publishedStories(job)};}
+/** Recover a real, committed website receipt after a DB/connection interruption.
+ * Expiry blocks NEW publication, never recovery of an already public snapshot. */
+export async function reconcileSitePublication(job:TgJob,root:string,now=new Date()){
+ if(!job.product.siteFirst||job.review?.scope!=='website'||!approvalIsBound(job,{},now))return undefined;
+ let index:{schema:number;editions:{kind:string;publicationKey:string;edition:string;date:string}[]};
+ try{index=JSON.parse(await readFile(path.join(root,'index.json'),'utf8'));}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')return undefined;throw error;}
+ if(index.schema!==1||!Array.isArray(index.editions))throw Error('Invalid committed site index');
+ if(!index.editions.some(e=>e.kind==='daily'&&e.edition===job.edition&&e.date===job.date&&e.publicationKey===job.review!.bundleSha256))return undefined;
+ const folder=path.join(root,siteEditionPath(job.edition,job.date).replace(/^\/edizioni\//u,''),job.review!.bundleSha256!);
+ const data=JSON.parse(await readFile(path.join(folder,'release.json'),'utf8')) as PublicSiteEdition;
+ if(!Number.isFinite(Date.parse(data.publishedAt))||Date.parse(data.publishedAt)>now.getTime())throw Error('Invalid published clock');
+ const expected=publicSiteEdition(job,data.publishedAt),{sha256,...body}=data;
+ if(sha(JSON.stringify(body))!==sha256||expected.sha256!==sha256)throw Error('Published receipt differs from approved snapshot');
+ for(const name of mediaNames){const actual=await fileHash(path.join(folder,name));if(actual.bytes!==expected.media[name].bytes||actual.sha256!==expected.media[name].sha256)throw Error('Committed website media altered');}
+ return siteReceipt(job,expected);
+}
 async function atomic(file:string,data:string){const temporary=file+'.'+randomUUID()+'.partial';await writeFile(temporary,data,{mode:0o644});await rename(temporary,file);}
 export async function addSiteIndex(root:string,edition:{kind:string;edition:string;date:string;title:string;description:string;url:string;releaseUrl:string;publicationKey:string;publishedAt:string;seconds:number}){
  let index:{schema:number;editions:typeof edition[]}={schema:1,editions:[]};
@@ -75,6 +92,6 @@ export async function publishEditionToSite(job:TgJob,root:string,history:TgPubli
   await atomic(path.join(folder,'index.html'),html);
   const entry={kind:data.kind,edition:data.edition,date:data.date,title:data.title,description:data.description,url:data.url,releaseUrl:data.releaseUrl,publicationKey:data.publicationKey,publishedAt:data.publishedAt,seconds:data.seconds};
   await addSiteIndex(root,entry);
-  return{url:data.url,releaseUrl:data.releaseUrl,bundleSha256:data.publicationKey,publishedAt:data.publishedAt,stories:publishedStories(job)};
+  return siteReceipt(job,data);
  }finally{await rm(temporary,{recursive:true,force:true});}
 }
