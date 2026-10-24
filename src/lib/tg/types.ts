@@ -2,11 +2,13 @@ import type { GestureIntent, PerformanceChoreography } from '@conclavia/avatar-k
 import type { PodcastEmotion } from '@conclavia/avatar-kit/types/podcast';
 export type TgEdition = 'it' | 'world';
 export type TgPlatform = 'youtube' | 'instagram' | 'tiktok' | 'spotify';
-export type TgState = 'queued' | 'researching' | 'writing' | 'verifying' | 'voicing' | 'rendering' | 'reviewing' | 'needs_review' | 'ready' | 'publishing' | 'published' | 'blocked' | 'failed' | 'cancelled';
+export type TgState = 'queued' | 'researching' | 'writing' | 'verifying' | 'editorial_ready' | 'voicing' | 'rendering' | 'reviewing' | 'needs_review' | 'ready' | 'publishing' | 'published' | 'blocked' | 'failed' | 'cancelled';
 export interface TgProduct {
   edition: TgEdition; name: string; language: 'it' | 'en'; seconds: number; presenters: 1 | 2;
   /** Omitted on legacy snapshots: prepare 45 minutes before publication. */
   productionStandard?: 'cdaily-v1';
+  /** Editorial commissioning stops after A/B and private text export. */
+  productionMode?: 'editorial' | 'full';
   productionTime?: string;
   publicationDriver?: 'worker' | 'chatgpt-work';
   publishTime: string; timezone: string; enabled: boolean; automatic: boolean; platforms: TgPlatform[];

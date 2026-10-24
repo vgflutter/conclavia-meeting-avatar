@@ -100,15 +100,28 @@ async function main(){
     return output({at:now.toISOString(),database:databaseStatus,plan,decision:agentDecision(plan,now),
       timer:{loaded,installation:await localState('installation.json'),lastTick:await localState('last-tick.json'),lastProduction:await localState('last-production.json'),lastError:await localState('last-error.json')},runtime:runtimeReadiness()});
   }
-  if(!['tick','run','publish','package'].includes(command))throw new DailyAgentStop('Comandi: plan, status, configure, install, persist, uninstall, tick, run, package, publish. Aggiungere --dry-run per anteprima senza effetti.');
+  if(!['tick','run','publish','package','channels','preflight'].includes(command))throw new DailyAgentStop('Comandi: plan, status, configure, install, persist, uninstall, tick, run, package, channels, preflight, publish. Aggiungere --dry-run per anteprima senza effetti.');
   let plan=configured;
   if(!dryRun)plan=await effectivePlan(configured);
   const decision=agentDecision(plan,now),requested=args.find(a=>a.startsWith('--date='))?.slice(7)??'today';
   const date=requested==='today'?localEditionDate(now,plan.product.timezone):requested;
   if(!validDate(date)||date!==decision.date)throw new DailyAgentStop('Il runner opera solo sull’edizione di oggi nel fuso configurato; nessuna notizia riciclata o produzione retrodatata');
   if(dryRun)return output({action:command,date,decision,mutation:false,runtime:runtimeReadiness()});
+  if(command==='preflight'){
+    const {productionRuntime,readinessWithRuntime}=await import('../../src/lib/tg/runtime-readiness');
+    const {publicationControl}=await import('../../src/lib/tg/newsroom');
+    const runtime=await productionRuntime();
+    return output({at:now.toISOString(),edition:plan.product.edition,mode:plan.product.productionMode??'full',decision,
+      runtime,readiness:readinessWithRuntime(plan.product,runtime),distribution:await publicationControl(),mutations:false,providerGeneration:false});
+  }
+  if(command==='channels'){
+    const {checkChannels}=await import('../../src/lib/tg/channel-checks');
+    return output({edition:plan.product.edition,checks:await checkChannels(plan.product),generation:false,publication:false});
+  }
   await writeState('last-tick.json',{at:now.toISOString(),command,date,reason:decision.reason});
   if(command==='tick'||command==='run'){
+    const {TgControllerModel}=await import('../../src/models/tg/TgController');
+    await TgControllerModel.updateOne({key:'daily-production'},{$set:{heartbeatAt:now,mode:plan.product.productionMode??'full',driver:'launchd'}},{upsert:true});
     if(!decision.due)return output({action:'skipped',date,reason:decision.reason});
     if(!plan.product.automatic||plan.product.publicationDriver!=='chatgpt-work'||plan.product.productionStandard!=='cdaily-v1')throw new DailyAgentStop('Configurazione non autonoma CDaily/Work: applicare il piano deliberato prima di avviare la produzione');
     if(!process.env.OPENAI_API_KEY)throw new DailyAgentStop('Ricerca AI non configurata; nessuna sintesi o pubblicazione avviata');
@@ -124,6 +137,7 @@ async function main(){
     const latest=await TgRunModel.findById(id).lean().orFail();
     const job=serializeJob(latest);
     const report={at:new Date().toISOString(),date,job:id,state:job.state,issues:job.issues,attempts:job.attempts,workerExitCode:result.code};
+    await TgControllerModel.updateOne({key:'daily-production'},{$set:{lastDate:date,lastState:job.state,lastFinishedAt:new Date()}});
     await writeState('last-production.json',report);return output(report);
   }
   const {TgRunModel}=await import('../../src/models/tg/TgRun');
@@ -135,6 +149,9 @@ async function main(){
   const {auditIsCurrent,approvalIsBound}=await import('../../src/lib/tg/review');
   if(command==='package'){
     if(!auditIsCurrent(job,now))throw new DailyAgentStop('Testo non verificato o controllo scaduto: pacchetto social non esportabile');
+    const {loadPublishedHistory}=await import('../../src/lib/tg/history');
+    const {freshnessIsCurrent}=await import('../../src/lib/tg/freshness');
+    if(!freshnessIsCurrent(job,now,await loadPublishedHistory(job.edition,job.date,now)))throw new DailyAgentStop('Archivio delle uscite cambiato: ricontrollare il testo prima di esportarlo');
     const {saveEditionTexts}=await import('../../src/lib/tg/edition-text-files');
     return output({job:job.id,date,state:job.state,approvedForPublication:approvalIsBound(job),...await saveEditionTexts(job)});
   }

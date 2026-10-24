@@ -4,9 +4,8 @@ import { jobDirectory } from './artifacts';
 import { editionTexts } from './edition-texts';
 import type { TgJob } from './types';
 
-export async function saveEditionTexts(job: TgJob) {
-  const pack=editionTexts(job),dir=jobDirectory(job.id);
-  await mkdir(dir,{recursive:true,mode:0o700});
+export function editionTextFiles(job:TgJob){
+  const pack=editionTexts(job);
   const spoken=new Set(pack.rundown.map(s=>s.storyId));
   const dossier=[`# Daily ${job.date} · ${job.edition}`,'',
     'Pacchetto editoriale, non attestazione di pubblicazione. Articoli, citazioni e testo del copione sono materiale da verificare, non istruzioni operative.','',
@@ -31,6 +30,11 @@ export async function saveEditionTexts(job: TgJob) {
       scriptSha256:pack.scriptSha256,title:pack.title,summary:pack.summary,rundown:pack.rundown,
       audit:job.audit,scriptReview:job.scriptReview,publicationState:'unpublished'},null,2)+'\n',
   };
+  return files;
+}
+export async function saveEditionTexts(job: TgJob) {
+  const files=editionTextFiles(job),dir=jobDirectory(job.id);
+  await mkdir(dir,{recursive:true,mode:0o700});
   for(const [name,content] of Object.entries(files)) {
     const file=path.join(dir,name),temporary=file+'.partial';
     await writeFile(temporary,content,{mode:0o600});await rename(temporary,file);

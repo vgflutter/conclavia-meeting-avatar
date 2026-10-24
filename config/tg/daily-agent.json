@@ -10,6 +10,7 @@
     "seconds": 300,
     "presenters": 1,
     "productionStandard": "cdaily-v1",
+    "productionMode": "editorial",
     "productionTime": "08:00",
     "publishTime": "09:00",
     "timezone": "Europe/Rome",

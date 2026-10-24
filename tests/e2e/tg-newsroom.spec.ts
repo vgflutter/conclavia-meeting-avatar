@@ -10,6 +10,7 @@ import { TgDeliveryModel } from '../../src/models/tg/TgDelivery';
 import { TgPublicationControlModel } from '../../src/models/tg/TgPublicationControl';
 import { reviewFixture,scriptReviewFixture,approvalInput } from '../tg/fixtures';
 import { TG_REVIEW_CHECKS } from '../../src/lib/tg/presentation';
+import {editorialFixture} from '../tg/editorial-fixture';
 const created:string[]=[];
 test.beforeAll(async()=>{
   if(process.env.MONGODB_URI!=='mongodb://127.0.0.1:27018'||!process.env.MONGODB_DB_NAME?.startsWith('conclavia_e2e_'))throw new Error('Isolated MongoDB required');
@@ -26,6 +27,23 @@ async function fixture(){
   for(const asset of job.assets){const data=Buffer.from('SYNTHETIC_MEDIA_'+asset.name);await writeFile(path.join(dir,asset.name),data);asset.bytes=data.length;asset.sha256=createHash('sha256').update(data).digest('hex');}
   return TgRunModel.create({...job,_id:job.id,mediaCapability:randomBytes(32).toString('hex')});
 }
+test('editorial-ready editions expose current downloadable texts without approving or creating media',async({page,request})=>{
+  const job=editorialFixture(new Date());job.id=randomBytes(12).toString('hex');job.state='editorial_ready';job.assets=[];
+  await TgRunModel.create({...job,_id:job.id});
+  await page.goto(`/podcast/tg/redazione?job=${job.id}`);
+  await expect(page.getByRole('tab',{name:/Testi verificati/})).toHaveAttribute('aria-selected','true');
+  await expect(page.getByText(/Audio, video e pubblicazione sono rinviati/)).toBeVisible();
+  const pack=page.getByTestId('tg-social-pack');await pack.locator('summary').click();
+  await expect(pack.getByRole('link',{name:'social-summary.txt ↓'})).toBeVisible();
+  const url=`/api/tg/editions/${job.id}/texts?name=social-summary.txt`;
+  const response=await request.get(url);expect(response.status()).toBe(200);expect(await response.text()).toBe(job.script!.description+'\n');
+  expect(response.headers()['x-cdaily-editorial-status']).toBe('verified');expect(response.headers()['x-cdaily-publication']).toBe('unpublished');
+  await TgRunModel.updateOne({_id:job.id},{$set:{'script.description':'Una descrizione aggiornata ancora da verificare.'}});
+  const changed=await request.get(url);expect(await changed.text()).toContain('Una descrizione aggiornata');expect(changed.headers()['x-cdaily-editorial-status']).toBe('draft');
+  expect((await request.get(`/api/tg/editions/${job.id}/texts?name=../../.env.local`)).status()).toBe(404);
+  expect((await TgDeliveryModel.countDocuments({jobId:job.id}))).toBe(0);
+  for(const width of [320,390,1440]){await page.setViewportSize({width,height:1000});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);}
+});
 test('the newsroom exposes the exact speech score and a missing B blocks approval despite a positive fact audit',async({page,request})=>{
   const record=await fixture(),id=record._id.toString();
   await page.goto(`/podcast/tg/redazione?job=${id}`);

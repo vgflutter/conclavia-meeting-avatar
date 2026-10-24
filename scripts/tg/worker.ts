@@ -64,6 +64,8 @@ async function tick() {
       };
       const requireApprovedVoice=()=>{if(requiresApprovedDaily){if(tgSpeechPlan(run.product).provider!=='elevenlabs')throw new TgEditorialError('Identità Alex 2 richiesta: nessuna sostituzione della voce approvata');alex2Config();}};
       await produceTg(serializeJob(run.toObject()), JSON.stringify(previous), {
+        editorialOnly:process.env.TG_EDITORIAL_ONLY==='true',
+        editorialReady:async job=>{await saveEditionTexts(job);},
         research: prior => researchEdition(run.product, now, prior, signal),
         write: (r, correction) => writeEdition(run.product, r, signal, correction,run.date),
         audit: async (r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s),signal,previous),

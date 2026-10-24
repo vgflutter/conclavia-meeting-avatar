@@ -2,6 +2,8 @@
 
 Revisione: **24 ottobre 2026**, fuso editoriale **Europe/Rome**. Questo è il punto di ingresso per riprendere il progetto senza la chat. Leggerlo integralmente prima di creare un’edizione. Le istruzioni correnti dell’utente prevalgono; registrare qui le nuove decisioni approvate, distinguendole dalle prove.
 
+**Priorità corrente:** l’utente ha chiesto di smarcare prima tutto ciò che non riguarda audio/video. Le prossime edizioni Italia sono in `productionMode=editorial`: raccolta, copione e A/B, poi esportazione e stato `editorial_ready`. Nessuna sintesi, render o pubblicazione. [Stato non media e host separato](cdaily-nonmedia-readiness-20261024.md). La sincronizzazione Alex 2 resta rinviata, senza ripetere prove vocali.
+
 ## 1. Che cosa stiamo costruendo
 
 Conclavia Daily / CDaily, made by Conclavia: informazione e intrattenimento con un presentatore sintetico riconoscibile, fatti verificabili e spiegazioni accessibili. Claim: **«Meno rumore, più contesto.»** Sito pubblico: <https://daily.conclavia.me>, italiano e inglese.

@@ -1,4 +1,4 @@
-import { TgWorkerModel } from '@/models/tg/TgWorker';
+import {productionRuntime,readinessWithRuntime} from '@/lib/tg/runtime-readiness';
 import { products } from '@/lib/tg/store';
 import { tgReadiness } from '@/lib/tg/readiness';
 import { parseProduct } from '@/lib/tg/config';
@@ -6,10 +6,7 @@ import { podcastMutationIsSameOrigin, readPodcastJson } from '@/lib/podcast/requ
 import { TgEditionModel } from '@/models/tg/TgEdition';
 export const runtime = 'nodejs';
 async function readinessFor(product: Parameters<typeof tgReadiness>[0]) {
-  const readiness=tgReadiness(product);
-  const worker=await TgWorkerModel.exists({heartbeatAt:{$gte:new Date(Date.now()-90000)}});
-  const checks=readiness.checks.map(c=>c.id==='worker'?{...c,ready:c.ready&&Boolean(worker)}:c);
-  return {...readiness,checks,productionReady:checks.every(c=>c.ready)&&readiness.channels.every(c=>c.ready)};
+  return readinessWithRuntime(product,await productionRuntime());
 }
 export async function GET() {
   try { const editions = await products(); return Response.json({ editions: await Promise.all(editions.map(async x=>({...x,readiness:await readinessFor(x.product)}))) }, { headers: { 'Cache-Control': 'no-store' } }); }

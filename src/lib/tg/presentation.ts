@@ -8,7 +8,7 @@ export const TG_REVIEW_CHECKS = {
   publication: 'Titolo, testo social, diritti e dichiarazione AI sono corretti',
 } as const;
 export const TG_STATE_NAMES: Record<string, string> = {
-  queued: 'In coda', researching: 'Ricerca', writing: 'Scrittura', verifying: 'Verifica', voicing: 'Voci', rendering: 'Video', reviewing: 'Revisione finale AI',
+  queued: 'In coda', researching: 'Ricerca', writing: 'Scrittura', verifying: 'Verifica', editorial_ready:'Testi verificati · media rinviati', voicing: 'Voci', rendering: 'Video', reviewing: 'Revisione finale AI',
   needs_review: 'Da revisionare', ready: 'Approvata', publishing: 'In distribuzione', published: 'Pubblicata', blocked: 'Da correggere', failed: 'Interrotta', cancelled:'Annullata',
 };
 export const TG_DELIVERY_NAMES: Record<string, string> = {

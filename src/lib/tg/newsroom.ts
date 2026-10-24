@@ -68,7 +68,7 @@ export async function editorialAction(id:string,body:Record<string,unknown>) {
     } else {
       if(deliveries.length)throw new TgNewsroomError('Sono già presenti invii: controlla le ricevute prima di modificare l’edizione');
       if(body.action==='cancel'){
-        if(!['queued','needs_review','ready','blocked','failed'].includes(job.state)||!note)throw new TgNewsroomError('Indica il motivo dell’annullamento; le edizioni già inviate non possono essere annullate da qui');
+        if(!['queued','editorial_ready','needs_review','ready','blocked','failed'].includes(job.state)||!note)throw new TgNewsroomError('Indica il motivo dell’annullamento; le edizioni già inviate non possono essere annullate da qui');
         set={state:'cancelled',issues:[],review:{decision:'withdrawn',reviewer:reviewer||'Redazione',at:now.toISOString(),note,checks:{}}};
         unset={approvedAt:1,publicationPlan:1};detail=`Edizione annullata: ${note}`;
       } else if(body.action==='withdraw') {

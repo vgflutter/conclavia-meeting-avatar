@@ -5,6 +5,7 @@ import { jobDirectory } from './artifacts';
 import type { TgJob, TgPlatform } from './types';
 import { publicationCopy } from './presentation';
 import { startMetricoolTikTok, pollMetricoolTikTok, verifyMetricoolTarget } from './metricool';
+import {masterSeconds} from './media-contract';
 export interface DeliveryReceipt { state: 'submitted' | 'published'; remoteId: string; url?: string }
 export function channelPrefix(job: Pick<TgJob, 'edition'>) { return job.edition === 'it' ? 'TG_IT_' : 'TG_WORLD_'; }
 function required(name: string) { const value = process.env[name]?.trim(); if (!value) throw new Error(`Collegamento TG incompleto: ${name}`); return value; }
@@ -70,7 +71,7 @@ export async function startDelivery(job: TgJob, platform: TgPlatform, mediaUrl: 
   // Spotify video needs a supported distribution host; never pretend audio RSS is video delivery.
   const origin = new URL(required('TG_SPOTIFY_PARTNER_URL')); if (origin.protocol !== 'https:' || origin.username || origin.password) throw new Error('Partner Spotify non valido');
   await hooks.beforeMutation?.();
-  const result = await json(new URL('deliveries', origin.toString().replace(/\/?$/u, '/')).toString(), { method: 'POST', headers: { Authorization: `Bearer ${required('TG_SPOTIFY_PARTNER_TOKEN')}`, 'Content-Type': 'application/json', 'Idempotency-Key': `${job.id}:spotify` }, body: JSON.stringify({ destination: required(prefix + 'SPOTIFY_SHOW_ID'), videoUrl: mediaUrl, title: meta.title, description: meta.description, language: job.product.language, durationSeconds: job.product.seconds }) }, signal);
+  const result = await json(new URL('deliveries', origin.toString().replace(/\/?$/u, '/')).toString(), { method: 'POST', headers: { Authorization: `Bearer ${required('TG_SPOTIFY_PARTNER_TOKEN')}`, 'Content-Type': 'application/json', 'Idempotency-Key': `${job.id}:spotify` }, body: JSON.stringify({ destination: required(prefix + 'SPOTIFY_SHOW_ID'), videoUrl: mediaUrl, title: meta.title, description: meta.description, language: job.product.language, durationSeconds: masterSeconds(job) }) }, signal);
   if (typeof result.id !== 'string' || !['submitted', 'published'].includes(result.state)) throw new Error('Ricevuta partner Spotify non valida');
   const receipt: DeliveryReceipt = { remoteId: result.id, state: result.state, ...(typeof result.url === 'string' && result.url.startsWith('https://open.spotify.com/') ? { url: result.url } : {}) }; await checkpoint(receipt); return receipt;
 }

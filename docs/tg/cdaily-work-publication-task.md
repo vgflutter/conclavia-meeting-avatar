@@ -1,6 +1,6 @@
 # Task ChatGPT Work: pubblicazione di Conclavia Daily
 
-Configurazione proposta: **ogni giorno alle 09:00, Europe/Rome**, prima data **24 ottobre 2026**. Avvio produzione distinto: timer locale alle 08:00. Una task Work non risulta ancora salvata/verificata da questa implementazione. Non considerare questo file una task attiva.
+Configurazione proposta: **ogni giorno alle 09:00, Europe/Rome**, prima data **24 ottobre 2026**. Avvio redazione distinto alle 08:00. Il 24 ottobre l’utente ha chiesto di completare prima tutta la parte non media: la modalità corrente è **solo redazione**, quindi questa task controlla e segnala il pacchetto, senza produrre o pubblicare video. Una task Work non risulta ancora salvata/verificata da questa implementazione. Non considerare questo file una task attiva.
 
 Creare una **task desktop locale** con directory di progetto `/Users/vins/work/conclavia-meeting-avatar`; verificare il salvataggio nella sezione Scheduled e il primo esito. Selezionare l’esecuzione nella cartella locale già installata, con il kit adiacente e i volumi dell’ambiente esistente. Mac e app devono essere disponibili. Eventuale RRULE della task: `RRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=0;BYSECOND=0`, con timezone separata `Europe/Rome`. Non usare UTC fisso.
 
@@ -16,8 +16,13 @@ Prima di agire leggi AGENTS.md e docs/tg/cdaily-agent-runbook.md. Non usare la
 memoria di altre chat come sostituto delle regole. Il giorno dell'edizione è
 quello corrente in Europe/Rome. La prima data autorizzata è 2026-10-24.
 
-Esegui npm run daily:agent -- status, quindi
+Esegui npm run daily:agent -- preflight, quindi
 npm run daily:agent -- package --date=today.
+
+Se la modalità è editorial o lo stato è editorial_ready, riporta l'esito A/B,
+il riassunto e la scaletta. Audio, video e pubblicazione sono rinviati per
+istruzione dell'utente: non tentare di completarli, non cambiare modalità,
+non interpretare il pacchetto editoriale come approvazione dei media.
 
 Controlla che l'edizione di oggi abbia testo, scaletta e riassunto social, entrambi
 i master, controlli A/B e revisione finale AI positivi, hash e destinazioni

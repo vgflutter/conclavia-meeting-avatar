@@ -41,6 +41,7 @@ export function publicationDigest(job: TgJob, plan: TgPublicationPlan, destinati
   })).digest('hex');
 }
 export function approvalIsBound(job: TgJob, env: Record<string,string|undefined> = process.env, now = new Date()) {
+  if(job.product.productionMode==='editorial')return false;
   if (!job.approvedAt || job.review?.decision !== 'approved' || !job.publicationPlan || !job.review.bundleSha256) return false;
   if (job.review.mode === 'ai' ? !job.product.automatic || !finalReviewIsBound(job, now, Infinity) : !Object.keys(TG_REVIEW_CHECKS).every(key => job.review?.checks[key] === true)) return false;
   const destinations = Object.fromEntries(job.publicationPlan.platforms.map(p => [p, channelDestination(job.edition,p,env)]));
@@ -60,6 +61,7 @@ export function parsePublicationPlan(value: unknown, job: TgJob, now = new Date(
   return {platforms:[...p.platforms].sort(),scheduledAt:new Date(at).toISOString()};
 }
 function requireMediaBundle(job: TgJob) {
+  if(job.product.productionMode==='editorial')throw new Error('Modalità solo redazione: nessuna approvazione dei media o pubblicazione');
   if(naturalDailyClock(job.product)&&!validMasterClock(job.product,job.manifest))throw new Error('Standard del master non verificato');
   for (const name of ['landscape.mp4','portrait.mp4','audio.mp3','captions.vtt','manifest.json']) {
     const a = job.assets.find(a => a.name === name);

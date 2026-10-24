@@ -6,8 +6,8 @@ export function tgReadiness(product: TgProduct, env: Record<string, string | und
   const alex2=product.productionStandard==='cdaily-v1'&&product.edition==='it'&&product.presenters===1&&alex2SynthesisVerified(env);
   const checks = [
     { id: 'ai', label: 'Ricerca e redazione AI', ready: Boolean(env.OPENAI_API_KEY) && (scopedDaily || env.TG_AI_ENABLED === 'true' && env.PODCAST_AI_ENABLED === 'true') },
-    { id: 'speech', label: product.productionStandard==='cdaily-v1' ? alex2?'Alex 2 · sintesi API verificata':'Alex 2 · verifica API reale richiesta' : product.language === 'it' ? 'Voci italiane · Inworld TTS-2' : 'Voci inglesi · Inworld TTS-2', ready: env.PODCAST_SPEECH_ENABLED === 'true'&&(product.productionStandard==='cdaily-v1'?alex2:Boolean(env.INWORLD_API_KEY)) },
-    { id: 'worker', label: 'Worker video e archivio persistente', ready: env.TG_WORKER_ENABLED === 'true' && Boolean(env.TG_ARTIFACT_DIR) },
+    { id: 'speech', label: product.productionStandard==='cdaily-v1' ? alex2?'Alex 2 · sintesi API verificata':'Alex 2 · verifica API reale richiesta' : product.language === 'it' ? 'Voci italiane · Inworld TTS-2' : 'Voci inglesi · Inworld TTS-2', ready: (scopedDaily||env.PODCAST_SPEECH_ENABLED === 'true')&&(product.productionStandard==='cdaily-v1'?alex2:Boolean(env.INWORLD_API_KEY)) },
+    { id: 'worker', label: scopedDaily?'Controller giornaliero · segnale recente richiesto':'Worker video e archivio persistente', ready: scopedDaily||env.TG_WORKER_ENABLED === 'true' && Boolean(env.TG_ARTIFACT_DIR) },
   ];
   if(product.automatic)checks.push({id:'final-review',label:'Revisore finale AI indipendente',ready:Boolean(env.OPENAI_API_KEY)&&(scopedDaily||env.TG_AUTOMATIC_REVIEW_ENABLED==='true'&&env.TG_AI_ENABLED==='true')});
   let publicMedia=false;
@@ -28,5 +28,8 @@ export function tgReadiness(product: TgProduct, env: Record<string, string | und
       reason:!linked?'Account dell’edizione da collegare':!extra?'Servizio di distribuzione da configurare':!mediaReady?'Indirizzo HTTPS dei video da configurare':env.TG_PUBLISH_ENABLED!=='true'?'Invii reali disabilitati sul server':'Configurato; verifica il collegamento prima del lancio',
       mode:platform==='tiktok'?'Metricool · pubblicazione programmata':platform==='spotify'?'Host video Spotify':'API nativa'};
   });
-  return {checks,channels,productionReady:checks.every(x=>x.ready)&&channels.every(x=>x.ready),reviewRequired:true,automaticReviewAvailable:scopedDaily?Boolean(env.OPENAI_API_KEY):env.TG_AUTOMATIC_REVIEW_ENABLED==='true',reviewMode:product.automatic?'ai' as const:'human' as const};
+  const editorialConfigured=checks.find(c=>c.id==='ai')!.ready;
+  return {checks,channels,editorialConfigured,editorialReady:false,
+    mediaDeferred:product.productionMode==='editorial',
+    productionReady:product.productionMode!=='editorial'&&checks.every(x=>x.ready)&&channels.every(x=>x.ready),reviewRequired:true,automaticReviewAvailable:scopedDaily?Boolean(env.OPENAI_API_KEY):env.TG_AUTOMATIC_REVIEW_ENABLED==='true',reviewMode:product.automatic?'ai' as const:'human' as const};
 }

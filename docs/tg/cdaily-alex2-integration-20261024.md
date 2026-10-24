@@ -61,7 +61,7 @@ Riferimenti primari verificati: [sintesi e timing](https://elevenlabs.io/docs/ap
 - Browser Meeting: **26 test positivi** per player, labiale, avatar, contatti delle mani e master di presentazione approvato; provider disabilitati, server 3101 e Mongo temporaneo 27018.
 - Build di produzione Meeting e Onboarding positive, in directory separate. Onboarding: **82 test**, typecheck e lint positivi; nessuna modifica al suo codice applicativo.
 - Identità video: **17 fingerprint approvati invariati**. Gitleaks sul diff del kit positivo; nessuna credenziale in commit o output.
-- Prove vocali eseguite soltanto con fixture sintetiche: non sono un ascolto di Alex 2 né una produzione completa reale. Il comando locale `daily:voice -- status` rileva modello predisposto, chiave e ID voce assenti, sintesi reale non verificata. Nessuna pubblicazione o acquisto effettuato.
+- I test di regressione vocali usano soltanto fixture sintetiche. Le due prove reali e il recupero sono descritti sopra: chiave e ID presenti, audio generato, sincronizzazione ancora non verificata. Nessun ascolto certificato, pubblicazione o acquisto effettuato. I test non equivalgono a una produzione completa reale.
 
 La prova tecnica usa anche un take simulato di circa 200 s con obiettivo 300 s, senza rallentamenti, e verifica pausa/gesto, cache, esito incerto, configurazione cambiata e blocco di un testo troppo breve anche con rapporti AI precedenti positivi. I controlli numerici non sostituiscono l’ascolto e la revisione dei due master reali.
 

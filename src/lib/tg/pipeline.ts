@@ -8,6 +8,9 @@ import { factualAuditIsCurrent, createAiApproval } from './review';
 import {scoredNarration,scriptReviewIsCurrent} from './script-review';
 import type { TgAsset, TgAudit, TgFinalReview, TgJob, TgManifest, TgResearch, TgScript, TgScriptReview, TgState } from './types';
 export interface TgProductionPorts {
+  /** Runtime ceiling: never synthesize or render during editorial commissioning. */
+  editorialOnly?: boolean;
+  editorialReady?(job: TgJob): Promise<void>;
   research(previous: string): Promise<TgResearch>;
   write(research: TgResearch, correction?: string): Promise<TgScript>;
   audit(research: TgResearch, script: TgScript): Promise<TgAudit>;
@@ -92,6 +95,15 @@ export async function produceTg(job: TgJob, previous: string, ports: TgProductio
     }
   };
   if(!await verify())return;
+  // Preserve the reviewed text pack before even consulting a media cache or
+  // voice configuration. A downstream failure must not lose the newsroom work.
+  const editorialData={script,research,audit,scriptReview,issues:[],manifest:undefined,assets:[],finalReview:undefined,review:undefined,approvedAt:undefined,publicationPlan:undefined};
+  if(ports.editorialReady)await ports.editorialReady({...job,...editorialData,state:'editorial_ready'});
+  if(job.product.productionMode==='editorial'||ports.editorialOnly){
+    if(!ports.editorialReady)throw new Error('Esportazione del pacchetto editoriale non disponibile');
+    await ports.checkpoint('editorial_ready',editorialData,'Testi e score verificati da AI A/B ed esportati: audio, video e invii rinviati');
+    return;
+  }
   let manifest = job.manifest;
   if(manifest&&naturalDailyClock(job.product)&&manifest.voiceConfigSha256!==ports.voiceConfigurationSha256?.())manifest=undefined;
   if (manifest && (JSON.stringify(manifest.speech)!==JSON.stringify(tgSpeechPlan(job.product)) || manifest.product.presenters!==job.product.presenters || !validMasterClock(job.product,manifest) || manifest.stories.some(story=>story.whyItMatters!==(script!.cards?.find(c=>c.storyId===story.id)?.context??'')||story.changedSinceYesterday!==(script!.cards?.find(c=>c.storyId===story.id)?.change??'')) || sentenceDigest(manifest.cues) !== sentenceDigest(script.sentences) || script.headlines?.some(h=>manifest!.stories.find(s=>s.id===h.storyId)?.headline!==h.title))) manifest = undefined;

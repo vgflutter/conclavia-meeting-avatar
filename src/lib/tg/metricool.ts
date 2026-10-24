@@ -6,6 +6,7 @@ import { jobDirectory } from './artifacts';
 import { publicationCopy } from './presentation';
 import type { TgJob } from './types';
 import type { DeliveryReceipt } from './publishers';
+import {masterSeconds} from './media-contract';
 
 function setting(name:string){const value=process.env[name]?.trim();if(!value)throw new Error('Collegamento Metricool incompleto');return value;}
 function prefix(job:Pick<TgJob,'edition'>){return job.edition==='it'?'TG_IT_':'TG_WORLD_';}
@@ -69,7 +70,7 @@ async function uploadVideo(job:TgJob,signal:AbortSignal,beforeMutation:()=>Promi
 }
 export async function startMetricoolTikTok(job:TgJob,signal:AbortSignal,checkpoint:(r:DeliveryReceipt)=>Promise<void>,beforeMutation:()=>Promise<void>){
   const creator=await verifyMetricoolTarget(job,signal);
-  if(!Number.isFinite(creator.maxVideoPostDurationSec)||job.product.seconds>creator.maxVideoPostDurationSec)throw new Error('La durata supera il limite dell’account TikTok');
+  if(!Number.isFinite(creator.maxVideoPostDurationSec)||masterSeconds(job)>creator.maxVideoPostDurationSec)throw new Error('La durata supera il limite dell’account TikTok');
   const media=await uploadVideo(job,signal,beforeMutation),copy=publicationCopy(job,'tiktok');
   // Dispatch only starts at the approved airtime. The planner needs a future date.
   const at=new Date(Date.now()+60000).toISOString().slice(0,19);
