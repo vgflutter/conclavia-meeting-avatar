@@ -22,7 +22,10 @@ test('voice readiness requires matching recent receipt, complete word times and 
   assert.equal(alex2SynthesisVerified(env,now),true);
   assert.equal(alex2SynthesisVerified({...env,TG_IT_ELEVENLABS_VOICE_ID:'different-voice'},now),false);
   assert.equal(alex2SynthesisVerified(env,now+8*86400000),false);
-  await writeFile(path.join(directory,'take.wav'),wave(Buffer.alloc(pcm.length)));
+  const silent=wave(Buffer.alloc(pcm.length));
+  await writeFile(path.join(directory,'take.wav'),silent);
   assert.equal(alex2SynthesisVerified(env,now),false,'altered/silent PCM cannot remain verified');
+  await writeFile(path.join(directory,'proof.json'),JSON.stringify({...proof,audioSha256:createHash('sha256').update(silent).digest('hex')}));
+  assert.equal(alex2SynthesisVerified(env,now),false,'a matching receipt cannot certify inaudible provider output');
  }finally{process.chdir(previous);await rm(temporary,{recursive:true,force:true});}
 });
