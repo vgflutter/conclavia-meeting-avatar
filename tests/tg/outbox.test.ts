@@ -38,6 +38,13 @@ test('outbox sends once under competing workers and marks published only after r
   await publishReadyTg(signal,h.ports);await publishReadyTg(signal,h.ports);
   assert.equal(h.calls.start,1);assert.equal(h.calls.poll,1);assert.equal((await TgRunModel.findById(job.id).lean())?.state,'published');
 });
+test('site-first editions stay untouched by the native social outbox',{skip:!enabled},async()=>{
+ const job=await createRun(),h=ports(job);
+ await TgRunModel.updateOne({_id:job.id},{$set:{'product.siteFirst':true}});
+ await publishReadyTg(new AbortController().signal,h.ports);
+ assert.equal(h.calls.start,0);assert.equal(h.calls.poll,0);assert.equal(await TgDeliveryModel.countDocuments({jobId:job.id}),0);
+ assert.equal((await TgRunModel.findById(job.id).lean())?.state,'ready');
+});
 test('a Work-owned edition is never dispatched by the background worker and is scoped by date and id',{skip:!enabled},async()=>{
   const now=new Date(Date.now()-5000),job=reviewFixture(now);
   job.product.publicationDriver='chatgpt-work';

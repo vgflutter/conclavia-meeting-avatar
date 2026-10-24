@@ -11,6 +11,7 @@ const schema = new Schema<TgRunRecord>({
   leaseOwner: String, leaseUntil: Date, mediaCapability: { type: String, select: false },
   nextProductionAttemptAt: String,
   revision: { type: Number, default: 0 }, publicationPlan: Schema.Types.Mixed, review: Schema.Types.Mixed, finalReview: Schema.Types.Mixed,
+  sitePublication: Schema.Types.Mixed,
   publicationOwner: { type: String, select: false }, publicationLeaseUntil: { type: Date, select: false },
 }, { timestamps: true });
 schema.index({ edition: 1, date: 1 }, { unique: true });

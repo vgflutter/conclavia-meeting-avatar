@@ -33,7 +33,7 @@ export async function publishReadyTg(signal:AbortSignal,ports=defaults,scope:{dr
   const pendingIds=await TgDeliveryModel.distinct('jobId',{state:{$in:['submitted','polling','finalizing']}});
   const recentDate=new Date(Date.now()-86400000).toISOString().slice(0,10);
   const driver=scope.driver??'worker';
-  const candidates=await TgRunModel.find({...(scope.edition?{edition:scope.edition}:{}),...(scope.date?{date:scope.date}:{}),...(scope.jobId?{_id:scope.jobId}:{}),'product.publicationDriver':driver==='chatgpt-work'?'chatgpt-work':{$ne:'chatgpt-work'},approvedAt:{$exists:true},$or:[{state:'ready'},{state:'publishing',date:{$gte:recentDate}},{_id:{$in:pendingIds},state:{$in:['publishing','blocked']}}]}).select('_id').sort({updatedAt:1}).limit(40).lean();
+  const candidates=await TgRunModel.find({'product.siteFirst':{$ne:true},...(scope.edition?{edition:scope.edition}:{}),...(scope.date?{date:scope.date}:{}),...(scope.jobId?{_id:scope.jobId}:{}),'product.publicationDriver':driver==='chatgpt-work'?'chatgpt-work':{$ne:'chatgpt-work'},approvedAt:{$exists:true},$or:[{state:'ready'},{state:'publishing',date:{$gte:recentDate}},{_id:{$in:pendingIds},state:{$in:['publishing','blocked']}}]}).select('_id').sort({updatedAt:1}).limit(40).lean();
   for(const candidate of candidates){
     signal.throwIfAborted();
     const owner=randomUUID(),now=new Date();

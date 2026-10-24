@@ -11,6 +11,8 @@ export interface TgProduct {
   productionMode?: 'editorial' | 'full';
   productionTime?: string;
   publicationDriver?: 'worker' | 'chatgpt-work';
+  /** Publish approved media to the public site; Work consumes that release. */
+  siteFirst?: boolean;
   publishTime: string; timezone: string; enabled: boolean; automatic: boolean; platforms: TgPlatform[];
 }
 export interface TgSource { id: string; publisher: string; url: string; title: string; publishedAt: string; evidence: string; independentGroup: string }
@@ -51,7 +53,7 @@ export interface TgAsset { name: 'landscape.mp4' | 'portrait.mp4' | 'audio.mp3' 
 export interface TgPublicationPlan { platforms: TgPlatform[]; scheduledAt: string }
 export interface TgReview {
   decision: 'approved' | 'changes_requested' | 'withdrawn'; reviewer: string; at: string; note: string;
-  checks: Record<string, boolean>; bundleSha256?: string; destinations?: Partial<Record<TgPlatform, string>>; mode?: 'human' | 'ai';
+  checks: Record<string, boolean>; bundleSha256?: string; destinations?: Partial<Record<TgPlatform | 'website', string>>; mode?: 'human' | 'ai'; scope?: 'website';
 }
 export interface TgMediaCheck {
   format: 'landscape' | 'portrait'; width: number; height: number; seconds: number;
@@ -70,6 +72,7 @@ export interface TgJob {
   approvedAt?: string; publishedAt?: string; createdAt: string; updatedAt: string; attempts: number;
   revision?: number; publicationPlan?: TgPublicationPlan; review?: TgReview;
   finalReview?: TgFinalReview;
+  sitePublication?: {url:string;releaseUrl:string;bundleSha256:string;publishedAt:string;stories:TgPublishedEdition['stories']};
   nextProductionAttemptAt?: string;
   deliveries: { platform: TgPlatform; state: string; remoteId?: string; url?: string; issue?: string; attempts?: number; nextAttemptAt?: string; resumable?: boolean }[];
 }

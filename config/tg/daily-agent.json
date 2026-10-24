@@ -5,7 +5,7 @@
   "publicationDriver": "chatgpt-work",
   "product": {
     "edition": "it",
-    "name": "Conclavia Daily · Italia",
+    "name": "Conclavia Daily \u00b7 Italia",
     "language": "it",
     "seconds": 300,
     "presenters": 1,
@@ -17,6 +17,12 @@
     "enabled": true,
     "automatic": true,
     "publicationDriver": "chatgpt-work",
-    "platforms": ["youtube", "instagram", "tiktok", "spotify"]
+    "platforms": [
+      "youtube",
+      "instagram",
+      "tiktok",
+      "spotify"
+    ],
+    "siteFirst": true
   }
 }

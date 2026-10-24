@@ -9,6 +9,11 @@ import {scriptReviewIsCurrent} from './script-review';
 import type { TgJob, TgPlatform, TgPublicationPlan, TgReview } from './types';
 import { masterSeconds, naturalDailyClock, validMasterClock } from './media-contract';
 import { dailyScriptDepthIssues } from './script-depth';
+import {DAILY_SITE_ORIGIN,siteEditionPath} from './site-contract';
+
+function reviewDestinations(job:TgJob,plan:TgPublicationPlan,env:Record<string,string|undefined>){
+ return job.product.siteFirst?{website:DAILY_SITE_ORIGIN+siteEditionPath(job.edition,job.date)}:Object.fromEntries(plan.platforms.map(p=>[p,channelDestination(job.edition,p,env)]));
+}
 
 export const AUDIT_MAX_AGE_MS = 6 * 3600000;
 export function factualAuditIsCurrent(job: TgJob, now = new Date()) {
@@ -37,14 +42,15 @@ export function publicationDigest(job: TgJob, plan: TgPublicationPlan, destinati
     edition: job.edition, date: job.date, product: job.product, script: job.script && scriptDigest(job.script),
     audit: job.audit, scriptReview:job.scriptReview, research:job.research,
     assets: [...job.assets].sort((a,b) => a.name.localeCompare(b.name)).map(a => ({name:a.name,sha:a.sha256,bytes:a.bytes,duration:a.duration})),
-    plan, destinations, finalReview: job.finalReview, copy: plan.platforms.map(p => ({platform:p,...publicationCopy(job,p)})),
+    plan, destinations, finalReview: job.finalReview, copy: (job.product.siteFirst?job.product.platforms:plan.platforms).map(p => ({platform:p,...publicationCopy(job,p)})),
   })).digest('hex');
 }
 export function approvalIsBound(job: TgJob, env: Record<string,string|undefined> = process.env, now = new Date()) {
   if(job.product.productionMode==='editorial')return false;
   if (!job.approvedAt || job.review?.decision !== 'approved' || !job.publicationPlan || !job.review.bundleSha256) return false;
   if (job.review.mode === 'ai' ? !job.product.automatic || !finalReviewIsBound(job, now, Infinity) : !Object.keys(TG_REVIEW_CHECKS).every(key => job.review?.checks[key] === true)) return false;
-  const destinations = Object.fromEntries(job.publicationPlan.platforms.map(p => [p, channelDestination(job.edition,p,env)]));
+  if(Boolean(job.product.siteFirst)!==(job.review.scope==='website')||job.product.siteFirst&&job.publicationPlan.platforms.length)return false;
+  const destinations = reviewDestinations(job,job.publicationPlan,env);
   return Object.values(destinations).every(Boolean)
     && JSON.stringify(destinations) === JSON.stringify(job.review.destinations)
     && publicationDigest(job,job.publicationPlan,destinations) === job.review.bundleSha256;
@@ -91,10 +97,10 @@ export function createAiApproval(job: TgJob, now = new Date(), env: Record<strin
   const slot = editionSlot(job.product, job.date), at = Math.max(Date.parse(slot.scheduledAt), now.getTime());
   if (now.getTime() < Date.parse(slot.prepareAt) || at > Date.parse(slot.closesAt)
     || at >= Date.parse(job.audit!.checkedAt) + AUDIT_MAX_AGE_MS || !freshnessIsCurrent(job,new Date(at))) throw new Error('Finestra di uscita superata: nessuna pubblicazione tardiva automatica');
-  const plan = { platforms: [...job.product.platforms].sort(), scheduledAt: new Date(at).toISOString() };
-  const destinations = Object.fromEntries(plan.platforms.map(p => [p, channelDestination(job.edition, p, env)]));
+  const plan = { platforms: job.product.siteFirst?[]:[...job.product.platforms].sort(), scheduledAt: new Date(at).toISOString() };
+  const destinations = reviewDestinations(job,plan,env);
   if (!Object.values(destinations).every(Boolean)) throw new Error('Destinazioni non configurate: edizione AI non programmata');
-  const review: TgReview = { mode: 'ai', decision: 'approved', reviewer: 'Daily · revisore AI indipendente', at: now.toISOString(),
+  const review: TgReview = { mode: 'ai', ...(job.product.siteFirst?{scope:'website' as const}:{}), decision: 'approved', reviewer: 'Daily · revisore AI indipendente', at: now.toISOString(),
     note: job.finalReview!.summary, checks: { ...job.finalReview!.checks }, destinations };
   review.bundleSha256 = publicationDigest(job, plan, destinations);
   return { review, publicationPlan: plan, approvedAt: now.toISOString() };

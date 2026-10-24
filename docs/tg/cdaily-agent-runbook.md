@@ -4,7 +4,9 @@ Revisione: **24 ottobre 2026**, fuso editoriale **Europe/Rome**. Questo è il pu
 
 **Priorità corrente dello scheduler:** le prossime edizioni Italia sono in `productionMode=editorial`: raccolta, copione e A/B, poi esportazione e stato `editorial_ready`. Nessuna sintesi, render o pubblicazione automatica. [Stato non media e host separato](cdaily-nonmedia-readiness-20261024.md). Dopo questo lavoro l’utente ha autorizzato una **demo isolata di circa un minuto con voce e gesti**: nuovo take Alex 2, allineamento ASR misurato e due formati, senza cambiare la modalità schedulata o la presentazione pubblicata. [Demo, limiti e verifiche del 24 ottobre](cdaily-acting-demo-20261024.md). I timestamp nativi incoerenti non sono stati accettati né la produzione autonoma dichiarata pronta.
 
-**Scheduler corrente:** host editoriale separato sul VPS, release `editorial-20261024132158764-5819ecf3`, timer systemd attivo e persistente, segnale condiviso nel DB. Il precedente timer launchd del Mac è stato disattivato dopo verifica remota; le sezioni storiche che lo descrivono attivo restano cronologia. La prima raccolta/A/B sul nuovo host è attesa il 25 ottobre alle 08:00 Rome (07:00 UTC). Work gestirà la pubblicazione, non una sessione Codex; task e trasporti reali ancora da collaudare e media tuttora rinviati.
+**Scheduler corrente:** host editoriale separato sul VPS, release `editorial-20261024204925120-3f975e30`, timer systemd attivo e persistente, segnale condiviso nel DB. Il precedente timer launchd del Mac è stato disattivato dopo verifica remota; le sezioni storiche che lo descrivono attivo restano cronologia. La prima raccolta/A/B sul nuovo host è attesa il 25 ottobre alle 08:00 Rome (07:00 UTC). Work gestirà la pubblicazione, non una sessione Codex; task e trasporti reali ancora da collaudare e media tuttora rinviati.
+
+**Consegna sito approvata e attiva:** le puntate complete con `siteFirst=true` e revisione AI positiva vengono pubblicate dal servizio separato sul sito, nei due formati. Work legge `https://daily.conclavia.me/edizioni/it/latest.json` e la release immutabile, senza cartella del Mac. La demo del 24 è già online, esclusa dalle uscite Daily; `latest` è ancora `waiting`. [Architettura, URL, verifiche e limiti](cdaily-site-handoff-20261024.md). Redazione attuale `editorial-20261024204925120-3f975e30`, publisher `site-1792875512222-df1769d4`; produzione video giornaliera e task Work restano da completare/collaudare. Questa decisione supera le indicazioni storiche di usare il CLI locale per la distribuzione delle nuove edizioni `siteFirst`.
 
 ## 1. Che cosa stiamo costruendo
 
@@ -99,8 +101,9 @@ flowchart TD
   M --> F[Render portrait e landscape]
   F --> Q[Misure media e revisione finale AI]
   Q --> P[Bundle approvato e destinazioni congelate]
-  P --> W[ChatGPT Work · orario di pubblicazione]
-  W --> O[Outbox · invio e riconciliazione ricevute]
+  P --> SITE[Sito · due master e release immutabile]
+  SITE --> W[ChatGPT Work · legge dal sito]
+  W --> O[Connessioni social · invio e riconciliazione ricevute]
   O --> D[Archivio pubblicato, sito e tracciamento]
   A -->|negativo| X[Una correzione editoriale, poi A e B ripartono]
   B -->|negativo| X
@@ -178,6 +181,8 @@ Riassunto e scaletta coprono **tutte e sole le notizie pronunciate**, nello stes
 
 ## 9. Tool, calendario e riavvio
 
+Il timer Mac descritto qui è cronologia e rimane disattivato: redazione e publisher sito correnti sono i due servizi separati sul server. Non ricaricare launchd mentre sono attivi.
+
 CLI nel repository Meeting:
 
 ```sh
@@ -206,9 +211,9 @@ Il Mac deve essere acceso e il database raggiungibile. Al risveglio si rivaluta 
 
 ## 10. ChatGPT Work e distribuzione
 
-[Prompt e istruzioni per la task Work](cdaily-work-publication-task.md). Deve essere una task **desktop con accesso a questo progetto locale**, alle **09:00 Europe/Rome**, confermata come salvata nella UI. La versione web non può leggere direttamente la cartella locale. Il CLI non inventa un ID task o una conferma di salvataggio.
+[Prompt e istruzioni correnti per la task Work](cdaily-work-publication-task.md). Per le nuove edizioni `siteFirst` è una task **web/in cloud**, alle **09:00 Europe/Rome**, che legge il sito pubblico e le connessioni autorizzate. Non richiede la cartella del Mac, Mongo o SSH. Il salvataggio e il primo esito vanno verificati nella UI; il CLI non inventa un ID task.
 
-Work è il regista della distribuzione: legge questo manuale, controlla stato e pacchetto, poi invoca `publish --date=today`. Gli adattatori/outbox restano il trasporto persistente: controllo prima di ogni mutazione, una ricevuta per piattaforma, nessun upload ripetuto se l’esito è incerto. Work non usa un caricamento manuale alternativo per aggirare un blocco del backend. Un ID remoto non è una pubblicazione confermata; interrogare e salvare la ricevuta finale. Se cambia un asset o la destinazione, serve una nuova approvazione.
+Work legge `it/latest.json`, richiede data odierna e `kind=daily`, poi recupera la release immutabile con i due formati e i testi approvati. Usa le connessioni social del progetto, confronta account e post esistenti e riconcilia le ricevute prima di un nuovo invio. Una demo, un vecchio Daily o un esito incerto non autorizzano un caricamento. Le ricevute Work restano nella task e nei servizi: non attribuirle all’outbox nativa senza un adattatore verificato. Quest’ultima esclude le edizioni `siteFirst`; il precedente comando locale `publish --date=today` rimane soltanto per gli altri snapshot.
 
 Canali pubblici del progetto:
 

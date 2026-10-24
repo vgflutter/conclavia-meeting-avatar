@@ -18,10 +18,11 @@ export function parseProduct(value: unknown): TgProduct {
     (p.productionMode !== undefined && !['editorial','full'].includes(p.productionMode)) ||
     (p.productionTime !== undefined && (!/^([01]\d|2[0-3]):[0-5]\d$/u.test(p.productionTime) || p.productionTime >= p.publishTime)) ||
     (p.publicationDriver !== undefined && !['worker','chatgpt-work'].includes(p.publicationDriver)) ||
+    (p.siteFirst !== undefined && typeof p.siteFirst !== 'boolean') ||
     typeof p.enabled !== 'boolean' || typeof p.automatic !== 'boolean' || !Array.isArray(p.platforms) ||
     !p.platforms.length || new Set(p.platforms).size !== p.platforms.length || p.platforms.some(x => !['youtube', 'instagram', 'tiktok', 'spotify'].includes(x))) throw new Error('Configurazione TG non valida');
   try { new Intl.DateTimeFormat('en', { timeZone: p.timezone }).format(); } catch { throw new Error('Fuso orario non valido'); }
-  return { edition: p.edition, name: p.name.trim(), language: p.language, seconds: p.seconds, presenters: p.presenters, ...(p.productionMode === undefined ? {} : {productionMode:p.productionMode}), ...(p.productionStandard === undefined ? {} : {productionStandard:p.productionStandard}), ...(p.productionTime === undefined ? {} : {productionTime:p.productionTime}), ...(p.publicationDriver === undefined ? {} : {publicationDriver:p.publicationDriver}), publishTime: p.publishTime, timezone: p.timezone, enabled: p.enabled, automatic: p.automatic, platforms: [...p.platforms] };
+  return { edition: p.edition, name: p.name.trim(), language: p.language, seconds: p.seconds, presenters: p.presenters, ...(p.siteFirst===undefined?{}:{siteFirst:p.siteFirst}), ...(p.productionMode === undefined ? {} : {productionMode:p.productionMode}), ...(p.productionStandard === undefined ? {} : {productionStandard:p.productionStandard}), ...(p.productionTime === undefined ? {} : {productionTime:p.productionTime}), ...(p.publicationDriver === undefined ? {} : {publicationDriver:p.publicationDriver}), publishTime: p.publishTime, timezone: p.timezone, enabled: p.enabled, automatic: p.automatic, platforms: [...p.platforms] };
 }
 export const TG_PLATFORM_LABELS = {youtube:'YouTube',instagram:'Instagram',tiktok:'TikTok',spotify:'Spotify'} as const;
 export function isDue(product: TgProduct, now: Date) {

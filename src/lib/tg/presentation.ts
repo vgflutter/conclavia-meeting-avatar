@@ -1,4 +1,5 @@
 import type { TgJob, TgPlatform } from './types';
+import {DAILY_SITE_ORIGIN,siteEditionPath} from './site-contract';
 
 export const TG_REVIEW_CHECKS = {
   facts: 'Ho controllato fatti, numeri, date e attribuzioni',
@@ -31,7 +32,8 @@ export function publicationCopy(job: Pick<TgJob,'product'|'edition'|'date'|'scri
   const header=platform==='instagram'||platform==='tiktok'?title:'';
   const body=job.script?.description??'';
   const invitation=it?'Segui Conclavia Daily e scrivici cosa vuoi approfondire.':'Follow Conclavia Daily and tell us what you would like us to explore.';
-  const website=it?'Fonti e approfondimenti: https://daily.conclavia.me':'Sources and further coverage: https://daily.conclavia.me';
+  const siteUrl=job.product.siteFirst?DAILY_SITE_ORIGIN+siteEditionPath(job.edition,job.date):DAILY_SITE_ORIGIN;
+  const website=(it?'Fonti e approfondimenti: ':'Sources and further coverage: ')+siteUrl;
   const footer=[invitation,website,disclosure,it?'Fonti:':'Sources:'].join('\n\n');
   // Validated editions reserve <=1100 characters for the complete summary, so it
   // always fits before credits. Old oversized drafts still need an editorial rewrite.
