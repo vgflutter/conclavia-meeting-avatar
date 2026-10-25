@@ -52,14 +52,20 @@ async function tick(commission=false){
   if(commission){phase='commission';const receipt=JSON.parse(await run(process.execPath,[...nodeArgs,'scripts/tg/commission-today.ts','--confirm']));extra=[`--commission=${receipt.jobId}`];}
   phase='preflight';const decision=JSON.parse(await daily('preflight',...extra));
   if(!decision.decision?.due)return {state:'skipped',reason:decision.decision?.reason};
-  const editorial=decision.mode==='editorial',prereq=await checks();
+  if(['waiting','stopped','published'].includes(decision.stage)){
+   // Keep the controller heartbeat visible while idle. tick sees the existing
+   // terminal/paused job and never claims it or creates a second edition.
+   await daily('tick',...extra);
+   return {state:decision.currentEdition?.state,date:decision.decision.date,issues:decision.currentEdition?.issues??[],awaitingTextApproval:decision.stage==='waiting'&&decision.currentEdition?.textReviewMode==='manual',videoUploaded:decision.stage==='published'};
+  }
+  const editorial=decision.stage==='editorial',prereq=await checks();
   const required=editorial?['mac','node','privateEnvironment','ai']:Object.keys(prereq).filter(k=>k!=='chrome');
   if(required.some(k=>!prereq[k]))throw Error('Prerequisiti Mac incompleti: eseguire daily:mac doctor');
-  if(!editorial){
+  if(decision.stage==='media'){
    phase='identity';await run(process.execPath,['scripts/tg/check-video-identity.mjs']);
    phase='render-host';renderer=await macRenderServer();
   }
-  const env={...runtime,...(editorial?{TG_EDITORIAL_ONLY:'true',PODCAST_SPEECH_ENABLED:'false'}:{TG_RENDER_ORIGIN:renderer.origin,TG_RENDER_PATH:'/__cdaily-render__/',...(prereq.chrome?{TG_CHROME_CHANNEL:'chrome'}:{})})};
+  const env={...runtime,...(editorial?{TG_EDITORIAL_ONLY:'true',PODCAST_SPEECH_ENABLED:'false'}:renderer?{TG_RENDER_ORIGIN:renderer.origin,TG_RENDER_PATH:'/__cdaily-render__/',...(prereq.chrome?{TG_CHROME_CHANNEL:'chrome'}:{})}:{})};
   phase='production';await run(process.execPath,[...nodeArgs,'scripts/tg/daily-agent.ts','tick',...extra],{env,inherit:true,timeout:Math.max(1000,Date.parse(decision.decision.slot.closesAt)-Date.now())});
   let produced;
   try{produced=JSON.parse(await readFile(join(state,'last-production.json'),'utf8'));}catch{}

@@ -10,6 +10,7 @@ import { parseProduct } from '../../src/lib/tg/config';
 import { localEditionDate } from '../../src/lib/tg/schedule';
 import { alex2ConfigStatus } from '../../src/lib/tg/alex2-config';
 import { alex2SynthesisVerified } from '../../src/lib/tg/alex2-proof';
+import {macProductionStage} from '../../src/lib/tg/mac-production-stage';
 
 class DailyAgentStop extends Error {}
 const root=path.resolve(fileURLToPath(new URL('../..',import.meta.url)));
@@ -130,7 +131,12 @@ async function main(){
     const {productionRuntime,readinessWithRuntime}=await import('../../src/lib/tg/runtime-readiness');
     const {publicationControl}=await import('../../src/lib/tg/newsroom');
     const runtime=await productionRuntime();
-    return output({at:now.toISOString(),edition:plan.product.edition,mode:plan.product.productionMode??'full',decision,
+    const {TgRunModel}=await import('../../src/models/tg/TgRun');
+    const {serializeJob}=await import('../../src/lib/tg/store');
+    const record=await TgRunModel.findOne({edition:plan.product.edition,date}).lean();
+    const job=record?serializeJob(record):undefined;
+    return output({at:now.toISOString(),edition:plan.product.edition,mode:job?.product.productionMode??plan.product.productionMode??'full',decision,
+      stage:macProductionStage(plan.product,job,now),currentEdition:job?{date:job.date,state:job.state,textReviewMode:job.product.textReviewMode,issues:job.issues}:undefined,
       runtime,readiness:readinessWithRuntime(plan.product,runtime),distribution:await publicationControl(),mutations:false,providerGeneration:false});
   }
   if(command==='channels'){

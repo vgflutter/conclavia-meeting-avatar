@@ -47,14 +47,14 @@ for(const reused of [false,true])test(`the scheduled worker blocks the unavailab
     }
   });
 
-test('scheduled editorial mode finishes and stays idle on a second tick with all providers denied',
+for(const manual of [false,true])test(`scheduled ${manual?'full/manual':'editorial'} mode finishes and stays idle on a second tick with all providers denied`,
   {skip:process.env.TG_INTEGRATION_TESTS!=='true',timeout:30000},async()=>{
     if(process.env.MONGODB_URI!=='mongodb://127.0.0.1:27018'||!process.env.MONGODB_DB_NAME?.startsWith('conclavia_e2e_'))throw new Error('Isolated MongoDB required');
     const root=await mkdtemp(path.join(os.tmpdir(),'cdaily-text-worker-'));
     try{
       await mongoose.connect(process.env.MONGODB_URI,{dbName:process.env.MONGODB_DB_NAME});
       const now=new Date(),job=editorialFixture(now);
-      job.product={...job.product,productionTime:'00:00',publishTime:'23:59',timezone:'UTC'};
+      job.product={...job.product,productionTime:'00:00',publishTime:'23:59',timezone:'UTC',...(manual?{productionMode:'full',textReviewMode:'manual'}:{})};
       job.state='queued';job.assets=[];job.attempts=0;
       job.scriptReview=scriptReviewFixture(job.product,job.date,job.research!,job.script!,now);
       await TgRunModel.create({...job,_id:job.id});

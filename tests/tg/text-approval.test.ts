@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createHash} from 'node:crypto';
-import {manualTextApprovalIsCurrent} from '../../src/lib/tg/text-approval';
+import {createManualTextApproval,manualTextApprovalIsCurrent} from '../../src/lib/tg/text-approval';
 import {scoredNarration} from '../../src/lib/tg/script-review';
 import {dailyGreeting,dailyClosing,scriptDigest,scriptSchema} from '../../src/lib/tg/editorial';
 import {editorialFixture} from './editorial-fixture';
@@ -92,4 +92,18 @@ test('the reviewed opening is short and dated, and the closing has one comments 
  assert.ok(opening.split(/\s+/u).length<=25);
  const closing=dailyClosing('it','reviewed');assert.equal(closing.filter(s=>s.intent==='point-down').length,1);
  assert.ok(closing.some(s=>s.text.includes('daily.conclavia.me')));assert.ok(closing.some(s=>s.text.includes('Segui Conclavia Daily')));
+});
+test('only an explicit confirmation of current A/B, words and score creates a text receipt within the edition window',()=>{
+ const at=new Date('2026-10-26T07:00:00Z'),job=editorialFixture(at);
+ job.state='editorial_ready';job.product={...job.product,productionMode:'full',textReviewMode:'manual',productionTime:'07:30',publishTime:'08:15',timezone:'Europe/Rome'};
+ job.scriptReview=scriptReviewFixture(job.product,job.date,job.research!,job.script!,at);
+ const input={confirmed:true,reviewer:'Synthetic test reviewer',scriptSha256:scriptDigest(job.script!),reviewInputSha256:job.scriptReview.inputSha256};
+ const approval=createManualTextApproval(job,input,at);
+ assert.equal(manualTextApprovalIsCurrent({...job,textApproval:approval},at),true);
+ for(const invalid of [{confirmed:false},{reviewer:''},{scriptSha256:'changed'},{reviewInputSha256:'changed'}])assert.throws(()=>createManualTextApproval(job,{...input,...invalid},at));
+ assert.throws(()=>createManualTextApproval(job,input,new Date('2026-10-26T08:00:00Z')),/finestra/u);
+ assert.throws(()=>createManualTextApproval({...job,attempts:3},input,at),/Tentativi/u);
+ assert.throws(()=>createManualTextApproval({...job,scriptReview:undefined},input,at),/controlli AI/u);
+ assert.throws(()=>createManualTextApproval({...job,audit:{...job.audit!,passed:false}},input,at),/controlli AI/u);
+ assert.throws(()=>createManualTextApproval({...job,product:{...job.product,productionMode:'editorial'}},input,at),/non attende/u);
 });

@@ -44,6 +44,26 @@ test('editorial-ready editions expose current downloadable texts without approvi
   expect((await TgDeliveryModel.countDocuments({jobId:job.id}))).toBe(0);
   for(const width of [320,390,1440]){await page.setViewportSize({width,height:1000});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);}
 });
+test('the manual text gate requires an explicit read confirmation and queues the same reviewed edition for the Mac',async({page,request},info)=>{
+  const now=new Date(),job=editorialFixture(now);job.id=randomBytes(12).toString('hex');job.state='editorial_ready';job.assets=[];
+  job.product={...job.product,productionMode:'full',textReviewMode:'manual',productionTime:'00:00',publishTime:'23:59',timezone:'UTC'};
+  job.scriptReview=scriptReviewFixture(job.product,job.date,job.research!,job.script!,now);
+  await TgRunModel.create({...job,_id:job.id});
+  await page.goto(`/podcast/tg/redazione?job=${job.id}`);
+  const gate=page.getByTestId('tg-text-approval'),confirm=gate.getByRole('button',{name:'Conferma testo e avvia produzione'});
+  await expect(confirm).toBeDisabled();await gate.getByLabel('Revisore del copione').fill('Revisore sintetico');
+  await expect(confirm).toBeDisabled();
+  await gate.getByRole('checkbox',{name:'Ho letto e confermo questo copione e lo score di mood e intenzioni'}).check();
+  await expect(confirm).toBeEnabled();
+  for(const width of [320,390,1440]){await page.setViewportSize({width,height:1000});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);}
+  await gate.screenshot({path:info.outputPath('daily-confirm-text.png')});
+  await confirm.click();await expect(page.getByText(/Copione e mood confermati/)).toBeVisible();
+  const saved=await TgRunModel.findById(job.id).lean().orFail();
+  expect(saved.state).toBe('queued');expect(saved.textApproval?.reviewer).toBe('Revisore sintetico');
+  expect(saved.attempts).toBe(job.attempts);expect(saved.assets).toEqual([]);expect(saved.approvedAt).toBeUndefined();
+  expect(await TgDeliveryModel.countDocuments({jobId:job.id})).toBe(0);
+  expect((await request.post(`/api/tg/editions/${job.id}`,{data:{action:'approve-text',revision:0,confirmed:true,reviewer:'Stale fixture'}})).status()).toBe(409);
+});
 test('the newsroom exposes the exact speech score and a missing B blocks approval despite a positive fact audit',async({page,request})=>{
   const record=await fixture(),id=record._id.toString();
   await page.goto(`/podcast/tg/redazione?job=${id}`);

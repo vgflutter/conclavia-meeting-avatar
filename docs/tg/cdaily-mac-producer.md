@@ -13,7 +13,10 @@ flowchart LR
  R --> E[Copione, scaletta, testo social e mood]
  E --> A[Verifica AI A]
  A --> B[Revisione AI B]
- B --> V[Alex 2 · take continuo e parole misurate]
+ B --> G{Verifica manuale attiva?}
+ G -->|sì| H[GUI privata · conferma testo e score]
+ G -->|no| V[Alex 2 · take continuo e parole misurate]
+ H -->|versione esatta, nella finestra| V
  V --> F[Renderer approvato · 9:16 e 16:9 · 50 fps]
  F --> Q[Controlli tecnici e revisore finale AI]
  Q --> U[Mac · trasferimento privato con checksum]
@@ -27,6 +30,8 @@ flowchart LR
 - Il 25 ottobre gli orari corrispondono a 06:30, 07:15 e 07:45 UTC. Non salvare UTC fissi nei calendari.
 
 Il sito serve i media e verifica il pacchetto ricevuto; **non genera voce o video**. Work legge il sito e distribuisce soltanto il pacchetto odierno approvato; **non produce il Daily**. Le prove tecniche rimangono private.
+
+Con la configurazione corrente `full` + `manual`, alle 07:30 parte la redazione; il primo passaggio non richiede il renderer né crediti vocali. Dopo A/B il job diventa `editorial_ready`. In `/podcast/tg/redazione`, scheda **Testi verificati**, leggere il dossier e usare **Conferma testo e avvia produzione** con revisore e spunta esplicita. Il prossimo controllo del timer accoda/riprende i media di quella versione, senza azzerare i contatori. L’attesa non genera render ripetuti. Oltre le 08:45 non si approva né pubblica in ritardo. L’uscita delle 08:15 richiede che revisione manuale e media finiscano in tempo; non è garantita dal solo timer.
 
 ## Installazione su questo Mac o su uno nuovo
 

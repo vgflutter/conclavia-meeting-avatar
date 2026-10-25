@@ -26,6 +26,8 @@ Mac alle **07:30 Europe/Rome** → raccolta locale → selezione/verifica delle 
 
 In `config/tg/daily-agent.json`: `productionMode: full`, `textReviewMode: manual` attualmente attivo. `ai` o campo omesso salta soltanto l’OK umano. A/B e revisione finale rimangono obbligatori. Dopo una modifica al file: `npm run daily:agent -- configure`. La GUI salva direttamente nel backend; le edizioni già create mantengono lo snapshot.
 
+Con `manual`, aprire la GUI privata `/podcast/tg/redazione`, scheda **Testi verificati**, leggere copione, score e sintesi; compilare il revisore, spuntare la conferma e premere **Conferma testo e avvia produzione**. L’azione conserva i contatori e accoda quella versione: il Mac riprende entro il controllo successivo (circa un minuto), ricontrolla A/B e attualità, poi avvia i media. Il primo passaggio solo testo e l’attesa non compilano il renderer. Un controllo scaduto richiede **Richiedi nuova verifica**; non autorizza una conferma fittizia o una produzione oltre le 08:45. Questo percorso riguarda le edizioni del database, non importa automaticamente una sessione privata del laboratorio.
+
 Per un laboratorio **solo testo**, con chiamate AI esplicite ma media impossibili:
 
 ```sh

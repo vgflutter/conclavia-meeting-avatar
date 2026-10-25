@@ -6,6 +6,9 @@ import { TgPublicationControlModel } from '@/models/tg/TgPublicationControl';
 import { inspectArtifact } from './artifacts';
 import { createEditorialApproval, approvalIsBound, auditIsCurrent } from './review';
 import { serializeJob } from './store';
+import {createManualTextApproval} from './text-approval';
+import {loadPublishedHistory} from './history';
+import {freshnessIsCurrent} from './freshness';
 import type { TgJob } from './types';
 
 export class TgNewsroomError extends Error { constructor(message:string, public status=409) {super(message);} }
@@ -32,7 +35,7 @@ export async function authoritativeJob(id:string) {
 }
 /** The same publication lease protects review decisions and external dispatch. */
 export async function editorialAction(id:string,body:Record<string,unknown>) {
-  if(!['approve','reject','withdraw','retry','reverify','reconcile','cancel'].includes(String(body.action)))throw new TgNewsroomError('Azione non valida',400);
+  if(!['approve-text','approve','reject','withdraw','retry','reverify','reconcile','cancel'].includes(String(body.action)))throw new TgNewsroomError('Azione non valida',400);
   if(!Number.isInteger(body.revision) || Number(body.revision)<0)throw new TgNewsroomError('Ricarica l’edizione prima di decidere');
   const owner=randomUUID(),now=new Date();
   const record=await TgRunModel.findOneAndUpdate({_id:id,$and:[
@@ -47,7 +50,15 @@ export async function editorialAction(id:string,body:Record<string,unknown>) {
     const note=typeof body.note==='string'?body.note.trim().slice(0,1000):'';
     const reviewer=typeof body.reviewer==='string'?body.reviewer.trim().slice(0,80):'';
     let set:Record<string,unknown>={},unset:Record<string,1>={},detail='';
-    if(body.action==='approve') {
+    if(body.action==='approve-text') {
+      if(deliveries.length||job.approvedAt||job.sitePublication)throw new TgNewsroomError('Edizione già in distribuzione');
+      let textApproval;try{textApproval=createManualTextApproval(job,body,now);}catch(error){throw new TgNewsroomError((error as Error).message);}
+      if(!freshnessIsCurrent(job,now,await loadPublishedHistory(job.edition,job.date,now)))throw new TgNewsroomError('Archivio delle uscite cambiato: ripetere il controllo editoriale');
+      // Keep every prior attempt and editorial repair. The next Mac tick rechecks
+      // A/B, evidence and this exact receipt before any paid media operation.
+      set={textApproval,state:'queued',issues:[]};unset={nextProductionAttemptAt:1};
+      detail=`Testo e score confermati esplicitamente da ${textApproval.reviewer}; ripresa accodata sul Mac, senza approvazione dei media`;
+    } else if(body.action==='approve') {
       if(deliveries.length)throw new TgNewsroomError('Questa edizione ha già ricevute di distribuzione');
       let approval;try{approval=createEditorialApproval(job,body,now);}catch(error){throw new TgNewsroomError((error as Error).message);}
       for(const asset of job.assets){const actual=await inspectArtifact(id,asset.name);if(actual.sha256!==asset.sha256||actual.bytes!==asset.bytes)throw new TgNewsroomError('Il file video è cambiato: serve una nuova verifica');}
@@ -80,11 +91,11 @@ export async function editorialAction(id:string,body:Record<string,unknown>) {
         set={state:'blocked',issues:[note],review:{decision:'changes_requested',reviewer:reviewer||'Redazione',at:now.toISOString(),note,checks:{}}};
         unset={approvedAt:1,publicationPlan:1};detail=`Correzioni richieste: ${note}`;
       } else {
-        if(job.approvedAt || !['needs_review','blocked','failed'].includes(job.state))throw new TgNewsroomError('Ritira prima l’approvazione o attendi la lavorazione');
+        if(job.approvedAt || !['needs_review','blocked','failed',...(body.action==='reverify'?['editorial_ready']:[])].includes(job.state))throw new TgNewsroomError('Ritira prima l’approvazione o attendi la lavorazione');
         if(!note)throw new TgNewsroomError('Indica il motivo del nuovo tentativo');
         if(body.action==='reverify'&&!job.script)throw new TgNewsroomError('Non c’è un copione da verificare');
-        set={state:'queued',attempts:0,issues:body.action==='retry'?[...job.issues,note].slice(-5):[]};
-        unset={audit:1,scriptReview:1,review:1,finalReview:1,approvedAt:1,publicationPlan:1,nextProductionAttemptAt:1};
+        set={state:'queued',attempts:job.state==='editorial_ready'?job.attempts:0,issues:body.action==='retry'?[...job.issues,note].slice(-5):[]};
+        unset={audit:1,scriptReview:1,textApproval:1,review:1,finalReview:1,approvedAt:1,publicationPlan:1,nextProductionAttemptAt:1};
         if(body.action==='retry'&&job.state==='blocked'){unset={...unset,research:1,script:1,manifest:1};set.assets=[];set.editorialRepairs=0;set.durationRepairs=0;}
         detail=body.action==='reverify'?`Nuova verifica richiesta: ${note}`:`Rigenerazione richiesta: ${note}`;
       }
