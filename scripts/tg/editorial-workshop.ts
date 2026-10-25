@@ -217,6 +217,7 @@ async function main(){
  };
  await produceTg(current,JSON.stringify(history),{
   editorialOnly:true,
+  maximumEditorialRepairs:12,
   research:async()=>current.research!,
   write:async(research,feedback)=>{
    stage='writing';const key=createHash('sha256').update(JSON.stringify({research,feedback,date,product})).digest('hex');

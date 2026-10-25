@@ -68,7 +68,7 @@ export function scriptSchema(product:TgProduct,research:TgResearch){
   const line=(id:string,ids:string[],factual:boolean)=>object({text:{type:'string',minLength:5,maxLength:450},mood:{type:'string',enum:moods},intensity:{type:'number',minimum:0,maximum:1},intent:{type:'string',enum:dailyEditorialIntents,description:'Communicative intention of this clause, judged from its meaning. The renderer chooses a compatible gesture or quiet; never select by news category or topic.'},speaker:{type:'integer',enum:product.presenters===1?[0]:[0,1]},storyId:{type:'string',enum:[id]},sourceIds:{type:'array',minItems:factual?1:0,maxItems:8,items:{type:'string',enum:ids}}});
   const all=research.sources.map(s=>s.id);
   schema.properties.sentences={type:'array',minItems:8,maxItems:46,items:{anyOf:[...research.stories.map(s=>line(s.id,s.sourceIds,true)),line('intro',all,false)]}};
-  if(product.productionStandard==='cdaily-v1'&&product.textReviewMode==='manual'){
+  if(product.productionStandard==='cdaily-v1'){
     // The writer must develop EACH item; an unconstrained flat list repeatedly
     // collapsed the edition into 400 words. The public TgScript stays flat.
     schema.properties.sentences=object(Object.fromEntries(research.stories.map((s,index)=>{
@@ -203,7 +203,7 @@ export function validateResearch(value: unknown, retrievedUrls: Set<string>, now
 export function validateScript(value: unknown, product: TgProduct, research: TgResearch): TgScript {
   if (!value || typeof value !== 'object') fail('Copione non valido');
   const s = value as TgScript;
-  if (typeof s.title !== 'string' || !s.title || s.title.length > 110 || typeof s.description !== 'string' || s.description.length > 3500 || !Array.isArray(s.sentences) || s.sentences.length < 8 || s.sentences.length > (product.textReviewMode==='manual'?70:50)) fail('Copione non valido');
+  if (typeof s.title !== 'string' || !s.title || s.title.length > 110 || typeof s.description !== 'string' || s.description.length > 3500 || !Array.isArray(s.sentences) || s.sentences.length < 8 || s.sentences.length > (product.productionStandard==='cdaily-v1'?70:50)) fail('Copione non valido');
   const summaryIssues=dailySummaryIssues(s);
   if(summaryIssues.length)fail(summaryIssues.join(' '));
   const ids = new Set(research.sources.map(source => source.id));

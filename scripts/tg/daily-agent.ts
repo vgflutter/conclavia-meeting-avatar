@@ -67,7 +67,7 @@ async function main(){
     const product=parseProduct({...current.product,...Object.fromEntries(fields.map(k=>[k,configured.product[k]]))});
     const result=await TgEditionModel.updateOne({_id:current._id,revision:current.revision},{$set:{product,updatedAt:now},$inc:{revision:1}});
     if(result.modifiedCount!==1)throw new DailyAgentStop('Configurazione cambiata durante il salvataggio');
-    return output({configured:true,edition:configured.product.edition,productionTime:configured.product.productionTime,publishTime:configured.product.publishTime,timezone:configured.product.timezone,publicationDriver:configured.publicationDriver});
+    return output({configured:true,edition:configured.product.edition,productionTime:configured.product.productionTime,publishTime:configured.product.publishTime,timezone:configured.product.timezone,publicationDriver:configured.publicationDriver,productionMode:product.productionMode??'full',textReviewMode:product.textReviewMode??'ai'});
   }
   if(command==='install'||command==='uninstall'||command==='persist'){
     if(command!=='uninstall'&&configured.productionDriver==='launchd'&&configured.product.productionMode==='full')throw new DailyAgentStop('Per il produttore completo usare npm run daily:mac -- install');
@@ -112,9 +112,9 @@ async function main(){
     const loaded=service?(await spawnCommand('/bin/launchctl',['print',service])).code===0:false;
     const controller=databaseStatus==='connected'?(await (await import('../../src/lib/tg/runtime-readiness')).productionRuntime()).controller:undefined;
     const {TgRunModel}=await import('../../src/models/tg/TgRun');
-    const current=databaseStatus==='connected'?await TgRunModel.findOne({edition:plan.product.edition,date:localEditionDate(now,plan.product.timezone)}).select('date state issues product.productionMode').lean():undefined;
+    const current=databaseStatus==='connected'?await TgRunModel.findOne({edition:plan.product.edition,date:localEditionDate(now,plan.product.timezone)}).select('date state issues product.productionMode product.textReviewMode').lean():undefined;
     return output({at:now.toISOString(),database:databaseStatus,plan,calendar:agentCalendar(plan,now),decision:agentDecision(plan,now),
-      currentEdition:current?{date:current.date,state:current.state,issues:current.issues,mode:current.product.productionMode}:undefined,
+      currentEdition:current?{date:current.date,state:current.state,issues:current.issues,mode:current.product.productionMode,textReviewMode:current.product.textReviewMode}:undefined,
       timer:{scope:'local',loaded,installation:await localState('installation.json'),lastTick:await localState('last-tick.json'),lastProduction:await localState('last-production.json'),lastError:await localState('last-error.json')},runtime:{...runtimeReadiness(),productionController:controller}});
   }
   if(!['tick','run','publish','package','channels','preflight'].includes(command))throw new DailyAgentStop('Comandi: plan, status, configure, install, persist, uninstall, tick, run, package, channels, preflight, publish. Aggiungere --dry-run per anteprima senza effetti.');

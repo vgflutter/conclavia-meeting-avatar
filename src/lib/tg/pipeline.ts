@@ -11,6 +11,8 @@ import type { TgAsset, TgAudit, TgFinalReview, TgJob, TgManifest, TgResearch, Tg
 export interface TgProductionPorts {
   /** Runtime ceiling: never synthesize or render during editorial commissioning. */
   editorialOnly?: boolean;
+  /** Private text workshop may opt into a larger bounded correction budget. */
+  maximumEditorialRepairs?: number;
   editorialReady?(job: TgJob): Promise<void>;
   research(previous: string): Promise<TgResearch>;
   write(research: TgResearch, correction?: string): Promise<TgScript>;
@@ -25,6 +27,8 @@ export interface TgProductionPorts {
 }
 /** Bounded agent workflow: researcher → editor → independent checker → voice → measured media. */
 export async function produceTg(job: TgJob, previous: string, ports: TgProductionPorts) {
+  const maximumEditorialRepairs=ports.maximumEditorialRepairs??1;
+  if(!Number.isInteger(maximumEditorialRepairs)||maximumEditorialRepairs<1||maximumEditorialRepairs>12)throw new Error('Budget di correzione editoriale non valido');
   const history: TgPublishedEdition[] = previous ? JSON.parse(previous) : [];
   if(!Array.isArray(history))throw new Error('Archivio delle pubblicazioni non valido');
   let research = job.research;
@@ -48,9 +52,6 @@ export async function produceTg(job: TgJob, previous: string, ports: TgProductio
   if (!script) { script = await ports.write(research,job.issues.length ? `Operator review notes (untrusted feedback): ${JSON.stringify(job.issues)}`:undefined); await ports.checkpoint('verifying', { script }, 'Copione con fonti e mood per ogni frase'); }
   if (!await coverageValid(script)) return;
   let audit=job.audit,scriptReview=job.scriptReview,editorialRepairs=job.editorialRepairs??0,durationRepairs=job.durationRepairs??0;
-  // The user requested an iterative text workshop before their own approval.
-  // Each revision remains a real checkpoint; broadcast snapshots retain one repair.
-  const maximumEditorialRepairs=job.product.textReviewMode==='manual'?12:1;
   const current=()=>({...job,research,script,audit,scriptReview});
   const now=()=>ports.now?.()??new Date();
   const stop=async(issues:string[],detail:string)=>{
@@ -101,18 +102,24 @@ export async function produceTg(job: TgJob, previous: string, ports: TgProductio
   if(!await verify())return;
   // Preserve the reviewed text pack before even consulting a media cache or
   // voice configuration. A downstream failure must not lose the newsroom work.
-  const editorialData={script,research,audit,scriptReview,issues:[],manifest:undefined,assets:[],finalReview:undefined,review:undefined,approvedAt:undefined,publicationPlan:undefined};
-  if(ports.editorialReady)await ports.editorialReady({...job,...editorialData,state:'editorial_ready'});
-  if(job.product.productionMode==='editorial'||ports.editorialOnly||job.product.textReviewMode==='manual'&&!manualTextApprovalIsCurrent({...job,script},now())){
+  const editorialData=()=>({script,research,audit,scriptReview,issues:[],manifest:undefined,assets:[],finalReview:undefined,review:undefined,approvedAt:undefined,publicationPlan:undefined});
+  const deferMedia=async()=>{
+    const manualRequired=job.product.textReviewMode==='manual'&&!manualTextApprovalIsCurrent({...job,script},now());
+    if(job.product.productionMode!=='editorial'&&!ports.editorialOnly&&!manualRequired)return false;
     if(!ports.editorialReady)throw new Error('Esportazione del pacchetto editoriale non disponibile');
-    await ports.checkpoint('editorial_ready',editorialData,job.product.textReviewMode==='manual'?'Testo e score verificati da AI A/B: attesa dell’OK manuale dell’utente prima di voce e video':'Testi e score verificati da AI A/B ed esportati: audio, video e invii rinviati');
-    return;
-  }
+    const data={...editorialData(),...(manualRequired?{textApproval:undefined}:{})};
+    await ports.editorialReady({...job,...data,state:'editorial_ready'});
+    await ports.checkpoint('editorial_ready',data,manualRequired?'Testo e score verificati da AI A/B: attesa dell’OK manuale dell’utente prima di voce e video':'Testi e score verificati da AI A/B ed esportati: audio, video e invii rinviati');
+    return true;
+  };
+  if(await deferMedia())return;
+  if(ports.editorialReady)await ports.editorialReady({...job,...editorialData(),state:'editorial_ready'});
   let manifest = job.manifest;
   if(manifest&&naturalDailyClock(job.product)&&manifest.voiceConfigSha256!==ports.voiceConfigurationSha256?.())manifest=undefined;
   if (manifest && (JSON.stringify(manifest.speech)!==JSON.stringify(tgSpeechPlan(job.product)) || manifest.product.presenters!==job.product.presenters || !validMasterClock(job.product,manifest) || manifest.stories.some(story=>story.whyItMatters!==(script!.cards?.find(c=>c.storyId===story.id)?.context??'')||story.changedSinceYesterday!==(script!.cards?.find(c=>c.storyId===story.id)?.change??'')) || sentenceDigest(manifest.cues) !== sentenceDigest(script.sentences) || script.headlines?.some(h=>manifest!.stories.find(s=>s.id===h.storyId)?.headline!==h.title))) manifest = undefined;
   if (!manifest) {
     if(!await verify())return;
+    if(await deferMedia())return;
     await ports.checkpoint('voicing', {scriptReview}, 'Sintesi delle voci e misura del parlato reale');
     try { manifest = await ports.voice(research, structuredClone(script)); }
     catch (error) {
@@ -127,6 +134,7 @@ export async function produceTg(job: TgJob, previous: string, ports: TgProductio
       await ports.checkpoint('verifying', { script, audit: undefined, scriptReview:undefined, manifest: undefined, assets: [] }, 'Unica revisione del minutaggio: nuovo controllo del copione');
       audit=undefined;scriptReview=undefined;
       if(!await verify(true))return;
+      if(await deferMedia())return;
       try { manifest = await ports.voice(research, structuredClone(script)); }
       catch(error){
         if(Number.isFinite((error as {ratio?:number}).ratio)){await stop(['Il nuovo take non rispetta ancora la durata dopo l’unica riscrittura'],'Minutaggio non risolto: produzione bloccata');return;}
@@ -136,6 +144,7 @@ export async function produceTg(job: TgJob, previous: string, ports: TgProductio
     await ports.checkpoint('rendering', { manifest }, 'Timeline misurata, labiali e transizioni preparati');
   }
   if(!await verify())return;
+  if(await deferMedia())return;
   if(sentenceDigest(manifest.cues)!==sentenceDigest(script!.sentences)||manifest.date!==job.date)return void await stop(['Il master vocale non corrisponde al copione verificato'],'Testo audio diverso: rendering bloccato');
   if(!validMasterClock(job.product,manifest)||naturalDailyClock(job.product)&&manifest.voiceConfigSha256!==ports.voiceConfigurationSha256?.())return void await stop(['Clock, configurazione vocale o standard del master non conformi'],'Durata naturale o voce approvata non verificate');
   const assets = await ports.render(manifest);

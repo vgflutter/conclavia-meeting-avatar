@@ -9,7 +9,7 @@ export interface TgProduct {
   productionStandard?: 'cdaily-v1';
   /** Editorial commissioning stops after A/B and private text export. */
   productionMode?: 'editorial' | 'full';
-  /** Human confirmation of the exact spoken copy and acting score before media. */
+  /** Additional user confirmation AFTER AI A/B; omitted/ai continues automatically. */
   textReviewMode?: 'manual' | 'ai';
   productionTime?: string;
   publicationDriver?: 'worker' | 'chatgpt-work';

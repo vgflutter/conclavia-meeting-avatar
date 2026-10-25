@@ -11,7 +11,7 @@
     "seconds": 300,
     "presenters": 1,
     "productionStandard": "cdaily-v1",
-    "productionMode": "editorial",
+    "productionMode": "full",
     "textReviewMode": "manual",
     "productionTime": "07:30",
     "publishTime": "08:15",

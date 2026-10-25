@@ -1,6 +1,6 @@
 # CDaily: manuale per gli agenti e continuità di produzione
 
-> **Aggiornamento del 25 ottobre — decisione corrente:** [testo prima del video, limite sotto dieci minuti e conferma manuale](cdaily-editorial-standard-20261025.md). Il Mac parte alle 07:30 ma ora prepara soltanto copione, fonti, mood e controlli A/B (`productionMode: editorial`, `textReviewMode: manual`). Attendere l’OK esplicito dell’utente su quella versione prima di voce/video. Le descrizioni di produzione interamente automatica sotto sono il traguardo successivo; non autorizzano a saltare questo passaggio. Work distribuisce solo un pacchetto effettivamente approvato e rilasciato sul sito.
+> **Aggiornamento del 25 ottobre — decisione corrente:** [testo prima del video, limite sotto dieci minuti e verifica manuale configurabile](cdaily-editorial-standard-20261025.md). Il Mac parte alle 07:30. Nel percorso completo (`productionMode: full`), `textReviewMode: manual` aggiunge l’OK esplicito dell’utente dopo AI A/B e prima della voce; `ai` prosegue automaticamente dopo gli stessi controlli. La verifica manuale è attualmente attiva. `productionMode: editorial` resta un arresto tecnico separato. Work distribuisce solo un pacchetto effettivamente approvato e rilasciato sul sito.
 
 
 Revisione: **25 ottobre 2026**, fuso editoriale **Europe/Rome**. Questo è il punto di ingresso per riprendere il progetto senza la chat. Leggerlo integralmente prima di creare un’edizione. Le istruzioni correnti dell’utente prevalgono; registrare qui le nuove decisioni approvate, distinguendole dalle prove.

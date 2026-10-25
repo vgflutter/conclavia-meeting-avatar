@@ -63,11 +63,11 @@ async function tick(commission=false){
   phase='production';await run(process.execPath,[...nodeArgs,'scripts/tg/daily-agent.ts','tick',...extra],{env,inherit:true,timeout:Math.max(1000,Date.parse(decision.decision.slot.closesAt)-Date.now())});
   let produced;
   try{produced=JSON.parse(await readFile(join(state,'last-production.json'),'utf8'));}catch{}
-  if(editorial){
+  const current=JSON.parse(await daily('status')).currentEdition;
+  if(editorial||current?.state==='editorial_ready'){
    // A tick can find an existing blocked/ready job without writing a receipt.
    // Read today's DB record instead of presenting yesterday's local result.
-   const current=JSON.parse(await daily('status')).currentEdition;
-   return {state:current?.state??'editorial-result-unavailable',date:decision.decision.date,awaitingTextApproval:current?.state==='editorial_ready',videoUploaded:false};
+   return {state:current?.state??'editorial-result-unavailable',date:decision.decision.date,awaitingTextApproval:current?.state==='editorial_ready'&&current.textReviewMode==='manual',videoUploaded:false};
   }
   // Query the current job explicitly: an older local receipt never selects an upload.
   phase='package';const pack=JSON.parse(await run(process.execPath,[...nodeArgs,'scripts/tg/prepare-site-upload.ts','--today'],{env}));

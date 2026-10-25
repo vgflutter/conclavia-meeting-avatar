@@ -42,14 +42,29 @@ flowchart TD
  A --> B[AI B: rilettura indipendente di contenuto, forma e recitazione]
  A -->|rilievi| C
  B -->|rilievi| C
- B -->|positivo| U[Testo leggibile: attesa dell’OK dell’utente]
+ B -->|positivo| G{Verifica manuale attiva?}
+ G -->|manual| U[Testo leggibile: attesa dell’OK dell’utente]
+ G -->|ai| V[Alex 2 e tempi misurati]
  U -->|conferma del testo esatto| V[Alex 2 e tempi misurati]
  V --> M[Avatar: mood e gesti, portrait e landscape]
  M --> F[Verifica finale media]
  F --> P[Sito; Work distribuisce il pacchetto approvato]
 ```
 
-**Ora il controllo manuale è obbligatorio.** Configurazione persistita: `productionMode: editorial`, `textReviewMode: manual`; avvio Mac alle 07:30 invariato. Anche passando per errore a `full`, la pipeline e la sintesi rifiutano media privi della ricevuta dell’OK sul testo. Non creare questa ricevuta da un verdetto AI.
+**Il controllo manuale è configurabile e attualmente attivo.** In `config/tg/daily-agent.json`, dentro `product`:
+
+```json
+{
+  "productionMode": "full",
+  "textReviewMode": "manual"
+}
+```
+
+`manual` aggiunge l’OK dell’utente **dopo entrambi i controlli AI e prima dei media**. Cambiare soltanto `textReviewMode` in `ai` (oppure ometterlo) ripristina la prosecuzione automatica: raccolta, formato del copione, mood/gesture, controlli A/B e revisione finale rimangono gli stessi. Un esito negativo di A o B blocca anche con verifica manuale disattivata. Non creare una ricevuta umana a partire da un verdetto AI.
+
+La stessa opzione è nel desk **Redazione → Edizioni e canali → Verifica manuale del copione**. Per applicare un file modificato al backend eseguire `npm run daily:agent -- configure`; la UI salva direttamente la configurazione persistente. L’avvio Mac alle 07:30 rimane invariato. Le edizioni già create conservano il loro snapshot: cambiare la configurazione non approva né sblocca retroattivamente un copione in attesa.
+
+`productionMode: editorial` e il limite runtime `TG_EDITORIAL_ONLY=true` restano arresti tecnici separati: fermano sempre la produzione dopo il testo, anche con `textReviewMode: ai`. Nel normale percorso completo il solo interruttore della verifica umana è `textReviewMode`.
 
 Il modello editoriale è esplicito nel piano: `editorialModel: gpt-5.4`, applicato soltanto al processo Daily. La configurazione delle altre funzioni Meeting rimane distinta. Il modello effettivo entra nelle chiavi delle cache del laboratorio; non riusare un esito prodotto con un’altra configurazione come se fosse una nuova verifica.
 
@@ -57,11 +72,11 @@ A controlla tutti i segmenti, titoli, cartelli e sintesi; B legge il medesimo pa
 
 Il nuovo rapporto A registra ciascun rilievo sul target preciso come `unsupported` o `unverifiable`, con motivazione e prove; qualunque target negativo blocca il passaggio. Una nota positiva non va inserita fra i problemi bloccanti. I vecchi rapporti con rilievi liberi restano conservati e mantengono il loro esito. Quando parte una nuova revisione, la precedente consegna da approvare viene archiviata privatamente e sostituita da «revisione in corso»: nessun vecchio dossier positivo deve sembrare quello corrente.
 
-Il laboratorio manuale consente al massimo dodici riscritture automatiche persistenti per sessione; il job storico del primo ciclo mantiene i propri contatori. La cifra è un limite operativo, non un obiettivo. Una nuova revisione esplicita del redattore può essere sottoposta ad A/B senza azzerare quei contatori; non abilita altre riscritture automatiche oltre il limite. Se il problema riguarda la selezione, cambiare realmente le prove/scaletta invece di riscrivere all’infinito lo stesso materiale. Le richieste con esito incerto non vengono automaticamente ripetute.
+Il laboratorio privato richiede esplicitamente al massimo dodici riscritture automatiche persistenti per sessione; il ciclo ordinario mantiene il proprio budget di una correzione, identico con verifica manuale attiva o disattiva. Il job storico del primo ciclo mantiene i propri contatori. La cifra è un limite operativo, non un obiettivo. Una nuova revisione esplicita del redattore può essere sottoposta ad A/B senza azzerare quei contatori; non abilita altre riscritture automatiche oltre il limite. Se il problema riguarda la selezione, cambiare realmente le prove/scaletta invece di riscrivere all’infinito lo stesso materiale. Le richieste con esito incerto non vengono automaticamente ripetute.
 
-La ricevuta `textApproval` lega conferma esplicita, revisore, data, hash del copione completo e hash dello score. Cambiare parole, titoli/sintesi, mood o intenzioni invalida la conferma; il testo aggiornato va ricontrollato e ripresentato. I controlli di attualità vanno rinnovati quando scadono: un’approvazione manuale non rende fresche notizie vecchie. Non trasformare automaticamente un testo di oggi in una puntata di domani.
+La ricevuta `textApproval` lega conferma esplicita, revisore, data, hash del copione completo e hash dello score. Con verifica manuale attiva, cambiare parole, titoli/sintesi, mood o intenzioni invalida la conferma; il testo aggiornato va ricontrollato e ripresentato. Questo vale anche per una riscrittura del minutaggio dopo il primo take: nuova verifica A/B e nuovo OK prima di una seconda sintesi. I controlli di attualità vanno rinnovati quando scadono: un’approvazione manuale non rende fresche notizie vecchie. Non trasformare automaticamente un testo di oggi in una puntata di domani.
 
-Solo dopo l’OK si prepara il take Alex 2, si misura la durata reale e si genera il video nei due formati nativi. Restano i controlli finali su testo/audio, giunzioni, mani, volto, leggibilità e pubblicazione. Il sito ospita solo presentazione approvata e vere edizioni rilasciate. Work legge il pacchetto odierno dal sito; l’orario delle 08:15 è un obiettivo subordinato ai controlli e all’OK, non un permesso di saltarli.
+Superati i controlli configurati (incluso l’OK se `manual`), si prepara il take Alex 2, si misura la durata reale e si genera il video nei due formati nativi. Restano i controlli finali su testo/audio, giunzioni, mani, volto, leggibilità e pubblicazione. Il sito ospita solo presentazione approvata e vere edizioni rilasciate. Work legge il pacchetto odierno dal sito; l’orario delle 08:15 è un obiettivo subordinato ai controlli e all’eventuale OK manuale, non un permesso di saltarli.
 
 ## Mood e gesti
 
