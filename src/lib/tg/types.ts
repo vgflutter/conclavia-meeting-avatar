@@ -9,19 +9,21 @@ export interface TgProduct {
   productionStandard?: 'cdaily-v1';
   /** Editorial commissioning stops after A/B and private text export. */
   productionMode?: 'editorial' | 'full';
+  /** Human confirmation of the exact spoken copy and acting score before media. */
+  textReviewMode?: 'manual' | 'ai';
   productionTime?: string;
   publicationDriver?: 'worker' | 'chatgpt-work';
   /** Publish approved media to the public site; Work consumes that release. */
   siteFirst?: boolean;
   publishTime: string; timezone: string; enabled: boolean; automatic: boolean; platforms: TgPlatform[];
 }
-export interface TgSource { id: string; publisher: string; url: string; title: string; publishedAt: string; evidence: string; independentGroup: string }
+export interface TgSource { id: string; publisher: string; url: string; title: string; publishedAt: string; evidence: string; independentGroup: string; feedId?:string }
 export interface TgStory {
   id: string; headline: string; category: 'world' | 'economy' | 'society' | 'science' | 'culture';
   importance: number; changedSinceYesterday: string; whyItMatters: string; uncertainty: string;
   sourceIds: string[]; facts: { text: string; sourceIds: string[] }[];
 }
-export interface TgResearch { stories: TgStory[]; sources: TgSource[]; collectedAt: string; searchCalls: number; warnings: string[] }
+export interface TgResearch { stories: TgStory[]; sources: TgSource[]; collectedAt: string; searchCalls: number; warnings: string[]; retrievedContext?:{storyId:string;brief:string;sourceUrls:string[]}[] }
 export interface TgSentence { intent?:GestureIntent;gestureWord?:string;text: string; mood: PodcastEmotion; intensity: number; speaker: 0 | 1; storyId: string; sourceIds: string[] }
 export interface TgScript { cards?:{storyId:string;context:string;change:string}[]; headlines?: {storyId:string;title:string}[]; title: string; description: string; sentences: TgSentence[] }
 export interface TgCue extends TgSentence { choreography?:PerformanceChoreography;performanceWindow?:{start:number;end:number};gestureAccent?:number;gestureAlignment?:'word'|'phrase';start: number; end: number; alignment?:'word'|'estimated'|'sentence-pcm'; frameSeconds?: number; levels?: number[]; phones?: { start: number; end: number; viseme: string }[] }
@@ -74,5 +76,6 @@ export interface TgJob {
   finalReview?: TgFinalReview;
   sitePublication?: {url:string;releaseUrl:string;bundleSha256:string;publishedAt:string;stories:TgPublishedEdition['stories']};
   nextProductionAttemptAt?: string;
+  textApproval?: {mode:'manual';reviewer:string;at:string;date:string;scriptSha256:string;scoreSha256:string};
   deliveries: { platform: TgPlatform; state: string; remoteId?: string; url?: string; issue?: string; attempts?: number; nextAttemptAt?: string; resumable?: boolean }[];
 }

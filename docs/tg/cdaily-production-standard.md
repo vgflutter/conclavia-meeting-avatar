@@ -1,5 +1,8 @@
 # CDaily — standard approvato per ogni nuova puntata
 
+> **Aggiornamento del 25 ottobre — decisione corrente:** [testo prima del video, limite sotto dieci minuti e conferma manuale](cdaily-editorial-standard-20261025.md). Il Mac parte alle 07:30 ma ora prepara soltanto copione, fonti, mood e controlli A/B (`productionMode: editorial`, `textReviewMode: manual`). Attendere l’OK esplicito dell’utente su quella versione prima di voce/video. Le descrizioni di produzione interamente automatica sotto sono il traguardo successivo; non autorizzano a saltare questo passaggio. Work distribuisce solo un pacchetto effettivamente approvato e rilasciato sul sito.
+
+
 Consolidato il **23 ottobre 2026**, dopo l'approvazione dell'utente: «partendo da questo stile che adesso è ok». Questo è il punto di ingresso operativo; le revisioni cronologiche restano materiale di confronto. Leggere anche [linea editoriale](cdaily-editorial-line.md), [flusso](editorial-workflow.md) e [guida video](cdaily-video-guide.md).
 
 **Base del Daily confermata dopo la visione del pilota Italia r3:** [basi del formato giornaliero](cdaily-format-foundation.md), media `1876a600e330`, 326,64 s. Dalla prossima edizione pronunciare giorno e mese nell’apertura. [Direzione di mood e gesti](cdaily-acting-direction.md): la maggiore varietà è specificata come prossimo sviluppo, senza modificare i master approvati o dichiarare già disponibili nuovi contatti col volto.

@@ -63,7 +63,7 @@ async function main(){
     if(dryRun)return output({action:'configure',plan:configured});
     await database();const {TgEditionModel}=await import('../../src/models/tg/TgEdition');
     const current=await TgEditionModel.findOne({edition:configured.product.edition}).lean().orFail();
-    const fields=['productionTime','publishTime','productionMode','productionStandard','publicationDriver','siteFirst','enabled','automatic'] as const;
+    const fields=['productionTime','publishTime','productionMode','productionStandard','publicationDriver','siteFirst','enabled','automatic','textReviewMode'] as const;
     const product=parseProduct({...current.product,...Object.fromEntries(fields.map(k=>[k,configured.product[k]]))});
     const result=await TgEditionModel.updateOne({_id:current._id,revision:current.revision},{$set:{product,updatedAt:now},$inc:{revision:1}});
     if(result.modifiedCount!==1)throw new DailyAgentStop('Configurazione cambiata durante il salvataggio');
@@ -154,7 +154,7 @@ async function main(){
     if(!['queued','researching','writing','verifying','voicing','rendering','reviewing'].includes(run.state))return output({action:'existing',job:id,date,state:run.state,issues:run.issues});
     const controllerBeat=setInterval(()=>void TgControllerModel.updateOne({key:'daily-production'},{$set:{heartbeatAt:new Date(),driver:'launchd',mode:plan.product.productionMode??'full'}}).catch(()=>undefined),30000);
     let result:{code:number;stdout:string};
-    try{result=await spawnCommand(process.execPath,['--conditions=react-server','--import','tsx','scripts/tg/worker.ts','--once',`--job=${id}`,'--no-schedule','--no-publish','--approved-daily'],{inherit:true,environment:{...env,TG_WORKER_ENABLED:'true',TG_AI_ENABLED:'true',PODCAST_AI_ENABLED:'true',TG_AUTOMATIC_REVIEW_ENABLED:'true'}});}
+    try{result=await spawnCommand(process.execPath,['--conditions=react-server','--import','tsx','scripts/tg/worker.ts','--once',`--job=${id}`,'--no-schedule','--no-publish','--approved-daily'],{inherit:true,environment:{...env,...(plan.editorialModel?{PODCAST_OPENAI_MODEL:plan.editorialModel}:{}),TG_WORKER_ENABLED:'true',TG_AI_ENABLED:'true',PODCAST_AI_ENABLED:'true',TG_AUTOMATIC_REVIEW_ENABLED:'true'}});}
     finally{clearInterval(controllerBeat);}
     const latest=await TgRunModel.findById(id).lean().orFail();
     const job=serializeJob(latest);

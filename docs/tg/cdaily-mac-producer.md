@@ -1,5 +1,8 @@
 # CDaily — produttore Mac, sito e Work
 
+> **Aggiornamento del 25 ottobre — decisione corrente:** [testo prima del video, limite sotto dieci minuti e conferma manuale](cdaily-editorial-standard-20261025.md). Il Mac parte alle 07:30 ma ora prepara soltanto copione, fonti, mood e controlli A/B (`productionMode: editorial`, `textReviewMode: manual`). Attendere l’OK esplicito dell’utente su quella versione prima di voce/video. Le descrizioni di produzione interamente automatica sotto sono il traguardo successivo; non autorizzano a saltare questo passaggio. Work distribuisce solo un pacchetto effettivamente approvato e rilasciato sul sito.
+
+
 Decisione dell’utente del **25 ottobre 2026**: questo Mac prepara ogni Daily alle **07:30 Europe/Rome**, pubblica i file approvati sul sito e lascia la distribuzione social a ChatGPT Work. Il Mac resta acceso. Il precedente produttore editoriale sul VPS è disabilitato; non riattivarlo insieme al Mac.
 
 ## Responsabilità e calendario

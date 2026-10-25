@@ -136,6 +136,18 @@ test('a repaired script needs a separate passing audit before producing any audi
  await produceTg(job(),'',{...h.ports,audit:async()=>{h.calls.push('audit');return ++audits===1?{...h.audit,passed:false,issues:['Attribuire questa affermazione']}:h.audit;}});
  assert.deepEqual(h.calls,['research','write','audit','write','audit','reviewB','voice','render']);assert.equal(h.states.at(-1),'needs_review');
 });
+test('a negative target blocks an otherwise positive audit without free-form issues; historic issues remain blocking',()=>{
+ const r=research(),s=script(),citations=r.sources.map(x=>({url:x.url,title:x.title}));
+ const value={issues:[] as string[],checks:Object.fromEntries(auditTargets(s).map(t=>[t.key,{status:'supported',evidence:'Fatto presente nella fonte acquisita e controllata.',sourceUrls:[r.sources[0].url]}]))};
+ assert.equal(validateAudit(value,s,citations,now).passed,true);
+ for(const status of ['unsupported','unverifiable']){
+  const changed=structuredClone(value);changed.checks.sentence_1.status=status;
+  const result=validateAudit(changed,s,citations,now);
+  assert.equal(result.passed,false);assert.ok(result.issues.some(s=>s.startsWith('sentence_1:')));
+ }
+ const historic=structuredClone(value);historic.issues.push('Rilievo storico da conservare, non da eliminare.');
+ assert.equal(validateAudit(historic,s,citations,now).passed,false);
+});
 test('RSS detail support cannot replace live corroboration of every story',()=>{
  const r=research(),s=script();
  const value={issues:[],checks:Object.fromEntries(auditTargets(s).map(t=>[t.key,{status:'supported',evidence:'Dettaglio esplicitamente presente nella fonte raccolta.',sourceUrls:[r.sources[0].url]}]))};

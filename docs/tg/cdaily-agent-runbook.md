@@ -1,5 +1,8 @@
 # CDaily: manuale per gli agenti e continuità di produzione
 
+> **Aggiornamento del 25 ottobre — decisione corrente:** [testo prima del video, limite sotto dieci minuti e conferma manuale](cdaily-editorial-standard-20261025.md). Il Mac parte alle 07:30 ma ora prepara soltanto copione, fonti, mood e controlli A/B (`productionMode: editorial`, `textReviewMode: manual`). Attendere l’OK esplicito dell’utente su quella versione prima di voce/video. Le descrizioni di produzione interamente automatica sotto sono il traguardo successivo; non autorizzano a saltare questo passaggio. Work distribuisce solo un pacchetto effettivamente approvato e rilasciato sul sito.
+
+
 Revisione: **25 ottobre 2026**, fuso editoriale **Europe/Rome**. Questo è il punto di ingresso per riprendere il progetto senza la chat. Leggerlo integralmente prima di creare un’edizione. Le istruzioni correnti dell’utente prevalgono; registrare qui le nuove decisioni approvate, distinguendole dalle prove.
 
 **Decisione corrente dell’utente:** il produttore è **questo Mac**, ogni mattina alle **07:30 Europe/Rome**. Prepara fonti, copione, A/B, voce Alex 2, mood/labiale, master portrait e landscape a 50 fps, revisione finale e caricamento verificato sul sito. **Work distribuisce dal sito dalle 08:15**; chiusura della finestra alle 08:45. Non spostare implicitamente la produzione sul VPS e non attribuirla a Work.

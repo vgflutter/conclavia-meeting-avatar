@@ -1,7 +1,8 @@
 import type {SpeechWord} from '@conclavia/avatar-kit/speech';
+export const DAILY_OPENING_PAUSE_SECONDS=2;
 
 /** Product edit for Daily's measured intro handoff; 16-bit mono PCM only. */
-export function insertDailyOpeningPause(pcm:Buffer,words:SpeechWord[],rate:number,before:number,after:number,seconds=2){
+export function insertDailyOpeningPause(pcm:Buffer,words:SpeechWord[],rate:number,before:number,after:number,seconds=DAILY_OPENING_PAUSE_SECONDS){
  if(!Number.isInteger(rate)||rate<8000||pcm.length%2||!Number.isFinite(before)||!Number.isFinite(after)||before<0||after<before||after>pcm.length/(rate*2)||seconds<1||seconds>2)throw Error('Invalid Daily opening pause');
  const existing=after-before;
  if(existing>seconds+.05)throw Error('Existing opening pause needs explicit shortening review');

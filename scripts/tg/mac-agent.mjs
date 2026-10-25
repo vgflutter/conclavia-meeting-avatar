@@ -52,13 +52,23 @@ async function tick(commission=false){
   if(commission){phase='commission';const receipt=JSON.parse(await run(process.execPath,[...nodeArgs,'scripts/tg/commission-today.ts','--confirm']));extra=[`--commission=${receipt.jobId}`];}
   phase='preflight';const decision=JSON.parse(await daily('preflight',...extra));
   if(!decision.decision?.due)return {state:'skipped',reason:decision.decision?.reason};
-  const prereq=await checks();if(Object.entries(prereq).some(([k,v])=>k!=='chrome'&&!v))throw Error('Prerequisiti Mac incompleti: eseguire daily:mac doctor');
-  phase='identity';await run(process.execPath,['scripts/tg/check-video-identity.mjs']);
-  phase='render-host';renderer=await macRenderServer();
-  const env={...runtime,TG_RENDER_ORIGIN:renderer.origin,TG_RENDER_PATH:'/__cdaily-render__/',...(prereq.chrome?{TG_CHROME_CHANNEL:'chrome'}:{})};
+  const editorial=decision.mode==='editorial',prereq=await checks();
+  const required=editorial?['mac','node','privateEnvironment','ai']:Object.keys(prereq).filter(k=>k!=='chrome');
+  if(required.some(k=>!prereq[k]))throw Error('Prerequisiti Mac incompleti: eseguire daily:mac doctor');
+  if(!editorial){
+   phase='identity';await run(process.execPath,['scripts/tg/check-video-identity.mjs']);
+   phase='render-host';renderer=await macRenderServer();
+  }
+  const env={...runtime,...(editorial?{TG_EDITORIAL_ONLY:'true',PODCAST_SPEECH_ENABLED:'false'}:{TG_RENDER_ORIGIN:renderer.origin,TG_RENDER_PATH:'/__cdaily-render__/',...(prereq.chrome?{TG_CHROME_CHANNEL:'chrome'}:{})})};
   phase='production';await run(process.execPath,[...nodeArgs,'scripts/tg/daily-agent.ts','tick',...extra],{env,inherit:true,timeout:Math.max(1000,Date.parse(decision.decision.slot.closesAt)-Date.now())});
   let produced;
   try{produced=JSON.parse(await readFile(join(state,'last-production.json'),'utf8'));}catch{}
+  if(editorial){
+   // A tick can find an existing blocked/ready job without writing a receipt.
+   // Read today's DB record instead of presenting yesterday's local result.
+   const current=JSON.parse(await daily('status')).currentEdition;
+   return {state:current?.state??'editorial-result-unavailable',date:decision.decision.date,awaitingTextApproval:current?.state==='editorial_ready',videoUploaded:false};
+  }
   // Query the current job explicitly: an older local receipt never selects an upload.
   phase='package';const pack=JSON.parse(await run(process.execPath,[...nodeArgs,'scripts/tg/prepare-site-upload.ts','--today'],{env}));
   if(!pack.ready)return {state:pack.state,date:pack.date,issues:pack.issues??[],videoUploaded:false};

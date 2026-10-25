@@ -9,6 +9,19 @@ export const TG_FEEDS = [
   { id: 'agi', name: 'AGI', group: 'agi', edition: 'it', url: 'https://www.agi.it/cronaca/rss.xml' },
   { id: 'sole24ore-it', name: 'Il Sole 24 Ore', group: 'ilsole24ore.com', edition: 'it', url: 'https://www.ilsole24ore.com/rss/italia.xml' },
   { id: 'istat', name: 'Istat', group: 'istat.it', edition: 'it', url: 'https://www.istat.it/feed/' },
+  // Verified against publisher endpoints on 25 October. ANSA channels remain
+  // ONE origin; additional feeds increase coverage, never independence counts.
+  { id: 'ansa-home', name: 'ANSA', group: 'ansa', edition: 'it', url: 'https://www.ansa.it/sito/ansait_rss.xml' },
+  { id: 'ansa-cronaca', name: 'ANSA', group: 'ansa', edition: 'it', url: 'https://www.ansa.it/sito/notizie/cronaca/cronaca_rss.xml' },
+  { id: 'ansa-politica', name: 'ANSA', group: 'ansa', edition: 'it', url: 'https://www.ansa.it/sito/notizie/politica/politica_rss.xml' },
+  { id: 'ansa-economia', name: 'ANSA', group: 'ansa', edition: 'it', url: 'https://www.ansa.it/sito/notizie/economia/economia_rss.xml' },
+  { id: 'ansa-scienza', name: 'ANSA', group: 'ansa', edition: 'it', url: 'https://www.ansa.it/canale_scienza_tecnica/notizie/scienzaetecnica_rss.xml' },
+  { id: 'ansa-salute', name: 'ANSA', group: 'ansa', edition: 'it', url: 'https://www.ansa.it/canale_saluteebenessere/notizie/saluteebenessere_rss.xml' },
+  { id: 'ansa-tecnologia', name: 'ANSA', group: 'ansa', edition: 'it', url: 'https://www.ansa.it/canale_tecnologia/notizie/tecnologia_rss.xml' },
+  { id: 'repubblica', name: 'la Repubblica', group: 'repubblica.it', edition: 'it', url: 'https://www.repubblica.it/rss/homepage/rss2.0.xml' },
+  { id: 'tgcom24', name: 'TGcom24', group: 'mediaset.it', edition: 'it', url: 'https://www.tgcom24.mediaset.it/rss/homepage.xml' },
+  { id: 'open', name: 'Open', group: 'open.online', edition: 'it', url: 'https://www.open.online/feed/' },
+  { id: 'governo', name: 'Governo italiano', group: 'governo.it', edition: 'it', url: 'https://www.governo.it/it/rss.xml' },
   { id: 'bbc-world', name: 'BBC News', group: 'bbc', edition: 'world', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
   { id: 'guardian-world', name: 'The Guardian', group: 'guardian', edition: 'world', url: 'https://www.theguardian.com/world/rss' },
   { id: 'npr-world', name: 'NPR', group: 'npr', edition: 'world', url: 'https://feeds.npr.org/1004/rss.xml' },
@@ -24,7 +37,11 @@ export const TG_SEARCH_DOMAINS = ['ansa.it', 'adnkronos.com', 'rainews.it', 'reu
  // Direct evidence for the Italy-focused pilot. Bank host carries the MEF PDF,
  // not an extra independent confirmation of that same press release.
  'agenas.gov.it','regione.puglia.it','ingv.it','regione.sicilia.it','protezionecivile.it','protezionecivilesicilia.it','bancobpm.it','dt.mef.gov.it',
- 'agi.it','ilsole24ore.com'];
+ 'agi.it','ilsole24ore.com','repubblica.it','tgcom24.mediaset.it','open.online','governo.it',
+ 'mef.gov.it','inps.it','cgiamestre.com',
+ // Primary evidence endpoints, not additional wire/publisher independence.
+ 'gazzettaufficiale.it','tse.jus.br','formula1.com','esmo.org','nejm.org','dana-farber.org',
+ 'romacinemafest.it','fidal.it','european-athletics.com','swiss-athletics.ch'];
 const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: false, processEntities: false });
 export function plain(value: unknown, max = 800): string {
   const s = typeof value === 'string' ? value : typeof value === 'number' ? String(value) : '';
@@ -37,6 +54,12 @@ export function publicSourceUrl(value: unknown): string | undefined {
 }
 export function independentGroup(url: string) {
   const host = new URL(url).hostname;
+  if(host==='ansa.it'||host.endsWith('.ansa.it'))return 'ansa';
+  if(host==='rainews.it'||host.endsWith('.rainews.it'))return 'rai';
+  if(host==='agi.it'||host.endsWith('.agi.it'))return 'agi';
+  if(host==='adnkronos.com'||host.endsWith('.adnkronos.com'))return 'adnkronos';
+  if(host==='euronews.com'||host.endsWith('.euronews.com'))return 'euronews';
+  if(host==='mediaset.it'||host.endsWith('.mediaset.it'))return 'mediaset.it';
   if (host.includes('bbc.')) return 'bbc';
   if (host.endsWith('europa.eu')) return 'eu';
   return TG_SEARCH_DOMAINS.find(d => host === d || host.endsWith('.' + d)) ?? host;
@@ -59,8 +82,19 @@ export function parseFeed(xml: string, feed: typeof TG_FEEDS[number], now: Date,
     const group = /Associated Press|\bAP\b/iu.test(author) ? 'apnews.com' : /Reuters/iu.test(author) ? 'reuters.com' : /ANSA/iu.test(author) ? 'ansa' : /Adnkronos/iu.test(author) ? 'adnkronos' : /\bAGI\b/iu.test(author)?'agi':feed.group;
     const date = new Date(String(item.pubDate ?? item.published ?? item.updated ?? ''));
     if (!url || !title || !evidence || !Number.isFinite(date.getTime()) || date.getTime() > now.getTime() + 5 * 60_000 || date.getTime() < now.getTime() - days * 86400_000) return [];
-    return [{ id: createHash('sha256').update(url).digest('hex').slice(0, 20), publisher: feed.name, independentGroup: group, url, title, evidence, publishedAt: date.toISOString() }];
+    return [{ id: createHash('sha256').update(url).digest('hex').slice(0, 20), publisher: feed.name, independentGroup: group, url, title, evidence, publishedAt: date.toISOString(),feedId:feed.id }];
   });
+}
+/** Preserve different sections within one publisher without counting them as
+ * independent origins. Recent evidence precedes background from the past week. */
+export function balancedSourceLedger(sources:TgSource[],now:Date,maximum=240){
+ const roundRobin=(groups:TgSource[][],limit:number)=>Array.from({length:Math.max(0,...groups.map(g=>g.length))},(_,i)=>groups.flatMap(g=>g[i]?[g[i]]:[])).flat().slice(0,limit);
+ const publishers=[...new Set(sources.map(s=>s.publisher))].map(p=>{
+  const own=sources.filter(s=>s.publisher===p),feeds=[...new Set(own.map(s=>s.feedId??p))];
+  return roundRobin(feeds.map(f=>own.filter(s=>(s.feedId??p)===f).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt))),24);
+ });
+ const ledger=roundRobin(publishers,maximum);
+ return [...ledger.filter(s=>Date.parse(s.publishedAt)>=now.getTime()-36*3600000),...ledger.filter(s=>Date.parse(s.publishedAt)<now.getTime()-36*3600000)];
 }
 export async function collectFeeds(edition: TgEdition, now: Date, signal: AbortSignal, days = 1, fetcher = fetch) {
   const results = await Promise.allSettled(TG_FEEDS.filter(feed => feed.edition === edition).map(async feed => {

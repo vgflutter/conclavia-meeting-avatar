@@ -61,7 +61,8 @@ test('natural master duration is distinct from its editorial target; low FPS and
   const manifest:TgManifest={version:1,product,date:'2026-10-24',seconds:326.64,fps:50,lipSync:'word-anchored-estimate',speech:tgSpeechPlan(product),
     voiceConfigSha256:'a'.repeat(64),openingPause:take.openingPause,stories:[],sources:[],cues:take.cues};
   assert.equal(validMasterClock(product,manifest),true);
-  for(const change of [{seconds:421},{fps:25},{speech:{...manifest.speech!,voices:['Another voice']}},{openingPause:{...manifest.openingPause!,wordGapSeconds:.18}}])assert.equal(validMasterClock(product,{...manifest,...change} as TgManifest),false);
+  assert.equal(validMasterClock(product,{...manifest,seconds:599.9}),true);
+  for(const change of [{seconds:600},{fps:25},{speech:{...manifest.speech!,voices:['Another voice']}},{openingPause:{...manifest.openingPause!,wordGapSeconds:.18}}])assert.equal(validMasterClock(product,{...manifest,...change} as TgManifest),false);
   const media=([{format:'landscape',width:1920,height:1080},{format:'portrait',width:1080,height:1920}] as const).map(m=>({...m,seconds:326.64,fps:50,rms:.1,peak:.8,clippedRatio:0,leadingSilence:.1,trailingSilence:1}));
   assert.deepEqual(mediaCheckIssues(media,manifest.seconds,true),[]);
   assert.ok(mediaCheckIssues(media.map(m=>({...m,fps:25})),manifest.seconds,true).length);

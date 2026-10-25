@@ -1,5 +1,8 @@
 # CDaily — linea editoriale per tutte le edizioni
 
+> **Aggiornamento del 25 ottobre — decisione corrente:** [testo prima del video, limite sotto dieci minuti e conferma manuale](cdaily-editorial-standard-20261025.md). Il Mac parte alle 07:30 ma ora prepara soltanto copione, fonti, mood e controlli A/B (`productionMode: editorial`, `textReviewMode: manual`). Attendere l’OK esplicito dell’utente su quella versione prima di voce/video. Le descrizioni di produzione interamente automatica sotto sono il traguardo successivo; non autorizzano a saltare questo passaggio. Work distribuisce solo un pacchetto effettivamente approvato e rilasciato sul sito.
+
+
 Versione **2026-10-23**, consolidata dopo la revisione del pilota italiano r3 e l'approvazione dello stile dell'avatar. Punto di ingresso per ogni nuova puntata: [standard di produzione approvato](cdaily-production-standard.md).
 Vale per Italia e World, nei due formati video. Le regole approvate qui
 prevalgono sugli esempi dei vecchi piloti. Per la grafica il riferimento è la

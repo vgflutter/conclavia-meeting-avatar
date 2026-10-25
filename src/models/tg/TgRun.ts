@@ -12,6 +12,7 @@ const schema = new Schema<TgRunRecord>({
   nextProductionAttemptAt: String,
   revision: { type: Number, default: 0 }, publicationPlan: Schema.Types.Mixed, review: Schema.Types.Mixed, finalReview: Schema.Types.Mixed,
   sitePublication: Schema.Types.Mixed,
+  textApproval: Schema.Types.Mixed,
   commissioning: {type:Schema.Types.Mixed,select:false},
   publicationOwner: { type: String, select: false }, publicationLeaseUntil: { type: Date, select: false },
 }, { timestamps: true });

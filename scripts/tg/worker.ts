@@ -6,7 +6,7 @@ import { claimJob, checkpoint, products, queueEdition, renewLease, serializeJob,
 import { localEditionDate } from '../../src/lib/tg/config';
 import { dueSlot, editionSlot } from '../../src/lib/tg/schedule';
 import { reviewFinalVideo } from '../../src/lib/tg/final-review';
-import { researchEdition, writeEdition, retrieveAuditEvidence, judgeEdition, reviewEditionScript } from '../../src/lib/tg/agents';
+import { researchAndCorroborateEdition, writeEdition, retrieveAuditEvidence, judgeEdition, reviewEditionScript } from '../../src/lib/tg/agents';
 import { synthesize, renderMedia } from '../../src/lib/tg/media';
 import { publicPodcastSpeechConfig } from '../../src/lib/podcast/speech';
 import { produceTg } from '../../src/lib/tg/pipeline';
@@ -66,7 +66,7 @@ async function tick() {
       await produceTg(serializeJob(run.toObject()), JSON.stringify(previous), {
         editorialOnly:process.env.TG_EDITORIAL_ONLY==='true',
         editorialReady:async job=>{await saveEditionTexts(job);},
-        research: prior => researchEdition(run.product, now, prior, signal),
+        research: prior => researchAndCorroborateEdition(run.product, now, prior, signal),
         write: (r, correction) => writeEdition(run.product, r, signal, correction,run.date),
         audit: async (r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s),signal,previous),
         reviewScript:async(r,s)=>reviewEditionScript(run.product,run.date,r,s,await getEvidence(r,s),signal),
@@ -75,7 +75,7 @@ async function tick() {
           const current=await TgRunModel.findById(id).lean().orFail();
           await saveEditionTexts({...serializeJob(current),research:r,script:s});
           requireApprovedVoice();
-          return synthesize(id,run.product,run.date,r,s,signal);
+          return synthesize(id,run.product,run.date,r,s,signal,{textApproval:current.textApproval});
         }, render: async m => {
           const current=await TgRunModel.findById(id).lean().orFail();
           await saveEditionTexts(serializeJob(current));

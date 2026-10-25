@@ -50,7 +50,12 @@ export function freshnessSchema(research:TgResearch,history:TgPublishedEdition[]
   return object({checks:object(Object.fromEntries(research.stories.map(story=>[story.id,object({
     status:{type:'string',enum:prior.length?['new','update','duplicate','stale','unverifiable']:['new','duplicate','stale','unverifiable']},
     development:{type:'string',maxLength:700},eventDate:{type:'string',maxLength:10},evidence:{type:'string',maxLength:1000},
-    sourceIds:{type:'array',maxItems:8,items:{type:'string',enum:story.sourceIds}},
+    sourcePair:{anyOf:story.sourceIds.flatMap(first=>{
+      const a=research.sources.find(s=>s.id===first);
+      const second=story.sourceIds.filter(id=>research.sources.find(s=>s.id===id)?.independentGroup!==a?.independentGroup);
+      return a&&second.length?[object({first:{type:'string',enum:[first]},second:{type:'string',enum:second}})]:[];
+    })},
+    sourceIds:{type:'array',maxItems:6,items:{type:'string',enum:story.sourceIds}},
     webUrls:{type:'array',maxItems:4,items:webByStory[story.id]?.length?{type:'string',enum:webByStory[story.id]}:str},
     previousStoryKeys:{type:'array',maxItems:Math.min(28,prior.length),items:prior.length?{type:'string',enum:prior}:str},
   })])))});
@@ -76,6 +81,8 @@ export function validateFreshness(value:unknown,research:TgResearch,script:TgScr
   if(!raw?.checks||typeof raw.checks!=='object'||Object.keys(raw.checks).length!==research.stories.length)throw new TgEditorialError('Verifica di attualità incompleta');
   const checks=research.stories.map(story=>{
     const c=raw.checks![story.id];
+    const pair=(c as typeof c&{sourcePair?:{first:string;second:string}})?.sourcePair;
+    if(pair)c.sourceIds=[...new Set([pair.first,pair.second,...(Array.isArray(c.sourceIds)?c.sourceIds:[])])];
     if(!c||!['new','update','duplicate','stale','unverifiable'].includes(c.status)||typeof c.eventDate!=='string'||typeof c.development!=='string'||typeof c.evidence!=='string'||c.development.length>700||c.evidence.length>1000||!Array.isArray(c.sourceIds)||c.sourceIds.length>8||c.sourceIds.some(id=>typeof id!=='string')||!Array.isArray(c.webUrls)||c.webUrls.length>4||c.webUrls.some(url=>!webByStory[story.id]?.includes(url))||!Array.isArray(c.previousStoryKeys)||c.previousStoryKeys.length>28||c.previousStoryKeys.some(key=>typeof key!=='string'))throw new TgEditorialError(`Verifica di attualità incompleta: ${story.id}`);
     return {...c,storyId:story.id};
   });

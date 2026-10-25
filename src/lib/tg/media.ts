@@ -17,6 +17,7 @@ import { assembleAlex2Take, recordAlex2Passages } from './alex2-speech';
 import { dailyRenderFps, naturalDailyClock } from './media-contract';
 import { alex2Config, alex2ConfigDigest } from './alex2-config';
 import {wave} from './wave';
+import {manualTextApprovalIsCurrent} from './text-approval';
 export {wave} from './wave';
 export async function command(file: string, args: string[], signal: AbortSignal) {
   const child = spawn(file, args, { stdio: ['ignore', 'pipe', 'pipe'], signal });
@@ -28,7 +29,8 @@ export async function command(file: string, args: string[], signal: AbortSignal)
   return output;
 }
 export class TgDurationError extends Error { constructor(public ratio: number, public actualSeconds: number) { super('Il parlato richiede una revisione del minutaggio'); } }
-export async function synthesize(id: string, product: TgProduct, date: string, research: TgResearch, script: TgScript, signal: AbortSignal, options:{naturalDuration?:boolean}={}): Promise<TgManifest> {
+export async function synthesize(id: string, product: TgProduct, date: string, research: TgResearch, script: TgScript, signal: AbortSignal, options:{naturalDuration?:boolean;textApproval?:import('./types').TgJob['textApproval']}={}): Promise<TgManifest> {
+  if(product.textReviewMode==='manual'&&!manualTextApprovalIsCurrent({product,date,script,textApproval:options.textApproval}))throw new Error('Serve l’OK manuale dell’utente sul testo e sullo score prima di creare la voce');
   if (process.env.PODCAST_SPEECH_ENABLED !== 'true') throw new Error('Voci TG non abilitate');
   const narration=scoredNarration(script);
   const speech=tgSpeechPlan(product),cache=path.join(jobDirectory(id),'.speech');
@@ -39,7 +41,7 @@ export async function synthesize(id: string, product: TgProduct, date: string, r
     if (product.edition !== 'it' || product.language !== 'it' || product.presenters !== 1) throw new Error('Alex 2 è approvato per Italia con un presentatore; configurare separatamente gli altri cast');
     const voiceConfigSha256=alex2ConfigDigest(alex2Config());
     const take = assembleAlex2Take(await recordAlex2Passages(id,narration.sentences,signal),date);
-    if(take.seconds<180||take.seconds>420)throw new TgDurationError(take.seconds/product.seconds,take.seconds);
+    if(take.seconds<180||take.seconds>=600)throw new TgDurationError(take.seconds/product.seconds,take.seconds);
     const dir=jobDirectory(id);
     await writeFile(path.join(dir,'raw.wav'),wave(take.pcm),{mode:0o600});
     await writeFile(path.join(dir,'word-timings.json'),JSON.stringify({version:1,sources:take.timingSources,words:take.words}),{mode:0o600});

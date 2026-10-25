@@ -8,7 +8,7 @@ export function validMasterClock(product: TgProduct, manifest?: TgManifest) {
   if (!naturalDailyClock(product)) return manifest.seconds === product.seconds;
   const firstNews=manifest.cues.findIndex(c=>c.storyId!=='intro'), introEnd=manifest.cues[firstNews-1]?.end, newsStart=manifest.cues[firstNews]?.start;
   const pointer=manifest.cues.filter(c=>c.intent==='point-down');
-  return manifest.seconds >= 180 && manifest.seconds <= 420 && manifest.fps === 50
+  return manifest.seconds >= 180 && manifest.seconds < 600 && manifest.fps === 50
     && product.edition==='it'&&product.presenters===1&&/^[a-f\d]{64}$/u.test(manifest.voiceConfigSha256??'')
     && manifest.speech?.provider === 'elevenlabs' && manifest.speech.model === 'eleven_v4'
     && manifest.speech.voices.length === 1 && manifest.speech.voices[0] === 'Alex 2 - daily'

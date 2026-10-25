@@ -34,11 +34,11 @@ test('new editions require five distinct covered items; archived four-minute job
  assert.equal(dailyStoryCount({seconds:180}),3);
 });
 
-test('CDaily varies its selected story count between five and seven without changing archived quotas',()=>{
+test('CDaily varies its selected story count between five and nine without changing archived quotas',()=>{
  const product={...TG_PRODUCTS[0],productionStandard:'cdaily-v1' as const};
- for(const count of [4,5,6,7,8]){
+ for(const count of [4,5,6,7,8,9,10]){
   const stories=Array.from({length:count},(_,i)=>({id:`story-${i}`})) as TgResearch['stories'];
-  if(count>=5&&count<=7)assert.doesNotThrow(()=>requireDailyCoverage(product,{stories}));
+  if(count>=5&&count<=9)assert.doesNotThrow(()=>requireDailyCoverage(product,{stories}));
   else assert.throws(()=>requireDailyCoverage(product,{stories}),TgCoverageError);
  }
  assert.match(dailyWritingStructure(product),/real take determines/);

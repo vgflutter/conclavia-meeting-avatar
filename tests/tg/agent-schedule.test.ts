@@ -13,6 +13,12 @@ import { tgReadiness } from '../../src/lib/tg/readiness';
 import { saveEditionTexts } from '../../src/lib/tg/edition-text-files';
 
 const plan=parseAgentSchedule(JSON.parse(readFileSync(new URL('../../config/tg/daily-agent.json',import.meta.url),'utf8')));
+test('the Daily model is explicit and scoped to its plan; older schedules keep their configured default',()=>{
+ assert.equal(plan.editorialModel,'gpt-5.4');
+ const legacy={...plan};delete legacy.editorialModel;
+ assert.equal(parseAgentSchedule(legacy).editorialModel,undefined);
+ assert.throws(()=>parseAgentSchedule({...plan,editorialModel:'invented-provider-model'}));
+});
 test('07:30 creation is distinct from 08:15 publication across the October DST transition',()=>{
   const before=editionSlot(plan.product,'2026-10-24'),after=editionSlot(plan.product,'2026-10-25');
   assert.equal(before.prepareAt,'2026-10-24T05:30:00.000Z');assert.equal(before.scheduledAt,'2026-10-24T06:15:00.000Z');

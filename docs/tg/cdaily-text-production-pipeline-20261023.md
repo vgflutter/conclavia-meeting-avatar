@@ -1,5 +1,8 @@
 # CDaily — copione, score espressivo e doppio controllo prima dei media
 
+> **Aggiornamento del 25 ottobre — decisione corrente:** [testo prima del video, limite sotto dieci minuti e conferma manuale](cdaily-editorial-standard-20261025.md). Il Mac parte alle 07:30 ma ora prepara soltanto copione, fonti, mood e controlli A/B (`productionMode: editorial`, `textReviewMode: manual`). Attendere l’OK esplicito dell’utente su quella versione prima di voce/video. Le descrizioni di produzione interamente automatica sotto sono il traguardo successivo; non autorizzano a saltare questo passaggio. Work distribuisce solo un pacchetto effettivamente approvato e rilasciato sul sito.
+
+
 Revisione avviata il 23 ottobre 2026, verificata nella notte del 24. Richiesta implementata: ampliare la raccolta e verificare con due giudizi AI separati il testo che diventerà l’audio, compresi forma e recitazione. Non è una nuova edizione né un’attivazione dello scheduler.
 
 ## Pipeline

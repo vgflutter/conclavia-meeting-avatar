@@ -15,6 +15,19 @@ function context(){
  const history:TgPublishedEdition[]=[{id:'b'.repeat(24),edition:'it',date:'2026-10-20',publishedAt:'2026-10-20T18:00:00Z',stories:[{key:'previous:transport',headline:'Vertice sui trasporti',claims:['Ieri è stato convocato un vertice sul trasporto locale.'],development:'Convocato ieri un vertice sul trasporto locale.'}]}];
  return {job,r,s,web,checks,history};
 }
+test('freshness structured output requires a distinct-origin pair and preserves legacy array verdicts',()=>{
+ const {r,s,web,checks,history}=context(),schema=freshnessSchema(r,history,web);
+ for(const story of r.stories){
+  const pair=schema.properties.checks.properties[story.id].properties.sourcePair;
+  for(const option of pair.anyOf){
+   const first=option.properties.first.enum[0],group=r.sources.find(source=>source.id===first)!.independentGroup;
+   assert.ok(option.properties.second.enum.every(id=>r.sources.find(source=>source.id===id)!.independentGroup!==group));
+  }
+ }
+ const paired=Object.fromEntries(Object.entries(checks).map(([id,c])=>[id,{...c,sourceIds:[],sourcePair:{first:c.sourceIds[0],second:c.sourceIds[1]}}]));
+ assert.equal(validateFreshness({checks:paired},r,s,history,web,now).passed,true);
+ assert.equal(validateFreshness({checks},r,s,history,web,now).passed,true);
+});
 test('fresh sources alone cannot pass an old event, a future event, an undated fact or a paraphrased repeat',()=>{
  const {r,s,web,checks,history}=context();
  for(const patch of [{status:'duplicate',evidence:'I nuovi titoli riformulano lo stesso vertice già raccontato ieri.'},{status:'stale',eventDate:'2026-10-16'},{status:'new',eventDate:'2026-10-17'},{status:'new',eventDate:'2026-10-22'},{status:'new',eventDate:''},{status:'new',eventDate:'2026-02-31'},{status:'unverifiable'}]){

@@ -10,7 +10,7 @@ import {wave} from './wave';
 import { jobDirectory } from './artifacts';
 import { alex2ConfigDigest, verifyAlex2Identity } from './alex2-config';
 import { TgEditorialError } from './editorial';
-import { insertDailyOpeningPause } from './opening-pause';
+import { DAILY_OPENING_PAUSE_SECONDS, insertDailyOpeningPause } from './opening-pause';
 import { directDailyCueMotion } from './performance-direction';
 import type { TgCue, TgSentence } from './types';
 
@@ -126,7 +126,7 @@ export function assembleAlex2Take(parts: Alex2Passage[], date: string) {
   const firstNews = clauses.findIndex(c => c.sentence.storyId !== 'intro');
   if (firstNews <= 0 || clauses.slice(firstNews).some(c => c.sentence.storyId === 'intro')) throw new TgEditorialError('Manca una sola introduzione completa prima delle notizie');
   const before = allWords[clauses[firstNews-1].to-1].end, after = allWords[clauses[firstNews].from].start;
-  const edited = insertDailyOpeningPause(Buffer.concat(chunks), allWords, RATE, before, after, 2);
+  const edited = insertDailyOpeningPause(Buffer.concat(chunks), allWords, RATE, before, after, DAILY_OPENING_PAUSE_SECONDS);
   const cues: TgCue[] = clauses.map(({sentence,from,to}) => {
     const words = edited.words.slice(from,to), start = words[0].start, end = words.at(-1)!.end;
     const firstSample = Math.floor(start * RATE), lastSample = Math.min(edited.pcm.length/2, Math.ceil(end * RATE));

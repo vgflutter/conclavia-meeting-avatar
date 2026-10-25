@@ -11,6 +11,11 @@ function copy(...texts: string[]) {
   return { sentences: texts.map((text, i) => ({ ...script.sentences[i % script.sentences.length], text })) };
 }
 
+test('serialized acting metadata accidentally inside narration blocks the copy before voice',()=>{
+ assert.ok(dailyCopyIssues(copy('La frase finisce qui. ",\'mood\':\'agreement\',\'sourceIds\':[\'a\']')).length);
+ assert.deepEqual(dailyCopyIssues(copy('Spieghiamo il fatto con una frase completa.')),[]);
+});
+
 test('evening-briefing and numbered-story formulas are caught across mood clauses in IT and EN', () => {
   for (const texts of [
     ['Quattro minuti con gli aggiornamenti verificati', 'di ieri sera.'],

@@ -1,5 +1,8 @@
 # CDaily — basi del formato giornaliero
 
+> **Aggiornamento del 25 ottobre — decisione corrente:** [testo prima del video, limite sotto dieci minuti e conferma manuale](cdaily-editorial-standard-20261025.md). Il Mac parte alle 07:30 ma ora prepara soltanto copione, fonti, mood e controlli A/B (`productionMode: editorial`, `textReviewMode: manual`). Attendere l’OK esplicito dell’utente su quella versione prima di voce/video. Le descrizioni di produzione interamente automatica sotto sono il traguardo successivo; non autorizzano a saltare questo passaggio. Work distribuisce solo un pacchetto effettivamente approvato e rilasciato sul sito.
+
+
 Decisioni consolidate il **23 ottobre 2026**, dopo il riscontro dell’utente sul pilota Italia: «mi sembra che ci siamo» e «per il resto mi piace molto». Questa è la base delle prossime puntate. Alla successiva approvazione «ok adesso ci siamo» sono confermati anche i [palmi raccolti e inclinati verso il petto](cdaily-palms-chest-20261023.md); il tocco laterale al mento resta quello già apprezzato. L’inserimento nella nuova puntata deve essere verificato sul suo parlato reale.
 
 Seguito autorizzato: [prova della regia e del labiale](cdaily-acting-semantic-20261023.md). Le capacità di selezione per sottosegmenti e memoria delle famiglie sono implementate; la prova breve conserva voce, testo, data e grafica del pilota approvato. La nuova regia completa non è ancora un nuovo master lungo approvato.
