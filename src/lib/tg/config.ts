@@ -15,6 +15,7 @@ export function parseProduct(value: unknown): TgProduct {
     p.language !== (p.edition === 'it' ? 'it' : 'en') || !Number.isInteger(p.seconds) || p.seconds < 60 || p.seconds > 600 ||
     ![1, 2].includes(p.presenters) || !/^([01]\d|2[0-3]):[0-5]\d$/u.test(p.publishTime) ||
     (p.productionStandard !== undefined && p.productionStandard !== 'cdaily-v1') ||
+    (p.editorialProfile !== undefined && (p.editorialProfile !== 'italia-morning-v2' || p.productionStandard !== 'cdaily-v1' || p.edition !== 'it')) ||
     (p.productionMode !== undefined && !['editorial','full'].includes(p.productionMode)) ||
     (p.textReviewMode !== undefined && !['manual','ai'].includes(p.textReviewMode)) ||
     (p.productionTime !== undefined && (!/^([01]\d|2[0-3]):[0-5]\d$/u.test(p.productionTime) || p.productionTime >= p.publishTime)) ||
@@ -23,7 +24,7 @@ export function parseProduct(value: unknown): TgProduct {
     typeof p.enabled !== 'boolean' || typeof p.automatic !== 'boolean' || !Array.isArray(p.platforms) ||
     !p.platforms.length || new Set(p.platforms).size !== p.platforms.length || p.platforms.some(x => !['youtube', 'instagram', 'tiktok', 'spotify'].includes(x))) throw new Error('Configurazione TG non valida');
   try { new Intl.DateTimeFormat('en', { timeZone: p.timezone }).format(); } catch { throw new Error('Fuso orario non valido'); }
-  return { edition: p.edition, name: p.name.trim(), language: p.language, seconds: p.seconds, presenters: p.presenters, ...(p.textReviewMode===undefined?{}:{textReviewMode:p.textReviewMode}), ...(p.siteFirst===undefined?{}:{siteFirst:p.siteFirst}), ...(p.productionMode === undefined ? {} : {productionMode:p.productionMode}), ...(p.productionStandard === undefined ? {} : {productionStandard:p.productionStandard}), ...(p.productionTime === undefined ? {} : {productionTime:p.productionTime}), ...(p.publicationDriver === undefined ? {} : {publicationDriver:p.publicationDriver}), publishTime: p.publishTime, timezone: p.timezone, enabled: p.enabled, automatic: p.automatic, platforms: [...p.platforms] };
+  return { edition: p.edition, name: p.name.trim(), language: p.language, seconds: p.seconds, presenters: p.presenters, ...(p.editorialProfile===undefined?{}:{editorialProfile:p.editorialProfile}), ...(p.textReviewMode===undefined?{}:{textReviewMode:p.textReviewMode}), ...(p.siteFirst===undefined?{}:{siteFirst:p.siteFirst}), ...(p.productionMode === undefined ? {} : {productionMode:p.productionMode}), ...(p.productionStandard === undefined ? {} : {productionStandard:p.productionStandard}), ...(p.productionTime === undefined ? {} : {productionTime:p.productionTime}), ...(p.publicationDriver === undefined ? {} : {publicationDriver:p.publicationDriver}), publishTime: p.publishTime, timezone: p.timezone, enabled: p.enabled, automatic: p.automatic, platforms: [...p.platforms] };
 }
 export const TG_PLATFORM_LABELS = {youtube:'YouTube',instagram:'Instagram',tiktok:'TikTok',spotify:'Spotify'} as const;
 export function isDue(product: TgProduct, now: Date) {

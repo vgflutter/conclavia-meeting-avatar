@@ -64,7 +64,7 @@ async function main(){
     if(dryRun)return output({action:'configure',plan:configured});
     await database();const {TgEditionModel}=await import('../../src/models/tg/TgEdition');
     const current=await TgEditionModel.findOne({edition:configured.product.edition}).lean().orFail();
-    const fields=['productionTime','publishTime','productionMode','productionStandard','publicationDriver','siteFirst','enabled','automatic','textReviewMode'] as const;
+    const fields=['productionTime','publishTime','productionMode','productionStandard','editorialProfile','publicationDriver','siteFirst','enabled','automatic','textReviewMode'] as const;
     const product=parseProduct({...current.product,...Object.fromEntries(fields.map(k=>[k,configured.product[k]]))});
     const result=await TgEditionModel.updateOne({_id:current._id,revision:current.revision},{$set:{product,updatedAt:now},$inc:{revision:1}});
     if(result.modifiedCount!==1)throw new DailyAgentStop('Configurazione cambiata durante il salvataggio');

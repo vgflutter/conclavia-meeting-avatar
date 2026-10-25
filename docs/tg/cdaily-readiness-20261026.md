@@ -2,6 +2,12 @@
 
 Verificato il 25 ottobre 2026. Questa pagina registra predisposizione e collaudi tecnici, non attesta una puntata futura prodotta o pubblicata.
 
+## Blocco rilevato nella prova serale
+
+Alle **17:59 UTC del 25 ottobre**, OpenAI ha risposto **HTTP 429, crediti esauriti** durante il controllo A della prova privata. La raccolta ha trovato 12 candidate e una prima stesura; A/B non sono completati, nessun media prodotto. Non basta la presenza della chiave per dichiarare disponibile il provider. Il timer del Mac resta caricato, ma **la produzione di domani non può completare i controlli AI finché questo blocco non è risolto**. Non aggirare il blocco, cambiare provider o approvare implicitamente la bozza.
+
+La configurazione persistente ora usa `editorialProfile: italia-morning-v2`: obiettivo 5–7 minuti, minimo sei notizie, normalmente 6–8, massimo nove; master minimo 4:30 e sotto 10:00. [Decisioni e motivazioni degli scarti](cdaily-selection-policy-20261025.md). La verifica in sola lettura conferma: prova assente dal database, archivio pubblicato invariato, job reale del 25 ottobre invariato e nessun job anticipato del 26. Il nuovo profilo è una modifica intenzionale delle regole future, non una notizia di prova registrata come trasmessa.
+
 ## Domani
 
 1. **07:30 Europe/Rome (06:30 UTC)**: il timer del Mac avvia una nuova edizione Italia datata 26 ottobre. Raccolta e memoria del pubblicato, selezione, copione completo, score semantico, titoli, scaletta e testo social; controlli AI A/B obbligatori.
@@ -17,7 +23,7 @@ Il Mac deve restare alimentato, acceso e con utente connesso. Non occorre lascia
 - Prerequisiti Mac presenti, identità Alex 2 già verificata dalla prova salvata; 17 impronte di asset e impostazioni grafiche corrispondono allo stile approvato. La disponibilità futura dei provider e dei crediti non è certificata da questi controlli.
 - Ricevitore sito verificato in sola lettura: installato, timer attivo/abilitato, nessuna generazione o distribuzione social sul server.
 - L’azione manuale usa revisione e lease, A/B correnti, hash del testo/score, data e archivio. Due conferme concorrenti non accodano due produzioni. Modifiche o controlli non validi impediscono la conferma. Contatori e precedenti errori rimangono conservati.
-- Collaudo finale: **179 test Daily superati, comprese tutte le integrazioni** su `mongodb://127.0.0.1:27018` e database `conclavia_e2e_*` dedicati; **14 test GUI superati**, incluso il nuovo passaggio manuale e le larghezze 320/390/1440 px. Typecheck, lint dei file modificati e build Webpack separata `.next-build-verify` superati. Nessun provider reale usato nei test; le applicazioni esistenti sono state preservate.
+- Collaudo finale: **188 test Daily superati, comprese tutte le integrazioni** su `mongodb://127.0.0.1:27018` e database `conclavia_e2e_*` dedicati; **14 test GUI superati nel collaudo precedente**, incluso il nuovo passaggio manuale e le larghezze 320/390/1440 px. Typecheck, lint dei file modificati e build Webpack separata `.next-build-verify` superati. Nessun provider reale usato nei test; le applicazioni esistenti sono state preservate.
 - La task **ChatGPT Work delle 08:15 non è verificata da questo strumento**. Prompt completo: [task Work](cdaily-work-publication-task.md). Un link Spotify o una pagina social non certificano una connessione di caricamento; gli esiti dipendono dalle connessioni effettive di Work.
 - Il primo Daily completo da notizie fresche fino alle ricevute social resta da osservare. Non garantire un master in 45 minuti finché non è misurato. Nessun nuovo take, video o post reale prodotto per questi test di predisposizione.
 

@@ -13,7 +13,7 @@ Genera `.tg-artifacts/context/AAAA-MM-GG/agent-context.md` e `.json`: giorno e a
 ## Contratto da conservare
 
 - **Conclavia Daily**, «Meno rumore, più contesto». Italia al centro; estero per conseguenze italiane documentate o un’eccezione mondiale motivata. World è un prodotto distinto.
-- **Meno di dieci minuti**, senza riempire il tempo. Di norma sei–otto notizie, margine cinque–nove quando giustificato. La durata reale si misurerà dopo il testo.
+- **Obiettivo 5–7 minuti**, minimo sei notizie, normalmente 6–8 e massimo nove. Master reale almeno 4:30 e inferiore a 10:00, senza riempitivi. Profilo `italia-morning-v2`; gli snapshot precedenti mantengono le loro soglie. [Criteri e scarti del collaudo](cdaily-selection-policy-20261025.md).
 - Saluto a tutti, programma, claim e giorno/mese in pochi secondi; due secondi di pausa pulita prima delle notizie. Il codice genera apertura e chiusura: non riscriverle a ogni giro.
 - Linguaggio amichevole, agile e comprensibile. Per ogni notizia: sviluppo, protagonisti e loro ruolo, contesto minimo, conseguenza documentata o incertezza. Fatti e dichiarazioni distinti. Nessuna opinione AI ricorrente o promessa di neutralità infallibile.
 - Nuovo sviluppo nelle ultime 24 ore, riscontri entro 36 ore, confronto con l’archivio realmente pubblicato. Due origini sullo stesso evento; le copie di agenzia non sono indipendenti. Un tema può tornare con un fatto nuovo. Il contesto vecchio resta datato.
@@ -35,6 +35,8 @@ npm run daily:editorial
 ```
 
 Riprendere la sessione privata esistente. Correggere rilievi concreti e conservare errori/contatori; nessun reset o ripetizione alla ricerca di un sì. Il ciclo normale ha una correzione automatica; il laboratorio ne richiede esplicitamente al massimo dodici. `productionMode: editorial` è un arresto tecnico distinto dal flag manuale.
+
+Per una prova completa separata, senza influenzare le prossime notizie: `npm run daily:editorial -- --rehearsal=prova-serale`. Il dossier va in `.tg-artifacts/rehearsals/AAAA-MM-GG/prova-serale/review.md`, senza registrazione nel database, archivio pubblico o modifica degli orari. Anche questa prova aspetta il tuo OK sul testo prima dei media. [Procedura e limiti](cdaily-private-rehearsal.md).
 
 ## Risparmio già applicato
 

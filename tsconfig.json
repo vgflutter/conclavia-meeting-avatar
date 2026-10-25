@@ -44,6 +44,8 @@
     ".next-build-verify/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".daily-agent",
+    ".tg-artifacts"
   ]
 }

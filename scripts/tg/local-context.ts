@@ -19,7 +19,7 @@ async function main(){
  const policy=await readFile('docs/tg/cdaily-editorial-standard-20261025.md','utf8');
  const feeds=TG_FEEDS.filter(f=>f.edition===product.edition);
  const context={version:1,date,edition:product.edition,timezone:product.timezone,productionTime:product.productionTime,
-  productionMode:product.productionMode??'full',textReviewMode:product.textReviewMode??'ai',model:plan.editorialModel,
+  editorialProfile:product.editorialProfile,productionMode:product.productionMode??'full',textReviewMode:product.textReviewMode??'ai',model:plan.editorialModel,
   policySha256:createHash('sha256').update(policy).digest('hex'),
   opening:dailyGreeting(product.language,date,'reviewed'),openingPauseSeconds:DAILY_OPENING_PAUSE_SECONDS,
   closing:dailyClosing(product.language,'reviewed').map(s=>({text:s.text,mood:s.mood,intent:s.intent,gestureWord:s.gestureWord})),
@@ -34,7 +34,7 @@ async function main(){
   context.closing.map(s=>s.text).join(' '),'',
   '## Contratto per questa edizione','',
   '- Italia al centro; estero solo con impatto italiano verificato o eccezione mondiale motivata. World è un prodotto distinto.',
-  '- Meno di dieci minuti. Peso e numero delle notizie seguono rilevanza e prove; nessun riempitivo.',
+  '- Profilo italia-morning-v2: obiettivo 5–7 minuti, almeno sei notizie, normalmente 6–8 e massimo nove. Master minimo 4:30 e inferiore a 10:00. Bacino di riserva prima della selezione; nessun riempitivo.',
   '- Spiegare protagonisti, sviluppo nuovo e contesto per non esperti. Fatti, dichiarazioni e incertezze distinti; nessuna promessa di imparzialità infallibile.',
   '- Sviluppo nelle ultime 24 ore, riscontri entro 36 ore e confronto con l’archivio realmente pubblicato. Evoluzioni ammesse; vecchi fatti non diventano nuovi cambiando data.',
   '- Ogni clausola conserva text, mood, intensity, intent, speaker, storyId e sourceIds. Il planner sceglie gesti variati o quiete; nessuna posa fissa per categoria di notizia.',

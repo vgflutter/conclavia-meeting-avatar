@@ -1,4 +1,5 @@
 import 'server-only';
+import {minimumDailySeconds} from './editorial-profile';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { writeFile, readFile, rename, mkdir } from 'node:fs/promises';
@@ -41,7 +42,7 @@ export async function synthesize(id: string, product: TgProduct, date: string, r
     if (product.edition !== 'it' || product.language !== 'it' || product.presenters !== 1) throw new Error('Alex 2 è approvato per Italia con un presentatore; configurare separatamente gli altri cast');
     const voiceConfigSha256=alex2ConfigDigest(alex2Config());
     const take = assembleAlex2Take(await recordAlex2Passages(id,narration.sentences,signal),date);
-    if(take.seconds<180||take.seconds>=600)throw new TgDurationError(take.seconds/product.seconds,take.seconds);
+    if(take.seconds<minimumDailySeconds(product)||take.seconds>=600)throw new TgDurationError(take.seconds/product.seconds,take.seconds);
     const dir=jobDirectory(id);
     await writeFile(path.join(dir,'raw.wav'),wave(take.pcm),{mode:0o600});
     await writeFile(path.join(dir,'word-timings.json'),JSON.stringify({version:1,sources:take.timingSources,words:take.words}),{mode:0o600});

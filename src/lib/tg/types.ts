@@ -7,6 +7,8 @@ export interface TgProduct {
   edition: TgEdition; name: string; language: 'it' | 'en'; seconds: number; presenters: 1 | 2;
   /** Omitted on legacy snapshots: prepare 45 minutes before publication. */
   productionStandard?: 'cdaily-v1';
+  /** Versioned editorial coverage/clock; absent on frozen legacy editions. */
+  editorialProfile?: 'italia-morning-v2';
   /** Editorial commissioning stops after A/B and private text export. */
   productionMode?: 'editorial' | 'full';
   /** Additional user confirmation AFTER AI A/B; omitted/ai continues automatically. */

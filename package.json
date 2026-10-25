@@ -35,7 +35,8 @@
     "daily:editorial": "TG_PUBLISH_ENABLED=false TG_AI_ENABLED=true PODCAST_AI_ENABLED=true PODCAST_SPEECH_ENABLED=false TG_EDITORIAL_ONLY=true node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/editorial-workshop.ts",
     "daily:agent": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/daily-agent.ts",
     "daily:mac": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/mac-agent.mjs",
-    "daily:voice": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/alex2-voice.ts"
+    "daily:voice": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/alex2-voice.ts",
+    "daily:rehearsal-media": "TG_PUBLISH_ENABLED=false TG_AI_ENABLED=true PODCAST_AI_ENABLED=true PODCAST_SPEECH_ENABLED=true TG_EDITORIAL_ONLY=false node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/rehearsal-media.ts"
   },
   "dependencies": {
     "@conclavia/avatar-kit": "file:../conclavia-avatar-kit",

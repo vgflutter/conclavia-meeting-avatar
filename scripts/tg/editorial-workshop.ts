@@ -13,12 +13,16 @@ import {produceTg} from '../../src/lib/tg/pipeline';
 import {saveEditionTexts} from '../../src/lib/tg/edition-text-files';
 import {loadPublishedHistory} from '../../src/lib/tg/history';
 import {scoredNarration} from '../../src/lib/tg/script-review';
-import {applySourceEditorReview} from '../../src/lib/tg/selection-review';
 import {verifyScientificReferences} from '../../src/lib/tg/scientific-references';
 import {EVIDENCE_CACHE_WINDOW_MS} from '../../src/lib/tg/evidence-cache';
+import {auditIsCurrent} from '../../src/lib/tg/review';
+import {editorialWorkspace,rehearsalProduct,REHEARSAL_EXTRA_DOMAINS} from '../../src/lib/tg/rehearsal';
+import {TG_SEARCH_DOMAINS} from '../../src/lib/tg/sources';
 import type {TgJob,TgResearch,TgScript} from '../../src/lib/tg/types';
 
-const now=new Date(),date=localEditionDate(now,'Europe/Rome'),directory=path.resolve('.tg-artifacts/editorial',date);
+const now=new Date(),date=localEditionDate(now,'Europe/Rome');
+const rehearsal=process.argv.find(a=>a.startsWith('--rehearsal='))?.slice(12);
+const workspace=editorialWorkspace(process.cwd(),date,rehearsal),{directory}=workspace;
 const signal=AbortSignal.timeout(40*60000);
 let stage='initializing';
 let reviewModel=process.env.PODCAST_OPENAI_MODEL||process.env.OPENAI_MEETING_MODEL||'gpt-5.4-mini';
@@ -35,8 +39,9 @@ async function cached<T>(name:string,fn:()=>Promise<T>):Promise<T>{
 }
 type Evidence=Awaited<ReturnType<typeof retrieveAuditEvidence>>;
 const retrieve=(research:TgResearch,script:TgScript)=>retrieveAuditEvidence(research,script,signal,(key,generate)=>cached('evidence-story-v1-'+key,generate));
-const corroborate=(research:TgResearch,evidence:Evidence)=>corroborateResearch(research,evidence,signal);
-const reviewDocument=`docs/tg/editions/${date}-it-editorial-review.md`;
+let activeProduct:import('../../src/lib/tg/types').TgProduct|undefined;
+const corroborate=(research:TgResearch,evidence:Evidence)=>corroborateResearch(research,evidence,signal,new Date(),activeProduct);
+const reviewDocument=workspace.reviewDocument;
 async function saveReviewDocument(content:string){
  await mkdir(path.dirname(reviewDocument),{recursive:true});
  await writeFile(reviewDocument+'.partial',content);await rename(reviewDocument+'.partial',reviewDocument);
@@ -119,34 +124,39 @@ function reviewMarkdown(job:TgJob){
 async function main(){
  if(process.env.TG_PUBLISH_ENABLED!=='false'||process.env.PODCAST_SPEECH_ENABLED!=='false')throw Error('Text workshop requires speech/publication explicitly disabled');
  await mkdir(directory,{recursive:true,mode:0o700});
+ if(rehearsal)for(const domain of REHEARSAL_EXTRA_DOMAINS)if(!TG_SEARCH_DOMAINS.includes(domain))TG_SEARCH_DOMAINS.push(domain);
  process.env.TG_RESEARCH_TRACE_DIR=path.join(directory,'research-trace');
  const plan=parseAgentSchedule(JSON.parse(await readFile('config/tg/daily-agent.json','utf8')));
- const product={...plan.product,productionMode:'editorial' as const,textReviewMode:'manual' as const};
+ let product=rehearsal?rehearsalProduct(plan.product,now):{...plan.product,productionMode:'editorial' as const,textReviewMode:'manual' as const};
+ if(workspace.artifactDirectory)process.env.TG_ARTIFACT_DIR=workspace.artifactDirectory;
  reviewModel=plan.editorialModel||reviewModel;process.env.PODCAST_OPENAI_MODEL=reviewModel;
  await json('review-model',{model:reviewModel,at:new Date().toISOString(),scope:'this-private-editorial-process'});
  await connectToDatabase();
  const history=await loadPublishedHistory(product.edition,date,now);
+ if(rehearsal){
+  await json('published-history-readonly',history);
+  await cached('isolation',async()=>({version:1,kind:'private-rehearsal',date,rehearsal,at:now.toISOString(),registeredInDatabase:false,publicationEligible:false,newsMemoryWrites:false,scheduleWrites:false,extraSearchDomains:REHEARSAL_EXTRA_DOMAINS,
+   productionScheduleSha256:createHash('sha256').update(await readFile('config/tg/daily-agent.json')).digest('hex')}));
+ }
  let job:TgJob|undefined;
  try{job=await json<TgJob>('session');}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
+ if(rehearsal&&job)product=job.product; // A resumed rehearsal keeps its own frozen window.
+ activeProduct=product;
   const revisionFile=process.argv.slice(2).find(a=>!a.startsWith('--'));
  if(revisionFile){
   if(!job)throw Error('An editorial revision requires the preserved original session');
   const file=path.resolve(revisionFile);
   if(!file.startsWith(directory+path.sep))throw Error('Editorial revision must be inside the private dated workshop');
   const revision=JSON.parse(await readFile(file,'utf8')) as {research:TgResearch;script?:TgScript;note:string};
-  const key=createHash('sha256').update(JSON.stringify(revision)).digest('hex');
+  const key=createHash('sha256').update(JSON.stringify({revision,editorialProfile:product.editorialProfile,sourcePolicyVersion:2})).digest('hex');
   if(!job.events.some(e=>e.detail.includes(key))){
    await invalidateReviewDelivery();
    const allowed=new Set(revision.research.sources.map(s=>s.url));
-   const research=validateResearch(revision.research,allowed,new Date(),new Map(revision.research.sources.map(s=>[s.url,s.independentGroup])));
-   requireDailyCoverage(product,research);
+   const research=validateResearch(revision.research,allowed,new Date(),new Map(revision.research.sources.map(s=>[s.url,s.independentGroup])),{candidatePool:product.editorialProfile!==undefined});
    const briefing:TgScript={title:'Revisione della selezione',description:'',sentences:research.stories.flatMap(s=>s.facts.map(f=>({text:f.text,storyId:s.id,sourceIds:f.sourceIds,speaker:0 as const,mood:'attention' as const,intensity:.3})))};
    const unchangedResearch=JSON.stringify(revision.research)===JSON.stringify(job.research);
    stage='revised-evidence';const evidence=unchangedResearch?await json<Evidence>('evidence'):await cached('evidence-'+key,()=>retrieve(research,briefing));
    stage='revised-source-review';const checked=unchangedResearch?{research:job.research!,review:{checks:{}}}:await cached('source-review-'+key,()=>corroborate(research,evidence));
-   // Reapply local policy to the immutable actual verdict, without rerunning
-   // the reviewer or changing any false field into a positive judgement.
-   if(!unchangedResearch)checked.research=applySourceEditorReview(research,checked.review.checks);
    await json('selection-'+key,checked);requireDailyCoverage(product,checked.research);
    await json('revision-'+(job.revision??0),job);
    job.research=checked.research;delete job.script;delete job.audit;delete job.scriptReview;delete job.textApproval;
@@ -160,7 +170,7 @@ async function main(){
    await json('evidence',evidence);await json('session',job);
   }
  }
- if(job?.state==='editorial_ready'&&!process.argv.includes('--verify-references')){
+ if(job?.state==='editorial_ready'&&auditIsCurrent(job,new Date())&&!process.argv.includes('--verify-references')){
   await saveReviewDocument(reviewMarkdown(job));
   await json('awaiting-user',{date,scriptSha256:scriptDigest(job.script!),state:'awaiting-user',mediaGenerated:false});
   return console.log(JSON.stringify({state:'awaiting-user',date,words:scoredNarration(job.script!).narrationText.split(/\s+/u).length,document:reviewDocument,mediaGenerated:false}));
@@ -242,4 +252,17 @@ async function main(){
  await json('awaiting-user',{date,scriptSha256:scriptDigest(current.script!),state:'awaiting-user',mediaGenerated:false});
  console.log(JSON.stringify({state:'awaiting-user',document:reviewDocument,words:scoredNarration(current.script!).narrationText.split(/\s+/u).length,stories:current.research!.stories.length,mediaGenerated:false}));
 }
-main().catch(async error=>{await mkdir(directory,{recursive:true,mode:0o700});await json('last-error',{stage,at:new Date().toISOString(),issue:error instanceof Error?error.message:'Editorial workshop failed'});console.error(JSON.stringify({stage,state:'blocked',issue:error instanceof Error?error.message:'Editorial workshop failed',mediaGenerated:false}));process.exitCode=1;}).finally(()=>mongoose.disconnect());
+main().catch(async error=>{
+ await mkdir(directory,{recursive:true,mode:0o700});
+ const issue=error instanceof Error?error.message:'Editorial workshop failed',at=new Date().toISOString();
+ await json('last-error',{stage,at,issue});
+ try{
+  const job=await json<TgJob>('session');await json('before-error-'+(job.revision??0),job);
+  job.state='blocked';job.revision=(job.revision??0)+1;job.updatedAt=at;job.issues=[issue];
+  job.events.push({at,stage:'blocked',detail:`Errore tecnico durante ${stage}: ${issue}. Nessun controllo positivo implicito; revisioni precedenti conservate.`});
+  await json('session',job);await json('revision-'+job.revision,job);
+ }catch(failure){if((failure as NodeJS.ErrnoException).code!=='ENOENT')throw failure;}
+ await json('awaiting-user',{date,state:'blocked',stage,issue,mediaGenerated:false});
+ await saveReviewDocument(`# Conclavia Daily — ${date} — verifica sospesa\n\n${issue}\n\nIl controllo ${stage} non è completato: il testo non è approvato. Nessun audio, video o pubblicazione. Le prove e le stesure precedenti restano conservate privatamente.\n`);
+ console.error(JSON.stringify({stage,state:'blocked',issue,mediaGenerated:false}));process.exitCode=1;
+}).finally(()=>mongoose.disconnect());

@@ -1,3 +1,4 @@
+import {minimumDailySeconds} from './editorial-profile';
 import type { TgJob, TgManifest, TgProduct } from './types';
 
 export const naturalDailyClock = (product: TgProduct) => product.productionStandard === 'cdaily-v1';
@@ -6,9 +7,10 @@ export const dailyRenderFps = (product: TgProduct) => naturalDailyClock(product)
 export function validMasterClock(product: TgProduct, manifest?: TgManifest) {
   if (!manifest || !Number.isFinite(manifest.seconds) || manifest.product.seconds !== (naturalDailyClock(product) ? product.seconds : manifest.seconds)) return false;
   if (!naturalDailyClock(product)) return manifest.seconds === product.seconds;
+  if(manifest.product.editorialProfile!==product.editorialProfile)return false;
   const firstNews=manifest.cues.findIndex(c=>c.storyId!=='intro'), introEnd=manifest.cues[firstNews-1]?.end, newsStart=manifest.cues[firstNews]?.start;
   const pointer=manifest.cues.filter(c=>c.intent==='point-down');
-  return manifest.seconds >= 180 && manifest.seconds < 600 && manifest.fps === 50
+  return manifest.seconds >= minimumDailySeconds(product) && manifest.seconds < 600 && manifest.fps === 50
     && product.edition==='it'&&product.presenters===1&&/^[a-f\d]{64}$/u.test(manifest.voiceConfigSha256??'')
     && manifest.speech?.provider === 'elevenlabs' && manifest.speech.model === 'eleven_v4'
     && manifest.speech.voices.length === 1 && manifest.speech.voices[0] === 'Alex 2 - daily'

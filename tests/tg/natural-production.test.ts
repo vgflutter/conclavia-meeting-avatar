@@ -48,3 +48,13 @@ test('a resumed master with changed private voice configuration is not silently 
     voiceConfigurationSha256:()=>'d'.repeat(64),voice:async()=>{recordings++;throw Error('Synthetic voice interruption');},render:async()=>{assert.fail('No old video');},now:()=>now,checkpoint:async()=>{}}),/Synthetic/);
   assert.equal(recordings,1);
 });
+
+test('the broader edition enforces 4:30 on the measured master and binds its editorial profile',async()=>{
+ const {validMasterClock}=await import('../../src/lib/tg/media-contract');
+ const job=candidate(),legacy=timeline(job),product={...job.product,editorialProfile:'italia-morning-v2' as const};
+ assert.equal(validMasterClock(job.product,legacy),true);
+ assert.equal(validMasterClock(product,legacy),false);
+ const manifest={...legacy,product,seconds:269.99};assert.equal(validMasterClock(product,manifest),false);
+ manifest.seconds=270;assert.equal(validMasterClock(product,manifest),true);
+ manifest.seconds=600;assert.equal(validMasterClock(product,manifest),false);
+});
