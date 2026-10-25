@@ -13,13 +13,13 @@ import { tgReadiness } from '../../src/lib/tg/readiness';
 import { saveEditionTexts } from '../../src/lib/tg/edition-text-files';
 
 const plan=parseAgentSchedule(JSON.parse(readFileSync(new URL('../../config/tg/daily-agent.json',import.meta.url),'utf8')));
-test('07:45 creation is distinct from 08:15 publication across the October DST transition',()=>{
+test('07:30 creation is distinct from 08:15 publication across the October DST transition',()=>{
   const before=editionSlot(plan.product,'2026-10-24'),after=editionSlot(plan.product,'2026-10-25');
-  assert.equal(before.prepareAt,'2026-10-24T05:45:00.000Z');assert.equal(before.scheduledAt,'2026-10-24T06:15:00.000Z');
-  assert.equal(after.prepareAt,'2026-10-25T06:45:00.000Z');assert.equal(after.scheduledAt,'2026-10-25T07:15:00.000Z');
+  assert.equal(before.prepareAt,'2026-10-24T05:30:00.000Z');assert.equal(before.scheduledAt,'2026-10-24T06:15:00.000Z');
+  assert.equal(after.prepareAt,'2026-10-25T06:30:00.000Z');assert.equal(after.scheduledAt,'2026-10-25T07:15:00.000Z');
   assert.equal(after.closesAt,'2026-10-25T07:45:00.000Z');
-  assert.equal(agentDecision(plan,new Date('2026-10-24T05:44:59Z')).due,false);
-  assert.equal(agentDecision(plan,new Date('2026-10-24T05:45:00Z')).due,true);
+  assert.equal(agentDecision(plan,new Date('2026-10-24T05:29:59Z')).due,false);
+  assert.equal(agentDecision(plan,new Date('2026-10-24T05:30:00Z')).due,true);
   assert.equal(agentDecision(plan,new Date('2026-10-24T06:45:01Z')).reason,'closed');
 });
 test('first edition, disabled schedules and actual local date prevent old-news catch-up',()=>{

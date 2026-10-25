@@ -37,7 +37,8 @@ async function effectivePlan(plan:DailyAgentSchedule){
   const {TgEditionModel}=await import('../../src/models/tg/TgEdition');
   await database();
   const saved=await TgEditionModel.findOne({edition:plan.product.edition}).lean();
-  return saved?{...plan,product:parseProduct(saved.product)}:plan;
+  if(!saved)throw new DailyAgentStop('Configurazione Daily esistente non trovata: non creare un database sostitutivo');
+  return {...plan,product:parseProduct(saved.product)};
 }
 function runtimeReadiness(){return {
   researchAIConfigured:Boolean(process.env.OPENAI_API_KEY),databaseConfigured:Boolean(process.env.MONGODB_URI),
@@ -54,10 +55,15 @@ async function main(){
   if(command==='configure'){
     if(dryRun)return output({action:'configure',plan:configured});
     await database();const {TgEditionModel}=await import('../../src/models/tg/TgEdition');
-    await TgEditionModel.updateOne({edition:configured.product.edition},{$set:{product:configured.product,updatedAt:now},$inc:{revision:1}},{upsert:true});
+    const current=await TgEditionModel.findOne({edition:configured.product.edition}).lean().orFail();
+    const fields=['productionTime','publishTime','productionMode','productionStandard','publicationDriver','siteFirst','enabled','automatic'] as const;
+    const product=parseProduct({...current.product,...Object.fromEntries(fields.map(k=>[k,configured.product[k]]))});
+    const result=await TgEditionModel.updateOne({_id:current._id,revision:current.revision},{$set:{product,updatedAt:now},$inc:{revision:1}});
+    if(result.modifiedCount!==1)throw new DailyAgentStop('Configurazione cambiata durante il salvataggio');
     return output({configured:true,edition:configured.product.edition,productionTime:configured.product.productionTime,publishTime:configured.product.publishTime,timezone:configured.product.timezone,publicationDriver:configured.publicationDriver});
   }
   if(command==='install'||command==='uninstall'||command==='persist'){
+    if(command!=='uninstall'&&configured.productionDriver==='launchd'&&configured.product.productionMode==='full')throw new DailyAgentStop('Per il produttore completo usare npm run daily:mac -- install');
     if(process.platform!=='darwin'||process.getuid===undefined)throw new DailyAgentStop('Questo installer è per macOS launchd; usare il contratto Work o un timer sul render host negli altri ambienti');
     const label='me.conclavia.daily-production',service=`gui/${process.getuid()}/${label}`,plist=path.join(stateDir,label+'.plist');
     const loginPath=path.join(os.homedir(),'Library','LaunchAgents',label+'.plist');
@@ -98,7 +104,10 @@ async function main(){
     const service=process.platform==='darwin'&&process.getuid?`gui/${process.getuid()}/me.conclavia.daily-production`:undefined;
     const loaded=service?(await spawnCommand('/bin/launchctl',['print',service])).code===0:false;
     const controller=databaseStatus==='connected'?(await (await import('../../src/lib/tg/runtime-readiness')).productionRuntime()).controller:undefined;
-    return output({at:now.toISOString(),database:databaseStatus,plan,decision:agentDecision(plan,now),
+    const {TgRunModel}=await import('../../src/models/tg/TgRun');
+    const current=databaseStatus==='connected'?await TgRunModel.findOne({edition:plan.product.edition,date:localEditionDate(now,plan.product.timezone)}).select('date state issues product.productionMode').lean():undefined;
+    return output({at:now.toISOString(),database:databaseStatus,plan,calendar:agentCalendar(plan,now),decision:agentDecision(plan,now),
+      currentEdition:current?{date:current.date,state:current.state,issues:current.issues,mode:current.product.productionMode}:undefined,
       timer:{scope:'local',loaded,installation:await localState('installation.json'),lastTick:await localState('last-tick.json'),lastProduction:await localState('last-production.json'),lastError:await localState('last-error.json')},runtime:{...runtimeReadiness(),productionController:controller}});
   }
   if(!['tick','run','publish','package','channels','preflight'].includes(command))throw new DailyAgentStop('Comandi: plan, status, configure, install, persist, uninstall, tick, run, package, channels, preflight, publish. Aggiungere --dry-run per anteprima senza effetti.');
@@ -134,7 +143,10 @@ async function main(){
     // Frozen edition settings are never overwritten by a later GUI change.
     if(run.product.productionStandard!=='cdaily-v1'||run.product.publicationDriver!=='chatgpt-work')throw new DailyAgentStop('Edizione esistente con un altro contratto: non sovrascrivere o pubblicare automaticamente');
     if(!['queued','researching','writing','verifying','voicing','rendering','reviewing'].includes(run.state))return output({action:'existing',job:id,date,state:run.state,issues:run.issues});
-    const result=await spawnCommand(process.execPath,['--conditions=react-server','--import','tsx','scripts/tg/worker.ts','--once',`--job=${id}`,'--no-schedule','--no-publish','--approved-daily'],{inherit:true,environment:{...env,TG_WORKER_ENABLED:'true',TG_AI_ENABLED:'true',PODCAST_AI_ENABLED:'true',TG_AUTOMATIC_REVIEW_ENABLED:'true'}});
+    const controllerBeat=setInterval(()=>void TgControllerModel.updateOne({key:'daily-production'},{$set:{heartbeatAt:new Date(),driver:'launchd',mode:plan.product.productionMode??'full'}}).catch(()=>undefined),30000);
+    let result:{code:number;stdout:string};
+    try{result=await spawnCommand(process.execPath,['--conditions=react-server','--import','tsx','scripts/tg/worker.ts','--once',`--job=${id}`,'--no-schedule','--no-publish','--approved-daily'],{inherit:true,environment:{...env,TG_WORKER_ENABLED:'true',TG_AI_ENABLED:'true',PODCAST_AI_ENABLED:'true',TG_AUTOMATIC_REVIEW_ENABLED:'true'}});}
+    finally{clearInterval(controllerBeat);}
     const latest=await TgRunModel.findById(id).lean().orFail();
     const job=serializeJob(latest);
     const report={at:new Date().toISOString(),date,job:id,state:job.state,issues:job.issues,attempts:job.attempts,workerExitCode:result.code};

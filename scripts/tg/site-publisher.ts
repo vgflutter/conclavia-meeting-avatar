@@ -9,7 +9,16 @@ import {assertSiteReady,publishEditionToSite,reconcileSitePublication} from '../
 async function main(){
  if(process.env.TG_SITE_PUBLISH_ENABLED!=='true'||!process.env.TG_SITE_PUBLIC_DIR||process.env.TG_PUBLISH_ENABLED==='true')throw Error('Website-only runtime required');
  await connectToDatabase();
- const action=process.argv[2]??'status';if(!['status','tick','configure'].includes(action))throw Error('Invalid website publisher action');
+ const action=process.argv[2]??'status';if(!['status','tick','configure','validate-upload'].includes(action))throw Error('Invalid website publisher action');
+ const jobId=process.argv.find(a=>a.startsWith('--job='))?.slice(6);
+ if(jobId&&!/^[a-f0-9]{24}$/u.test(jobId))throw Error('Invalid upload job');
+ if(action==='validate-upload'){
+  if(!jobId)throw Error('Upload job required');
+  const job=serializeJob(await TgRunModel.findById(jobId).lean().orFail());
+  if(job.sitePublication?.bundleSha256===job.review?.bundleSha256&&job.sitePublication)return console.log(JSON.stringify({alreadyPublished:true,url:job.sitePublication.url}));
+  assertSiteReady(job,await loadPublishedHistory(job.edition,job.date,new Date()),new Date());
+  return console.log(JSON.stringify({schema:1,jobId,publicationKey:job.review!.bundleSha256,date:job.date,assets:['portrait.mp4','landscape.mp4','audio.mp3','captions.vtt'].map(name=>{const a=job.assets.find(a=>a.name===name);if(!a)throw Error('Missing approved asset');return{name:a.name,bytes:a.bytes,sha256:a.sha256};})}));
+ }
  if(action==='configure'){
   if(!process.argv.includes('--confirm'))throw Error('Explicit website handoff configuration required');
   const edition=await TgEditionModel.findOne({edition:'it','product.productionStandard':'cdaily-v1','product.publicationDriver':'chatgpt-work'}).lean().orFail();
@@ -19,7 +28,7 @@ async function main(){
   return console.log(JSON.stringify({configured:true,siteFirst:true,productionMode:edition.product.productionMode,changed:true,mediaEnabled:false}));
  }
  if(action==='status')return console.log(JSON.stringify({database:'connected',website:true,social:false,generation:false}));
- const records=await TgRunModel.find({'product.siteFirst':true,'product.productionMode':{$ne:'editorial'},'review.scope':'website',state:{$in:['ready','publishing','blocked']},sitePublication:{$exists:false}}).sort({date:-1}).limit(4).lean();
+ const records=await TgRunModel.find({... (jobId?{_id:jobId}:{}),'product.siteFirst':true,'product.productionMode':{$ne:'editorial'},'review.scope':'website',state:{$in:['ready','publishing','blocked']},sitePublication:{$exists:false}}).sort({date:-1}).limit(4).lean();
  const results=[];
  for(const record of records){
   const job=serializeJob(record),now=new Date();

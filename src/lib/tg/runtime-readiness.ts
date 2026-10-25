@@ -18,5 +18,5 @@ export function readinessWithRuntime(product:TgProduct,runtime:{worker:{online:b
   const readiness=tgReadiness(product),scoped=product.productionStandard==='cdaily-v1'&&product.publicationDriver==='chatgpt-work';
   const checks=readiness.checks.map(c=>c.id==='worker'?{...c,ready:c.ready&&(scoped?runtime.controller.online:runtime.worker.online)}:c);
   return {...readiness,checks,editorialReady:readiness.editorialConfigured&&Boolean(checks.find(c=>c.id==='worker')?.ready),
-    productionReady:!readiness.mediaDeferred&&checks.every(c=>c.ready)&&readiness.channels.every(c=>c.ready)};
+    productionReady:!readiness.mediaDeferred&&checks.every(c=>c.ready)&&(product.siteFirst||readiness.channels.every(c=>c.ready))};
 }

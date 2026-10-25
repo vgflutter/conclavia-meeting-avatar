@@ -69,6 +69,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # CDaily video continuity
 
+- The Daily producer is this user's always-on Mac, at 07:30 Europe/Rome, installed through `npm run daily:mac -- install`. It runs research, both AI text checks, Alex 2, approved native portrait/landscape rendering, final review and verified upload to the site. The VPS editorial producer is disabled; keep the website receiver/publisher only. Work distributes from the site at 08:15. See `docs/tg/cdaily-mac-producer.md` for portable installation and migration; never move production back to the VPS implicitly or treat a saved Work task as a video generator.
+
 - Internal Daily voice, lip-sync, gesture and editorial trials are private. Do not publish them in the public site, catalogue or release URLs. The approved project presentation and released news editions are the public material; never relabel a technical trial as an edition or presentation to hide its nature.
 
 - For Daily scheduling, autonomous production or publishing, start with `docs/tg/cdaily-agent-runbook.md`. It is the durable handoff when chat context is missing. Preserve the approved date greeting, A/B text gates, semantic acting, Alex 2 identity, closing pointer, both formats and per-edition social summary/rundown. Do not confuse a loaded local production timer with a saved ChatGPT Work task or an operational end-to-end video pipeline.

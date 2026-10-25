@@ -32,6 +32,7 @@
     "tg:preview:hands": "node scripts/tg/build-hand-motion-preview.mjs",
     "tg:render:hands": "node scripts/tg/build-hand-motion-preview.mjs && node scripts/tg/render-hand-motion-preview.mjs",
     "daily:agent": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/daily-agent.ts",
+    "daily:mac": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/mac-agent.mjs",
     "daily:voice": "node --conditions=react-server --import tsx --env-file-if-exists=.env.local scripts/tg/alex2-voice.ts"
   },
   "dependencies": {

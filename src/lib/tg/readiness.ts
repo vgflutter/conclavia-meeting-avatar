@@ -31,5 +31,5 @@ export function tgReadiness(product: TgProduct, env: Record<string, string | und
   const editorialConfigured=checks.find(c=>c.id==='ai')!.ready;
   return {checks,channels,editorialConfigured,editorialReady:false,
     mediaDeferred:product.productionMode==='editorial',
-    productionReady:product.productionMode!=='editorial'&&checks.every(x=>x.ready)&&channels.every(x=>x.ready),reviewRequired:true,automaticReviewAvailable:scopedDaily?Boolean(env.OPENAI_API_KEY):env.TG_AUTOMATIC_REVIEW_ENABLED==='true',reviewMode:product.automatic?'ai' as const:'human' as const};
+    productionReady:product.productionMode!=='editorial'&&checks.every(x=>x.ready)&&(product.siteFirst||channels.every(x=>x.ready)),reviewRequired:true,automaticReviewAvailable:scopedDaily?Boolean(env.OPENAI_API_KEY):env.TG_AUTOMATIC_REVIEW_ENABLED==='true',reviewMode:product.automatic?'ai' as const:'human' as const};
 }

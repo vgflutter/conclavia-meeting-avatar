@@ -2,8 +2,11 @@ import 'server-only';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
-import { elevenLabsSpeechPcm } from '@conclavia/avatar-kit/speech/server';
-import { buildWordAnchoredLipSync, SPEECH_SAMPLE_RATE as RATE, type SpeechWord } from '@conclavia/avatar-kit/speech';
+import { elevenLabsSpeechPcm,ElevenLabsSpeechError } from '@conclavia/avatar-kit/speech/server';
+import { buildWordAnchoredLipSync,punctuateSpeechWordAnchors, SPEECH_SAMPLE_RATE as RATE, type SpeechWord } from '@conclavia/avatar-kit/speech';
+import {alignAlex2Pcm} from './alex2-alignment';
+import {alex2ProofDirectory} from './alex2-proof';
+import {wave} from './wave';
 import { jobDirectory } from './artifacts';
 import { alex2ConfigDigest, verifyAlex2Identity } from './alex2-config';
 import { TgEditorialError } from './editorial';
@@ -21,13 +24,14 @@ export function alex2Passages(sentences: TgSentence[]) {
   }
   return groups;
 }
-export interface Alex2Passage { sentences: TgSentence[]; pcm: Buffer; words: SpeechWord[] }
+export interface Alex2Passage { sentences: TgSentence[]; pcm: Buffer; words: SpeechWord[]; timingSource?:'elevenlabs-native-characters'|'whisper-1-verified-anchors' }
 const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 function validateTake(text: string, pcm: Buffer, words: SpeechWord[]) {
-  const tokens = text.match(/\S+/gu) ?? [], seconds = pcm.length / (RATE * 2);
-  if (pcm.length < 2400 || pcm.length % 2 || seconds > 240 || !Array.isArray(words) || words.length !== tokens.length
-    || words.some((w, i) => w.text !== tokens[i] || !Number.isFinite(w.start) || !Number.isFinite(w.end)
+  const seconds = pcm.length / (RATE * 2);
+  if (pcm.length < 2400 || pcm.length % 2 || seconds > 240 || !Array.isArray(words) || !words.length
+    || words.some((w, i) => !w.text.trim() || !Number.isFinite(w.start) || !Number.isFinite(w.end)
       || w.start < 0 || w.end <= w.start || w.end > seconds + .02 || i > 0 && w.start < words[i - 1].end - .03)) throw new TgEditorialError('Take Alex 2 incompleto o non allineato: nessuna stima sostitutiva');
+  try{punctuateSpeechWordAnchors([text],words);}catch{throw new TgEditorialError('Il take non contiene il copione completo');}
 }
 
 /** One continuous paragraph per story. Cache includes context/settings and a
@@ -44,8 +48,8 @@ export async function recordAlex2Passages(id: string, sentences: TgSentence[], s
     const nextText = groups[index + 1]?.map(s => s.text).join(' ').slice(0, 1800);
     const key = digest(JSON.stringify({version:1,config:alex2ConfigDigest(config),text,previousText,nextText}));
     const file = path.join(directory, key), metadataFile = file + '.json';
-    let take: {pcm:Buffer; words:SpeechWord[]} | undefined;
-    let metadata: {pcmSha256?:string; words:SpeechWord[]} | undefined;
+    let take: {pcm:Buffer; words:SpeechWord[];timingSource?:Alex2Passage['timingSource']} | undefined;
+    let metadata: {pcmSha256?:string; words:SpeechWord[];timingSource?:Alex2Passage['timingSource']} | undefined;
     try {
       metadata = JSON.parse(await readFile(metadataFile, 'utf8'));
       if(!metadata||typeof metadata!=='object'||!Array.isArray(metadata.words)||!metadata.pcmSha256)throw Error();
@@ -55,21 +59,47 @@ export async function recordAlex2Passages(id: string, sentences: TgSentence[], s
       try {
         const pcm = await readFile(file + '.pcm');
         if (digest(pcm) !== metadata.pcmSha256) throw Error();
-        validateTake(text, pcm, metadata.words); take = {pcm, words:metadata.words};
+        validateTake(text, pcm, metadata.words); take = {pcm, words:metadata.words,timingSource:metadata.timingSource};
       } catch { throw new TgEditorialError('Cache Alex 2 alterata o incompleta: nessuna rigenerazione automatica'); }
     }
     if (!take) {
-      try { await writeFile(file + '.attempt.json', JSON.stringify({version:1,requestSha256:key,startedAt:new Date().toISOString()}), {flag:'wx', mode:0o600}); }
-      catch { throw new TgEditorialError('Richiesta Alex 2 già iniziata con esito non confermato: controllare prima di ripetere la sintesi'); }
+      let savedResponse:string|undefined;
+      try{savedResponse=await readFile(file+'.response.json','utf8');}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw new TgEditorialError('Risposta vocale conservata non leggibile');}
+      if(!savedResponse){
+       try { await writeFile(file + '.attempt.json', JSON.stringify({version:1,requestSha256:key,startedAt:new Date().toISOString()}), {flag:'wx', mode:0o600}); }
+       catch { throw new TgEditorialError('Richiesta Alex 2 già iniziata con esito non confermato: controllare prima di ripetere la sintesi'); }
+      }
       try {
-        const recorded = await elevenLabsSpeechPcm({text,voiceId:config.voiceId,model:config.model,language:'it',settings:config.settings,previousText,nextText,signal}, {apiKey:config.apiKey});
-        take = {pcm:Buffer.from(recorded.pcm), words:recorded.words}; validateTake(text, take.pcm, take.words);
+        try{
+         const recorded = await elevenLabsSpeechPcm({text,voiceId:config.voiceId,model:config.model,language:'it',settings:config.settings,previousText,nextText,signal}, {apiKey:config.apiKey,fetcher:async(input,init)=>{
+          if(savedResponse)return new Response(savedResponse,{headers:{'Content-Type':'application/json'}});
+          const response=await fetch(input,init);if(!response.ok)return response;
+          if(!response.body)throw Error();const reader=response.body.getReader(),chunks:Uint8Array[]=[];let bytes=0;
+          try{for(;;){const next=await reader.read();if(next.done)break;bytes+=next.value.length;if(bytes>17000000)throw Error();chunks.push(next.value);}}
+          finally{await reader.cancel().catch(()=>undefined);reader.releaseLock();}
+          savedResponse=Buffer.concat(chunks).toString();await writeFile(file+'.response.json.partial',savedResponse,{mode:0o600});await rename(file+'.response.json.partial',file+'.response.json');
+          return new Response(savedResponse,{headers:{'Content-Type':'application/json'}});
+         }});
+         take = {pcm:Buffer.from(recorded.pcm), words:recorded.words,timingSource:'elevenlabs-native-characters'};
+        }catch(error){
+         // Timing is validated after PCM by the canonical provider adapter.
+         // Reuse that exact saved take, never ask ElevenLabs to synthesize it twice.
+         if(!(error instanceof ElevenLabsSpeechError)||error.stage!=='timing'||!savedResponse)throw error;
+         const pcm=Buffer.from(JSON.parse(savedResponse).audio_base64,'base64');
+         take={pcm,words:await alignAlex2Pcm(file,group.map(s=>s.text),pcm,signal),timingSource:'whisper-1-verified-anchors'};
+        }
+        validateTake(text, take.pcm, take.words);
         await writeFile(file + '.pcm.partial', take.pcm, {mode:0o600}); await rename(file + '.pcm.partial', file + '.pcm');
-        await writeFile(metadataFile + '.partial', JSON.stringify({version:1,pcmSha256:digest(take.pcm),words:take.words}), {mode:0o600});
+        await writeFile(metadataFile + '.partial', JSON.stringify({version:1,pcmSha256:digest(take.pcm),words:take.words,timingSource:take.timingSource}), {mode:0o600});
         await rename(metadataFile + '.partial', metadataFile);
       } catch { throw new TgEditorialError('Registrazione Alex 2 non completata: take precedenti conservati; nessun cambio voce o nuovo tentativo a pagamento automatico'); }
     }
     parts.push({sentences:group,...take});
+    if(take.pcm.length<=RATE*2*60){
+     const proof=alex2ProofDirectory(),audio=wave(take.pcm);await mkdir(proof,{recursive:true,mode:0o700});
+     await writeFile(path.join(proof,'take.wav.partial'),audio,{mode:0o600});await rename(path.join(proof,'take.wav.partial'),path.join(proof,'take.wav'));
+     await writeFile(path.join(proof,'proof.json.partial'),JSON.stringify({version:2,checkedAt:new Date().toISOString(),configSha256:alex2ConfigDigest(config),text,seconds:take.pcm.length/(RATE*2),audioSha256:digest(audio),words:take.words,alignmentSource:take.timingSource??'elevenlabs-native-characters'}),{mode:0o600});await rename(path.join(proof,'proof.json.partial'),path.join(proof,'proof.json'));
+    }
   }
   return parts;
 }
@@ -83,8 +113,11 @@ export function assembleAlex2Take(parts: Alex2Passage[], date: string) {
     validateTake(part.sentences.map(s => s.text).join(' '), part.pcm, part.words);
     let cursor = 0;
     for (const sentence of part.sentences) {
-      const count = (sentence.text.match(/\S+/gu) ?? []).length, from = allWords.length + cursor;
-      clauses.push({sentence,from,to:from+count}); cursor += count;
+      const norm=(s:string)=>s.normalize('NFKD').toLowerCase().replace(/\p{M}/gu,'').replace(/[^\p{L}\p{N}]/gu,'');
+      const expected=norm(sentence.text),from=allWords.length+cursor;let actual='';
+      while(actual.length<expected.length&&cursor<part.words.length)actual+=norm(part.words[cursor++].text);
+      if(actual!==expected)throw new TgEditorialError('Un intervallo vocale attraversa un cambio di mood');
+      clauses.push({sentence,from,to:allWords.length+cursor});
     }
     allWords.push(...part.words.map(w => ({...w,start:w.start+offset,end:w.end+offset})));
     chunks.push(part.pcm, Buffer.alloc(Math.round(RATE * .18) * 2));
@@ -113,5 +146,5 @@ export function assembleAlex2Take(parts: Alex2Passage[], date: string) {
   });
   directDailyCueMotion(cues,date);
   const seconds = Math.ceil((edited.pcm.length/(RATE*2)+1)*50)/50;
-  return {pcm:edited.pcm,cues,seconds,openingPause:edited.edit,words:edited.words};
+  return {pcm:edited.pcm,cues,seconds,openingPause:edited.edit,words:edited.words,timingSources:[...new Set(parts.map(p=>p.timingSource??'elevenlabs-native-characters'))]};
 }

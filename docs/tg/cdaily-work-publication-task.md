@@ -2,15 +2,14 @@
 
 Aggiornamento del 25 ottobre 2026, richiesto dall’utente: **prima pubblicare automaticamente il pacchetto approvato sul sito; poi Work recupera da lì i due formati e i testi per i social**. Questa task si esegue sul web/in cloud: non richiede una cartella del Mac, Mongo, SSH, chiavi del backend o comandi Codex. Il presente file è un prompt pronto, non la prova che la task sia già stata salvata.
 
-Calendario: ogni giorno alle **08:15 Europe/Rome**. La produzione editoriale parte alle 07:45; la finestra di distribuzione si chiude alle 08:45. I trenta minuti sono un obiettivo ancora da misurare sul primo master completo, non una garanzia. Un ritardo non autorizza a saltare A/B o la revisione media. Usare il fuso, non UTC fisso. Creare o aggiornare una sola task, verificare il primo esito e mantenere il contesto di distribuzione. Il [supporto ufficiale OpenAI](https://learn.chatgpt.com/docs/automations) distingue le task web, con strumenti connessi e sorgenti accessibili, dalle cartelle locali delle task desktop. Le sessioni e le connessioni effettive vanno collaudate, non presunte.
+Calendario: ogni giorno alle **08:15 Europe/Rome**. La produzione completa parte sul Mac alle 07:30; la finestra di distribuzione si chiude alle 08:45. I quarantacinque minuti fino all’uscita sono un obiettivo ancora da misurare sul primo master completo, non una garanzia. Un ritardo non autorizza a saltare A/B o la revisione media. Usare il fuso, non UTC fisso. Creare o aggiornare una sola task, verificare il primo esito e mantenere il contesto di distribuzione. Il [supporto ufficiale OpenAI](https://learn.chatgpt.com/docs/automations) distingue le task web, con strumenti connessi e sorgenti accessibili, dalle cartelle locali delle task desktop. Le sessioni e le connessioni effettive vanno collaudate, non presunte.
 
 ## Prompt da salvare
 
 ```text
 Distribuisci sui social l'edizione italiana odierna di Conclavia Daily.
 L'utente ha autorizzato la pubblicazione automatica delle edizioni complete
-approvate dall'AI. La produzione e la pubblicazione sul sito avvengono nel
-backend: tu non crei notizie, copioni, voce o video e non usi Codex.
+approvate dall'AI. La produzione avviene sul Mac e il pacchetto approvato viene caricato sul sito: tu non crei notizie, copioni, voce o video e non usi Codex.
 
 Calcola la data corrente in Europe/Rome. Opera solo dalle 08:15 alle 08:45 locali.
 Leggi https://daily.conclavia.me/edizioni/it/latest.json senza usare una copia

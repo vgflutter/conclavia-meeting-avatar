@@ -2,11 +2,13 @@
 
 Revisione: **25 ottobre 2026**, fuso editoriale **Europe/Rome**. Questo è il punto di ingresso per riprendere il progetto senza la chat. Leggerlo integralmente prima di creare un’edizione. Le istruzioni correnti dell’utente prevalgono; registrare qui le nuove decisioni approvate, distinguendole dalle prove.
 
-**Priorità corrente dello scheduler:** le prossime edizioni Italia sono in `productionMode=editorial`: raccolta, copione e A/B, poi esportazione e stato `editorial_ready`. Nessuna sintesi, render o pubblicazione automatica. [Stato non media e host separato](cdaily-nonmedia-readiness-20261024.md). Dopo questo lavoro l’utente ha autorizzato una **demo isolata di circa un minuto con voce e gesti**: nuovo take Alex 2, allineamento ASR misurato e due formati, senza cambiare la modalità schedulata o la presentazione pubblicata. [Demo, limiti e verifiche del 24 ottobre](cdaily-acting-demo-20261024.md). I timestamp nativi incoerenti non sono stati accettati né la produzione autonoma dichiarata pronta.
+**Decisione corrente dell’utente:** il produttore è **questo Mac**, ogni mattina alle **07:30 Europe/Rome**. Prepara fonti, copione, A/B, voce Alex 2, mood/labiale, master portrait e landscape a 50 fps, revisione finale e caricamento verificato sul sito. **Work distribuisce dal sito dalle 08:15**; chiusura della finestra alle 08:45. Non spostare implicitamente la produzione sul VPS e non attribuirla a Work.
 
-**Scheduler corrente:** host editoriale separato sul VPS, release `editorial-20261024230925890-08684ff9`, timer systemd attivo e persistente, segnale condiviso nel DB. Il precedente timer launchd del Mac è stato disattivato dopo verifica remota; le sezioni storiche che lo descrivono attivo restano cronologia. Il piano aggiornato il 25 ottobre prevede preparazione alle **07:45 Europe/Rome**, uscita obiettivo **08:15** e chiusura **08:45**. Orari applicati e riletti sul DB effettivo del server; gli snapshot già accodati restano invariati. Work gestirà la pubblicazione, non una sessione Codex; task e trasporti reali ancora da collaudare e media tuttora rinviati.
+**Installazione e migrazione:** [produttore Mac e riconfigurazione su un altro Mac](cdaily-mac-producer.md). Il comando è `npm run daily:mac -- install`, con stato/diagnostica tramite `status` e `doctor`. Tre LaunchAgent gestiscono produzione, tunnel Mongo esistente e mantenimento sveglio su alimentazione. Il vecchio timer editoriale VPS è disabilitato; sul server rimane il ricevitore/publisher del sito, release `site-1792913821486-a46b0a63`. Non ricaricare il vecchio installer launchd del solo `daily-agent`.
 
-**Consegna sito approvata e attiva:** le puntate complete con `siteFirst=true` e revisione AI positiva vengono pubblicate dal servizio separato sul sito, nei due formati. Work legge `https://daily.conclavia.me/edizioni/it/latest.json` e la release immutabile, senza cartella del Mac. La demo interna del 24 è stata ritirata dal sito su richiesta dell’utente il 25 ottobre; i file restano privati; `latest` è ancora `waiting`. [Architettura, URL, verifiche e limiti](cdaily-site-handoff-20261024.md). Redazione attuale `editorial-20261024230925890-08684ff9`, publisher `site-1792910796617-a7519222`; produzione video giornaliera e task Work restano da completare/collaudare. Questa decisione supera le indicazioni storiche di usare il CLI locale per la distribuzione delle nuove edizioni `siteFirst`.
+**Prove reali:** recupero e allineamento ASR riusciti sul take Alex 2 da 8,88 s, senza nuova sintesi. Renderer Mac indipendente da Next provato nei due formati: otto secondi a 50 fps in circa 18,14 s di elaborazione totale. Il budget del Daily completo resta da misurare nel primo ciclo reale. Il job del 25 ottobre era già bloccato per riscontri indipendenti insufficienti; il passaggio al Mac non lo riapre e non cambia lo snapshot.
+
+**Consegna sito:** Work legge `https://daily.conclavia.me/edizioni/it/latest.json` e la release immutabile; demo e prove interne restano private. Il catalogo è ancora in attesa della prima vera puntata. Il salvataggio della task Work e la prima consegna social richiedono una verifica nella UI, non la sola presenza del produttore Mac. Le sezioni cronologiche sotto descrivono anche configurazioni precedenti e non prevalgono su questa decisione.
 
 ## 1. Che cosa stiamo costruendo
 
@@ -89,7 +91,7 @@ senza uscite precedenti un fatto recente su una vicenda già in corso è `new`;
 
 ```mermaid
 flowchart TD
-  S[07:45 · data locale e prenotazione unica] --> H[Archivio delle uscite confermate]
+  S[Mac · 07:30 · data locale e prenotazione unica] --> H[Archivio delle uscite confermate]
   H --> R[Feed e ricerca puntuale · registro delle prove]
   R --> N[Novità, rilevanza Italia e copertura]
   N --> E[Copione, titoli, riassunto social e score]
@@ -181,7 +183,7 @@ Riassunto e scaletta coprono **tutte e sole le notizie pronunciate**, nello stes
 
 ## 9. Tool, calendario e riavvio
 
-Il timer Mac descritto qui è cronologia e rimane disattivato: redazione e publisher sito correnti sono i due servizi separati sul server. Non ricaricare launchd mentre sono attivi.
+La procedura corrente è `daily:mac install/status/doctor`, descritta nella guida Mac. Il server conserva soltanto ricezione e pubblicazione del pacchetto. I comandi `daily:agent install/persist` sotto sono cronologia del vecchio launcher e non installano l’orchestratore Mac completo: non usarli per una nuova installazione.
 
 CLI nel repository Meeting:
 
@@ -321,7 +323,7 @@ Il master conserva l’obiettivo in `product.seconds` e la durata reale in `mani
 
 Aggiornamento del collegamento: onboarding ufficiale ElevenLabs completato con conferma esplicita dell’utente; `.env.local` contiene chiave e ID esatto, permessi `0600`, altre impostazioni conservate. `check` è positivo. Due richieste di prova generano il testo pubblico, ma il validatore respinge 139 intervalli su 143 con fine precedente all’inizio. La cronologia v4 li registra come dialogo a una voce: cercare la corrispondenza esatta negli input, non presumere assenza dopo un filtro sul solo `voice_id`. Take più recente recuperato senza rigenerazione in `.daily-agent/alex2-voice-proof/recovered-take.wav` (8,88 s); sincronizzazione e ascolto ancora pendenti, `synthesisVerified=false`. Nessun cambio piano, acquisto, nuovo Daily o pubblicazione. Non distribuire questo stato locale come prova di configurazione sul server di produzione.
 
-## 16. Calendario mattutino — 25 ottobre 2026
+## 16. Calendario mattutino 07:45 — storico del 25 ottobre, superato dalla sezione 18
 
 Su richiesta dell’utente: preparazione **07:45**, pubblicazione obiettivo **08:15**, chiusura **08:45**, sempre `Europe/Rome`. Il 25 ottobre corrispondono a 06:45, 07:15 e 07:45 UTC; il giorno prima sarebbero state 05:45, 06:15 e 06:45 UTC. Il timer server controlla ogni minuto il prodotto salvato nel DB: aggiornare il solo JSON non basta.
 
@@ -334,3 +336,9 @@ Verifica operativa: rilascio `editorial-20261024230925890-08684ff9`, DB collegat
 ## 17. Sito pubblico e prove interne — 25 ottobre 2026
 
 L’utente non vuole esporre i collaudi interni sul sito. Le prove di voce, labiale, gesti, mood e redazione restano nella GUI/ambiente interno. La demo del 24 è stata tolta dal catalogo e i file trasferiti fuori dalla document root, senza cancellarli. Il sito mantiene la presentazione approvata e le vere puntate pubblicate; non rinominare una prova come contenuto editoriale per mascherarne la natura. L’importatore e l’esportatore di demo pubbliche sono stati ritirati; frontend e gateway escludono i percorsi demo. Work e le release Daily non cambiano.
+
+## 18. Produzione sul Mac — decisione e installazione del 25 ottobre
+
+L’utente ha corretto esplicitamente l’architettura: **Mac alle 07:30 → sito → Work alle 08:15**. Il Mac resta acceso; la configurazione deve essere trasferibile. Il prodotto futuro è in modalità `full` e driver `launchd`. I job già congelati non vengono modificati. Guida completa e comandi: [cdaily-mac-producer.md](cdaily-mac-producer.md).
+
+La risposta ElevenLabs viene salvata prima del controllo dei tempi. Se i tempi nativi falliscono, la stessa registrazione passa all’ASR misurato, con riscontro integrale del testo e tentativo persistente: nessun addebito TTS sostitutivo. Il renderer locale usa il motore e l’identità della presentazione, senza Next aperto; il caricamento SSH porta solo quattro asset pubblici e metadati di trasferimento. Il server controlla approvazione e byte contro il DB prima di pubblicare. Restano tutte le regole editoriali e il blocco delle prove pubbliche.

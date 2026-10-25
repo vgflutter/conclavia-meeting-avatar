@@ -16,6 +16,8 @@ import {scoredNarration} from './script-review';
 import { assembleAlex2Take, recordAlex2Passages } from './alex2-speech';
 import { dailyRenderFps, naturalDailyClock } from './media-contract';
 import { alex2Config, alex2ConfigDigest } from './alex2-config';
+import {wave} from './wave';
+export {wave} from './wave';
 export async function command(file: string, args: string[], signal: AbortSignal) {
   const child = spawn(file, args, { stdio: ['ignore', 'pipe', 'pipe'], signal });
   let output = '', error = '';
@@ -24,9 +26,6 @@ export async function command(file: string, args: string[], signal: AbortSignal)
   const [code] = await once(child, 'close');
   if (code !== 0) throw new Error(`${path.basename(file)}: elaborazione media non riuscita (${code}); ${error.includes('No such file') ? 'file non disponibile' : 'verificare il worker'}`);
   return output;
-}
-export function wave(pcm: Buffer) {
-  const header = Buffer.alloc(44); header.write('RIFF'); header.writeUInt32LE(36 + pcm.length, 4); header.write('WAVEfmt ', 8); header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22); header.writeUInt32LE(SPEECH_SAMPLE_RATE, 24); header.writeUInt32LE(SPEECH_SAMPLE_RATE * 2, 28); header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34); header.write('data', 36); header.writeUInt32LE(pcm.length, 40); return Buffer.concat([header, pcm]);
 }
 export class TgDurationError extends Error { constructor(public ratio: number, public actualSeconds: number) { super('Il parlato richiede una revisione del minutaggio'); } }
 export async function synthesize(id: string, product: TgProduct, date: string, research: TgResearch, script: TgScript, signal: AbortSignal, options:{naturalDuration?:boolean}={}): Promise<TgManifest> {
@@ -43,7 +42,7 @@ export async function synthesize(id: string, product: TgProduct, date: string, r
     if(take.seconds<180||take.seconds>420)throw new TgDurationError(take.seconds/product.seconds,take.seconds);
     const dir=jobDirectory(id);
     await writeFile(path.join(dir,'raw.wav'),wave(take.pcm),{mode:0o600});
-    await writeFile(path.join(dir,'word-timings.json'),JSON.stringify({version:1,source:'elevenlabs-native-characters',words:take.words}),{mode:0o600});
+    await writeFile(path.join(dir,'word-timings.json'),JSON.stringify({version:1,sources:take.timingSources,words:take.words}),{mode:0o600});
     await command('ffmpeg',['-y','-v','error','-i',path.join(dir,'raw.wav'),'-af',`apad=pad_dur=2,atrim=duration=${take.seconds},loudnorm=I=-16:TP=-1.5:LRA=11`,'-ar',String(SPEECH_SAMPLE_RATE),path.join(dir,'track.wav')],signal);
     return {...editionManifest(product,date,research,script,take.cues,take.seconds),speech,fps:50,voiceConfigSha256,lipSync:'word-anchored-estimate',openingPause:take.openingPause};
   }
@@ -115,7 +114,10 @@ export async function renderMedia(id: string, manifest: TgManifest, signal: Abor
   const fps=dailyRenderFps(manifest.product);
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-    await page.goto(new URL('/podcast/tg/render', origin).toString());
+    await page.route('**/*',route=>route.request().method()==='GET'&&new URL(route.request().url()).origin===origin.origin?route.continue():route.abort());
+    const renderPath=process.env.TG_RENDER_PATH||'/podcast/tg/render';
+    if(!/^\/[a-zA-Z0-9/_-]+\/?$/u.test(renderPath))throw new Error('Percorso renderer non valido');
+    await page.goto(new URL(renderPath, origin).toString());
     await page.waitForFunction(() => Boolean((window as unknown as {conclaviaTgRender?: unknown}).conclaviaTgRender));
     for (const portrait of [false, true]) {
       signal.throwIfAborted();
@@ -123,10 +125,13 @@ export async function renderMedia(id: string, manifest: TgManifest, signal: Abor
       const name = portrait ? 'portrait.mp4' as const : 'landscape.mp4' as const, temporary = path.join(dir, name + '.partial.mp4');
       const encoder = spawn('ffmpeg', ['-y', '-v', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-vcodec', 'mjpeg', '-i', 'pipe:0', '-i', path.join(dir, 'track.wav'), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-t', String(manifest.seconds), '-movflags', '+faststart', temporary], { stdio: ['pipe', 'ignore', 'pipe'], signal });
       encoder.stderr.resume(); const closed = once(encoder, 'close');
-      try { for (let frame = 0; frame < Math.round(manifest.seconds * fps); frame++) {
+      try { for (let frame = 0; frame < Math.round(manifest.seconds * fps); frame+=12) {
         signal.throwIfAborted();
-        const data = await page.evaluate(t => (window as unknown as {conclaviaTgRender: {frame(t: number): string}}).conclaviaTgRender.frame(t), frame / fps);
-        if (!encoder.stdin.write(Buffer.from(data, 'base64'))) await Promise.race([once(encoder.stdin, 'drain'),closed.then(()=>{throw new Error('Encoder TG interrotto durante il rendering');})]);
+        const batch=await page.evaluate(({from,count,fps})=>{
+         const api=(window as unknown as {conclaviaTgRender:{frame(t:number):string;sample?():{texts?:{overflow:boolean}[]}}}).conclaviaTgRender;
+         const frames:string[]=[];for(let i=0;i<count;i++){frames.push(api.frame((from+i)/fps));if(api.sample?.().texts?.some(t=>t.overflow))throw Error('Testo oltre il layout approvato');}return frames;
+        },{from:frame,count:Math.min(12,Math.round(manifest.seconds*fps)-frame),fps});
+        for(const data of batch)if (!encoder.stdin.write(Buffer.from(data, 'base64'))) await Promise.race([once(encoder.stdin, 'drain'),closed.then(()=>{throw new Error('Encoder TG interrotto durante il rendering');})]);
       } encoder.stdin.end(); const [code] = await closed; if (code !== 0) throw new Error('Encoder TG non riuscito'); }
       catch (error) { encoder.kill('SIGTERM'); await closed.catch(() => undefined); throw error; }
       const probe = JSON.parse(await command('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=width,height,codec_name,avg_frame_rate', '-of', 'json', temporary], signal));
