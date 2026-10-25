@@ -9,14 +9,14 @@ import {macRenderServer} from './mac-render-server.mjs';
 import {runMacCommand} from './mac-process.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..'),state=join(root,'.daily-agent'),deploy=resolve(root,'../conclavia-deploy');
 const labels=['me.conclavia.daily-mongo','me.conclavia.daily-awake','me.conclavia.daily-production'];
-const action=process.argv[2]??'status',runtime={...process.env,TG_ARTIFACT_DIR:join(root,'.tg-artifacts'),TG_PUBLISH_ENABLED:'false',TG_EDITORIAL_ONLY:'false',TG_WORKER_ENABLED:'true',TG_AI_ENABLED:'true',PODCAST_AI_ENABLED:'true',PODCAST_SPEECH_ENABLED:'true',TG_AUTOMATIC_REVIEW_ENABLED:'true'};
+const action=process.argv[2]??'status',runtime={...process.env,TG_ARTIFACT_DIR:join(root,'.tg-artifacts'),TG_RESEARCH_TRACE_DIR:join(state,'research-trace'),TG_PUBLISH_ENABLED:'false',TG_EDITORIAL_ONLY:'false',TG_WORKER_ENABLED:'true',TG_AI_ENABLED:'true',PODCAST_AI_ENABLED:'true',PODCAST_SPEECH_ENABLED:'true',TG_AUTOMATIC_REVIEW_ENABLED:'true'};
 let phase='initializing';
 const nodeArgs=['--conditions=react-server','--import','tsx','--env-file-if-exists=.env.local'];
 const shutdown=new AbortController();
 for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>shutdown.abort());
 const privateState=async(name,value)=>{await mkdir(state,{recursive:true,mode:0o700});const f=join(state,name);await writeFile(f+'.partial',JSON.stringify(value,null,2)+'\n',{mode:0o600});await rename(f+'.partial',f);};
 const run=(file,args,options={})=>runMacCommand(file,args,{cwd:root,env:runtime,signal:shutdown.signal,...options});
-const daily=(command)=>run(process.execPath,[...nodeArgs,'scripts/tg/daily-agent.ts',command]);
+const daily=(command,...args)=>run(process.execPath,[...nodeArgs,'scripts/tg/daily-agent.ts',command,...args]);
 const exists=async p=>{try{await access(p);return true;}catch{return false;}};
 function loaded(label){try{execFileSync('/bin/launchctl',['print',`gui/${process.getuid()}/${label}`],{stdio:'ignore'});return true;}catch{return false;}}
 async function checks(){
@@ -44,17 +44,19 @@ async function lock(){
  }
  return undefined;
 }
-async function tick(){
+async function tick(commission=false){
  const release=await lock();if(!release)return {state:'already-running'};
  let renderer;
  try{
-  phase='preflight';const decision=JSON.parse(await daily('preflight'));
+  let extra=[];
+  if(commission){phase='commission';const receipt=JSON.parse(await run(process.execPath,[...nodeArgs,'scripts/tg/commission-today.ts','--confirm']));extra=[`--commission=${receipt.jobId}`];}
+  phase='preflight';const decision=JSON.parse(await daily('preflight',...extra));
   if(!decision.decision?.due)return {state:'skipped',reason:decision.decision?.reason};
   const prereq=await checks();if(Object.entries(prereq).some(([k,v])=>k!=='chrome'&&!v))throw Error('Prerequisiti Mac incompleti: eseguire daily:mac doctor');
   phase='identity';await run(process.execPath,['scripts/tg/check-video-identity.mjs']);
   phase='render-host';renderer=await macRenderServer();
   const env={...runtime,TG_RENDER_ORIGIN:renderer.origin,TG_RENDER_PATH:'/__cdaily-render__/',...(prereq.chrome?{TG_CHROME_CHANNEL:'chrome'}:{})};
-  phase='production';await run(process.execPath,[...nodeArgs,'scripts/tg/daily-agent.ts','tick'],{env,inherit:true,timeout:Math.max(1000,Date.parse(decision.decision.slot.closesAt)-Date.now())});
+  phase='production';await run(process.execPath,[...nodeArgs,'scripts/tg/daily-agent.ts','tick',...extra],{env,inherit:true,timeout:Math.max(1000,Date.parse(decision.decision.slot.closesAt)-Date.now())});
   let produced;
   try{produced=JSON.parse(await readFile(join(state,'last-production.json'),'utf8'));}catch{}
   // Query the current job explicitly: an older local receipt never selects an upload.
@@ -102,7 +104,7 @@ try{
  if(action==='install')result=await install();
  else if(action==='uninstall')result=await uninstall();
  else if(action==='status'||action==='doctor')result=await status();
- else if(action==='tick'||action==='run'){result=await tick();await privateState('mac-last-tick.json',{at:new Date().toISOString(),...result});if(!['skipped','already-running'].includes(result.state))await privateState('mac-last-run.json',{at:new Date().toISOString(),...result});}
- else throw Error('Comandi: install, uninstall, doctor, status, tick, run');
+ else if(['tick','run','commission'].includes(action)){result=await tick(action==='commission');await privateState('mac-last-tick.json',{at:new Date().toISOString(),...result});if(!['skipped','already-running'].includes(result.state))await privateState('mac-last-run.json',{at:new Date().toISOString(),...result});}
+ else throw Error('Comandi: install, uninstall, doctor, status, tick, run, commission');
  console.log(JSON.stringify(result,null,2));
 }catch(error){await privateState('mac-last-error.json',{at:new Date().toISOString(),phase,state:'blocked',issue:'Produttore Mac non completato: verificare doctor e lo stato privato'});console.error(error instanceof Error&&/^Prerequisiti|^LaunchAgent|^Installer|^Lock|^Comandi/u.test(error.message)?error.message:'Produttore Mac fermato; consultare lo stato privato, nessuna riuscita presunta');process.exitCode=1;}

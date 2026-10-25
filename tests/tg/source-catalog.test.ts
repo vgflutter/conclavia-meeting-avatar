@@ -17,6 +17,8 @@ test('two syndicated copies cannot count as independent evidence; missing and st
  const sources=TG_FEEDS.filter(f=>['agi','sole24ore-it','istat'].includes(f.id)).map((f,i)=>({...parseFeed(`<rss><channel><item><title>Fonte sintetica</title><link>${new URL('/fixture-'+i,f.url).href}</link><description>Prova con attribuzione all’agenzia.</description><source>AGI</source><pubDate>${now.toUTCString()}</pubDate></item></channel></rss>`,f,now)[0],id:String(i)}));
  assert.throws(()=>requireSourcePair({first:'0',second:'1'},sources,now),/indipendenti/);
  sources[2].independentGroup='istat.it';assert.deepEqual(requireSourcePair({first:'0',second:'2'},sources,now),['0','2']);
+ assert.throws(()=>requireSourcePair({first:'0',second:'2'},sources,now,[{sourceIds:['0']}]),/citate? nei fatti|citata nei fatti/u);
+ assert.deepEqual(requireSourcePair({first:'0',second:'2'},sources,now,[{sourceIds:['0','2']}]),['0','2']);
  assert.throws(()=>requireSourcePair({first:'invented',second:'2'},sources,now));
  sources[2].publishedAt='2020-01-01';assert.throws(()=>requireSourcePair({first:'0',second:'2'},sources,now));
 });

@@ -35,23 +35,30 @@ export const RESEARCH_SCHEMA = object({ sources: { type: 'array', items: object(
 export function catalogResearchSchema(catalog: TgSource[], now = new Date()) {
   const schema = JSON.parse(JSON.stringify(RESEARCH_SCHEMA)) as unknown as {properties:{stories:{items:{properties:Record<string,unknown>;required:string[];additionalProperties:boolean}}}};
   const story=schema.properties.stories.items;
+  story.properties.id={type:'string',minLength:1,maxLength:40,pattern:'^[A-Za-z0-9_-]+$'};
+  story.properties.headline={type:'string',minLength:1,maxLength:240};
+  story.properties.importance={type:'integer',minimum:0,maximum:100};
+  for(const field of ['whyItMatters','changedSinceYesterday','uncertainty'])story.properties[field]={type:'string',maxLength:700};
+  story.properties.facts={type:'array',minItems:1,maxItems:8,items:object({text:{type:'string',minLength:1,maxLength:600},sourceIds:{type:'array',minItems:1,items:string}})};
   const current=catalog.filter(s=>new Date(s.publishedAt).getTime()>=now.getTime()-36*3600000);
   const groups=[...new Set(current.map(s=>s.independentGroup))];
   if(groups.length<2)fail('Mancano due editori con notizie attuali');
   delete story.properties.sourceIds;
-  // Keep the schema linear as the catalog grows. Independence is enforced
-  // against the immutable ledger below, not inferred from model output.
-  const ids=current.map(s=>s.id);
-  story.properties.sourcePair=object({first:{type:'string',enum:ids},second:{type:'string',enum:ids}});
+  // Reference each origin's IDs once; structured output cannot pair two copies
+  // from that origin. Local evidence/independence validation remains mandatory.
+  const definitions=Object.fromEntries(groups.map((group,i)=>[`tg_origin_${i}`,{type:'string',enum:current.filter(s=>s.independentGroup===group).map(s=>s.id)}]));
+  const ref=(i:number)=>({$ref:`#/$defs/tg_origin_${i}`});
+  story.properties.sourcePair={anyOf:groups.map((_,i)=>object({first:ref(i),second:{anyOf:groups.flatMap((_,j)=>i===j?[]:[ref(j)])}}))};
   story.required=Object.keys(story.properties);
   const facts=story.properties.facts as {items:{properties:{sourceIds:{items:unknown}}}};
   facts.items.properties.sourceIds.items={type:'string',enum:catalog.map(s=>s.id)};
-  return {type:'object',properties:{stories:schema.properties.stories},required:['stories'],additionalProperties:false};
+  return {type:'object',properties:{stories:schema.properties.stories},required:['stories'],additionalProperties:false,$defs:definitions};
 }
-export function requireSourcePair(value:unknown,catalog:TgSource[],now:Date){
+export function requireSourcePair(value:unknown,catalog:TgSource[],now:Date,facts?:{sourceIds:string[]}[]){
  const pair=value as {first?:unknown;second?:unknown}|null;
  const first=catalog.find(s=>s.id===pair?.first),second=catalog.find(s=>s.id===pair?.second);
  if(!first||!second||first.independentGroup===second.independentGroup||[first,second].some(s=>!Number.isFinite(Date.parse(s.publishedAt))||Date.parse(s.publishedAt)<now.getTime()-36*3600000||Date.parse(s.publishedAt)>now.getTime()+5*60000))throw new TgEditorialError('La coppia di riscontri non contiene due origini indipendenti e attuali');
+ if(facts){const cited=new Set(facts.flatMap(f=>f.sourceIds));if(![first.id,second.id].every(id=>cited.has(id)))throw new TgEditorialError('La coppia indipendente deve essere citata nei fatti della notizia, senza aggiungere fonti estranee');}
  return [first.id,second.id];
 }
 export const SCRIPT_SCHEMA = object({ title: string, description: string, headlines:{type:'array',items:object({storyId:string,title:{type:'string',maxLength:82}})}, sentences: { type: 'array', items: object({ text: string, mood: { type: 'string', enum: moods }, intensity: { type: 'number' }, speaker: { type: 'integer', enum: [0, 1] }, storyId: string, sourceIds: strings }) } });

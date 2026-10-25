@@ -40,6 +40,13 @@ async function effectivePlan(plan:DailyAgentSchedule){
   if(!saved)throw new DailyAgentStop('Configurazione Daily esistente non trovata: non creare un database sostitutivo');
   return {...plan,product:parseProduct(saved.product)};
 }
+async function commissionedPlan(plan:DailyAgentSchedule,id:string){
+  if(!/^[a-f0-9]{24}$/u.test(id))throw new DailyAgentStop('Commissione non valida');
+  const {TgRunModel}=await import('../../src/models/tg/TgRun');
+  await database();const saved=await TgRunModel.findById(id).select('+commissioning').lean().orFail();
+  if(saved.commissioning?.kind!=='first-mac-cycle'||saved.edition!==plan.product.edition||saved.date!==localEditionDate(now,plan.product.timezone))throw new DailyAgentStop('Commissione odierna esplicita non trovata');
+  return {...plan,product:parseProduct(saved.product)};
+}
 function runtimeReadiness(){return {
   researchAIConfigured:Boolean(process.env.OPENAI_API_KEY),databaseConfigured:Boolean(process.env.MONGODB_URI),
   approvedVoiceConnected:alex2SynthesisVerified(),
@@ -113,6 +120,8 @@ async function main(){
   if(!['tick','run','publish','package','channels','preflight'].includes(command))throw new DailyAgentStop('Comandi: plan, status, configure, install, persist, uninstall, tick, run, package, channels, preflight, publish. Aggiungere --dry-run per anteprima senza effetti.');
   let plan=configured;
   if(!dryRun)plan=await effectivePlan(configured);
+  const commissioned=args.find(a=>a.startsWith('--commission='))?.slice(13);
+  if(commissioned&&!dryRun){if(!['preflight','tick','run'].includes(command))throw new DailyAgentStop('Comando non previsto per la commissione');plan=await commissionedPlan(plan,commissioned);}
   const decision=agentDecision(plan,now),requested=args.find(a=>a.startsWith('--date='))?.slice(7)??'today';
   const date=requested==='today'?localEditionDate(now,plan.product.timezone):requested;
   if(!validDate(date)||date!==decision.date)throw new DailyAgentStop('Il runner opera solo sull’edizione di oggi nel fuso configurato; nessuna notizia riciclata o produzione retrodatata');
