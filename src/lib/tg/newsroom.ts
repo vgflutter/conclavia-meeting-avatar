@@ -96,7 +96,10 @@ export async function editorialAction(id:string,body:Record<string,unknown>) {
         if(body.action==='reverify'&&!job.script)throw new TgNewsroomError('Non c’è un copione da verificare');
         set={state:'queued',attempts:job.state==='editorial_ready'?job.attempts:0,issues:body.action==='retry'?[...job.issues,note].slice(-5):[]};
         unset={audit:1,scriptReview:1,textApproval:1,review:1,finalReview:1,approvedAt:1,publicationPlan:1,nextProductionAttemptAt:1};
-        if(body.action==='retry'&&job.state==='blocked'){unset={...unset,research:1,script:1,manifest:1};set.assets=[];set.editorialRepairs=0;set.durationRepairs=0;}
+        if(body.action==='retry'&&(job.state==='blocked'||job.state==='failed'&&job.product.editorialProfile==='italia-morning-v2')){
+          unset={...unset,research:1,script:1,manifest:1,coverageRecovery:1};set.assets=[];set.editorialRepairs=0;set.durationRepairs=0;
+          if(job.coverageRecovery)set.coverageRecoveryHistory=[...(record.coverageRecoveryHistory??[]),job.coverageRecovery];
+        }
         detail=body.action==='reverify'?`Nuova verifica richiesta: ${note}`:`Rigenerazione richiesta: ${note}`;
       }
     }

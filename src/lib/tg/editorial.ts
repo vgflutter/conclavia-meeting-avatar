@@ -32,7 +32,7 @@ export function requireDailyCoverage(product: TgProduct, research: Pick<TgResear
   }
 }
 export const RESEARCH_SCHEMA = object({ sources: { type: 'array', items: object({ id: string, publisher: string, url: string, title: string, publishedAt: string, evidence: string }) }, stories: { type: 'array', items: object({ id: string, headline: string, category: { type: 'string', enum: ['world', 'economy', 'society', 'science', 'culture'] }, importance: { type: 'integer' }, changedSinceYesterday: string, whyItMatters: string, uncertainty: string, sourceIds: strings, facts: { type: 'array', items: object({ text: string, sourceIds: strings }) } }) } });
-export function catalogResearchSchema(catalog: TgSource[], now = new Date()) {
+export function catalogResearchSchema(catalog: TgSource[], now = new Date(), maximumStories=9) {
   const schema = JSON.parse(JSON.stringify(RESEARCH_SCHEMA)) as unknown as {properties:{stories:{items:{properties:Record<string,unknown>;required:string[];additionalProperties:boolean}}}};
   const story=schema.properties.stories.items;
   story.properties.id={type:'string',minLength:1,maxLength:40,pattern:'^[A-Za-z0-9_-]+$'};
@@ -52,7 +52,7 @@ export function catalogResearchSchema(catalog: TgSource[], now = new Date()) {
   story.required=Object.keys(story.properties);
   const facts=story.properties.facts as {items:{properties:{sourceIds:{items:unknown}}}};
   facts.items.properties.sourceIds.items={type:'string',enum:catalog.map(s=>s.id)};
-  return {type:'object',properties:{stories:schema.properties.stories},required:['stories'],additionalProperties:false,$defs:definitions};
+  return {type:'object',properties:{stories:{...schema.properties.stories,maxItems:maximumStories}},required:['stories'],additionalProperties:false,$defs:definitions};
 }
 export function requireSourcePair(value:unknown,catalog:TgSource[],now:Date,facts?:{sourceIds:string[]}[]){
  const pair=value as {first?:unknown;second?:unknown}|null;
@@ -175,10 +175,10 @@ export function dailySummaryIssues(script: Pick<TgScript, 'description'>): strin
     : script.description.length > 1100 ? ['Il riassunto social deve stare entro 1100 caratteri: riscriverlo senza troncare frasi o omettere notizie.'] : [];
 }
 function fail(message: string): never { throw new TgEditorialError(message); }
-export function validateResearch(value: unknown, retrievedUrls: Set<string>, now: Date, trustedGroups?: Map<string, string>, limits:{candidatePool?:boolean}={}): TgResearch {
+export function validateResearch(value: unknown, retrievedUrls: Set<string>, now: Date, trustedGroups?: Map<string, string>, limits:{candidatePool?:boolean;allowPartial?:boolean}={}): TgResearch {
   if (!value || typeof value !== 'object') fail('Ricerca non valida');
   const v = value as TgResearch;
-  if (!Array.isArray(v.sources) || v.sources.length < 4 || v.sources.length > (limits.candidatePool?72:40) || !Array.isArray(v.stories) || v.stories.length < 3 || v.stories.length > (limits.candidatePool?18:9)) fail('Copertura non valida: numero di fonti o notizie fuori dai limiti della selezione');
+  if (!Array.isArray(v.sources) || v.sources.length < (limits.candidatePool&&limits.allowPartial?2:4) || v.sources.length > (limits.candidatePool?72:40) || !Array.isArray(v.stories) || v.stories.length < (limits.candidatePool&&limits.allowPartial?1:3) || v.stories.length > (limits.candidatePool?18:9)) fail('Copertura non valida: numero di fonti o notizie fuori dai limiti della selezione');
   const sourceIds = new Set<string>();
   const sources = v.sources.map((s): TgSource => {
     if (!s || typeof s !== 'object') fail('Fonte non valida');

@@ -4,8 +4,9 @@ import { randomUUID } from 'node:crypto';
 import 'server-only';
 import { generateLlmJson } from '@/lib/podcast/llm-provider';
 import { collectFeeds, publicSourceUrl, TG_SEARCH_DOMAINS,balancedSourceLedger } from './sources';
-import { auditSchema, EDITORIAL_POLICY, catalogResearchSchema, scriptSchema, scriptDigest, validateAudit, visibleScript, dailyGreeting, withDailyGreeting, dailyClosing, withDailyClosing, requireWebCorroboration, requireSourcePair, requireDailyCoverage, requireEditorialScore, validateResearch, validateScript,TgEditorialError } from './editorial';
+import { auditSchema, EDITORIAL_POLICY, catalogResearchSchema, scriptSchema, scriptDigest, validateAudit, visibleScript, dailyGreeting, withDailyGreeting, dailyClosing, withDailyClosing, requireWebCorroboration, requireSourcePair, requireDailyCoverage, requireEditorialScore, validateResearch, validateScript,TgEditorialError,TgCoverageError } from './editorial';
 import { DAILY_CONTINUITY_POLICY, freshnessSchema, validateFreshness, requireFreshCandidates } from './freshness';
+import {recoverDailyCoverage,type CoverageRecoveryPorts} from './coverage-recovery';
 import {broadItalia,candidateRange,BROAD_ITALIA_SCOPE} from './editorial-profile';
 import {dailyStoryCount,dailyStoryRange,dailyWritingStructure} from './format';
 import {scoredNarration,scriptReviewSchema,validateScriptReview} from './script-review';
@@ -56,19 +57,20 @@ export async function searchJson(schema: Record<string, unknown> | undefined, in
   if (urls.length < minimumSources) throw new Error('Ricerca priva di fonti consultate');
   return result;
 }
-export async function researchEdition(product: TgProduct, now: Date, previous: string, signal: AbortSignal,feedback?:string): Promise<TgResearch> {
+export async function researchEdition(product: TgProduct, now: Date, previous: string, signal: AbortSignal,feedback?:string,options:{feeds?:Awaited<ReturnType<typeof collectFeeds>>;round?:number;allowPartial?:boolean;target?:number}={}): Promise<TgResearch> {
   const storyCount = dailyStoryCount(product);
-  const pool=candidateRange(product),range=pool??dailyStoryRange(product),selection=product.productionStandard==='cdaily-v1'?`between ${range.min} and ${range.max}`:`exactly ${storyCount}`;
-  const feeds = await collectFeeds(product.edition, now, signal, 7);
+  const defaults=candidateRange(product),pool=defaults?{...defaults,target:options.target??defaults.target,max:options.target?Math.min(defaults.max,options.target+4):defaults.max}:undefined,range=pool??dailyStoryRange(product),selection=options.allowPartial?`up to ${range.max}`:product.productionStandard==='cdaily-v1'?`between ${range.min} and ${range.max}`:`exactly ${storyCount}`;
+  const feeds = options.feeds??await collectFeeds(product.edition, now, signal, 7);
   // Balance the ledger before the model sees it: no truncation that drops a publisher.
-  const ledger=balancedSourceLedger(feeds.sources,now);
+  const round=options.round??1;
+  const ledger=balancedSourceLedger(feeds.sources,now,240*round,24*round);
   if (ledger.length < 4 || new Set(ledger.map(s=>s.independentGroup)).size < 2) throw new Error('Raccolta fonti insufficiente: attendere il ripristino dei feed');
   // Short handles reduce citation-copy errors and grammar size. Only this call
   // sees handles; persisted sources retain their original immutable IDs.
   const selectionLedger=ledger.map((source,index)=>({...source,id:`s${index}`}));
   const handles=new Map(selectionLedger.map((source,index)=>[source.id,ledger[index].id]));
-  const result = await generateLlmJson<{stories:unknown[]}>({model:'openai-default',signal,maxOutputTokens:pool?16000:10000,schemaName:'tg_source_selection',schema:catalogResearchSchema(selectionLedger,now),instructions:DAILY_EDITORIAL_POLICY + (broadItalia(product)?' '+BROAD_ITALIA_SCOPE+' The active profile overrides legacy story-count and duration suggestions.':'') + ' You are the source researcher. Use only the immutable source ledger. Do not invent sources. Select factually corroborated events; the independent fact checker will perform a separate live web search.',input:`Research today's ${product.edition === 'it' ? 'Italian edition: Italy and international events with consequences for Italy' : 'international English edition, genuinely global rather than US-only or Europe-only'}.
-Current UTC time ${now.toISOString()}. Edition duration: ${product.seconds} seconds. The source ledger below is immutable: select ONLY its source IDs; never fabricate a publisher, source or corroboration. Assess relevance, developments and independence using the original dated source ledger. A separate mandatory live-search audit follows writing. Select ${selection} distinct consequential stories, ranked by public relevance and verified novelty. ${pool?`This is a RESERVE CANDIDATE POOL, not the final edition: aim for ${pool.target} candidates across several subject areas so later checks can exclude weak items without starving coverage. Give 2–4 concise sourced facts per candidate. ${BROAD_ITALIA_SCOPE}`: ""} Do not fill a category quota with weak news. Each story needs TWO different original publisher groups from the last 36 hours. Two copies of a wire report or two BBC articles DO NOT count. At least one supporting source for the new development must be published in the LAST 24 HOURS and after the previous edition. Older ledger sources (max seven days) are background only. A fresh article about an old event, a reissued wire, or an updated webpage is NOT a new development. The archive contains actual published speech only; drafts and failed runs are not aired stories. Compare events and concrete developments, not just matching headlines: rewording yesterday's news is not a new story. If the ledger cannot support at least ${range.min} distinct corroborated stories, return an empty stories array; do not invent them.
+  const result = await generateLlmJson<{stories:unknown[]}>({model:'openai-default',signal,maxOutputTokens:pool?16000:10000,schemaName:'tg_source_selection',schema:catalogResearchSchema(selectionLedger,now,range.max),instructions:DAILY_EDITORIAL_POLICY + (broadItalia(product)?' '+BROAD_ITALIA_SCOPE+' The active profile overrides legacy story-count and duration suggestions.':'') + ' You are the source researcher. Use only the immutable source ledger. Do not invent sources. Select factually corroborated events; the independent fact checker will perform a separate live web search.',input:`Research today's ${product.edition === 'it' ? 'Italian edition: Italy and international events with consequences for Italy' : 'international English edition, genuinely global rather than US-only or Europe-only'}.
+Current UTC time ${now.toISOString()}. Edition duration: ${product.seconds} seconds. The source ledger below is immutable: select ONLY its source IDs; never fabricate a publisher, source or corroboration. Assess relevance, developments and independence using the original dated source ledger. A separate mandatory live-search audit follows writing. Select ${selection} distinct consequential stories, ranked by public relevance and verified novelty. ${pool?`This is a RESERVE CANDIDATE POOL, not the final edition: aim for ${pool.target} candidates across several subject areas so later checks can exclude weak items without starving coverage. Give 2–4 concise sourced facts per candidate. ${BROAD_ITALIA_SCOPE}`: ""} Do not fill a category quota with weak news. Each story needs TWO different original publisher groups from the last 36 hours. Two copies of a wire report or two BBC articles DO NOT count. At least one supporting source for the new development must be published in the LAST 24 HOURS and after the previous edition. Older ledger sources (max seven days) are background only. A fresh article about an old event, a reissued wire, or an updated webpage is NOT a new development. The archive contains actual published speech only; drafts and failed runs are not aired stories. Compare events and concrete developments, not just matching headlines: rewording yesterday's news is not a new story. ${options.allowPartial?"Return every supported distinct candidate even if fewer than six: the recovery controller retains valid items and supplements them automatically. Never return an empty list merely because the final minimum is not yet reached.":`If the ledger cannot support at least ${range.min} distinct corroborated stories, return an empty stories array; do not invent them.`}
 Every headline and explanation MUST be written in ${product.language === 'it' ? 'ITALIAN (ITALIANO), not English' : 'ENGLISH'}. Only source IDs are opaque identifiers. Use sourcePair.first and sourcePair.second from two different publisher groups. Never pair unrelated stories merely to fill a slot. Facts must be supported by the cited ledger evidence; no made-up numbers, motives or consequences. A HEADLINE ONLY entry supports only its explicit title: never infer an unseen article body, and require corroboration for the central event and details. Explain why each matters and what changed since yesterday; say when there is no verified new development. Importance 0–100 by public consequence/novelty/corroboration. Categories must cover at least two different subjects, only if newsworthy.
 <untrusted_previous_week>${previous}</untrusted_previous_week>
 ${feedback?`<untrusted_previous_selection_feedback>${feedback}</untrusted_previous_selection_feedback>\nCorrect the actual selection problems above; do not pair unrelated events or invent facts to meet a number.`:''}
@@ -86,12 +88,16 @@ ${feedback?`<untrusted_previous_selection_feedback>${feedback}</untrusted_previo
   if (!Array.isArray(stories)) throw new Error('Scaletta di ricerca non valida');
   const used = new Set(stories.flatMap(s=>Array.isArray(s?.sourceIds)?s.sourceIds:[]));
   const selected = ledger.filter(s=>used.has(s.id));
-  if(pool){if(stories.length<pool.min||stories.length>pool.max)throw new TgEditorialError('Bacino candidate insufficiente o fuori dal budget');}
+  if(options.allowPartial&&stories.length===0)return {sources:[],stories:[],collectedAt:now.toISOString(),searchCalls:0,warnings:[...feeds.warnings,...rejected]};
+  if(pool){if((!options.allowPartial&&stories.length<pool.min)||stories.length>pool.max)throw new TgCoverageError('Bacino candidate insufficiente o fuori dal budget');}
   else requireDailyCoverage(product, { stories });
-  const research = validateResearch({sources:selected,stories},new Set(ledger.map(s=>s.url)),now,new Map(ledger.map(s=>[s.url,s.independentGroup])),{candidatePool:!!pool});
+  const research = validateResearch({sources:selected,stories},new Set(ledger.map(s=>s.url)),now,new Map(ledger.map(s=>[s.url,s.independentGroup])),{candidatePool:!!pool,allowPartial:!!options.allowPartial});
   if(!pool)requireDailyCoverage(product, research);
   const history = previous ? JSON.parse(previous) as TgPublishedEdition[] : [];
-  requireFreshCandidates(research,now,history);
+  if(options.allowPartial){
+   research.stories=research.stories.filter(story=>{try{requireFreshCandidates({...research,stories:[story]},now,history,{allowPartial:true});return true;}catch(error){if(!(error instanceof TgEditorialError))throw error;rejected.push(`${story.id}: ${error.message}`);return false;}});
+   const used=new Set(research.stories.flatMap(s=>s.sourceIds));research.sources=research.sources.filter(s=>used.has(s.id));
+  }else requireFreshCandidates(research,now,history);
   return { ...research, searchCalls:0, warnings:[...research.warnings,...feeds.warnings,...rejected] };
 }
 
@@ -167,7 +173,17 @@ export async function corroborateResearch(research:TgResearch,evidence:Awaited<R
  if(process.env.TG_RESEARCH_TRACE_DIR)await writeFile(path.join(process.env.TG_RESEARCH_TRACE_DIR,`${Date.now()}-source-review.json`),JSON.stringify(result.data),{mode:0o600});
  return {review:result.data,research:checked};
 }
-export async function researchAndCorroborateEdition(product:TgProduct,now:Date,previous:string,signal:AbortSignal,lookup?:EvidenceLookup){
+export async function researchAndCorroborateEdition(product:TgProduct,now:Date,previous:string,signal:AbortSignal,lookup?:EvidenceLookup,recovery?:Pick<CoverageRecoveryPorts,'initial'|'save'|'deadline'>){
+ if(broadItalia(product)){
+  const feeds=await collectFeeds(product.edition,now,signal,7);
+  return recoverDailyCoverage(product,{signal,now:()=>new Date(),...recovery,save:recovery?.save??(async()=>undefined),
+   find:context=>researchEdition(product,new Date(),previous,signal,context.feedback,{feeds,round:context.round,allowPartial:true,target:context.round===1?14:Math.max(6,context.missing+4)}),
+   verify:async pool=>{const briefing:TgScript={title:'Bacino in recupero',description:'',sentences:pool.stories.flatMap(s=>s.facts.map(f=>({...f,storyId:s.id,speaker:0 as const,mood:'attention' as const,intensity:.3})))};
+    const evidence=await retrieveAuditEvidence(pool,briefing,signal,lookup);const result=await corroborateResearch(pool,evidence,signal,new Date(),product);
+    return {...result.review,context:result.research.retrievedContext};
+   },
+  });
+ }
  const research=await researchEdition(product,now,previous,signal);
  if(product.productionStandard!=='cdaily-v1')return research;
  const briefing:TgScript={title:'Ricerca',description:'',sentences:research.stories.flatMap(s=>s.facts.map(f=>({...f,storyId:s.id,speaker:0 as const,mood:'attention' as const,intensity:.3})))};

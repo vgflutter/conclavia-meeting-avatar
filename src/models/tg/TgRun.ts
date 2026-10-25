@@ -4,6 +4,7 @@ export interface TgRunRecord extends Omit<TgJob, 'id' | 'createdAt' | 'updatedAt
 const schema = new Schema<TgRunRecord>({
   edition: { type: String, required: true, enum: ['it', 'world'] }, date: { type: String, required: true },
   state: { type: String, required: true, default: 'queued' }, product: { type: Schema.Types.Mixed, required: true },
+  coverageRecovery: Schema.Types.Mixed,coverageRecoveryHistory:Schema.Types.Mixed,
   research: Schema.Types.Mixed, script: Schema.Types.Mixed, audit: Schema.Types.Mixed, manifest: Schema.Types.Mixed,
   scriptReview:Schema.Types.Mixed,editorialRepairs:{type:Number,default:0},durationRepairs:{type:Number,default:0},
   assets: { type: Schema.Types.Mixed, default: [] }, issues: { type: [String], default: [] }, events: { type: Schema.Types.Mixed, default: [] },
@@ -18,4 +19,10 @@ const schema = new Schema<TgRunRecord>({
 }, { timestamps: true });
 schema.index({ edition: 1, date: 1 }, { unique: true });
 schema.index({ state: 1, leaseUntil: 1 });
-export const TgRunModel = (models.TgRun as Model<TgRunRecord> | undefined) ?? model<TgRunRecord>('TgRun', schema, 'tg_runs');
+const existing=models.TgRun as Model<TgRunRecord>|undefined;
+// The private Next dev GUI may already hold the legacy model. Add only these
+// owned fields so updates are not silently stripped during hot reload.
+if(existing)for(const name of ['coverageRecovery','coverageRecoveryHistory']){
+  if(!existing.schema.path(name))existing.schema.add({[name]:Schema.Types.Mixed});
+}
+export const TgRunModel = existing ?? model<TgRunRecord>('TgRun', schema, 'tg_runs');

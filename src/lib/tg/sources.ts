@@ -87,11 +87,11 @@ export function parseFeed(xml: string, feed: typeof TG_FEEDS[number], now: Date,
 }
 /** Preserve different sections within one publisher without counting them as
  * independent origins. Recent evidence precedes background from the past week. */
-export function balancedSourceLedger(sources:TgSource[],now:Date,maximum=240){
+export function balancedSourceLedger(sources:TgSource[],now:Date,maximum=240,perPublisher=24){
  const roundRobin=(groups:TgSource[][],limit:number)=>Array.from({length:Math.max(0,...groups.map(g=>g.length))},(_,i)=>groups.flatMap(g=>g[i]?[g[i]]:[])).flat().slice(0,limit);
  const publishers=[...new Set(sources.map(s=>s.publisher))].map(p=>{
   const own=sources.filter(s=>s.publisher===p),feeds=[...new Set(own.map(s=>s.feedId??p))];
-  return roundRobin(feeds.map(f=>own.filter(s=>(s.feedId??p)===f).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt))),24);
+  return roundRobin(feeds.map(f=>own.filter(s=>(s.feedId??p)===f).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt))),perPublisher);
  });
  const ledger=roundRobin(publishers,maximum);
  return [...ledger.filter(s=>Date.parse(s.publishedAt)>=now.getTime()-36*3600000),...ledger.filter(s=>Date.parse(s.publishedAt)<now.getTime()-36*3600000)];

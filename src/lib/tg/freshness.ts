@@ -23,9 +23,9 @@ export function newsWindowStart(now: Date, history: TgPublishedEdition[]) {
   if (times.some(time=>!Number.isFinite(time)||time>now.getTime())) throw new TgEditorialError('Archivio delle uscite con date non verificabili');
   return Math.max(now.getTime()-NEWS_WINDOW_MS,...times);
 }
-function sourceIssues(research:TgResearch, now:Date, history:TgPublishedEdition[]) {
+function sourceIssues(research:TgResearch, now:Date, history:TgPublishedEdition[],minimum=3) {
   const start=newsWindowStart(now,history),issues:string[]=[];
-  if(research.stories.length<3||new Set(research.stories.map(s=>s.id)).size!==research.stories.length)issues.push('Scaletta senza storie sufficienti e distinte');
+  if(research.stories.length<minimum||new Set(research.stories.map(s=>s.id)).size!==research.stories.length)issues.push('Scaletta senza storie sufficienti e distinte');
   for(const story of research.stories){
     const sources=research.sources.filter(s=>story.sourceIds.includes(s.id));
     const current=sources.filter(s=>Date.parse(s.publishedAt)>=now.getTime()-SOURCE_WINDOW_MS&&Date.parse(s.publishedAt)<=now.getTime());
@@ -39,8 +39,8 @@ function sourceIssues(research:TgResearch, now:Date, history:TgPublishedEdition[
   return issues;
 }
 /** Cheap gates before writing; timestamps alone do not establish editorial novelty. */
-export function requireFreshCandidates(research:TgResearch, now:Date, history:TgPublishedEdition[]) {
-  const issues=sourceIssues(research,now,history);
+export function requireFreshCandidates(research:TgResearch, now:Date, history:TgPublishedEdition[],options:{allowPartial?:boolean}={}) {
+  const issues=sourceIssues(research,now,history,options.allowPartial?1:3);
   if(issues.length)throw new TgEditorialError(issues.join('; '));
 }
 export function freshnessSchema(research:TgResearch,history:TgPublishedEdition[],webByStory:Record<string,string[]>) {

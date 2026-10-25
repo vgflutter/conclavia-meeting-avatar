@@ -16,11 +16,26 @@ Una prova ridotta di quattro notizie può servire come prova tecnica dichiarata,
 
 Il problema del primo giro non era dimostrare che in Italia esistessero soltanto quattro notizie: il selettore restituiva già pochi elementi e i successivi filtri riducevano ulteriormente la copertura.
 
-Il nuovo profilo ricerca un bacino di riserva: obiettivo 14 candidate, massimo 18, tutte con una coppia di origini attuali sul medesimo fatto. Poi ricerca web, verifica delle fonti, accorpamento dei duplicati e selezione delle 6–8 migliori. Le candidate corroborate oltre il budget restano **riserve**, non diventano notizie false o vecchie. Se non restano almeno sei notizie solide il giro si ferma: ampliare le prove, non abbassare le soglie. Il bacino non è una certificazione e non passa direttamente alla scrittura.
+Il nuovo profilo ricerca un bacino di riserva: obiettivo 14 candidate, massimo 18, tutte con una coppia di origini attuali sul medesimo fatto. Poi ricerca web, verifica delle fonti, accorpamento dei duplicati e selezione delle 6–8 migliori. Le candidate corroborate oltre il budget restano **riserve**, non diventano notizie false o vecchie. Se non restano almeno sei notizie solide **non si ferma l’edizione al primo giro**: parte subito la ricerca integrativa descritta sotto, senza abbassare le soglie. Il bacino non è una certificazione e non passa direttamente alla scrittura.
 
 L'Italia comprende politica, giustizia, economia, lavoro, salute, società, cultura, scienza e sport nazionale di rilievo. Non servono una nuova legge o un effetto economico per rendere significativo un risultato sportivo italiano. Nessuna quota obbligatoria, calendario sportivo ordinario o gossip per riempire spazio. Una dichiarazione esperta può essere notizia, purché attribuita: non diventa per questo una previsione certa o una decisione pubblica.
 
 Estero: conseguenze italiane documentate o evento mondiale eccezionalmente importante. Al massimo due eccezioni mondiali e maggioranza stretta di notizie italiane; le ulteriori candidate valide restano in riserva. Tra candidate forti già ammesse, una sezione mancante può avere spazio a scapito di una sezione già molto rappresentata. È ammessa **al massimo una notizia scientifica/sanitaria di conoscenza condivisa**, appena divulgata e ben riscontrata, anche senza un effetto italiano specifico. Deve mantenere popolazione, comparatore e limiti; uno studio congressuale non è una terapia disponibile a tutti. Non inventare un collegamento italiano per ammetterlo.
+
+## Recupero automatico del minimo
+
+Decisione successiva del 25 ottobre: la continuità quotidiana è un requisito operativo. Quattro notizie valide sono materiale da completare, non il motivo per abbandonare immediatamente la puntata.
+
+1. Primo giro: bacino di riserva, verifica e selezione. Se sono almeno sei, proseguire.
+2. Se sono meno di sei, **secondo giro immediato nello stesso job**: conservare le candidate valide e cercare soltanto nuovi sviluppi per colmare il deficit, con un margine di riserva. Esempio: quattro valide → mancano due → ricerca integrativa → nuova verifica dell'insieme → almeno sei.
+3. Se il secondo non basta, terzo giro automatico più ampio sulle sezioni meno rappresentate. Il bacino locale espone progressivamente fino a 240/480/720 articoli, con massimo 24/48/72 per editore e bilanciamento fra sezioni. Più URL della stessa agenzia restano una sola origine. I feed vengono acquisiti una volta nel ciclo, le ricerche identiche riusano la cache valida.
+4. Riscontri e selezione dell'insieme impediscono di contare due volte lo stesso evento. Candidate respinte senza modifiche non vengono riproposte alla ricerca di un sì. Scarti e giudizi precedenti restano nel rapporto.
+5. `coverageRecovery` conserva i giri iniziati/completati, le candidate trattenute e i giudizi nel job. Un'interruzione o un cambio di lease riprende il budget salvato; non ricomincia da zero. Una richiesta manuale esplicita di nuova selezione archivia il ciclo precedente in `coverageRecoveryHistory` prima di aprirne uno nuovo; non lo riusa come ricerca fresca. Le candidate parziali non sono salvate come ricerca finale o come notizie trasmesse.
+6. Soltanto dopo almeno sei notizie: scrittura completa, titoli/cartelli, sintesi social, A, B e il flag manuale già previsto. Il recupero non autorizza voce, video o pubblicazione.
+
+Tre giri sono un budget operativo, non un permesso di inventare la sesta notizia o di spendere senza limite. Se dopo tutti e tre manca ancora il minimo, il job registra un problema operativo esplicito nella redazione privata; serve una correzione della raccolta. Un errore tecnico di credenziali, quota o provider si propaga subito, senza essere interpretato come poche notizie e senza un ciclo di richieste identiche. Restano la finestra di uscita, la freschezza, le due origini, il focus italiano e i controlli A/B. Non promettere una pubblicazione in presenza di un servizio indisponibile o della conferma manuale mancante.
+
+Il comportamento è comune al worker Mac e al laboratorio privato. Il laboratorio salva la ripresa solo nei propri file, senza registrare prove nell'archivio del pubblicato.
 
 ## Criteri separati nel rapporto
 

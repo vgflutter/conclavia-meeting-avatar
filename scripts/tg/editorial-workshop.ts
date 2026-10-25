@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 import {connectToDatabase} from '../../src/lib/mongodb';
 import {parseAgentSchedule} from '../../src/lib/tg/agent-schedule';
 import {localEditionDate} from '../../src/lib/tg/schedule';
-import {researchEdition,retrieveAuditEvidence,writeEdition,judgeEdition,reviewEditionScript,corroborateResearch} from '../../src/lib/tg/agents';
+import {researchEdition,retrieveAuditEvidence,writeEdition,judgeEdition,reviewEditionScript,corroborateResearch,researchAndCorroborateEdition} from '../../src/lib/tg/agents';
 import {requireDailyCoverage,scriptDigest,TgEditorialError,validateResearch,validateScript,requireEditorialScore,withDailyClosing} from '../../src/lib/tg/editorial';
 import {produceTg} from '../../src/lib/tg/pipeline';
 import {saveEditionTexts} from '../../src/lib/tg/edition-text-files';
@@ -17,6 +17,8 @@ import {verifyScientificReferences} from '../../src/lib/tg/scientific-references
 import {EVIDENCE_CACHE_WINDOW_MS} from '../../src/lib/tg/evidence-cache';
 import {auditIsCurrent} from '../../src/lib/tg/review';
 import {editorialWorkspace,rehearsalProduct,REHEARSAL_EXTRA_DOMAINS} from '../../src/lib/tg/rehearsal';
+import {editionSlot} from '../../src/lib/tg/schedule';
+import type {CoverageRecoveryState} from '../../src/lib/tg/coverage-recovery';
 import {TG_SEARCH_DOMAINS} from '../../src/lib/tg/sources';
 import type {TgJob,TgResearch,TgScript} from '../../src/lib/tg/types';
 
@@ -178,6 +180,12 @@ async function main(){
  await invalidateReviewDelivery();
  if(!job){
   let research:TgResearch|undefined,feedback='Prefer six to eight well corroborated items across Italian public life, economy, society and knowledge. Exclude routine forecasts, celebrity schedules and filler. A major global exception is allowed, but do not invent its Italian impact.';
+  if(product.editorialProfile==='italia-morning-v2'){
+   let initial:CoverageRecoveryState|undefined;try{initial=await json<CoverageRecoveryState>('coverage-recovery');}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
+   research=await researchAndCorroborateEdition(product,new Date(),JSON.stringify(history),signal,(key,generate)=>cached('evidence-story-v1-'+key,generate),{initial,deadline:new Date(editionSlot(product,date).closesAt),save:async(state,detail)=>{stage='coverage-recovery';await json('coverage-recovery',state);await json('coverage-round-'+state.rounds.length+'-'+state.rounds.at(-1)!.status,state);console.log(JSON.stringify({stage,detail}));}});
+   const briefing:TgScript={title:'Ricerca completata',description:'',sentences:research.stories.flatMap(s=>s.facts.map(f=>({...f,storyId:s.id,speaker:0 as const,mood:'attention' as const,intensity:.3})))};
+   await json('evidence',await retrieve(research,briefing));
+  }
   for(let attempt=1;attempt<=3&&!research;attempt++){
    try{
     stage=`research-${attempt}`;

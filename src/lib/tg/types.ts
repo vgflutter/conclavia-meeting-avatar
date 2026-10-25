@@ -74,6 +74,8 @@ export interface TgJob {
   id: string; edition: TgEdition; date: string; state: TgState; product: TgProduct; research?: TgResearch; script?: TgScript;
   audit?: TgAudit; scriptReview?:TgScriptReview; editorialRepairs?:number; durationRepairs?:number; manifest?: TgManifest; assets: TgAsset[]; issues: string[]; events: { at: string; stage: string; detail: string }[];
   approvedAt?: string; publishedAt?: string; createdAt: string; updatedAt: string; attempts: number;
+  coverageRecovery?: import('./coverage-recovery').CoverageRecoveryState;
+  coverageRecoveryHistory?: import('./coverage-recovery').CoverageRecoveryState[];
   revision?: number; publicationPlan?: TgPublicationPlan; review?: TgReview;
   finalReview?: TgFinalReview;
   sitePublication?: {url:string;releaseUrl:string;bundleSha256:string;publishedAt:string;stories:TgPublishedEdition['stories']};

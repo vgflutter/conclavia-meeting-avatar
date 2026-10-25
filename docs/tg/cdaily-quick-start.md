@@ -22,7 +22,7 @@ Genera `.tg-artifacts/context/AAAA-MM-GG/agent-context.md` e `.json`: giorno e a
 
 ## Flusso e configurazione
 
-Mac alle **07:30 Europe/Rome** → raccolta locale → selezione/verifica delle fonti → testo → A (attualità e fatti) → B (rilettura completa separata) → eventuale OK → media. Il sito riceve il pacchetto approvato; Work distribuisce, obiettivo 08:15.
+Mac alle **07:30 Europe/Rome** → raccolta locale → selezione/verifica delle fonti → se meno di sei, recupero immediato conservando le valide (secondo giro, poi terzo se serve) → testo → A (attualità e fatti) → B (rilettura completa separata) → eventuale OK → media. Il sito riceve il pacchetto approvato; Work distribuisce, obiettivo 08:15.
 
 In `config/tg/daily-agent.json`: `productionMode: full`, `textReviewMode: manual` attualmente attivo. `ai` o campo omesso salta soltanto l’OK umano. A/B e revisione finale rimangono obbligatori. Dopo una modifica al file: `npm run daily:agent -- configure`. La GUI salva direttamente nel backend; le edizioni già create mantengono lo snapshot.
 
@@ -34,7 +34,7 @@ Per un laboratorio **solo testo**, con chiamate AI esplicite ma media impossibil
 npm run daily:editorial
 ```
 
-Riprendere la sessione privata esistente. Correggere rilievi concreti e conservare errori/contatori; nessun reset o ripetizione alla ricerca di un sì. Il ciclo normale ha una correzione automatica; il laboratorio ne richiede esplicitamente al massimo dodici. `productionMode: editorial` è un arresto tecnico distinto dal flag manuale.
+Riprendere la sessione privata esistente. Correggere rilievi concreti e conservare errori/contatori; nessun reset o ripetizione alla ricerca di un sì. La copertura ha fino a tre giri di ricerca integrativa, salvati nel medesimo job; è distinta dalle riscritture e dagli errori tecnici. Il ciclo normale di riscrittura ha una correzione automatica; il laboratorio ne richiede esplicitamente al massimo dodici. `productionMode: editorial` è un arresto tecnico distinto dal flag manuale.
 
 Per una prova completa separata, senza influenzare le prossime notizie: `npm run daily:editorial -- --rehearsal=prova-serale`. Il dossier va in `.tg-artifacts/rehearsals/AAAA-MM-GG/prova-serale/review.md`, senza registrazione nel database, archivio pubblico o modifica degli orari. Anche questa prova aspetta il tuo OK sul testo prima dei media. [Procedura e limiti](cdaily-private-rehearsal.md).
 

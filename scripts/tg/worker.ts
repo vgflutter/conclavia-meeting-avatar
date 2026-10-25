@@ -68,7 +68,7 @@ async function tick() {
       await produceTg(serializeJob(run.toObject()), JSON.stringify(previous), {
         editorialOnly:process.env.TG_EDITORIAL_ONLY==='true',
         editorialReady:async job=>{await saveEditionTexts(job);},
-        research: prior => researchAndCorroborateEdition(run.product, now, prior, signal,storyEvidence),
+        research: prior => researchAndCorroborateEdition(run.product, now, prior, signal,storyEvidence,{initial:run.coverageRecovery,deadline:new Date(slot.closesAt),save:(coverageRecovery,detail)=>checkpoint(id,owner,'researching',{coverageRecovery},detail)}),
         write: (r, correction) => writeEdition(run.product, r, signal, correction,run.date),
         audit: async (r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s),signal,previous),
         reviewScript:async(r,s)=>reviewEditionScript(run.product,run.date,r,s,await getEvidence(r,s),signal),
