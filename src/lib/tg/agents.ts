@@ -176,7 +176,7 @@ export async function corroborateResearch(research:TgResearch,evidence:Awaited<R
 export async function researchAndCorroborateEdition(product:TgProduct,now:Date,previous:string,signal:AbortSignal,lookup?:EvidenceLookup,recovery?:Pick<CoverageRecoveryPorts,'initial'|'save'|'deadline'>){
  if(broadItalia(product)){
   const feeds=await collectFeeds(product.edition,now,signal,7);
-  return recoverDailyCoverage(product,{signal,now:()=>new Date(),...recovery,save:recovery?.save??(async()=>undefined),
+  return recoverDailyCoverage(product,{signal,now:()=>new Date(),...recovery,save:async(state,detail)=>{await recovery?.save({...state,collection:feeds.diagnostics},detail);},
    find:context=>researchEdition(product,new Date(),previous,signal,context.feedback,{feeds,round:context.round,allowPartial:true,target:context.round===1?14:Math.max(6,context.missing+4)}),
    verify:async pool=>{const briefing:TgScript={title:'Bacino in recupero',description:'',sentences:pool.stories.flatMap(s=>s.facts.map(f=>({...f,storyId:s.id,speaker:0 as const,mood:'attention' as const,intensity:.3})))};
     const evidence=await retrieveAuditEvidence(pool,briefing,signal,lookup);const result=await corroborateResearch(pool,evidence,signal,new Date(),product);

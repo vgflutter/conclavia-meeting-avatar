@@ -10,6 +10,7 @@ export interface CoverageRound {
  reason?:string;checks?:Record<string,SourceEditorCheck>;
 }
 export interface CoverageRecoveryState {
+ collection?:import('./sources').FeedCollectionHealth;
  version:1;rounds:CoverageRound[];retained:TgResearch;rejectedKeys:string[];
 }
 export interface CoverageRecoveryContext {
@@ -78,5 +79,5 @@ export async function recoverDailyCoverage(product:TgProduct,ports:CoverageRecov
   checkWindow();
   if(accepted.stories.length>=range.min){requireDailyCoverage(product,accepted);return accepted;}
  }
- throw new TgCoverageError(`Recupero esaurito dopo ${state.rounds.length} giri: ${state.retained.stories.length}/${range.min} notizie verificate. Intervento necessario, nessuna pubblicazione incompleta`);
+ throw new TgCoverageError(`Anomalia di raccolta/selezione dopo ${state.rounds.length} giri: ${state.retained.stories.length}/${range.min} notizie verificate. Controllare disponibilità fonti, date, indipendenza e filtri; nessuna pubblicazione incompleta`);
 }

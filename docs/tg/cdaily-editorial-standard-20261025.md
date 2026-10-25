@@ -24,7 +24,7 @@ Per i giri ordinari partire dalla [pagina rapida](cdaily-quick-start.md) e dal c
 
 ## Raccolta e verifica delle fonti
 
-Catalogo corrente: **25 feed complessivi, 18 per Italia**, con **11 gruppi editoriali/origini** nel registro italiano. Comprende Rai, ANSA, AGI, Adnkronos, Euronews, Il Sole 24 Ore, la Repubblica, TGcom24, Open, Governo e Istat. Gli otto feed ANSA (sette aggiunti) sono una sola origine, così come due URL della stessa testata o due copie della stessa agenzia. Il catalogo non è il numero di fonti consultate da ciascuna edizione.
+Catalogo corrente: **38 feed complessivi, 31 per Italia**, con **21 gruppi editoriali/origini dichiarati** nel registro italiano. Comprende Rai, ANSA, AGI, Adnkronos, Euronews, Il Sole 24 Ore, la Repubblica, TGcom24, Open, Governo e Istat. I dieci feed ANSA sono una sola origine, così come due URL della stessa testata o due copie della stessa agenzia. Il catalogo non è il numero di fonti consultate da ciascuna edizione. Il 25 ottobre sono stati aggiunti Il Fatto Quotidiano, Today, il manifesto, Domani, Libero, Quotidiano Nazionale, Il Messaggero, Punto Informatico, Quotidiano Sanità e HDblog, più sport/cultura ANSA ed economia del Sole. [Verifica operativa degli endpoint](cdaily-source-expansion-20261025.md).
 
 Il collaudo del 25 ottobre ha raccolto 411 voci RSS, poi bilanciate per editore e sezione: **411 candidate non significano 411 notizie verificate**. Non aggiungere feed rotti o vecchi solo per far crescere il numero: Corriere fermo al 2024, Sky 410 e Il Post 403 sono stati esclusi dalla raccolta provata. Conservare diagnostica e data di verifica privatamente.
 
