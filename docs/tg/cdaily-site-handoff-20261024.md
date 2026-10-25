@@ -1,3 +1,5 @@
+> **Aggiornamento del 25 ottobre 2026:** la demo citata nella cronologia sotto è stata ritirata dal sito; le prove interne sono private. Importatore/esportatore pubblico dismessi. Usare `daily-site withdraw-previews` per ritiri conservativi. La presentazione approvata e il flusso delle vere edizioni restano pubblici. Le verifiche del 24 sono cronologia, non confermano disponibilità odierna della demo.
+
 # CDaily — pubblicazione sul sito e consegna a Work
 
 Decisione dell’utente del **24 ottobre 2026**: «pubblicalo in automatico sul sito sia portrait che landscape poi il worker lavora dal sito». Il sito diventa l’archivio pubblico e il punto di consegna; Work non deve più leggere la cartella del Mac o accedere al database per distribuire i video.
@@ -25,7 +27,7 @@ flowchart TD
 - Archivio pubblico: <https://daily.conclavia.me/edizioni/>; pagina inglese <https://daily.conclavia.me/en/editions/>.
 - Catalogo: <https://daily.conclavia.me/edizioni/index.json>.
 - Punto d’ingresso Work Italia: <https://daily.conclavia.me/edizioni/it/latest.json>.
-- Demo reale pubblicata nei due formati: <https://daily.conclavia.me/edizioni/demo/2026-10-24/>.
+- Demo interna storica, URL oggi ritirato: <https://daily.conclavia.me/edizioni/demo/2026-10-24/>.
 - Puntate future: `/edizioni/it/YYYY-MM-DD/` oppure `/edizioni/world/YYYY-MM-DD/`.
 - Ogni revisione conserva file e `release.json` sotto la propria impronta. `latest` contiene un riferimento al JSON immutabile, non a un file locale modificabile.
 
@@ -56,10 +58,10 @@ Comandi in `../conclavia-deploy`:
 npm run conclavia -- daily-site status
 npm run conclavia -- daily-site deploy
 npm run conclavia -- daily-site configure
-npm run conclavia -- daily-site import-demo
+npm run conclavia -- daily-site withdraw-previews
 ```
 
-`configure` cambia soltanto `siteFirst` sulla configurazione Italia già esistente; non abilita media o social. `import-demo` richiede il pacchetto dimostrativo esplicito, whitelist/checksum e blocco di distribuzione; non crea un’approvazione AI di notizie.
+`configure` cambia soltanto `siteFirst` sulla configurazione Italia già esistente; non abilita media o social. `withdraw-previews` ritira dal pubblico le demo e ne conserva i file privatamente. L’importazione pubblica delle prove è disabilitata.
 
 ## Verifiche
 

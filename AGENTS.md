@@ -69,6 +69,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # CDaily video continuity
 
+- Internal Daily voice, lip-sync, gesture and editorial trials are private. Do not publish them in the public site, catalogue or release URLs. The approved project presentation and released news editions are the public material; never relabel a technical trial as an edition or presentation to hide its nature.
+
 - For Daily scheduling, autonomous production or publishing, start with `docs/tg/cdaily-agent-runbook.md`. It is the durable handoff when chat context is missing. Preserve the approved date greeting, A/B text gates, semantic acting, Alex 2 identity, closing pointer, both formats and per-edition social summary/rundown. Do not confuse a loaded local production timer with a saved ChatGPT Work task or an operational end-to-end video pipeline.
 
 - Start every new Daily or pilot with `docs/tg/cdaily-production-standard.md`. The user approved `avatar-refined-presence-20261023` (media `12c91abdf743`) on 23 October as the style to reuse. Preserve the sculpted light hybrid, anatomical hands, connected standing performance, approved studio/brand/font and Alex 2 voice. Use a dated dossier; do not rebuild the look from historical pilots or silently replace the voice when credits are unavailable.
