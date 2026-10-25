@@ -15,6 +15,7 @@ import {loadPublishedHistory} from '../../src/lib/tg/history';
 import {scoredNarration} from '../../src/lib/tg/script-review';
 import {applySourceEditorReview} from '../../src/lib/tg/selection-review';
 import {verifyScientificReferences} from '../../src/lib/tg/scientific-references';
+import {EVIDENCE_CACHE_WINDOW_MS} from '../../src/lib/tg/evidence-cache';
 import type {TgJob,TgResearch,TgScript} from '../../src/lib/tg/types';
 
 const now=new Date(),date=localEditionDate(now,'Europe/Rome'),directory=path.resolve('.tg-artifacts/editorial',date);
@@ -33,6 +34,7 @@ async function cached<T>(name:string,fn:()=>Promise<T>):Promise<T>{
  catch(error){await json(name+'.error',{at:new Date().toISOString(),issue:error instanceof Error?error.message:'Request failed'});throw error;}
 }
 type Evidence=Awaited<ReturnType<typeof retrieveAuditEvidence>>;
+const retrieve=(research:TgResearch,script:TgScript)=>retrieveAuditEvidence(research,script,signal,(key,generate)=>cached('evidence-story-v1-'+key,generate));
 const corroborate=(research:TgResearch,evidence:Evidence)=>corroborateResearch(research,evidence,signal);
 const reviewDocument=`docs/tg/editions/${date}-it-editorial-review.md`;
 async function saveReviewDocument(content:string){
@@ -140,7 +142,7 @@ async function main(){
    requireDailyCoverage(product,research);
    const briefing:TgScript={title:'Revisione della selezione',description:'',sentences:research.stories.flatMap(s=>s.facts.map(f=>({text:f.text,storyId:s.id,sourceIds:f.sourceIds,speaker:0 as const,mood:'attention' as const,intensity:.3})))};
    const unchangedResearch=JSON.stringify(revision.research)===JSON.stringify(job.research);
-   stage='revised-evidence';const evidence=unchangedResearch?await json<Evidence>('evidence'):await cached('evidence-'+key,()=>retrieveAuditEvidence(research,briefing,signal));
+   stage='revised-evidence';const evidence=unchangedResearch?await json<Evidence>('evidence'):await cached('evidence-'+key,()=>retrieve(research,briefing));
    stage='revised-source-review';const checked=unchangedResearch?{research:job.research!,review:{checks:{}}}:await cached('source-review-'+key,()=>corroborate(research,evidence));
    // Reapply local policy to the immutable actual verdict, without rerunning
    // the reviewer or changing any false field into a positive judgement.
@@ -171,7 +173,7 @@ async function main(){
     stage=`research-${attempt}`;
     const candidate=await cached(stage,()=>researchEdition(product,new Date(),JSON.stringify(history),signal,feedback));
     const briefing:TgScript={title:'Materiale di ricerca',description:'',sentences:candidate.stories.flatMap(s=>s.facts.map(f=>({text:f.text,storyId:s.id,sourceIds:f.sourceIds,speaker:0 as const,mood:'attention' as const,intensity:.3})))};
-    stage=`evidence-${attempt}`;const evidence=await cached(stage,()=>retrieveAuditEvidence(candidate,briefing,signal));
+    stage=`evidence-${attempt}`;const evidence=await cached(stage,()=>retrieve(candidate,briefing));
     stage=`source-review-${attempt}`;const checked=await cached(stage,()=>corroborate(candidate,evidence));
     await json(`selection-${attempt}`,checked);
     feedback=JSON.stringify(checked.review);
@@ -211,8 +213,8 @@ async function main(){
  }
  const spokenEvidence=new Map<string,Promise<Evidence>>();
  const evidenceForScript=(research:TgResearch,script:TgScript)=>{
-  const key=createHash('sha256').update(JSON.stringify({version:7,reviewModel,date,research,script})).digest('hex');
-  if(!spokenEvidence.has(key))spokenEvidence.set(key,cached('spoken-evidence-v7-'+key,()=>retrieveAuditEvidence(research,script,signal)));
+  const key=createHash('sha256').update(JSON.stringify({version:9,reviewModel,retrievalModel:process.env.TG_RESEARCH_MODEL||reviewModel,date,research,script,window:Math.floor(Date.now()/EVIDENCE_CACHE_WINDOW_MS)})).digest('hex');
+  if(!spokenEvidence.has(key))spokenEvidence.set(key,retrieve(research,script).then(value=>json('spoken-evidence-v9-'+createHash('sha256').update(JSON.stringify(value)).digest('hex'),value)));
   return spokenEvidence.get(key)!;
  };
  await produceTg(current,JSON.stringify(history),{
@@ -223,8 +225,8 @@ async function main(){
    stage='writing';const key=createHash('sha256').update(JSON.stringify({research,feedback,date,product})).digest('hex');
    return cached(`writer-${key}`,()=>writeEdition(product,research,signal,feedback,date));
   },
-  audit:async(research,script)=>{stage='audit-A';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:7,reviewModel,date,product,research,script,evidence:live,history})).digest('hex');return cached('audit-v7-'+digest,()=>judgeEdition(product,research,script,live,signal,history,new Date(),(key,generate)=>cached(`audit-part-v7-${digest}-${key}`,generate)));},
-  reviewScript:async(research,script)=>{stage='review-B';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:8,reviewModel,date,product,research,script,evidence:live})).digest('hex');return cached('review-v8-'+digest,()=>reviewEditionScript(product,date,research,script,live,signal));},
+  audit:async(research,script)=>{stage='audit-A';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:9,reviewModel,date,product,research,script,evidence:live,history})).digest('hex');return cached('audit-v9-'+digest,()=>judgeEdition(product,research,script,live,signal,history,new Date(),(key,generate)=>cached(`audit-part-v9-${digest}-${key}`,generate)));},
+  reviewScript:async(research,script)=>{stage='review-B';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:9,reviewModel,date,product,research,script,evidence:live})).digest('hex');return cached('review-v9-'+digest,()=>reviewEditionScript(product,date,research,script,live,signal));},
   editorialReady:async draft=>{await saveEditionTexts(draft);},
   voice:async()=>{throw Error('NO_MEDIA_PORT');},render:async()=>{throw Error('NO_MEDIA_PORT');},
   checkpoint:async(state,data,detail)=>{

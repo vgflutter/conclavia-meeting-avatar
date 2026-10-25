@@ -20,6 +20,8 @@ L’estero entra per conseguenze italiane documentate oppure come eccezione per 
 
 Nessuna opinione libera AI ricorrente è stata approvata. Distinguere fatti, dichiarazioni attribuite e interpretazioni. Non promettere neutralità infallibile perché la produzione usa AI. Un titolo corretto non salva un testo poco chiaro, ripetitivo o sbilanciato.
 
+Per i giri ordinari partire dalla [pagina rapida](cdaily-quick-start.md) e dal contesto locale generato con `npm run daily:context`. Questo documento resta il riferimento completo; la [nota sul riuso locale](cdaily-text-local-first.md) distingue le ottimizzazioni attive dagli sviluppi da qualificare.
+
 ## Raccolta e verifica delle fonti
 
 Catalogo corrente: **25 feed complessivi, 18 per Italia**, con **11 gruppi editoriali/origini** nel registro italiano. Comprende Rai, ANSA, AGI, Adnkronos, Euronews, Il Sole 24 Ore, la Repubblica, TGcom24, Open, Governo e Istat. Gli otto feed ANSA (sette aggiunti) sono una sola origine, così come due URL della stessa testata o due copie della stessa agenzia. Il catalogo non è il numero di fonti consultate da ciascuna edizione.

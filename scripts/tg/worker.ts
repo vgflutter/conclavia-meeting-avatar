@@ -12,6 +12,7 @@ import { publicPodcastSpeechConfig } from '../../src/lib/podcast/speech';
 import { produceTg } from '../../src/lib/tg/pipeline';
 import { loadPublishedHistory } from '../../src/lib/tg/history';
 import { scriptReviewInputDigest } from '../../src/lib/tg/script-review';
+import {evidenceMemo} from '../../src/lib/tg/evidence-cache';
 import { TgEditorialError } from '../../src/lib/tg/editorial';
 import { publishReadyTg } from '../../src/lib/tg/publishing';
 import { saveEditionTexts } from '../../src/lib/tg/edition-text-files';
@@ -56,17 +57,18 @@ async function tick() {
       if (!requiresApprovedDaily&&!voice?.providers.inworld) throw new Error('Voci Inworld dell’edizione non disponibili: controllare il servizio configurato');
       if (process.env.TG_AI_ENABLED !== 'true' || process.env.PODCAST_AI_ENABLED !== 'true') throw new Error('TG AI non abilitata');
       const previous = await loadPublishedHistory(run.edition,run.date,new Date());
+      const storyEvidence=evidenceMemo();
       let evidence:{value:Awaited<ReturnType<typeof retrieveAuditEvidence>>;at:number;key:string}|undefined;
       const getEvidence=async(r:Parameters<typeof judgeEdition>[1],s:Parameters<typeof judgeEdition>[2])=>{
         const key=scriptReviewInputDigest(run.product,run.date,r,s);
-        if(!evidence||evidence.key!==key||Date.now()-evidence.at>30*60000)evidence={key,value:await retrieveAuditEvidence(r,s,signal),at:Date.now()};
+        if(!evidence||evidence.key!==key||Date.now()-evidence.at>30*60000)evidence={key,value:await retrieveAuditEvidence(r,s,signal,storyEvidence),at:Date.now()};
         return evidence.value;
       };
       const requireApprovedVoice=()=>{if(requiresApprovedDaily){if(tgSpeechPlan(run.product).provider!=='elevenlabs')throw new TgEditorialError('Identità Alex 2 richiesta: nessuna sostituzione della voce approvata');alex2Config();}};
       await produceTg(serializeJob(run.toObject()), JSON.stringify(previous), {
         editorialOnly:process.env.TG_EDITORIAL_ONLY==='true',
         editorialReady:async job=>{await saveEditionTexts(job);},
-        research: prior => researchAndCorroborateEdition(run.product, now, prior, signal),
+        research: prior => researchAndCorroborateEdition(run.product, now, prior, signal,storyEvidence),
         write: (r, correction) => writeEdition(run.product, r, signal, correction,run.date),
         audit: async (r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s),signal,previous),
         reviewScript:async(r,s)=>reviewEditionScript(run.product,run.date,r,s,await getEvidence(r,s),signal),
