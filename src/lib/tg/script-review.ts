@@ -3,6 +3,8 @@ import {formatPerformanceMarkup,parsePerformanceMarkup} from '@conclavia/avatar-
 import {scriptDigest,TgEditorialError} from './editorial';
 import type {TgJob,TgProduct,TgResearch,TgScript,TgScriptReview,TgSentence} from './types';
 import {tgSpeechPassages} from './speech-plan';
+import {DAILY_NARRATIVE_POLICY,DAILY_NARRATIVE_REVIEW,DAILY_REVIEW_GENERATION} from './narrative-policy';
+import {DAILY_TIMELINE_POLICY} from './freshness';
 
 export const SCRIPT_REVIEW_CHECKS=['coherence','impartiality','opening','closing','coverage'] as const;
 export function compileEditorialPassage(markup:string,context:Pick<TgSentence,'speaker'|'storyId'|'sourceIds'>):TgSentence[]{
@@ -19,7 +21,7 @@ export function scoredNarration(script:TgScript){
 }
 export function scriptReviewInputDigest(product:TgProduct,date:string,research:TgResearch,script:TgScript){
  const score=scoredNarration(script);
- return createHash('sha256').update(JSON.stringify({version:1,product,date,research,script:scriptDigest(script),narrationText:score.narrationText,scoreMarkup:score.scoreMarkup})).digest('hex');
+ return createHash('sha256').update(JSON.stringify({version:1,narrativePolicy:DAILY_NARRATIVE_POLICY,narrativeReview:DAILY_NARRATIVE_REVIEW,timelinePolicy:DAILY_TIMELINE_POLICY,reviewGeneration:DAILY_REVIEW_GENERATION,product,date,research,script:scriptDigest(script),narrationText:score.narrationText,scoreMarkup:score.scoreMarkup})).digest('hex');
 }
 const object=(properties:Record<string,unknown>)=>({type:'object',properties,required:Object.keys(properties),additionalProperties:false});
 export function scriptReviewSchema(script:TgScript){

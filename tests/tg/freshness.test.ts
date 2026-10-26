@@ -35,6 +35,24 @@ test('fresh sources alone cannot pass an old event, a future event, an undated f
   assert.equal(validateFreshness({checks:copy},r,s,history,web,now).passed,false);
  }
 });
+test('a corroborated previous-afternoon event needs no invented exact clock time; the rolling window and negative verdicts remain binding',()=>{
+ const morning=new Date('2026-10-21T08:00:00Z');
+ const {r,s,web,checks}=context();
+ r.sources.forEach(source=>{source.publishedAt='2026-10-21T07:00:00Z';});
+ Object.assign(checks['story-0'],{
+  eventDate:'2026-10-20',
+  development:'Il congresso si è concluso nel pomeriggio del 20 ottobre con la riconferma del segretario.',
+  evidence:'Due origini indipendenti collocano il risultato nel pomeriggio del 20 ottobre; non è indicato il minuto del voto.',
+ });
+ const admitted=validateFreshness({checks:structuredClone(checks)},r,s,[],web,morning);
+ assert.equal(admitted.passed,true);
+ assert.equal(admitted.windowStart,'2026-10-20T08:00:00.000Z');
+ assert.equal(admitted.checks[0].eventDate,'2026-10-20');
+ for(const patch of [{status:'unverifiable',evidence:'La cronologia potrebbe precedere il limite della finestra e non è risolta.'},{status:'stale'},{eventDate:'2026-10-19'}]){
+  const rejected=structuredClone(checks);Object.assign(rejected['story-0'],patch);
+  assert.equal(validateFreshness({checks:rejected},r,s,[],web,morning).passed,false);
+ }
+});
 test('same story may return only with an evidenced new development and real published references',()=>{
  const {r,s,web,checks,history}=context(),c=checks['story-0'];
  Object.assign(c,{status:'update',previousStoryKeys:['previous:transport'],development:'Il vertice si è concluso oggi con un accordo verificato dalle due fonti.'});

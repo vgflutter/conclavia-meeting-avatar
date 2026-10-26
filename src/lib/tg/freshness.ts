@@ -5,6 +5,14 @@ import type { TgFreshnessCheck, TgFreshnessReview, TgJob, TgPublishedEdition, Tg
 export const NEWS_WINDOW_MS = 24 * 3600000;
 export const FRESHNESS_MAX_AGE_MS = 3600000;
 const SOURCE_WINDOW_MS = 36 * 3600000;
+/** Require enough chronology to assess the window, not artificial clock precision. */
+export const DAILY_TIMELINE_POLICY = [
+  'Use proportionate temporal precision. Establish a dated, corroborated development within the edition window; an exact clock time is not a routine admission requirement.',
+  'A dated account of a concluded event plus an explicit part of the day or a reliable sequence of events can establish that window. For example, yesterday afternoon can be sufficient for a morning edition without knowing the exact minute of a vote. Do not infer an event time solely from article publication or invent a missing time.',
+  'Seek a more precise time only when the unresolved chronology could materially change admission at the rolling 24-hour boundary or after the last published edition. If that material uncertainty remains, mark unverifiable and explain the boundary at issue; missing minute-level precision alone is not a blocking defect.',
+  'A newly corroborated announcement or disclosure within the edition window can be news even if the announced action is still pending or expected later. Date and verify the announcement, preserve attribution and the pending status, and never describe the future action as completed. The announcement need not fall on the current calendar day, but it must itself be evidenced as new within the window.',
+  'This does not extend the rolling window or waive independent corroboration: refreshed articles, unchanged aired facts, old announcements and expired alerts remain insufficient.',
+].join(' ');
 /** Programme continuity concerns the new development, never a ban on recurring topics. */
 export const DAILY_CONTINUITY_POLICY = [
   'An important ongoing story may return in consecutive Daily editions when a concrete, corroborated development is new within the edition window.',

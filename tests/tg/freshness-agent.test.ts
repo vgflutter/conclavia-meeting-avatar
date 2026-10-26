@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { judgeEdition } from '../../src/lib/tg/agents';
 import { reviewFixture } from './fixtures';
 import { auditTargets } from '../../src/lib/tg/editorial';
+import { DAILY_TIMELINE_POLICY } from '../../src/lib/tg/freshness';
 const now=new Date('2026-10-21T16:00:00Z');
 test('the actual audit adapter requests independent freshness, preserves negative verdicts and checks every public claim only after passing',async t=>{
  const saved={PODCAST_AI_ENABLED:process.env.PODCAST_AI_ENABLED,OPENAI_API_KEY:process.env.OPENAI_API_KEY};
@@ -16,6 +17,13 @@ test('the actual audit adapter requests independent freshness, preserves negativ
   let data:unknown;
   if(request.text.format.name==='tg_freshness_audit'){
    assert.match(request.instructions,/independent freshness/);assert.match(request.input,/actual published editions/);
+   assert.ok(request.instructions.includes(DAILY_TIMELINE_POLICY));
+   assert.match(request.input,/do not block for missing clock precision/);
+   assert.match(request.input,/announcement within the window/);
+   assert.match(request.input,/2026-10-20T16:00:00.000Z through 2026-10-21T16:00:00.000Z/);
+   assert.match(request.input,/NO completed-action requirement/);
+   assert.equal(request.reasoning.effort,'medium');assert.equal(request.text.verbosity,'low');
+   assert.doesNotMatch(request.input,/first public disclosure now|If day-only dating cannot establish/);
    assert.match(request.input,/OUR CONFIRMED PUBLISHED ARCHIVE/);
    const firstStory=request.text.format.schema.properties.checks.properties[r.stories[0].id].properties;
    assert.equal(firstStory.status.enum.includes('update'),false);
@@ -24,6 +32,7 @@ test('the actual audit adapter requests independent freshness, preserves negativ
    if(duplicate)(data as {checks:typeof checks}).checks['story-0']={...checks['story-0'],status:'duplicate',evidence:'Lo stesso fatto era già stato raccontato nella puntata precedente.'};
   } else {
    assert.equal(request.text.format.name,'tg_independent_audit');claimCalls++;
+   assert.ok(request.instructions.includes(DAILY_TIMELINE_POLICY));
    data={issues:[],checks:Object.fromEntries(Object.keys(request.text.format.schema.properties.checks.properties).map(key=>{const storyId=key.startsWith('sentence_')?s.sentences[Number(key.slice(9))].storyId:r.stories[0].id;return [key,{status:'supported',evidence:'Il dettaglio è esplicitamente sostenuto dalle fonti sintetiche.',sourceUrls:[webByStory[storyId]?.[0]??r.sources[0].url]}];}))};
   }
   return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(data)}]}]});

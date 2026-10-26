@@ -20,6 +20,8 @@ import {editorialWorkspace,rehearsalProduct,REHEARSAL_EXTRA_DOMAINS} from '../..
 import {editionSlot} from '../../src/lib/tg/schedule';
 import type {CoverageRecoveryState} from '../../src/lib/tg/coverage-recovery';
 import {TG_SEARCH_DOMAINS} from '../../src/lib/tg/sources';
+import {DAILY_TIMELINE_POLICY} from '../../src/lib/tg/freshness';
+import {DAILY_NARRATIVE_POLICY,DAILY_NARRATIVE_REVIEW,DAILY_WRITER_GENERATION,DAILY_REVIEW_GENERATION} from '../../src/lib/tg/narrative-policy';
 import type {TgJob,TgResearch,TgScript} from '../../src/lib/tg/types';
 
 const now=new Date(),date=localEditionDate(now,'Europe/Rome');
@@ -28,6 +30,8 @@ const workspace=editorialWorkspace(process.cwd(),date,rehearsal),{directory}=wor
 const signal=AbortSignal.timeout(40*60000);
 let stage='initializing';
 let reviewModel=process.env.PODCAST_OPENAI_MODEL||process.env.OPENAI_MEETING_MODEL||'gpt-5.4-mini';
+// A policy change cannot reuse a writer or reviewer answer from the old contract.
+const editorialRevision={timeline:DAILY_TIMELINE_POLICY,narrative:DAILY_NARRATIVE_POLICY,review:DAILY_NARRATIVE_REVIEW,writerGeneration:DAILY_WRITER_GENERATION,reviewGeneration:DAILY_REVIEW_GENERATION};
 async function json<T>(name:string,value?:T):Promise<T>{
  const file=path.join(directory,name+'.json');
  if(value===undefined)return JSON.parse(await readFile(file,'utf8'));
@@ -240,11 +244,11 @@ async function main(){
   maximumEditorialRepairs:12,
   research:async()=>current.research!,
   write:async(research,feedback)=>{
-   stage='writing';const key=createHash('sha256').update(JSON.stringify({research,feedback,date,product})).digest('hex');
+   stage='writing';const key=createHash('sha256').update(JSON.stringify({editorialRevision,research,feedback,date,product})).digest('hex');
    return cached(`writer-${key}`,()=>writeEdition(product,research,signal,feedback,date));
   },
-  audit:async(research,script)=>{stage='audit-A';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:9,reviewModel,date,product,research,script,evidence:live,history})).digest('hex');return cached('audit-v9-'+digest,()=>judgeEdition(product,research,script,live,signal,history,new Date(),(key,generate)=>cached(`audit-part-v9-${digest}-${key}`,generate)));},
-  reviewScript:async(research,script)=>{stage='review-B';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:9,reviewModel,date,product,research,script,evidence:live})).digest('hex');return cached('review-v9-'+digest,()=>reviewEditionScript(product,date,research,script,live,signal));},
+  audit:async(research,script)=>{stage='audit-A';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:9,editorialRevision,reviewModel,date,product,research,script,evidence:live,history})).digest('hex');return cached('audit-v9-'+digest,()=>judgeEdition(product,research,script,live,signal,history,new Date(),(key,generate)=>cached(`audit-part-v9-${digest}-${key}`,generate)));},
+  reviewScript:async(research,script)=>{stage='review-B';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:9,editorialRevision,reviewModel,date,product,research,script,evidence:live})).digest('hex');return cached('review-v9-'+digest,()=>reviewEditionScript(product,date,research,script,live,signal));},
   editorialReady:async draft=>{await saveEditionTexts(draft);},
   voice:async()=>{throw Error('NO_MEDIA_PORT');},render:async()=>{throw Error('NO_MEDIA_PORT');},
   checkpoint:async(state,data,detail)=>{

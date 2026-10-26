@@ -837,3 +837,22 @@ test("public video topic modes validate, serialize, and preserve immutable episo
   assert.equal(query.get("topicMode"), "custom");
   assert.equal(topic.normalizeVideoTopicMode(undefined), "episode");
 });
+
+
+test("Daily JSON controls are opt-in and leave other callers' compact defaults unchanged", async () => {
+  const bodies = [];
+  const provider = loader({ env: { PODCAST_AI_ENABLED: "true", OPENAI_API_KEY: "synthetic-only" }, fetcher: async (_url, init) => {
+    bodies.push(JSON.parse(init.body));
+    return Response.json({ status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: '{"ok":true}' }] }] });
+  } })("@/lib/podcast/llm-provider");
+  const request = { model: "openai-default", instructions: "Fixture", input: "Synthetic", schemaName: "fixture", schema: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"], additionalProperties: false } };
+  await provider.generateLlmJson(request);
+  await provider.generateLlmJson({ ...request, openai: { reasoningEffort: "medium", verbosity: "medium", timeoutMs: 240_000 } });
+  assert.equal(bodies[0].reasoning.effort, "low");assert.equal(bodies[0].text.verbosity, "low");
+  assert.equal(bodies[1].reasoning.effort, "medium");assert.equal(bodies[1].text.verbosity, "medium");
+  assert.deepEqual(bodies[0].text.format, bodies[1].text.format);
+  assert.equal(bodies[0].store, false);assert.equal(bodies[1].store, false);
+  await assert.rejects(provider.generateLlmJson({ ...request, openai: { timeoutMs: 0 } }), /bounded range/);
+  await assert.rejects(provider.generateLlmJson({ ...request, openai: { timeoutMs: 300_001 } }), /bounded range/);
+  assert.equal(bodies.length, 2, "invalid timeouts cannot reach a provider");
+});

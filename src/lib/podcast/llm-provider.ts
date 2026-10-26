@@ -22,6 +22,12 @@ export interface GenerationRequest {
 interface JsonGenerationRequest extends GenerationRequest {
   schemaName: string;
   schema: Record<string, unknown>;
+  /** Per-call JSON controls; omitted keeps the existing provider defaults. */
+  openai?: {
+    reasoningEffort?: 'low' | 'medium' | 'high';
+    verbosity?: 'low' | 'medium' | 'high';
+    timeoutMs?: number;
+  };
 }
 
 export interface GenerationResult {
@@ -88,8 +94,9 @@ function providerErrorMessage(
   }`;
 }
 
-function providerSignal(signal?: AbortSignal): AbortSignal {
-  const timeout = AbortSignal.timeout(PROVIDER_TIMEOUT_MS);
+function providerSignal(signal?: AbortSignal, timeoutMs=PROVIDER_TIMEOUT_MS): AbortSignal {
+  if(!Number.isInteger(timeoutMs)||timeoutMs<1000||timeoutMs>300_000)throw new Error("Provider timeout outside bounded range");
+  const timeout = AbortSignal.timeout(timeoutMs);
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
@@ -327,9 +334,9 @@ async function generateOpenAiJson(
       model: configuredModel(request.model),
       instructions: request.instructions,
       input: request.input,
-      reasoning: { effort: "low" },
+      reasoning: { effort: request.openai?.reasoningEffort ?? "low" },
       text: {
-        verbosity: "low",
+        verbosity: request.openai?.verbosity ?? "low",
         format: {
           type: "json_schema",
           name: request.schemaName,
@@ -340,7 +347,7 @@ async function generateOpenAiJson(
       max_output_tokens: request.maxOutputTokens ?? 4_000,
       store: false,
     }),
-    signal: providerSignal(request.signal),
+    signal: providerSignal(request.signal,request.openai?.timeoutMs),
   });
   const payload = await parseJson(response);
 

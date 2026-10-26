@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {reviewFixture,scriptReviewFixture} from './fixtures';
 import {compileEditorialPassage,scoredNarration,scriptReviewIsCurrent,validateScriptReview,SCRIPT_REVIEW_CHECKS} from '../../src/lib/tg/script-review';
 import {dailyGreeting,withDailyGreeting,scriptDigest} from '../../src/lib/tg/editorial';
@@ -7,6 +8,8 @@ import {produceTg,type TgProductionPorts} from '../../src/lib/tg/pipeline';
 import {freshnessFixture} from './freshness-fixture';
 import {tgSpeechPlan} from '../../src/lib/tg/speech-plan';
 import {reviewEditionScript} from '../../src/lib/tg/agents';
+import {DAILY_TIMELINE_POLICY} from '../../src/lib/tg/freshness';
+import {DAILY_NARRATIVE_POLICY,DAILY_NARRATIVE_REVIEW,DAILY_REVIEW_GENERATION} from '../../src/lib/tg/narrative-policy';
 import type {TgJob,TgManifest,TgScript} from '../../src/lib/tg/types';
 
 const now=new Date('2026-10-24T07:00:00Z');
@@ -73,9 +76,45 @@ test('real B adapter sees complete narration and score, without checker A conclu
  const j=reviewFixture(now);let calls=0;
  t.mock.method(globalThis,'fetch',async(_url:Parameters<typeof fetch>[0],init?:RequestInit)=>{
   calls++;const request=JSON.parse(String(init?.body));assert.equal(request.text.format.name,'tg_script_review_b');assert.equal(request.store,false);
+  assert.equal(request.reasoning.effort,'medium');assert.equal(request.text.verbosity,'low');
+  assert.ok(request.instructions.includes(DAILY_TIMELINE_POLICY));
+  assert.ok(request.input.includes(JSON.stringify(dailyGreeting(j.product.language,j.date,j.product.productionStandard==='cdaily-v1'?'reviewed':undefined))));
+  assert.match(request.input,/do not demand a numeric date, year or weekday/);
   assert.ok(request.input.includes(scoredNarration(j.script!).narrationText.split('\n')[0]));assert.ok(request.input.includes('<mood:attention'));assert.ok(request.instructions.includes('independent editor B'));
   return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(judgement(j.script!))}]}]});
  });
  try{const result=await reviewEditionScript(j.product,j.date,j.research!,j.script!,{data:[],sources:j.audit!.sources.length?j.audit!.sources:j.research!.sources.map(s=>({url:s.url,title:s.title})),webByStory:{}},new AbortController().signal,now);assert.equal(result.passed,true);assert.equal(calls,1);assert.equal(scriptReviewIsCurrent({...j,scriptReview:result},now),true);}
  finally{for(const k of Object.keys(original) as (keyof typeof original)[]){if(original[k]===undefined)delete process.env[k];else process.env[k]=original[k];}}
+});
+
+
+test('factual support cannot compensate for rejected narrative form or edition coherence, including manual review',async()=>{
+ for(const kind of ['content','form','coherence'] as const){
+  const h=harness();
+  h.j.product.textReviewMode='manual';h.j.editorialRepairs=1;
+  h.ports.reviewScript=async(r,s)=>{
+   h.calls.push('B');const verdict=judgement(s);
+   if(kind==='coherence')verdict.checks.coherence=false;
+   else verdict.clauses.sentence_2[kind]=false;
+   verdict.clauses.sentence_2.reason=kind==='content'?'Questa affermazione non è sostenuta dalle prove.':'La conclusione ripete il fatto iniziale senza aggiungere contesto.';
+   return validateScriptReview(verdict,h.j.product,h.j.date,r,s,'mock-editor-B',now);
+  };
+  await produceTg(h.j,'[]',h.ports);
+  assert.deepEqual(h.calls,['A','B']);
+  assert.equal(h.saved.at(-1)?.scriptReview?.passed,false);
+  assert.ok(h.saved.at(-1)?.issues?.length);
+  assert.equal(h.saved.some(s=>s.textApproval!==undefined),false);
+ }
+});
+
+test('a verdict created before the stronger narrative criteria requires a fresh B without changing the report schema',()=>{
+ const j=reviewFixture(now),score=scoredNarration(j.script!);
+ // The exact pre-revision digest, not an arbitrary corrupted hash.
+ const previousDigest=createHash('sha256').update(JSON.stringify({version:1,product:j.product,date:j.date,research:j.research,script:scriptDigest(j.script!),narrationText:score.narrationText,scoreMarkup:score.scoreMarkup})).digest('hex');
+ const old={...j,scriptReview:{...j.scriptReview!,inputSha256:previousDigest}};
+ assert.equal(scriptReviewIsCurrent(old,now),false);
+ assert.equal(scriptReviewIsCurrent(j,now),true);
+ assert.deepEqual(Object.keys(old.scriptReview).sort(),Object.keys(j.scriptReview!).sort());
+ const beforeTemporalPolicy=createHash('sha256').update(JSON.stringify({version:1,narrativePolicy:DAILY_NARRATIVE_POLICY,narrativeReview:DAILY_NARRATIVE_REVIEW,reviewGeneration:DAILY_REVIEW_GENERATION,product:j.product,date:j.date,research:j.research,script:scriptDigest(j.script!),narrationText:score.narrationText,scoreMarkup:score.scoreMarkup})).digest('hex');
+ assert.equal(scriptReviewIsCurrent({...j,scriptReview:{...j.scriptReview!,inputSha256:beforeTemporalPolicy}},now),false);
 });
