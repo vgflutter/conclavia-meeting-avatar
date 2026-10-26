@@ -41,10 +41,13 @@ export interface TgPublishedEdition {
 export interface TgFreshnessCheck {
   storyId:string;status:'new'|'update'|'duplicate'|'stale'|'unverifiable';development:string;eventDate:string;evidence:string;
   sourceIds:string[];webUrls:string[];previousStoryKeys:string[];
+  /** Additive detail on new reports; historical reports remain readable. */
+  latest?:{status:'current'|'superseded'|'unverifiable';evidence:string;webUrls:string[];supersededText:string;replacementText:string};
 }
 export interface TgFreshnessReview {
   version:1;checkedAt:string;researchSha256:string;scriptSha256:string;historySha256:string;windowStart:string;
   previousStoryKeys:string[];checks:TgFreshnessCheck[];issues:string[];passed:boolean;
+  evidenceCheckedAt?:string;
 }
 export interface TgAudit { freshness?:TgFreshnessReview; scriptSha256: string; passed: boolean; issues: string[]; checkedFacts: number; checkedAt: string; evidence: string; sources: { url: string; title: string }[]; checks?: TgAuditCheck[]; webSourceUrls?:string[] }
 export interface TgScriptReview {
@@ -52,6 +55,8 @@ export interface TgScriptReview {
   narrationText:string;scoreMarkup:string;
   checks:Record<'coherence'|'impartiality'|'opening'|'closing'|'coverage',boolean>;
   clauses:{index:number;content:boolean;form:boolean;delivery:boolean;reason:string}[];
+  /** Required for new verdicts; absent on preserved historical reports. */
+  quality?:Record<'naturalness'|'nonRedundancy'|'contextRelevance'|'informationValue',{passed:boolean;reason:string;clauseIndices:number[]}>;
 }
 export interface TgAsset { name: 'landscape.mp4' | 'portrait.mp4' | 'audio.mp3' | 'captions.vtt' | 'manifest.json'; bytes: number; sha256: string; duration?: number }
 export interface TgPublicationPlan { platforms: TgPlatform[]; scheduledAt: string }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {reviewFixture,scriptReviewFixture} from './fixtures';
+import {reviewFixture,scriptReviewFixture,qualityFixture} from './fixtures';
 import {compileEditorialPassage,scoredNarration,scriptReviewIsCurrent,validateScriptReview,SCRIPT_REVIEW_CHECKS} from '../../src/lib/tg/script-review';
 import {dailyGreeting,withDailyGreeting,scriptDigest} from '../../src/lib/tg/editorial';
 import {produceTg,type TgProductionPorts} from '../../src/lib/tg/pipeline';
@@ -13,7 +13,7 @@ import {DAILY_NARRATIVE_POLICY,DAILY_NARRATIVE_REVIEW,DAILY_REVIEW_GENERATION,DA
 import type {TgJob,TgManifest,TgScript} from '../../src/lib/tg/types';
 
 const now=new Date('2026-10-24T07:00:00Z');
-const judgement=(script:TgScript)=>({issues:[],checks:Object.fromEntries(SCRIPT_REVIEW_CHECKS.map(k=>[k,true])),clauses:Object.fromEntries(script.sentences.map((_,i)=>[`sentence_${i}`,{content:true,form:true,delivery:true,reason:'Frase verificata nel contesto sintetico del test.'}]))});
+const judgement=(script:TgScript)=>({issues:[],quality:qualityFixture(),checks:Object.fromEntries(SCRIPT_REVIEW_CHECKS.map(k=>[k,true])),clauses:Object.fromEntries(script.sentences.map((_,i)=>[`sentence_${i}`,{content:true,form:true,delivery:true,reason:'Frase verificata nel contesto sintetico del test.'}]))});
 test('the edition date is spoken in its language and never follows render time; dated greeting rewrites stay singular',()=>{
  assert.equal(dailyGreeting('it','2026-10-24'),'Ciao, questo è Conclavia Daily. Oggi è il ventiquattro ottobre.');
  assert.equal(dailyGreeting('en','2026-10-24'),'Hi, this is Conclavia Daily. Today is October 24.');
@@ -135,4 +135,28 @@ test('a verdict created before the stronger narrative criteria requires a fresh 
  assert.deepEqual(Object.keys(old.scriptReview).sort(),Object.keys(j.scriptReview!).sort());
  const beforeTemporalPolicy=createHash('sha256').update(JSON.stringify({version:1,narrativePolicy:DAILY_NARRATIVE_POLICY,narrativeReview:DAILY_NARRATIVE_REVIEW,reviewGeneration:DAILY_REVIEW_GENERATION,product:j.product,date:j.date,research:j.research,script:scriptDigest(j.script!),narrationText:score.narrationText,scoreMarkup:score.scoreMarkup})).digest('hex');
  assert.equal(scriptReviewIsCurrent({...j,scriptReview:{...j.scriptReview!,inputSha256:beforeTemporalPolicy}},now),false);
+});
+
+for(const key of ['naturalness','nonRedundancy','contextRelevance','informationValue'] as const)test(`explicit B subcheck ${key} blocks despite positive global/clause verdicts`,async()=>{
+ const h=harness();h.j.editorialRepairs=1;h.j.product.textReviewMode='manual';
+ h.ports.reviewScript=async(r,s)=>{
+  h.calls.push('B');const raw=judgement(s);
+  raw.quality[key]={passed:false,reason:'Il confronto dei passaggi mostra un difetto sostanziale da correggere.',clauseIndices:key==='nonRedundancy'?[1,2]:[1]};
+  return validateScriptReview(raw,h.j.product,h.j.date,r,s,'fixture/B',now);
+ };
+ await produceTg(h.j,'[]',h.ports);
+ assert.deepEqual(h.calls,['A','B']);assert.equal(h.saved.at(-1)?.scriptReview?.passed,false);
+ assert.ok(h.saved.at(-1)?.issues?.some(x=>x.includes(key)));
+ assert.equal(h.saved.some(x=>x.manifest||x.textApproval),false);
+});
+test('new B reports require all four justified subchecks and valid repetition references',()=>{
+ const j=reviewFixture(now),raw=judgement(j.script!);
+ const missing=structuredClone(raw) as {quality?:unknown};delete missing.quality;
+ assert.throws(()=>validateScriptReview(missing,j.product,j.date,j.research!,j.script!,'fixture',now),/qualitative incomplete/);
+ for(const refs of [[],[1,1],[1,999]]){
+  const bad=structuredClone(raw);bad.quality.nonRedundancy={passed:false,reason:'Le due frasi ripetono la stessa informazione con parole differenti.',clauseIndices:refs};
+  assert.throws(()=>validateScriptReview(bad,j.product,j.date,j.research!,j.script!,'fixture',now),/nonRedundancy incompleta/);
+ }
+ const legacy=structuredClone(j);delete legacy.scriptReview!.quality;
+ assert.equal(scriptReviewIsCurrent(legacy,now),false);
 });

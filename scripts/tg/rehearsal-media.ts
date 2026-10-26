@@ -53,9 +53,9 @@ async function main(){
  const model=JSON.parse(await readFile(path.join(directory,'review-model.json'),'utf8'));process.env.PODCAST_OPENAI_MODEL=model.model;
  await connectToDatabase();const history=await loadPublishedHistory(job.edition,date,new Date());
  const lookup=evidenceMemo(),cache=new Map<string,Promise<Awaited<ReturnType<typeof retrieveAuditEvidence>>>>(),signal=AbortSignal.timeout(45*60000);
- const evidence=(r:TgResearch,s:TgScript)=>{
+ const evidence=(r:TgResearch,s:TgScript,verify=false)=>{
   const key=createHash('sha256').update(JSON.stringify({r,s,bucket:Math.floor(Date.now()/1800000)})).digest('hex');
-  if(!cache.has(key))cache.set(key,retrieveAuditEvidence(r,s,signal,lookup));return cache.get(key)!;
+  if(verify||!cache.has(key))cache.set(key,retrieveAuditEvidence(r,s,signal,verify?undefined:lookup,verify?'verification':'research'));return cache.get(key)!;
  };
  let renderer:Awaited<ReturnType<typeof macRenderServer>>|undefined;
  try{
@@ -63,7 +63,7 @@ async function main(){
    maximumEditorialRepairs:12,
    research:async()=>{throw Error('La prova deve avere una scaletta già verificata');},
    write:(r,feedback)=>writeEdition(job.product,r,signal,feedback,date),
-   audit:async(r,s)=>{phase='audit-A';return judgeEdition(job.product,r,s,await evidence(r,s),signal,history);},
+   audit:async(r,s)=>{phase='audit-A';return judgeEdition(job.product,r,s,await evidence(r,s,true),signal,history);},
    reviewScript:async(r,s)=>{phase='review-B';return reviewEditionScript(job.product,date,r,s,await evidence(r,s),signal);},
    editorialReady:async draft=>{await saveEditionTexts(draft);},
    voiceConfigurationSha256:()=>alex2ConfigDigest(alex2Config()),

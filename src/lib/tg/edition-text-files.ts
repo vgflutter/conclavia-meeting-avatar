@@ -2,6 +2,7 @@ import { mkdir, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { jobDirectory } from './artifacts';
 import { editionTexts } from './edition-texts';
+import {SCRIPT_QUALITY_CHECKS,SCRIPT_QUALITY_LABELS} from './script-quality';
 import type { TgJob } from './types';
 
 export function editionTextFiles(job:TgJob){
@@ -12,7 +13,7 @@ export function editionTextFiles(job:TgJob){
     `Job: ${job.id}. Hash copione: ${pack.scriptSha256}.`,
     `Cutoff raccolta: ${job.research?.collectedAt??'non disponibile'}. Stile: avatar-refined-presence-20261023 / dailyVideoIdentity. Voce richiesta: Alex 2 - daily.`,
     `Controlli A/B: ${job.audit?.passed?'A positivo':'A non positivo'} / ${job.scriptReview?.passed?'B positivo':'B non positivo'}.`,'',
-    pack.markdown,'## Regia per clausola','',
+    pack.markdown,'## B — valutazioni qualitative','',...SCRIPT_QUALITY_CHECKS.map(k=>{const q=job.scriptReview?.quality?.[k];return `- ${SCRIPT_QUALITY_LABELS[k]}: ${q?q.passed?'positiva':'NEGATIVA':'non registrata'} — ${q?.reason??'rapporto storico incompleto'}${q?.clauseIndices.length?` (frasi ${q.clauseIndices.map(i=>i+1).join(', ')})`:''}`;}),'','## A — ultimi aggiornamenti','',`Ricerca aggiornata: ${job.audit?.freshness?.evidenceCheckedAt??'non registrata'}.`,...job.audit?.freshness?.checks.map(c=>`- ${c.storyId}: ${c.latest?.status??'non verificato'} — ${c.latest?.evidence??'confronto assente'}`)??[],'','## Regia per clausola','',
     ...job.script!.sentences.map((s,i)=>`${i+1}. ${s.storyId} · ${s.mood} ${s.intensity} · ${s.intent??'quiet'}${s.gestureWord?` · accento: ${s.gestureWord}`:''}`),'',
     '## Scelte e sviluppo nuovo','',...job.research!.stories.filter(s=>spoken.has(s.id)).flatMap(s=>[
       `### ${s.headline}`,`Sviluppo: ${s.changedSinceYesterday}`,`Rilevanza: ${s.whyItMatters}`,`Incertezza: ${s.uncertainty||'non indicata'}`,'']),

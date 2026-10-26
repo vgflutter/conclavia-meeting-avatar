@@ -59,9 +59,9 @@ async function tick() {
       const previous = await loadPublishedHistory(run.edition,run.date,new Date());
       const storyEvidence=evidenceMemo();
       let evidence:{value:Awaited<ReturnType<typeof retrieveAuditEvidence>>;at:number;key:string}|undefined;
-      const getEvidence=async(r:Parameters<typeof judgeEdition>[1],s:Parameters<typeof judgeEdition>[2])=>{
+      const getEvidence=async(r:Parameters<typeof judgeEdition>[1],s:Parameters<typeof judgeEdition>[2],verify=false)=>{
         const key=scriptReviewInputDigest(run.product,run.date,r,s);
-        if(!evidence||evidence.key!==key||Date.now()-evidence.at>30*60000)evidence={key,value:await retrieveAuditEvidence(r,s,signal,storyEvidence),at:Date.now()};
+        if(verify||!evidence||evidence.key!==key||Date.now()-evidence.at>30*60000)evidence={key,value:await retrieveAuditEvidence(r,s,signal,verify?undefined:storyEvidence,verify?'verification':'research'),at:Date.now()};
         return evidence.value;
       };
       const requireApprovedVoice=()=>{if(requiresApprovedDaily){if(tgSpeechPlan(run.product).provider!=='elevenlabs')throw new TgEditorialError('Identità Alex 2 richiesta: nessuna sostituzione della voce approvata');alex2Config();}};
@@ -70,7 +70,7 @@ async function tick() {
         editorialReady:async job=>{await saveEditionTexts(job);},
         research: prior => researchAndCorroborateEdition(run.product, now, prior, signal,storyEvidence,{initial:run.coverageRecovery,deadline:new Date(slot.closesAt),save:(coverageRecovery,detail)=>checkpoint(id,owner,'researching',{coverageRecovery},detail)}),
         write: (r, correction) => writeEdition(run.product, r, signal, correction,run.date),
-        audit: async (r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s),signal,previous),
+        audit: async (r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s,true),signal,previous),
         reviewScript:async(r,s)=>reviewEditionScript(run.product,run.date,r,s,await getEvidence(r,s),signal),
         voiceConfigurationSha256:()=>alex2ConfigDigest(alex2Config()),
         voice: async (r, s) => {

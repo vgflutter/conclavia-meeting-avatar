@@ -3,10 +3,11 @@ import { TG_PRODUCTS } from '../../src/lib/tg/config';
 import { scriptDigest } from '../../src/lib/tg/editorial';
 import { createEditorialApproval } from '../../src/lib/tg/review';
 import { TG_REVIEW_CHECKS } from '../../src/lib/tg/presentation';
-import {validateScriptReview,SCRIPT_REVIEW_CHECKS} from '../../src/lib/tg/script-review';
+import {validateScriptReview,SCRIPT_REVIEW_CHECKS,SCRIPT_QUALITY_CHECKS} from '../../src/lib/tg/script-review';
 import type { TgJob, TgAsset, TgProduct, TgResearch, TgScript } from '../../src/lib/tg/types';
+export const qualityFixture=()=>Object.fromEntries(SCRIPT_QUALITY_CHECKS.map(k=>[k,{passed:true,reason:'Valutazione sintetica esplicita delle clausole di prova.',clauseIndices:[] as number[]}]));
 export function scriptReviewFixture(product:TgProduct,date:string,research:TgResearch,script:TgScript,now=new Date()){
-  return validateScriptReview({issues:[],checks:Object.fromEntries(SCRIPT_REVIEW_CHECKS.map(k=>[k,true])),clauses:Object.fromEntries(script.sentences.map((_,i)=>[`sentence_${i}`,{content:true,form:true,delivery:true,reason:'Revisione sintetica esplicita del materiale di test.'}]))},product,date,research,script,'fixture/editor-B',now);
+  return validateScriptReview({issues:[],quality:qualityFixture(),checks:Object.fromEntries(SCRIPT_REVIEW_CHECKS.map(k=>[k,true])),clauses:Object.fromEntries(script.sentences.map((_,i)=>[`sentence_${i}`,{content:true,form:true,delivery:true,reason:'Revisione sintetica esplicita del materiale di test.'}]))},product,date,research,script,'fixture/editor-B',now);
 }
 export function reviewFixture(now=new Date()):TgJob{
   const script={title:'Una giornata di notizie spiegate',description:'Tre aggiornamenti con fonti verificabili.',sentences:Array.from({length:9},(_,i)=>({text:`Aggiornamento verificato numero ${i+1}.`,speaker:0 as const,mood:'attention' as const,intensity:.3,storyId:`story-${i%3}`,sourceIds:[`source-${i%3}`]}))};

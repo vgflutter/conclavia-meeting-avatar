@@ -1,4 +1,7 @@
 import {createHash} from 'node:crypto';
+import {scriptDigest} from './editorial';
+import {researchDigest} from './freshness';
+import type {TgResearch,TgScript} from './types';
 
 export interface TgEvidenceStory {
  storyId:string;brief:unknown;sources:{url:string;title:string}[];
@@ -7,6 +10,17 @@ export interface TgEvidenceStory {
 }
 export interface TgAuditEvidence {
  data:TgEvidenceStory[];sources:{url:string;title:string}[];webByStory:Record<string,string[]>;
+ verification?:{version:1;checkedAt:string;researchSha256:string;scriptSha256:string};
+}
+export const VERIFICATION_EVIDENCE_MAX_AGE_MS=5*60_000;
+/** A verification snapshot is issued by fresh retrieval, never by the model. */
+export function verificationEvidenceIsCurrent(value:unknown,research:TgResearch,script:TgScript,now:Date){
+ const e=value as TgAuditEvidence,v=e?.verification,at=Date.parse(v?.checkedAt??'');
+ if(!v||v.version!==1||!Number.isFinite(at)||at>now.getTime()+60_000||now.getTime()-at>VERIFICATION_EVIDENCE_MAX_AGE_MS||v.researchSha256!==researchDigest(research)||v.scriptSha256!==scriptDigest(script)||!Array.isArray(e.data)||e.data.length!==research.stories.length)return false;
+ return research.stories.every(s=>{
+  const matches=e.data.filter(d=>d.storyId===s.id),t=Date.parse(matches[0]?.retrievedAt??'');
+  return matches.length===1&&Number.isFinite(t)&&t>=at&&t<=now.getTime()+60_000&&now.getTime()-t<=VERIFICATION_EVIDENCE_MAX_AGE_MS&&matches[0].sources.length>0;
+ });
 }
 export type EvidenceLookup=(key:string,generate:()=>Promise<TgEvidenceStory>)=>Promise<TgEvidenceStory>;
 export const EVIDENCE_CACHE_WINDOW_MS=30*60_000;

@@ -39,8 +39,8 @@ async function main(){
   await produceTg(job,JSON.stringify(previous),{
    research:prior=>researchEdition(product,now,prior,AbortSignal.timeout(180000)),
    write:(r,correction)=>writeEdition(product,r,AbortSignal.timeout(180000),correction,job.date),
-   audit:async(r,s)=>{if(!evidence||Date.now()-evidence.at>30*60000)evidence={value:await retrieveAuditEvidence(r,s,AbortSignal.timeout(180000)),at:Date.now()};return judgeEdition(product,r,s,evidence.value,AbortSignal.timeout(240000),previous);},
-   reviewScript:async(r,s)=>reviewEditionScript(product,job.date,r,s,await retrieveAuditEvidence(r,s,AbortSignal.timeout(180000)),AbortSignal.timeout(180000)),
+   audit:async(r,s)=>{evidence={value:await retrieveAuditEvidence(r,s,AbortSignal.timeout(180000),undefined,'verification'),at:Date.now()};return judgeEdition(product,r,s,evidence.value,AbortSignal.timeout(240000),previous);},
+   reviewScript:async(r,s)=>reviewEditionScript(product,job.date,r,s,evidence?.value??await retrieveAuditEvidence(r,s,AbortSignal.timeout(180000),undefined,'verification'),AbortSignal.timeout(180000)),
    voice:(r,s)=>synthesize(stageId,product,job.date,r,s,AbortSignal.timeout(600000)),
    render:m=>renderMedia(stageId,m,AbortSignal.timeout(900000)),
    checkpoint:async(state,data,detail)=>{

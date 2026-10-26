@@ -58,6 +58,7 @@ export function freshnessSchema(research:TgResearch,history:TgPublishedEdition[]
   return object({checks:object(Object.fromEntries(research.stories.map(story=>[story.id,object({
     status:{type:'string',enum:prior.length?['new','update','duplicate','stale','unverifiable']:['new','duplicate','stale','unverifiable']},
     development:{type:'string',maxLength:700},eventDate:{type:'string',maxLength:10},evidence:{type:'string',maxLength:1000},
+    latest:object({status:{type:'string',enum:['current','superseded','unverifiable']},evidence:{type:'string',minLength:20,maxLength:1000},webUrls:{type:'array',minItems:1,maxItems:4,items:webByStory[story.id]?.length?{type:'string',enum:webByStory[story.id]}:str},supersededText:{type:'string',maxLength:1000},replacementText:{type:'string',maxLength:1000}}),
     sourcePair:{anyOf:story.sourceIds.flatMap(first=>{
       const a=research.sources.find(s=>s.id===first);
       const second=story.sourceIds.filter(id=>research.sources.find(s=>s.id===id)?.independentGroup!==a?.independentGroup);
@@ -73,6 +74,7 @@ function checkIssues(checks:TgFreshnessCheck[],research:TgResearch,now:Date,star
   if(checks.length!==research.stories.length||new Set(checks.map(c=>c.storyId)).size!==checks.length)issues.push('Il controllo di attualità non copre tutte le storie');
   for(const story of research.stories){
     const c=checks.find(c=>c.storyId===story.id);
+    if(!c?.latest||c.latest.status!=='current')issues.push(`${story.id}: dati aggiornati ${c?.latest?.status??'non verificati'} — ${c?.latest?.evidence??'manca il confronto con gli aggiornamenti più recenti'}`);
     if(!c||!['new','update'].includes(c.status)){issues.push(`${story.id}: ${c?.status??'controllo mancante'} — ${c?.evidence??'attualità e novità non provate'}`);continue;}
     const ids=c.sourceIds,sources=research.sources.filter(s=>ids.includes(s.id));
     if(c.development.trim().length<20||c.evidence.trim().length<20)issues.push(`${story.id}: manca la spiegazione verificata del fatto nuovo`);
@@ -84,26 +86,32 @@ function checkIssues(checks:TgFreshnessCheck[],research:TgResearch,now:Date,star
   return issues;
 }
 /** Model verdicts never select their own clock, archive or source catalog. */
-export function validateFreshness(value:unknown,research:TgResearch,script:TgScript,history:TgPublishedEdition[],webByStory:Record<string,string[]>,now:Date):TgFreshnessReview {
+export function validateFreshness(value:unknown,research:TgResearch,script:TgScript,history:TgPublishedEdition[],webByStory:Record<string,string[]>,now:Date,evidenceCheckedAt=now.toISOString()):TgFreshnessReview {
   const raw=value as {checks?:Record<string,Omit<TgFreshnessCheck,'storyId'>>};
   if(!raw?.checks||typeof raw.checks!=='object'||Object.keys(raw.checks).length!==research.stories.length)throw new TgEditorialError('Verifica di attualità incompleta');
   const checks=research.stories.map(story=>{
     const c=raw.checks![story.id];
     const pair=(c as typeof c&{sourcePair?:{first:string;second:string}})?.sourcePair;
     if(pair)c.sourceIds=[...new Set([pair.first,pair.second,...(Array.isArray(c.sourceIds)?c.sourceIds:[])])];
+    const latest=c?.latest;
+    if(!latest||!['current','superseded','unverifiable'].includes(latest.status)||typeof latest.evidence!=='string'||latest.evidence.trim().length<20||latest.evidence.length>1000||!Array.isArray(latest.webUrls)||!latest.webUrls.length||latest.webUrls.length>4||latest.webUrls.some(url=>!webByStory[story.id]?.includes(url))||typeof latest.supersededText!=='string'||latest.supersededText.length>1000||typeof latest.replacementText!=='string'||latest.replacementText.length>1000||latest.status==='superseded'&&(!latest.supersededText.trim()||!latest.replacementText.trim()))throw new TgEditorialError(`Confronto con gli aggiornamenti incompleto: ${story.id}`);
     if(!c||!['new','update','duplicate','stale','unverifiable'].includes(c.status)||typeof c.eventDate!=='string'||typeof c.development!=='string'||typeof c.evidence!=='string'||c.development.length>700||c.evidence.length>1000||!Array.isArray(c.sourceIds)||c.sourceIds.length>8||c.sourceIds.some(id=>typeof id!=='string')||!Array.isArray(c.webUrls)||c.webUrls.length>4||c.webUrls.some(url=>!webByStory[story.id]?.includes(url))||!Array.isArray(c.previousStoryKeys)||c.previousStoryKeys.length>28||c.previousStoryKeys.some(key=>typeof key!=='string'))throw new TgEditorialError(`Verifica di attualità incompleta: ${story.id}`);
     return {...c,storyId:story.id};
   });
   const start=newsWindowStart(now,history),previousKeys=history.flatMap(edition=>edition.stories.map(story=>story.key));
   const issues=[...sourceIssues(research,now,history),...checkIssues(checks,research,now,start,previousKeys)];
+  const evidenceAt=Date.parse(evidenceCheckedAt);
+  if(!Number.isFinite(evidenceAt)||evidenceAt>now.getTime()+60_000||now.getTime()-evidenceAt>5*60_000)issues.push('Ricerca degli aggiornamenti non contemporanea alla verifica');
   for(const c of checks)for(const edition of history)for(const old of edition.stories){
     if(normalize(c.development)===normalize(old.development??'')||old.claims.some(claim=>normalize(claim)===normalize(c.development)))issues.push(`${c.storyId}: lo sviluppo dichiarato è già nell’archivio pubblicato`);
   }
-  return {version:1,checkedAt:now.toISOString(),researchSha256:researchDigest(research),scriptSha256:scriptDigest(script),historySha256:historyDigest(history),windowStart:new Date(start).toISOString(),previousStoryKeys:previousKeys,checks,issues,passed:!issues.length};
+  return {version:1,checkedAt:now.toISOString(),evidenceCheckedAt,researchSha256:researchDigest(research),scriptSha256:scriptDigest(script),historySha256:historyDigest(history),windowStart:new Date(start).toISOString(),previousStoryKeys:previousKeys,checks,issues,passed:!issues.length};
 }
 export function freshnessIsCurrent(job:Pick<TgJob,'research'|'script'|'audit'>,now=new Date(),history?:TgPublishedEdition[]) {
   try {
   const f=job.audit?.freshness,at=Date.parse(f?.checkedAt??''),start=Date.parse(f?.windowStart??'');
+  const evidenceAt=Date.parse(f?.evidenceCheckedAt??'');
+  if(!Number.isFinite(evidenceAt)||evidenceAt>at+60_000||at-evidenceAt>5*60_000)return false;
   if(!job.research||!job.script||!f||f.version!==1||!f.passed||f.issues.length||!Number.isFinite(at)||at>now.getTime()+60000||now.getTime()-at>=FRESHNESS_MAX_AGE_MS||!Number.isFinite(start)||start<at-NEWS_WINDOW_MS||start>at||f.researchSha256!==researchDigest(job.research)||f.scriptSha256!==scriptDigest(job.script)||history&&f.historySha256!==historyDigest(history))return false;
   const effectiveStart=Math.max(start,now.getTime()-NEWS_WINDOW_MS);
   return !sourceIssues(job.research,now,history??[]).length&&!checkIssues(f.checks,job.research,now,effectiveStart,f.previousStoryKeys).length;

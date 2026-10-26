@@ -54,7 +54,7 @@ export const TG_SEARCH_DOMAINS = ['ilfattoquotidiano.it','today.it','ilmanifesto
  'agi.it','ilsole24ore.com','repubblica.it','tgcom24.mediaset.it','open.online','governo.it',
  'mef.gov.it','inps.it','cgiamestre.com',
  // Primary evidence endpoints, not additional wire/publisher independence.
- 'gazzettaufficiale.it','tse.jus.br','formula1.com','esmo.org','nejm.org','dana-farber.org',
+ 'gazzettaufficiale.it','srbija.gov.rs','tse.jus.br','formula1.com','esmo.org','nejm.org','dana-farber.org',
  'romacinemafest.it','fidal.it','european-athletics.com','swiss-athletics.ch'];
 const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: false, processEntities: false });
 export function plain(value: unknown, max = 800): string {

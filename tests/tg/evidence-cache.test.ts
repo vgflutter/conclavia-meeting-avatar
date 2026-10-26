@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {evidenceLookupKey,evidenceMemo,type TgEvidenceStory} from '../../src/lib/tg/evidence-cache';
+import {evidenceLookupKey,evidenceMemo,verificationEvidenceIsCurrent,type TgEvidenceStory} from '../../src/lib/tg/evidence-cache';
 import {retrieveAuditEvidence} from '../../src/lib/tg/agents';
 import {editorialFixture} from './editorial-fixture';
 const now=new Date('2026-10-25T08:01:00Z');
@@ -39,4 +39,24 @@ test('the retrieval adapter searches only the changed story and never returns an
   t.mock.timers.tick(30*60000);
   await retrieveAuditEvidence(j.research!,revised,new AbortController().signal,lookup);assert.equal(calls,11);
  }finally{for(const k of Object.keys(saved) as (keyof typeof saved)[]){if(saved[k]===undefined)delete process.env[k];else process.env[k]=saved[k];}}
+});
+
+test('verification searches bypass a warm research cache and bind fresh receipts to the exact script',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:now.getTime()});
+ const env={TG_AI_ENABLED:process.env.TG_AI_ENABLED,OPENAI_API_KEY:process.env.OPENAI_API_KEY};
+ Object.assign(process.env,{TG_AI_ENABLED:'true',OPENAI_API_KEY:'synthetic-regression-key'});
+ const j=editorialFixture(now),lookup=evidenceMemo();let calls=0;
+ t.mock.method(globalThis,'fetch',async(_u:Parameters<typeof fetch>[0],init?:RequestInit)=>{
+  calls++;const request=JSON.parse(String(init?.body));
+  assert.match(request.input,/LATEST available authoritative updates/);
+  return Response.json({status:'completed',output:[{type:'web_search_call',action:{sources:[{url:'https://www.ansa.it/current',title:'Fresh test lookup'}]}},{type:'message',content:[{type:'output_text',text:'The newest original bulletin supersedes earlier projections.'}]}]});
+ });
+ try{
+  await retrieveAuditEvidence(j.research!,j.script!,new AbortController().signal,lookup);assert.equal(calls,5);
+  const fresh=await retrieveAuditEvidence(j.research!,j.script!,new AbortController().signal,lookup,'verification');assert.equal(calls,10);
+  assert.ok(verificationEvidenceIsCurrent(fresh,j.research!,j.script!,now));
+  await retrieveAuditEvidence(j.research!,j.script!,new AbortController().signal,lookup,'verification');assert.equal(calls,15);
+  assert.equal(verificationEvidenceIsCurrent(fresh,j.research!,{...j.script!,description:'Changed summary'},now),false);
+  assert.equal(verificationEvidenceIsCurrent(fresh,j.research!,j.script!,new Date(now.getTime()+6*60000)),false);
+ }finally{for(const k of Object.keys(env) as (keyof typeof env)[]){if(env[k]===undefined)delete process.env[k];else process.env[k]=env[k];}}
 });

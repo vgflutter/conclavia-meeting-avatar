@@ -14,8 +14,8 @@ Le lunghe iterazioni del primo copione erano anche un collaudo del motore. Non v
 | Fonti, parsing RSS, URL, date, editori e bilanciamento | Codice locale; le notizie vengono raccolte di nuovo. Il catalogo attuale ha 25 feed, 18 italiani, 11 gruppi italiani dichiarati. |
 | Archivio del pubblicato | Lettura persistente; supporta il confronto. Un archivio non disponibile non equivale ad archivio vuoto. |
 | Selezione, contesto, scrittura e sintesi social | Ragionamento AI sui dati; una stesura produce copione, score e sintesi insieme. |
-| Prove web della singola notizia | Riutilizzabili solo per stessa query, fonti, modello e regole nella finestra corrente, al massimo 30 minuti. |
-| A: attualità e verifica dei fatti | Giudizio aggiornato, target esaustivi; ogni gruppo riceve prove pertinenti e l’intero parlato come contesto. |
+| Prove web della singola notizia | Nella raccolta: riutilizzabili per stessa query, fonti, modello e regole, al massimo 30 minuti. La verifica A forza invece nuove ricerche. |
+| A: attualità e verifica dei fatti | Recupero aggiornato, confronto esplicito con gli ultimi snapshot autorevoli e target esaustivi; ogni gruppo riceve prove pertinenti e l’intero parlato come contesto. |
 | B: contenuto, forma e regia | Chiamata distinta sull’intera edizione; non riceve il verdetto A. |
 | Formattazione, score, scaletta, testo condivisibile, hash e dossier | Compilazione locale dai dati verificati; nessun modello aggiuntivo. |
 | OK manuale | Configurabile: `manual` attende l’utente; `ai` conserva A/B e prosegue. |
@@ -27,6 +27,8 @@ Si riusano struttura, funzioni e contesto verificato; il corpo delle notizie dev
 **Contesto locale breve.** `npm run daily:context` genera un handoff datato di circa 2.500 caratteri, senza leggere la chat, caricare `.env.local` o chiamare rete/database/provider. Include un fingerprint delle regole; il file è un’anteprima, non un’approvazione editoriale o una prova dello stato del Mac.
 
 **Cache per notizia.** La chiave include l’ID, le esatte frasi da verificare, candidati e prove disponibili, domanda di ricerca, modello, policy, domini e finestra temporale. Correggere una notizia non invalida automaticamente le altre. Il worker condivide risultati e richieste in corso nello stesso job; il laboratorio li conserva privatamente su disco. I dati mantengono il momento originale del recupero. La scadenza della finestra, un cambiamento rilevante o un modello diverso producono una nuova chiave. Nessun riuso automatico il giorno dopo.
+
+**Eccezione obbligatoria per A dal 26 ottobre.** Il riuso di cui sopra riguarda raccolta e selezione: un nuovo controllo A salta tale cache, cerca aggiornamenti e confronta ogni notizia con il miglior dato autorevole trovato. La ricevuta locale identifica testo, ricerca e recupero entro cinque minuti dall’avvio del giudizio; il cache key dei sottoesiti fattuali include anche questo snapshot. B può riutilizzarlo senza una seconda ricerca e senza vedere il verdetto A. Le scadenze dei rapporti restano quelle già previste. [Verifica e limiti](cdaily-currentness-quality-20261026.md).
 
 **Controllo A per gruppi pertinenti.** I target mantengono gli indici originali e vengono raggruppati per notizia, con massimo sei controlli per richiesta. Ogni gruppo conserva integralmente le proprie prove e le clausole vicine; l’intero copione resta visibile. Titolo, sintesi e bookend conservano il dossier completo. I vecchi brief non strutturati vengono mantenuti interi. Nessun target negativo viene rimosso e il validatore pretende tutti i target. B rimane globale: il risparmio non deve nascondere contraddizioni fra notizie.
 
@@ -49,7 +51,7 @@ Riduzione misurata di quel payload: **61,3%**. È una simulazione offline: esclu
 
 Il report completo viene scritto in `.tg-artifacts/context/AAAA-MM-GG/payload-measurement.json`. Gli artefatti restano privati. I test usano provider simulati e includono un’esecuzione del comando con rete e socket vietati.
 
-La riscrittura automatica può ancora rigenerare l’intero copione. Una futura correzione limitata alle clausole interessate, mantenendo intatte le altre e rifacendo la rilettura globale B, è la prossima ottimizzazione da valutare sui dati reali. La cache attuale risparmia le ricerche delle notizie le cui frasi e prove rimangono identiche; non pretende che due riscritture diverse abbiano lo stesso contenuto.
+La riscrittura automatica può ancora rigenerare l’intero copione. Una futura correzione limitata alle clausole interessate, mantenendo intatte le altre e rifacendo la rilettura globale B, è la prossima ottimizzazione da valutare sui dati reali. La cache della raccolta risparmia ricerche identiche; la verifica A aggiorna comunque le prove, senza presumere che un testo immutato sia ancora corretto.
 
 ## Modello locale: passo successivo da qualificare
 

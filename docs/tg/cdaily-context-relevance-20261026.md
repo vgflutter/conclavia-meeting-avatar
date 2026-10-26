@@ -1,5 +1,7 @@
 # CDaily — pertinenza del contesto, 26 ottobre 2026
 
+**Rapporto storico della revisione 73.** La successiva verifica richiesta dall’utente ha rilevato dati serbi superati e introdotto sottoesiti B espliciti: [ultimo intervento e risultati](cdaily-currentness-quality-20261026.md). I sì descritti qui non approvano una revisione successiva; lo stato corrente è nel dossier dell’edizione.
+
 Ulteriore rifinitura richiesta dall’utente dopo la revisione narrativa. Documento interno: non è un’approvazione o un annuncio di pubblicazione.
 
 ## Regole generali implementate

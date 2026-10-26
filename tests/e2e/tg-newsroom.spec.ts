@@ -33,6 +33,12 @@ test('editorial-ready editions expose current downloadable texts without approvi
   await page.goto(`/podcast/tg/redazione?job=${job.id}`);
   await expect(page.getByRole('tab',{name:/Testi verificati/})).toHaveAttribute('aria-selected','true');
   await expect(page.getByText(/Audio, video e pubblicazione sono rinviati/)).toBeVisible();
+  const second=page.getByTestId('tg-script-review');await second.locator('summary').first().click();
+  const quality=page.getByTestId('tg-quality-review');
+  for(const label of ['Naturalezza del parlato','Ripetizioni informative','Pertinenza del contesto','Contributo informativo'])await expect(quality.getByText(`${label} · superata`,{exact:true})).toBeVisible();
+  const freshness=page.getByTestId('tg-freshness-review');await freshness.locator('summary').click();
+  await expect(page.getByTestId('tg-latest-review')).toHaveCount(job.research!.stories.length);
+  await expect(freshness).toContainText('compatibili con il copione');
   const pack=page.getByTestId('tg-social-pack');await pack.locator('summary').click();
   await expect(pack.getByRole('link',{name:'social-summary.txt ↓'})).toBeVisible();
   const url=`/api/tg/editions/${job.id}/texts?name=social-summary.txt`;

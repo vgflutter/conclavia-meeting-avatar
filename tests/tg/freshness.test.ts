@@ -153,3 +153,14 @@ test('stale cached research and duplicate AI verdicts stop before paid speech or
   assert.equal(states.at(-1),'blocked');assert.equal(calls.includes('write'),false);assert.deepEqual(saved.at(-1)?.assets,[]);
  }
 });
+
+test('fresh events cannot pass if figures or statuses were superseded, and old research cannot masquerade as a new lookup',()=>{
+ const {r,s,web,checks}=context();
+ const newer=structuredClone(checks);
+ newer['story-0'].latest={status:'superseded',evidence:'Il bollettino ufficiale aggiornato sostituisce i dati delle prime proiezioni.',webUrls:web['story-0'],supersededText:'Le prime proiezioni indicano 138.',replacementText:'Il dato più recente verificato è 140, ancora provvisorio.'};
+ const result=validateFreshness({checks:newer},r,s,[],web,now);
+ assert.equal(result.passed,false);assert.ok(result.issues.some(x=>x.includes('superseded')));
+ assert.equal(validateFreshness({checks:structuredClone(checks)},r,s,[],web,now,new Date(now.getTime()-6*60000).toISOString()).passed,false);
+ const missing=structuredClone(checks);delete missing['story-0'].latest;
+ assert.throws(()=>validateFreshness({checks:missing},r,s,[],web,now),/aggiornamenti incompleto/);
+});

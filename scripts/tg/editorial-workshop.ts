@@ -12,7 +12,7 @@ import {requireDailyCoverage,scriptDigest,TgEditorialError,validateResearch,vali
 import {produceTg} from '../../src/lib/tg/pipeline';
 import {saveEditionTexts} from '../../src/lib/tg/edition-text-files';
 import {loadPublishedHistory} from '../../src/lib/tg/history';
-import {scoredNarration} from '../../src/lib/tg/script-review';
+import {scoredNarration,SCRIPT_QUALITY_PROTOCOL} from '../../src/lib/tg/script-review';
 import {verifyScientificReferences} from '../../src/lib/tg/scientific-references';
 import {EVIDENCE_CACHE_WINDOW_MS} from '../../src/lib/tg/evidence-cache';
 import {auditIsCurrent} from '../../src/lib/tg/review';
@@ -31,7 +31,7 @@ const signal=AbortSignal.timeout(40*60000);
 let stage='initializing';
 let reviewModel=process.env.PODCAST_OPENAI_MODEL||process.env.OPENAI_MEETING_MODEL||'gpt-5.4-mini';
 // A policy change cannot reuse a writer or reviewer answer from the old contract.
-const editorialRevision={timeline:DAILY_TIMELINE_POLICY,narrative:DAILY_NARRATIVE_POLICY,review:DAILY_NARRATIVE_REVIEW,writerGeneration:DAILY_WRITER_GENERATION,reviewGeneration:DAILY_REVIEW_GENERATION};
+const editorialRevision={verificationProtocol:'latest-v1',qualityProtocol:SCRIPT_QUALITY_PROTOCOL,timeline:DAILY_TIMELINE_POLICY,narrative:DAILY_NARRATIVE_POLICY,review:DAILY_NARRATIVE_REVIEW,writerGeneration:DAILY_WRITER_GENERATION,reviewGeneration:DAILY_REVIEW_GENERATION};
 async function json<T>(name:string,value?:T):Promise<T>{
  const file=path.join(directory,name+'.json');
  if(value===undefined)return JSON.parse(await readFile(file,'utf8'));
@@ -234,9 +234,9 @@ async function main(){
   await json('session',current);await json('revision-'+current.revision,current);
  }
  const spokenEvidence=new Map<string,Promise<Evidence>>();
- const evidenceForScript=(research:TgResearch,script:TgScript)=>{
+ const evidenceForScript=(research:TgResearch,script:TgScript,verify=false)=>{
   const key=createHash('sha256').update(JSON.stringify({version:9,reviewModel,retrievalModel:process.env.TG_RESEARCH_MODEL||reviewModel,date,research,script,window:Math.floor(Date.now()/EVIDENCE_CACHE_WINDOW_MS)})).digest('hex');
-  if(!spokenEvidence.has(key))spokenEvidence.set(key,retrieve(research,script).then(value=>json('spoken-evidence-v9-'+createHash('sha256').update(JSON.stringify(value)).digest('hex'),value)));
+  if(verify||!spokenEvidence.has(key))spokenEvidence.set(key,(verify?retrieveAuditEvidence(research,script,signal,undefined,'verification'):retrieve(research,script)).then(value=>json('spoken-evidence-v9-'+createHash('sha256').update(JSON.stringify(value)).digest('hex'),value)));
   return spokenEvidence.get(key)!;
  };
  await produceTg(current,JSON.stringify(history),{
@@ -247,7 +247,7 @@ async function main(){
    stage='writing';const key=createHash('sha256').update(JSON.stringify({editorialRevision,research,feedback,date,product})).digest('hex');
    return cached(`writer-${key}`,()=>writeEdition(product,research,signal,feedback,date));
   },
-  audit:async(research,script)=>{stage='audit-A';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:9,editorialRevision,reviewModel,date,product,research,script,evidence:live,history})).digest('hex');return cached('audit-v9-'+digest,()=>judgeEdition(product,research,script,live,signal,history,new Date(),(key,generate)=>cached(`audit-part-v9-${digest}-${key}`,generate)));},
+  audit:async(research,script)=>{stage='audit-A';const live=await evidenceForScript(research,script,true),digest=createHash('sha256').update(JSON.stringify({version:9,editorialRevision,reviewModel,date,product,research,script,evidence:live,history})).digest('hex');return cached('audit-v9-'+digest,()=>judgeEdition(product,research,script,live,signal,history,new Date(),(key,generate)=>cached(`audit-part-v9-${digest}-${key}`,generate)));},
   reviewScript:async(research,script)=>{stage='review-B';const live=await evidenceForScript(research,script),digest=createHash('sha256').update(JSON.stringify({version:9,editorialRevision,reviewModel,date,product,research,script,evidence:live})).digest('hex');return cached('review-v9-'+digest,()=>reviewEditionScript(product,date,research,script,live,signal));},
   editorialReady:async draft=>{await saveEditionTexts(draft);},
   voice:async()=>{throw Error('NO_MEDIA_PORT');},render:async()=>{throw Error('NO_MEDIA_PORT');},

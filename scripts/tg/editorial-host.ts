@@ -59,15 +59,15 @@ async function main(){
   try{
     const previous=await loadPublishedHistory(run.edition,run.date,now);
     let evidence:{key:string;value:Awaited<ReturnType<typeof retrieveAuditEvidence>>}|undefined;
-    const getEvidence=async(r:Parameters<typeof judgeEdition>[1],s:Parameters<typeof judgeEdition>[2])=>{
+    const getEvidence=async(r:Parameters<typeof judgeEdition>[1],s:Parameters<typeof judgeEdition>[2],verify=false)=>{
       const key=scriptReviewInputDigest(run.product,run.date,r,s);
-      if(!evidence||key!==evidence.key)evidence={key,value:await retrieveAuditEvidence(r,s,signal)};
+      if(verify||!evidence||key!==evidence.key)evidence={key,value:await retrieveAuditEvidence(r,s,signal,undefined,verify?'verification':'research')};
       return evidence.value;
     };
     await produceTg(serializeJob(run.toObject()),JSON.stringify(previous),{
       editorialOnly:true,editorialReady:async job=>{await saveEditionTexts(job);},
       research:p=>researchEdition(run.product,now,p,signal),write:(r,c)=>writeEdition(run.product,r,signal,c,run.date),
-      audit:async(r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s),signal,previous),
+      audit:async(r,s)=>judgeEdition(run.product,r,s,await getEvidence(r,s,true),signal,previous),
       reviewScript:async(r,s)=>reviewEditionScript(run.product,run.date,r,s,await getEvidence(r,s),signal),
       voice:async()=>{throw Error('Media disabled');},render:async()=>{throw Error('Media disabled');},
       checkpoint:(state,data,detail)=>checkpoint(id,owner,state,data,detail),
