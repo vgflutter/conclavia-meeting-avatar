@@ -2,6 +2,10 @@
 
 Verificato il 25 ottobre 2026. Questa pagina registra predisposizione e collaudi tecnici, non attesta una puntata futura prodotta o pubblicata.
 
+## Giro effettivo del 26 ottobre
+
+Il timer ha avviato il job `6adef3723a80c1de325ac341`. Dopo correzioni puntuali di cartelli, attribuzioni e riscontri sullo stesso sviluppo, il copione di **855 parole / sei notizie** ha superato entrambi i controlli A/B ed è in `editorial_ready`, revisione 23 al momento della consegna. [Testo completo da approvare](editions/2026-10-26-it-editorial-review.md). Nessuna conferma manuale, voce, video o pubblicazione ancora effettuata. I tentativi del worker restano due; le correzioni e i giudizi precedenti sono conservati nel job e nella diagnostica privata `.tg-artifacts/editorial-recovery/2026-10-26`. Alex 2 è stato verificato in sola lettura con quota sufficiente per il copione; 17 impronte visive corrispondono allo stile approvato. Dopo l’OK sul testo usare il normale passaggio `approve-text`, senza azzerare contatori o creare ricevute implicite.
+
 ## Crediti ripristinati e controllo del servizio
 
 Alle **17:59 UTC del 25 ottobre**, OpenAI aveva risposto **HTTP 429, crediti esauriti** durante il controllo A della prova privata. Dopo la ricarica dichiarata dall’utente, alle **21:00 UTC (22:00 locali)** una richiesta minima al modello editoriale configurato `gpt-5.4` è stata completata correttamente. Ricevuta privata: `.tg-artifacts/provider-health/2026-10-25.json`. Questa verifica conferma il servizio disponibile in quel momento, non il completamento di A/B o dei media né un saldo futuro garantito.
