@@ -9,7 +9,7 @@ import {freshnessFixture} from './freshness-fixture';
 import {tgSpeechPlan} from '../../src/lib/tg/speech-plan';
 import {reviewEditionScript} from '../../src/lib/tg/agents';
 import {DAILY_TIMELINE_POLICY} from '../../src/lib/tg/freshness';
-import {DAILY_NARRATIVE_POLICY,DAILY_NARRATIVE_REVIEW,DAILY_REVIEW_GENERATION} from '../../src/lib/tg/narrative-policy';
+import {DAILY_NARRATIVE_POLICY,DAILY_NARRATIVE_REVIEW,DAILY_REVIEW_GENERATION,DAILY_CONTEXT_POLICY} from '../../src/lib/tg/narrative-policy';
 import type {TgJob,TgManifest,TgScript} from '../../src/lib/tg/types';
 
 const now=new Date('2026-10-24T07:00:00Z');
@@ -78,6 +78,8 @@ test('real B adapter sees complete narration and score, without checker A conclu
   calls++;const request=JSON.parse(String(init?.body));assert.equal(request.text.format.name,'tg_script_review_b');assert.equal(request.store,false);
   assert.equal(request.reasoning.effort,'medium');assert.equal(request.text.verbosity,'low');
   assert.ok(request.instructions.includes(DAILY_TIMELINE_POLICY));
+  assert.ok(request.instructions.includes(DAILY_CONTEXT_POLICY));
+  assert.ok(request.instructions.includes(DAILY_NARRATIVE_REVIEW));
   assert.ok(request.input.includes(JSON.stringify(dailyGreeting(j.product.language,j.date,j.product.productionStandard==='cdaily-v1'?'reviewed':undefined))));
   assert.match(request.input,/do not demand a numeric date, year or weekday/);
   assert.ok(request.input.includes(scoredNarration(j.script!).narrationText.split('\n')[0]));assert.ok(request.input.includes('<mood:attention'));assert.ok(request.instructions.includes('independent editor B'));
@@ -85,6 +87,22 @@ test('real B adapter sees complete narration and score, without checker A conclu
  });
  try{const result=await reviewEditionScript(j.product,j.date,j.research!,j.script!,{data:[],sources:j.audit!.sources.length?j.audit!.sources:j.research!.sources.map(s=>({url:s.url,title:s.title})),webByStory:{}},new AbortController().signal,now);assert.equal(result.passed,true);assert.equal(calls,1);assert.equal(scriptReviewIsCurrent({...j,scriptReview:result},now),true);}
  finally{for(const k of Object.keys(original) as (keyof typeof original)[]){if(original[k]===undefined)delete process.env[k];else process.env[k]=original[k];}}
+});
+
+for(const kind of ['missing-context','irrelevant-context','empty-prose'] as const)test(`B blocks ${kind} through existing fields even when all factual claims pass`,async()=>{
+ const h=harness();h.j.product.textReviewMode='manual';h.j.editorialRepairs=1;
+ h.ports.reviewScript=async(r,s)=>{
+  h.calls.push('B');const verdict=judgement(s);
+  if(kind==='missing-context')verdict.checks.coverage=false;
+  else verdict.clauses.sentence_2.form=false;
+  verdict.clauses.sentence_2.reason=kind==='missing-context'?'Manca il ruolo indispensabile per capire il soggetto della decisione.':kind==='irrelevant-context'?'La spiegazione ovvia occupa il posto del rapporto necessario a capire questo fatto.':'Il passaggio ripete il significato della frase precedente senza funzione narrativa.';
+  return validateScriptReview(verdict,h.j.product,h.j.date,r,s,'mock-editor-B',now);
+ };
+ await produceTg(h.j,'[]',h.ports);
+ assert.deepEqual(h.calls,['A','B']);
+ assert.equal(h.saved.at(-1)?.scriptReview?.passed,false);
+ assert.ok(h.saved.at(-1)?.scriptReview?.clauses.every(c=>c.content));
+ assert.equal(h.saved.some(data=>data.textApproval!==undefined||data.manifest!==undefined),false);
 });
 
 

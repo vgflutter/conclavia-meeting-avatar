@@ -4,7 +4,7 @@ import {writeEdition} from '../../src/lib/tg/agents';
 import {editorialFixture} from './editorial-fixture';
 import {dailyClosing,dailyGreeting,scriptSchema,validateScript} from '../../src/lib/tg/editorial';
 import {scoredNarration} from '../../src/lib/tg/script-review';
-import {writingEvidence} from '../../src/lib/tg/narrative-policy';
+import {writingEvidence,DAILY_CONTEXT_POLICY} from '../../src/lib/tg/narrative-policy';
 import {dailyScriptDepthIssues} from '../../src/lib/tg/script-depth';
 import {tgSpeechPassages} from '../../src/lib/tg/speech-plan';
 
@@ -13,6 +13,8 @@ import {tgSpeechPassages} from '../../src/lib/tg/speech-plan';
 test('writer keeps grouped generation, flat public score, continuous speech, sources and app-owned bookends',async t=>{
  const now=new Date('2026-10-26T07:00:00Z'),job=editorialFixture(now);
  const body=job.script!.sentences.filter(s=>!['intro','outro'].includes(s.storyId));
+ body[0]={...body[0],mood:'curiosity',intensity:.68,intent:'question'};
+ body[1]={...body[1],mood:'surprise',intensity:.63,intent:'explain'};
  const raw={title:job.script!.title,description:job.script!.description,
   sentences:Object.fromEntries(job.research!.stories.map(s=>[s.id,body.filter(l=>l.storyId===s.id)])),
   cards:Object.fromEntries(job.research!.stories.map(s=>[s.id,{context:'Una scheda completa per la prova tecnica.',change:''}])),
@@ -24,6 +26,7 @@ test('writer keeps grouped generation, flat public score, continuous speech, sou
   calls++;const request=JSON.parse(String(init?.body));
   assert.equal(request.text.format.name,'tg_script');assert.equal(request.store,false);
   assert.equal(request.reasoning.effort,'medium');assert.equal(request.text.verbosity,'medium');
+  assert.ok(request.instructions.includes(DAILY_CONTEXT_POLICY));
   const payload=JSON.parse(request.input.split('<untrusted_evidence>')[1].split('</untrusted_evidence>')[0]);
   assert.deepEqual(payload,writingEvidence(job.research!));
   const schema=request.text.format.schema;
@@ -38,6 +41,7 @@ test('writer keeps grouped generation, flat public score, continuous speech, sou
  try{
   const result=await writeEdition(job.product,job.research!,new AbortController().signal,undefined,job.date);
   assert.deepEqual(result.sentences.filter(s=>!['intro','outro'].includes(s.storyId)),body);
+  assert.deepEqual(result.sentences.slice(1,3).map(s=>[s.mood,s.intensity]),[['curiosity',.68],['surprise',.63]],'editing policy never normalizes lively score values automatically');
   assert.equal(result.sentences[0].text,dailyGreeting('it',job.date,'reviewed'));
   assert.deepEqual(result.sentences.filter(s=>s.storyId==='outro'),dailyClosing('it','reviewed'));
   assert.equal(result.sentences.filter(s=>s.storyId==='outro'&&s.intent==='point-down').length,1);

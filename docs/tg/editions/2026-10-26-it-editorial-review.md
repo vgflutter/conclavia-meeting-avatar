@@ -2,7 +2,7 @@
 
 **COPIONE VERIFICATO DA A E B — arresto prima della conferma manuale. Nessuna approvazione, audio, video o pubblicazione.**
 
-809 parole, 6 notizie. Stima circa cinque minuti; la durata non è stata misurata in un take. Apertura, pausa prevista e chiusura conservate.
+789 parole, 6 notizie. Stima circa cinque minuti; la durata non è stata misurata in un take. Apertura, pausa prevista e chiusura conservate.
 
 Dossier testuale dell’edizione del 26 ottobre: non va ridatato per un’uscita successiva. La finestra automatica mattutina resta quella configurata; questa revisione non autorizza una pubblicazione tardiva.
 
@@ -16,59 +16,55 @@ Ciao a tutti, è Conclavia Daily. Meno rumore, più contesto. Oggi è il ventise
 
 ## 1. Siher, oggi attesa la richiesta di convalida del fermo
 
-A Milano è attesa oggi la richiesta di convalida del fermo per Youssef Siher, nell’inchiesta sul cosiddetto Movimento 17 ottobre. La richiesta spetta alla Procura; sarà poi un giudice a valutarla. Al momento non risulta una decisione sulla convalida.
+A Milano è attesa oggi la richiesta di convalida del fermo per Youssef Siher. Gli inquirenti lo indicano come amministratore della pagina social e della chat Telegram del cosiddetto Movimento 17 ottobre, nelle quali venivano scambiati messaggi sulle manifestazioni e sui disordini del 17 e 18 ottobre a Milano.
 
-Che cosa significa convalida? È il controllo del giudice sul fermo e sulle condizioni previste dalla legge per disporlo. Non è il processo che stabilisce se una persona sia colpevole dei reati contestati. Sono due passaggi diversi del procedimento.
+La Procura gli contesta l’istigazione a delinquere aggravata dalla finalità di terrorismo. Secondo l’accusa, attraverso quella rete avrebbe spinto a commettere violenze durante le manifestazioni. Sulla convalida del fermo deciderà un giudice: dalle fonti consultate non risulta ancora una decisione.
 
-Secondo Adnkronos, gli investigatori stanno esaminando telefoni e computer sequestrati. L’agenzia riferisce di un documento sulla disobbedienza contro il governo Meloni, nel quale sono indicati tre obiettivi principali.
+Intanto gli investigatori stanno analizzando telefoni e computer sequestrati. Tra i materiali citati dalle fonti c’è un documento sulla disobbedienza contro il governo Meloni e, secondo AGI, un vademecum intitolato Rivoluzione, istruzioni per l’uso.
 
-Anche la moglie di Siher risulta indagata. Le ricostruzioni sul ruolo della coppia e sui materiali sequestrati sono attribuite agli inquirenti: le accuse dovranno essere verificate in sede giudiziaria. La convalida riguarda invece la legittimità del fermo.
+Anche la moglie di Siher risulta indagata. Tutti questi elementi vengono dalla ricostruzione degli inquirenti e dovranno essere verificati in giudizio.
 
-## 2. Lega, Salvini riconfermato e rilancia lo stop alle armi all’Ucraina
+## 2. Lega, Salvini rieletto e rilancia lo stop alle armi a Kiev
 
-Nella Lega, Matteo Salvini riparte dalla riconferma a segretario: ha ottenuto 465 voti al congresso concluso il 25 ottobre a Milano. Nel suo intervento ha chiesto di fermare l’invio di armi all’Ucraina.
+Nella Lega, Matteo Salvini è stato riconfermato segretario al congresso concluso il 25 ottobre a Milano: ha ottenuto 465 voti, contro i 146 di Massimo Garavaglia, e un nuovo mandato di quattro anni.
 
-La Lega fa parte della maggioranza di governo. Salvini ha detto che avrebbe portato in Consiglio dei ministri la posizione del partito su denaro e armi destinati all’Ucraina. È la richiesta del leader, non l’annuncio di una nuova decisione del governo sugli aiuti.
+Nel discorso dopo il voto ha detto di puntare a riportare la Lega al secondo posto nel Paese e ha chiesto di fermare l’invio di denaro e armi all’Ucraina. Ha aggiunto che porterà questa posizione in Consiglio dei ministri.
 
-La riconferma arriva mentre Repubblica descrive una tregua interna fragile e riferisce del malumore di Giancarlo Giorgetti e della prudenza di Luca Zaia sul proprio ruolo nel partito.
+È la richiesta del leader della Lega, uno dei partiti della maggioranza, non l’annuncio di una nuova decisione del governo. Sullo sfondo restano le tensioni interne: Repubblica parla di una tregua fragile, con assenze, uscite anticipate e il malumore attribuito a Giancarlo Giorgetti, mentre Luca Zaia viene descritto prudente sul proprio ruolo nel partito.
 
-## 3. Serbia, la Lista degli Studenti avanti e Vučić ammette la sconfitta
+## 3. Serbia, Vučić ammette la sconfitta: avanti la Lista degli Studenti
 
-In Serbia Aleksandar Vučić ha riconosciuto la sconfitta alle elezioni parlamentari. Ha annunciato che la Lista degli Studenti ha vinto il voto: è la formazione nata dal movimento di protesta studentesco, poi entrata nella competizione elettorale.
+In Serbia, il presidente Aleksandar Vučić ha riconosciuto la sconfitta del proprio schieramento alle elezioni parlamentari del 25 ottobre. A prevalere è la Lista degli Studenti, nata dal movimento di protesta studentesco e poi entrata nella competizione elettorale.
 
-Le prime proiezioni riportate da Adnkronos la indicano al 52 per cento dei voti e a 138 seggi. Per orientarsi: il parlamento serbo ha 250 seggi e la maggioranza assoluta si raggiunge a quota 126.
+Le prime proiezioni riportate da Adnkronos assegnano alla lista il 52 per cento dei voti e 138 seggi, oltre i 126 necessari per la maggioranza. Il passaggio dalla mobilitazione nelle piazze alla conquista di una maggioranza parlamentare resta dunque legato alla conferma di queste cifre.
 
-Con quei numeri la lista supererebbe la soglia necessaria per avere da sola più della metà dei deputati. Il risultato in seggi resta però provvisorio: manca la formalizzazione ufficiale e non va confuso con un conteggio definitivo.
-
-Dopo l’ammissione della sconfitta ci sono stati festeggiamenti a Belgrado e in altre città. ANSA e altri resoconti distinguono il riconoscimento politico del risultato dalle cifre finali che devono ancora arrivare dalla procedura elettorale.
+I risultati non sono ancora definitivi: manca la formalizzazione ufficiale dei seggi. Dopo l’ammissione della sconfitta da parte di Vučić, ci sono stati festeggiamenti a Belgrado e in altre città del Paese.
 
 ## 4. Roma, al liceo Righi una “lista stupri” e una svastica
 
-A Roma, il liceo Righi ha condannato la comparsa nei bagni di una scritta definita “lista stupri”, con nomi di studenti ed ex studenti, e di una svastica. Il caso è diventato pubblico nelle ultime ore.
+A Roma, al liceo Righi, la scuola e gli studenti hanno condannato la comparsa nei bagni di una scritta definita lista stupri, con nomi di studenti ed ex studenti, e di una svastica.
 
-Adnkronos, citando un post della lista studentesca Delta, colloca il ritrovamento al 19 ottobre. Sono dunque la denuncia pubblica e le reazioni della scuola a emergere adesso, mentre la scritta risalirebbe ai giorni precedenti.
+Secondo Adnkronos, che cita la lista studentesca Delta, il ritrovamento risale al 19 ottobre. Nelle ultime ore sono emerse la denuncia pubblica e le reazioni della comunità scolastica, mentre la scritta risalirebbe ai giorni precedenti.
 
-Il Collettivo Ludus Righi e la lista Delta hanno condannato l’episodio. Il preside Giovanni Cogliandro lo ha definito un’azione abominevole, secondo quanto riporta TGcom24. Le fonti consultate non indicano al momento chi abbia realizzato le scritte.
+Il Collettivo Ludus Righi e la lista Delta hanno condannato l’episodio. Il preside Giovanni Cogliandro lo ha definito, secondo TGcom24, un’azione abominevole. Le fonti consultate non indicano al momento chi abbia realizzato le scritte.
 
-## 5. Antonelli vince ad Austin: il titolo può arrivare in Messico
+## 5. Antonelli vince ad Austin, in Messico la prossima occasione per il titolo
 
-Andrea Kimi Antonelli ha vinto il Gran Premio degli Stati Uniti ad Austin davanti a Charles Leclerc e Max Verstappen. Il pilota italiano della Mercedes si avvicina al suo primo titolo mondiale di Formula 1, ma non lo ha ancora conquistato.
+Passiamo allo sport: Andrea Kimi Antonelli ha vinto il Gran Premio degli Stati Uniti ad Austin, davanti a Charles Leclerc e Max Verstappen. Il ventenne della Mercedes conquista così la nona vittoria della stagione, secondo il sito ufficiale della Formula 1.
 
-La vittoria di una gara e il titolo mondiale sono due risultati diversi. Il campionato si decide con i punti raccolti durante la stagione: per chiuderlo in anticipo, il vantaggio deve diventare irrecuperabile per gli avversari nelle gare rimaste.
+Antonelli è partito dalla pole position e la Mercedes ha scelto una strategia con un solo passaggio ai box. Il risultato lo porta a 365 punti, con 123 di vantaggio su George Russell, ma non gli ha ancora assegnato matematicamente il mondiale.
 
-Dopo Austin Antonelli è a 365 punti, con 123 punti di vantaggio su George Russell, secondo il sito ufficiale della Formula 1. Quel margine non ha ancora assegnato matematicamente il titolo.
+La prossima occasione è il Gran Premio di Città del Messico. Le condizioni riportate dalla Formula 1 prevedono il titolo se Antonelli non perderà più di 23 punti da Russell o più di 24 da Lewis Hamilton in quella gara.
 
-La prossima occasione è il Gran Premio di Città del Messico. Le combinazioni riportate dalla Formula 1 prevedono che Antonelli diventi campione se non perde più di 23 punti da Russell o più di 24 da Lewis Hamilton in quella gara.
+Se conquisterà il mondiale, diventerà il più giovane campione della storia della Formula 1: è questo il traguardo ancora da raggiungere.
 
-## 6. Del Vecchio valuta un’Opa su Seif, i soci del Fatto frenano
+## 6. Del Vecchio valuta un’Opa su Seif, i fondatori del Fatto frenano
 
-Passiamo all’editoria. LMDV Media, legata a Leonardo Maria Del Vecchio, valuta una possibile offerta pubblica di acquisto su Seif, la società che pubblica Il Fatto Quotidiano.
+Chiudiamo con l’editoria. LMDV Media, la società legata a Leonardo Maria Del Vecchio, sta valutando una possibile offerta pubblica di acquisto su Seif, cioè la società che pubblica Il Fatto Quotidiano.
 
-Opa è l’acronimo di offerta pubblica di acquisto: un’offerta rivolta agli azionisti per comprare le loro azioni alle condizioni indicate. In questo caso l’ipotesi è ancora subordinata a una verifica preliminare, chiamata due diligence.
+Per ora non c’è nessuna operazione conclusa e nemmeno un’offerta già lanciata sul mercato: il cda di LMDV Media ha autorizzato una due diligence, quindi una verifica preliminare dei conti e delle informazioni societarie, prima di decidere se andare avanti.
 
-Il consiglio di amministrazione di LMDV Media ha autorizzato questa analisi dei conti e delle informazioni societarie prima di decidere se procedere. Il Fatto e altri resoconti descrivono una possibile offerta, non un’acquisizione conclusa.
-
-Secondo Open, tra i fondatori che non vogliono vendere ci sono Marco Travaglio e Peter Gomez. La posizione è stata espressa pubblicamente mentre venivano riportati i dettagli dell’iniziativa di LMDV Media.
+Today riporta un’ipotesi di 0,286 euro per azione, per un controvalore di poco più di 7 milioni di euro. I soci fondatori, tra cui Marco Travaglio e Peter Gomez, hanno comunicato di non voler vendere: secondo il comunicato Seif ripreso dal Fatto, rappresentano la maggioranza del capitale della società.
 
 ## Chiusura
 
@@ -78,27 +74,27 @@ Gesto app-owned: un puntamento in basso sulla parola misurata “commenti”. Pr
 
 ## Sintesi social
 
-Sei notizie per aprire la giornata, con il contesto per capirle.
-• Siher: oggi è attesa la richiesta di convalida del fermo; le accuse restano da verificare in giudizio.
-• Lega: Salvini riconfermato segretario rilancia lo stop alle armi all’Ucraina; Repubblica descrive tensioni interne.
-• Serbia: Vučić ammette la sconfitta; la Lista degli Studenti è in maggioranza nelle proiezioni, ancora provvisorie.
+Sei notizie per aprire la giornata.
+• Siher: attesa oggi la richiesta di convalida del fermo; la Procura contesta l’istigazione a delinquere con finalità di terrorismo. Le accuse restano da verificare in giudizio.
+• Lega: Salvini rieletto segretario rilancia lo stop alle armi all’Ucraina come richiesta politica, non una decisione del governo.
+• Serbia: Vučić ammette la sconfitta; la Lista degli Studenti supera la maggioranza nelle proiezioni ancora provvisorie.
 • Roma: il Righi condanna la “lista stupri” e la svastica; il ritrovamento risalirebbe al 19 ottobre.
-• Formula 1: Antonelli vince ad Austin; il titolo non è assegnato e la prossima occasione è in Messico.
-• Seif: possibile Opa di LMDV Media, mentre i soci fondatori dichiarano di non voler vendere.
+• Formula 1: Antonelli vince ad Austin; titolo ancora da conquistare, prossima occasione in Messico.
+• Seif: possibile Opa di LMDV Media; i fondatori contrari alla vendita rappresentano, secondo Seif, la maggioranza del capitale.
 
 ## Controlli correnti
 
-A: positivo · 2026-10-26T09:40:28.227Z · 22 clausole fattuali controllate in questo esito.
+A: positivo · 2026-10-26T10:51:58.140Z · 20 clausole fattuali controllate in questo esito.
 
-Attualità: positiva. Finestra UTC da 2026-10-25T09:40:28.227Z fino a 2026-10-26T09:40:28.227Z.
-- c_c6e83dcff47da2fc6270775d: new · sviluppo 2026-10-26. Adnkronos on 26 October reports that the prosecutor would ask that day for convalida del fermo. ANSA on 25 October had already identified that request as the next step expected on 26 October. That makes the fresh item an announced procedural step within the window, not a completed court decision. Claims about chats, manuals and the wife’s role remain attributed allegations/background.
-- c_0498d00217444e6ad31e6502: new · sviluppo 2026-10-25. Adnkronos and ANSA both place the proclamation in the afternoon of 25 October and report the 465-to-146 result. The 26 October pieces are follow-up reaction and analysis, not a second vote. The verified fresh event is the re-election itself; any internal-tension framing is attributed commentary.
-- c_887ac9c1984492a392ee85c2: new · sviluppo 2026-10-25. ANSA and Adnkronos both report on 25 October that Vučić acknowledged defeat and that the Students’ List was ahead strongly enough for an outright majority in projections. The concession is the fresh event inside the window; the precise percentages and seats remain to be formalized.
-- c_d1919f735c1adb32afbde931: new · sviluppo 2026-10-25. Adnkronos and TGcom24 published the case on 25 October, while Adnkronos says the writing was found on 19 October. So the admissible new development is the public disclosure and reactions on 25 October, not the original act itself. No responsible person is identified in the cited reports.
-- c_6c3ba18766b3cc676c4c9a04: new · sviluppo 2026-10-25. ANSA reports the Austin win on 25 October, and Formula 1’s official site confirms the result, standings and that the title remains mathematically open for Mexico City. The fresh event is the race result itself within the window; pre-race title scenarios are older context only.
-- c_3d8460de3a0bbaf306a49a44: new · sviluppo 2026-10-25. Il Fatto Quotidiano reports the board authorization for confirmatory due diligence aimed at a possible full bid, and Open reports the founders’ public refusal to sell. The verified fresh development is a conditional corporate move plus immediate rejection the same evening, not a completed takeover or even a launched bid.
+Attualità: positiva. Finestra UTC da 2026-10-25T10:51:58.140Z fino a 2026-10-26T10:51:58.140Z.
+- c_c6e83dcff47da2fc6270775d: new · sviluppo 2026-10-25. ANSA on 2026-10-25 reported the request for validation of Siher’s detention as the imminent next court step; Adnkronos at 2026-10-26T02:19:50Z said the prosecutor would ask for validation on 26 October. That is a new public disclosure inside the window. The detention itself dates to 24 October and is background only.
+- c_0498d00217444e6ad31e6502: new · sviluppo 2026-10-25. Adnkronos on 2026-10-25 and ANSA on 2026-10-25 both report the congress result: Salvini re-elected 465 to 146 over Garavaglia. Those timestamps fall inside the window. The 2026-10-26 Repubblica piece adds interpretation about internal tensions, but the fresh event is the 25 October vote and Salvini’s immediate remarks.
+- c_887ac9c1984492a392ee85c2: new · sviluppo 2026-10-25. ANSA reports Vučić acknowledging defeat on 2026-10-25, and Adnkronos reports first projections giving the student list a majority if confirmed. The concession itself is the verified new event in the window; certification of final results was still pending.
+- c_d1919f735c1adb32afbde931: new · sviluppo 2026-10-25. Adnkronos says the writing was found on 2026-10-19, but the case emerged publicly on 2026-10-25 with school and student reactions; TGcom24 separately reports the swastika and the principal’s condemnation. So the fresh development is the disclosure and response, not a new act on 25 October.
+- c_6c3ba18766b3cc676c4c9a04: new · sviluppo 2026-10-25. ANSA reports Antonelli winning at Austin on 2026-10-25 ahead of Leclerc and Verstappen. The official Formula 1 site, published shortly after, confirms the standings impact and that the title remains to be clinched in the next round under stated points conditions. This is a fresh race result within the window.
+- c_3d8460de3a0bbaf306a49a44: new · sviluppo 2026-10-25. Il Fatto Quotidiano on 2026-10-25 reports SEIF’s communication that founding shareholders representing a majority do not intend to sell and would not join any eventual offer; Today on 2026-10-26 reports the possible bid terms. The verified new event is the 25 October public disclosure of a possible operation, not a completed or launched OPA.
 
-B: positivo · 2026-10-26T09:43:26.523Z · 27 clausole esaminate.
+B: positivo · 2026-10-26T10:54:37.207Z · 25 clausole esaminate.
 
 Criteri B: {"coherence":true,"impartiality":true,"opening":true,"closing":true,"coverage":true}.
 
@@ -141,37 +137,35 @@ A ha verificato i target previsti: parlato, titoli, cartelli e descrizione. B ha
 ## Regia semantica, non pronunciata
 
 1. intro · agreement · 0.45 · acknowledge
-2. c_c6e83dcff47da2fc6270775d · attention · 0.42 · explain
-3. c_c6e83dcff47da2fc6270775d · curiosity · 0.36 · question
-4. c_c6e83dcff47da2fc6270775d · attention · 0.42 · explain
-5. c_c6e83dcff47da2fc6270775d · doubt · 0.35 · contrast
+2. c_c6e83dcff47da2fc6270775d · attention · 0.45 · explain
+3. c_c6e83dcff47da2fc6270775d · attention · 0.42 · contrast
+4. c_c6e83dcff47da2fc6270775d · attention · 0.43 · explain
+5. c_c6e83dcff47da2fc6270775d · doubt · 0.34 · acknowledge
 6. c_0498d00217444e6ad31e6502 · attention · 0.43 · explain
-7. c_0498d00217444e6ad31e6502 · attention · 0.4 · contrast
-8. c_0498d00217444e6ad31e6502 · doubt · 0.34 · explain
-9. c_887ac9c1984492a392ee85c2 · attention · 0.45 · explain
-10. c_887ac9c1984492a392ee85c2 · curiosity · 0.38 · explain
+7. c_0498d00217444e6ad31e6502 · attention · 0.42 · emphasize
+8. c_0498d00217444e6ad31e6502 · doubt · 0.35 · contrast
+9. c_887ac9c1984492a392ee85c2 · attention · 0.45 · emphasize
+10. c_887ac9c1984492a392ee85c2 · attention · 0.43 · explain
 11. c_887ac9c1984492a392ee85c2 · doubt · 0.34 · contrast
-12. c_887ac9c1984492a392ee85c2 · attention · 0.36 · explain
-13. c_d1919f735c1adb32afbde931 · empathy · 0.36 · acknowledge
-14. c_d1919f735c1adb32afbde931 · attention · 0.34 · explain
-15. c_d1919f735c1adb32afbde931 · empathy · 0.35 · acknowledge
-16. c_6c3ba18766b3cc676c4c9a04 · surprise · 0.43 · explain
-17. c_6c3ba18766b3cc676c4c9a04 · attention · 0.38 · explain
-18. c_6c3ba18766b3cc676c4c9a04 · attention · 0.4 · explain
-19. c_6c3ba18766b3cc676c4c9a04 · curiosity · 0.38 · explain
-20. c_3d8460de3a0bbaf306a49a44 · attention · 0.41 · explain
-21. c_3d8460de3a0bbaf306a49a44 · curiosity · 0.38 · explain
-22. c_3d8460de3a0bbaf306a49a44 · attention · 0.36 · explain
-23. c_3d8460de3a0bbaf306a49a44 · attention · 0.38 · explain
-24. outro · attention · 0.35 · explain
-25. outro · curiosity · 0.64 · point-down · accento: commenti
-26. outro · agreement · 0.55 · invite
-27. outro · agreement · 0.44 · acknowledge
+12. c_d1919f735c1adb32afbde931 · empathy · 0.34 · acknowledge
+13. c_d1919f735c1adb32afbde931 · attention · 0.35 · contrast
+14. c_d1919f735c1adb32afbde931 · empathy · 0.33 · acknowledge
+15. c_6c3ba18766b3cc676c4c9a04 · surprise · 0.52 · emphasize
+16. c_6c3ba18766b3cc676c4c9a04 · attention · 0.41 · contrast
+17. c_6c3ba18766b3cc676c4c9a04 · attention · 0.39 · explain
+18. c_6c3ba18766b3cc676c4c9a04 · curiosity · 0.46 · emphasize
+19. c_3d8460de3a0bbaf306a49a44 · attention · 0.41 · explain
+20. c_3d8460de3a0bbaf306a49a44 · attention · 0.39 · contrast
+21. c_3d8460de3a0bbaf306a49a44 · attention · 0.4 · explain
+22. outro · attention · 0.35 · explain
+23. outro · curiosity · 0.64 · point-down · accento: commenti
+24. outro · agreement · 0.55 · invite
+25. outro · agreement · 0.44 · acknowledge
 
 ## Identità della revisione
 
-Job 6adef3723a80c1de325ac341 · revisione 71 · tentativi worker 2 · correzioni conservate 15.
-Hash del copione: b9fe322aa5ac2ae92db5e3045830cafafa83c72aba0ef8e2c032ca02d1203ca7.
-Hash dell’input B: 7e54669e291b1f4466918e43d78e99a57afddb219d0d2f3406b8e6ea8896d5e8.
+Job 6adef3723a80c1de325ac341 · revisione 73 · tentativi worker 2 · correzioni conservate 16.
+Hash del copione: 0a8be6739fdc6ef3307e68797f1b412816deaca23d64c5260f50df42ac987f74.
+Hash dell’input B: 70a64817985d940e9580a2bba19ef4c5739f15c990022a2cc599c66879e98a20.
 
-Il testo comprende la rifinitura editoriale dell’agente sulle nuove generazioni e sulle prove raccolte. [Implementazione, confronto prima/dopo e limiti osservati](../cdaily-narrative-revision-20261026.md). Nessuna notizia di questa bozza è registrata come trasmessa.
+Il testo comprende la rifinitura editoriale dell’agente sulle nuove generazioni e sulle prove raccolte. [Regole generali, pertinenza del contesto e verifiche effettive](../cdaily-context-relevance-20261026.md). Nessuna notizia di questa bozza è registrata come trasmessa.
