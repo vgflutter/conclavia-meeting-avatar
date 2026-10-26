@@ -28,7 +28,7 @@ test('the retrieval adapter searches only the changed story and never returns an
  const j=editorialFixture(now),lookup=evidenceMemo();let calls=0;
  t.mock.method(globalThis,'fetch',async (url:Parameters<typeof fetch>[0])=>{
   assert.equal(String(url),'https://api.openai.com/v1/responses');calls++;
-  return Response.json({status:'completed',output:[{type:'web_search_call',action:{sources:[{url:'https://www.ansa.it/fixture',title:'Actual mocked retrieval'}]}},{type:'message',content:[{type:'output_text',text:'Evidence retrieved by the mocked provider.'}]}]});
+  return Response.json({status:'completed',output:[{type:'web_search_call',action:{sources:[{url:'https://www.ansa.it/fixture',title:'Actual mocked retrieval'}]}},{type:'message',content:[{type:'output_text',text:'Evidence retrieved by the mocked provider. [Source](https://www.ansa.it/fixture)'}]}]});
  });
  try{
   const first=await retrieveAuditEvidence(j.research!,j.script!,new AbortController().signal,lookup);
@@ -49,7 +49,7 @@ test('verification searches bypass a warm research cache and bind fresh receipts
  t.mock.method(globalThis,'fetch',async(_u:Parameters<typeof fetch>[0],init?:RequestInit)=>{
   calls++;const request=JSON.parse(String(init?.body));
   assert.match(request.input,/LATEST available authoritative updates/);
-  return Response.json({status:'completed',output:[{type:'web_search_call',action:{sources:[{url:'https://www.ansa.it/current',title:'Fresh test lookup'}]}},{type:'message',content:[{type:'output_text',text:'The newest original bulletin supersedes earlier projections.'}]}]});
+  return Response.json({status:'completed',output:[{type:'web_search_call',action:{sources:[{url:'https://www.ansa.it/current',title:'Fresh test lookup'}]}},{type:'message',content:[{type:'output_text',text:'The newest original bulletin supersedes earlier projections. [Source](https://www.ansa.it/current)'}]}]});
  });
  try{
   await retrieveAuditEvidence(j.research!,j.script!,new AbortController().signal,lookup);assert.equal(calls,5);

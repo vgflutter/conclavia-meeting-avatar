@@ -33,7 +33,7 @@ test('the actual audit adapter requests independent freshness, preserves negativ
   } else {
    assert.equal(request.text.format.name,'tg_independent_audit');claimCalls++;
    assert.ok(request.instructions.includes(DAILY_TIMELINE_POLICY));
-   data={issues:[],checks:Object.fromEntries(Object.keys(request.text.format.schema.properties.checks.properties).map(key=>{const storyId=key.startsWith('sentence_')?s.sentences[Number(key.slice(9))].storyId:r.stories[0].id;return [key,{status:'supported',evidence:'Il dettaglio è esplicitamente sostenuto dalle fonti sintetiche.',sourceUrls:[webByStory[storyId]?.[0]??r.sources[0].url]}];}))};
+   data={issues:[],checks:Object.fromEntries(Object.keys(request.text.format.schema.properties.checks.properties).map(key=>{const storyId=key.startsWith('sentence_')?s.sentences[Number(key.slice(9))].storyId:key.startsWith('headline_')?s.headlines?.[Number(key.slice(9))]?.storyId:key.startsWith('context_')||key.startsWith('change_')?s.cards?.[Number(key.split('_')[1])]?.storyId:r.stories[0].id;return [key,{status:'supported',evidence:'Il dettaglio è esplicitamente sostenuto dalle fonti sintetiche.',sourceUrls:[webByStory[storyId??r.stories[0].id]?.[0]??r.sources[0].url]}];}))};
   }
   return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(data)}]}]});
  });
@@ -63,7 +63,7 @@ test('A refreshes untagged research evidence and rejects a once-correct projecti
   }
   assert.equal(request.text?.format?.name,undefined,'No claim audit may follow a freshness rejection');
   searches++;assert.match(request.input,/LATEST available authoritative updates/);
-  return Response.json({status:'completed',output:[{type:'web_search_call',action:{sources:[{url:source,title:'New official count'},{url:'https://www.rainews.it/new-count',title:'Independent current confirmation'}]}},{type:'message',content:[{type:'output_text',text:'The new official count is 61, superseding the earlier projection of 58.'}]}]});
+  return Response.json({status:'completed',output:[{type:'web_search_call',action:{sources:[{url:source,title:'New official count'},{url:'https://www.rainews.it/new-count',title:'Independent current confirmation'}]}},{type:'message',content:[{type:'output_text',text:'The new official count is 61, superseding the earlier projection of 58. [Official](https://www.ansa.it/fresh-official-count) [Independent](https://www.rainews.it/new-count)'}]}]});
  });
  try{
   const result=await judgeEdition(job.product,r,s,{data:[{brief:'OLD_CACHE_ONLY'}],sources:[{url:'https://www.ansa.it/old',title:'Old projection'}]},new AbortController().signal,[],now);

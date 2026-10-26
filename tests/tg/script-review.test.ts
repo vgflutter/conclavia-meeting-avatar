@@ -82,7 +82,7 @@ test('real B adapter sees complete narration and score, without checker A conclu
   assert.ok(request.instructions.includes(DAILY_NARRATIVE_REVIEW));
   assert.ok(request.input.includes(JSON.stringify(dailyGreeting(j.product.language,j.date,j.product.productionStandard==='cdaily-v1'?'reviewed':undefined))));
   assert.match(request.input,/do not demand a numeric date, year or weekday/);
-  assert.ok(request.input.includes(scoredNarration(j.script!).narrationText.split('\n')[0]));assert.ok(request.input.includes('<mood:attention'));assert.ok(request.instructions.includes('independent editor B'));
+  assert.ok(request.input.includes(scoredNarration(j.script!).narrationText.split('\n')[0]));assert.ok(request.input.includes('<mood:attention'));assert.ok(request.instructions.includes('independent editor B'));assert.match(request.instructions,/Compare informational propositions/);assert.match(request.instructions,/assess priority as well as correctness/);
   return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(judgement(j.script!))}]}]});
  });
  try{const result=await reviewEditionScript(j.product,j.date,j.research!,j.script!,{data:[],sources:j.audit!.sources.length?j.audit!.sources:j.research!.sources.map(s=>({url:s.url,title:s.title})),webByStory:{}},new AbortController().signal,now);assert.equal(result.passed,true);assert.equal(calls,1);assert.equal(scriptReviewIsCurrent({...j,scriptReview:result},now),true);}

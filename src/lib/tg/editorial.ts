@@ -127,10 +127,10 @@ export function auditTargets(script: TgScript) {
     ...script.sentences.map((s,i)=>({key:`sentence_${i}`,text:s.text,factual:!['intro','outro'].includes(s.storyId)}))];
 }
 /** Required keys prevent a model's self-reported count from concealing skipped sentences. */
-export function auditSchema(script: TgScript, retrievedUrls?:string[], keys?:string[], webByStory?:Record<string,string[]>) {
+export function auditSchema(script: TgScript, retrievedUrls?:string[], keys?:string[], webByStory?:Record<string,string[]>,citationScopes?:Record<string,string[]>) {
   const check=(key:string)=>{
     const headline=key.startsWith('headline_')?script.headlines?.[Number(key.slice(9))]:undefined;
-    const urls=headline&&webByStory?.[headline.storyId]?.length?webByStory[headline.storyId]:retrievedUrls;
+    const urls=headline&&webByStory?.[headline.storyId]?.length?webByStory[headline.storyId]:citationScopes?.[key]??retrievedUrls;
     return object({status:{type:'string',enum:['supported','unsupported','unverifiable']},evidence:{type:'string',maxLength:500},sourceUrls:{type:'array',maxItems:key==='description'?8:2,items:urls?{type:'string',enum:urls}:string}});
   };
   // Every blocking finding belongs to its required target and is derived from
@@ -224,7 +224,7 @@ export function validateScript(value: unknown, product: TgProduct, research: TgR
 }
 export function sentenceDigest(sentences: TgScript['sentences']) { return createHash('sha256').update(JSON.stringify(sentences.map(s=>({text:s.text,mood:s.mood,intensity:s.intensity,speaker:s.speaker,storyId:s.storyId,sourceIds:[...s.sourceIds].sort(),...(s.intent?{intent:s.intent}:{}),...(s.gestureWord?{gestureWord:s.gestureWord}:{})})))).digest('hex'); }
 export function scriptDigest(script: TgScript) { return createHash('sha256').update(JSON.stringify({title:script.title,description:script.description,cards:script.cards?.map(c=>({storyId:c.storyId,context:c.context,change:c.change})).sort((a,b)=>a.storyId.localeCompare(b.storyId)),headlines:script.headlines?.map(h=>({storyId:h.storyId,title:h.title})).sort((a,b)=>a.storyId.localeCompare(b.storyId)),sentences:sentenceDigest(script.sentences)})).digest('hex'); }
-export function validateAudit(value: unknown, script: TgScript, citations: {url: string; title: string}[], now: Date): TgAudit {
+export function validateAudit(value: unknown, script: TgScript, citations: {url: string; title: string}[], now: Date,citationScopes?:Record<string,string[]>): TgAudit {
   const v = value as {issues:string[];checks:Record<string,{status:'supported'|'unsupported'|'unverifiable';evidence:string;sourceUrls:string[]}>};
   const count = script.sentences.filter(x => x.storyId !== 'intro' && x.storyId !== 'outro').length;
   if (!v || !Array.isArray(v.issues) || v.issues.some(x=>typeof x!=='string') || !v.checks || citations.length<2) fail('Verifica editoriale incompleta');
@@ -233,15 +233,19 @@ export function validateAudit(value: unknown, script: TgScript, citations: {url:
   const checks=auditTargets(script).map(target=>{
     const c=v.checks[target.key];
     if(!c||!['supported','unsupported','unverifiable'].includes(c.status)||typeof c.evidence!=='string'||c.evidence.length<10||!Array.isArray(c.sourceUrls)||c.sourceUrls.some(u=>typeof u!=='string'))fail(`Verifica editoriale incompleta: ${target.key}`);
-    const urls=[...new Set(c.sourceUrls.map(u=>publicSourceUrl(u)).filter((u):u is string=>Boolean(u&&retrieved.has(u))))];
-    const status=target.factual&&c.status==='supported'&&!urls.length?'unverifiable':c.status;
+    const eligible=citationScopes?.[target.key],outside=Boolean(eligible&&c.sourceUrls.some(u=>!eligible.includes(publicSourceUrl(u)??'')));
+    const urls=[...new Set(c.sourceUrls.map(u=>publicSourceUrl(u)).filter((u):u is string=>Boolean(u&&retrieved.has(u)&&(!eligible||eligible.includes(u)))))];
+    const status=outside||target.factual&&c.status==='supported'&&!urls.length?'unverifiable':c.status;
+    if(outside)issues.push(`${target.key}: fonte non pertinente alla notizia associata; riesaminare l’affermazione`);
     if(status!=='supported')issues.push(`${target.key}: ${c.evidence.slice(0,600)}${target.factual&&!urls.length?' (nessuna fonte effettivamente consultata associata)':''}`);
     return {key:target.key,status,evidence:c.evidence.slice(0,1000),sourceUrls:urls};
   });
-  return { scriptSha256: scriptDigest(script), passed: issues.length===0, issues: issues.slice(0,60), checkedFacts: count, checkedAt: now.toISOString(), evidence: checks.map(c=>`${c.key}: ${c.evidence}`).join('\n').slice(0,8000), checks, sources: citations.slice(0,60) };
+  const used=new Set(checks.flatMap(c=>c.sourceUrls));
+  return { scriptSha256: scriptDigest(script), passed: issues.length===0, issues: issues.slice(0,60), checkedFacts: count, checkedAt: now.toISOString(), evidence: checks.map(c=>`${c.key}: ${c.evidence}`).join('\n').slice(0,8000), checks, sources: citations.filter(c=>used.has(publicSourceUrl(c.url)??'')).slice(0,60) };
 }
 export function requireWebCorroboration(audit:TgAudit,research:TgResearch,script:TgScript,webUrls:string[]){
-  audit.webSourceUrls=[...webUrls];const live=new Set(webUrls);
+  const used=new Set(audit.checks?.flatMap(c=>c.sourceUrls));
+  audit.webSourceUrls=webUrls.filter(url=>used.has(url));const live=new Set(webUrls);
   for(const story of research.stories){
     const keys=new Set([...script.sentences.flatMap((s,i)=>s.storyId===story.id?[`sentence_${i}`]:[]),...(script.headlines??[]).flatMap((h,i)=>h.storyId===story.id?[`headline_${i}`]:[])]);
     if(keys.size&&!audit.checks?.some(c=>keys.has(c.key)&&c.status==='supported'&&c.sourceUrls.some(u=>live.has(u))))audit.issues.push(`Notizia ${story.id}: manca un riscontro web indipendente sul fatto centrale`);

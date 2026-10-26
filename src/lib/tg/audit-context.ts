@@ -9,6 +9,16 @@ function targetStoryId(script:TgScript,key:string){
   :match?script.cards?.[Number(match[2])]?.storyId:undefined;
  return id&&!['intro','outro'].includes(id)?id:undefined;
 }
+/** URL eligibility follows the actual story, independently of batch layout. */
+export function auditCitationScopes(research:TgResearch,script:TgScript,searched:EvidenceInput){
+ const global=[...new Set([...research.sources.map(s=>s.url),...searched.sources.map(s=>s.url)])];
+ return Object.fromEntries(auditTargets(script).map(target=>{
+  const id=targetStoryId(script,target.key);if(!id)return [target.key,global];
+  const ids=new Set([...(research.stories.find(s=>s.id===id)?.sourceIds??[]),...script.sentences.filter(s=>s.storyId===id).flatMap(s=>s.sourceIds)]);
+  const web=searched.webByStory?.[id]??(Array.isArray(searched.data)?(searched.data as TgEvidenceStory[]).filter(d=>d.storyId===id).flatMap(d=>d.sources.map(s=>s.url)):[]);
+  return [target.key,[...new Set([...research.sources.filter(s=>ids.has(s.id)).map(s=>s.url),...web])]];
+ }));
+}
 /** Group related checks so one source dossier is not resent for unrelated
  * headlines/cards. Preserve every original key, with a bounded response size. */
 export function factAuditBatches(script:TgScript,maximum=6){
@@ -43,6 +53,6 @@ export function factBatchContext(research:TgResearch,script:TgScript,searched:Ev
  const webSources=global?searched.sources:searched.sources.filter(s=>webUrls.has(s.url));
  const consulted=[...new Map([...sources.map(s=>({url:s.url,title:s.title})),...webSources].map(s=>[s.url,s])).values()];
  const scopedResearch={...research,stories,sources};delete scopedResearch.retrievedContext;
- return {research:scopedResearch,script,targets:all.filter(t=>keys.includes(t.key)),consultedSourceCatalog:consulted,
+ return {research:scopedResearch,script,targets:all.filter(t=>keys.includes(t.key)),consultedSourceCatalog:consulted,citationScopes:auditCitationScopes(research,script,searched),
   searched:{data,sources:webSources,webByStory},storyIds:stories.map(s=>s.id)};
 }
